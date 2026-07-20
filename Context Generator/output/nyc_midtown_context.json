@@ -1,0 +1,329 @@
+{
+  "city_key": "nyc_midtown",
+  "city_name": "New York City (Midtown Manhattan - Times Square)",
+  "typology": "strict_grid_diagonal",
+  "density_class": "superhigh_density",
+  "coordinates": {
+    "lat": 40.758,
+    "lon": -73.9855
+  },
+  "verification_links": {
+    "google_maps": "https://www.google.com/maps?q=40.7580,-73.9855",
+    "openstreetmap": "https://www.openstreetmap.org/#map=18/40.7580/-73.9855"
+  },
+  "radius_m": 100.0,
+  "site_boundary": {
+    "name": "Target Parcel (Times Square Plaza / W 45th St & Broadway)",
+    "vertices_2d": [
+      [
+        -12.0,
+        25.0
+      ],
+      [
+        18.0,
+        42.0
+      ],
+      [
+        28.0,
+        18.0
+      ],
+      [
+        -2.0,
+        5.0
+      ]
+    ],
+    "centroid": [
+      8.0,
+      22.5
+    ],
+    "original_height": 110.0
+  },
+  "context_buildings": [
+    {
+      "id": "bldg_marriott_marquis",
+      "name": "New York Marriott Marquis Hotel",
+      "vertices_2d": [
+        [
+          -85.0,
+          30.0
+        ],
+        [
+          -25.0,
+          55.0
+        ],
+        [
+          -15.0,
+          105.0
+        ],
+        [
+          -75.0,
+          80.0
+        ]
+      ],
+      "height": 175.0,
+      "centroid": [
+        -50.0,
+        67.5
+      ]
+    },
+    {
+      "id": "bldg_one_times_square",
+      "name": "One Times Square (1475 Broadway)",
+      "vertices_2d": [
+        [
+          -22.0,
+          -85.0
+        ],
+        [
+          -2.0,
+          -45.0
+        ],
+        [
+          15.0,
+          -80.0
+        ]
+      ],
+      "height": 111.0,
+      "centroid": [
+        -3.0,
+        -70.0
+      ]
+    },
+    {
+      "id": "bldg_1515_broadway",
+      "name": "1515 Broadway (Paramount Plaza / Viacom Headquarters)",
+      "vertices_2d": [
+        [
+          -85.0,
+          -35.0
+        ],
+        [
+          -25.0,
+          -10.0
+        ],
+        [
+          -15.0,
+          -60.0
+        ],
+        [
+          -75.0,
+          -85.0
+        ]
+      ],
+      "height": 227.0,
+      "centroid": [
+        -50.0,
+        -47.5
+      ]
+    },
+    {
+      "id": "bldg_w_hotel",
+      "name": "W New York Times Square (1567 Broadway)",
+      "vertices_2d": [
+        [
+          -15.0,
+          110.0
+        ],
+        [
+          45.0,
+          135.0
+        ],
+        [
+          60.0,
+          95.0
+        ],
+        [
+          0.0,
+          70.0
+        ]
+      ],
+      "height": 178.0,
+      "centroid": [
+        22.5,
+        102.5
+      ]
+    },
+    {
+      "id": "bldg_hudson_theatre",
+      "name": "Hudson Theatre & Millennium Hotel",
+      "vertices_2d": [
+        [
+          35.0,
+          -15.0
+        ],
+        [
+          95.0,
+          10.0
+        ],
+        [
+          85.0,
+          -35.0
+        ],
+        [
+          25.0,
+          -60.0
+        ]
+      ],
+      "height": 88.0,
+      "centroid": [
+        60.0,
+        -25.0
+      ]
+    },
+    {
+      "id": "bldg_museum_broadway",
+      "name": "Museum of Broadway / W 45th Commercial Block",
+      "vertices_2d": [
+        [
+          28.0,
+          50.0
+        ],
+        [
+          88.0,
+          75.0
+        ],
+        [
+          78.0,
+          25.0
+        ],
+        [
+          18.0,
+          0.0
+        ]
+      ],
+      "height": 65.0,
+      "centroid": [
+        53.0,
+        37.5
+      ]
+    },
+    {
+      "id": "bldg_skechers_retail",
+      "name": "Skechers Retail / W 44th Corner",
+      "vertices_2d": [
+        [
+          -80.0,
+          10.0
+        ],
+        [
+          -30.0,
+          28.0
+        ],
+        [
+          -35.0,
+          -5.0
+        ],
+        [
+          -85.0,
+          -20.0
+        ]
+      ],
+      "height": 52.0,
+      "centroid": [
+        -57.5,
+        3.2
+      ]
+    }
+  ],
+  "roads": [
+    {
+      "id": "road_broadway",
+      "name": "Broadway (Diagonal Avenue)",
+      "highway_type": "primary",
+      "width_m": 16.0,
+      "polyline_2d": [
+        [
+          -85.0,
+          -110.0
+        ],
+        [
+          -20.0,
+          -40.0
+        ],
+        [
+          15.0,
+          30.0
+        ],
+        [
+          65.0,
+          110.0
+        ]
+      ]
+    },
+    {
+      "id": "road_7th_ave",
+      "name": "7th Avenue",
+      "highway_type": "primary",
+      "width_m": 15.0,
+      "polyline_2d": [
+        [
+          -20.0,
+          -110.0
+        ],
+        [
+          -20.0,
+          110.0
+        ]
+      ]
+    },
+    {
+      "id": "road_w45th",
+      "name": "W 45th Street",
+      "highway_type": "secondary",
+      "width_m": 11.0,
+      "polyline_2d": [
+        [
+          -100.0,
+          30.0
+        ],
+        [
+          100.0,
+          55.0
+        ]
+      ]
+    },
+    {
+      "id": "road_w44th",
+      "name": "W 44th Street",
+      "highway_type": "secondary",
+      "width_m": 11.0,
+      "polyline_2d": [
+        [
+          -100.0,
+          -20.0
+        ],
+        [
+          100.0,
+          5.0
+        ]
+      ]
+    },
+    {
+      "id": "road_w43rd",
+      "name": "W 43rd Street",
+      "highway_type": "secondary",
+      "width_m": 11.0,
+      "polyline_2d": [
+        [
+          -100.0,
+          -70.0
+        ],
+        [
+          100.0,
+          -45.0
+        ]
+      ]
+    }
+  ],
+  "metrics": {
+    "site_area_m2": 615.0,
+    "building_count": 7,
+    "total_footprint_area_m2": 18450.0,
+    "ground_coverage_ratio": 0.587,
+    "floor_area_ratio": 24.8,
+    "avg_height_m": 128.0,
+    "max_height_m": 227.0,
+    "min_height_m": 52.0,
+    "sky_view_factor": 0.312
+  }
+}

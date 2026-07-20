@@ -1,0 +1,8 @@
+numpy>=1.20.0
+shapely>=2.0.0
+trimesh>=3.15.0
+mapbox-earcut>=1.0.0
+plotly>=5.0.0
+matplotlib>=3.5.0
+scipy>=1.7.0
+requests>=2.25.0

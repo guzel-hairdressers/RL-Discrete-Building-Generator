@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive reinforcement-learning environment for reusable modular floor-plan optimization.">
+  <title>Module Lab · RL Floor Plan Optimizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div>
+          <p class="eyebrow">MODULE LAB / 01</p>
+          <h1>RL floor plan optimizer</h1>
+        </div>
+      </div>
+      <div class="training-status" aria-live="polite">
+        <span id="statusDot" class="status-dot"></span>
+        <span id="statusText">Ready to train</span>
+      </div>
+      <div class="header-actions">
+        <button id="newSiteBtn" class="button button-secondary" type="button">New site</button>
+        <button id="trainBtn" class="button button-primary" type="button"><span id="trainIcon">▶</span><span id="trainLabel">Train policy</span></button>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="control-panel" aria-label="Optimization controls">
+        <section class="control-section intro-section">
+          <div class="section-heading">
+            <span class="section-number">01</span>
+            <div><p class="eyebrow">ENVIRONMENT</p><h2>Site definition</h2></div>
+          </div>
+          <label class="field-label" for="boundaryType">Boundary</label>
+          <select id="boundaryType" class="select-input">
+            <option value="rect">Rectangular / office</option>
+            <option value="lshape">L-shaped / mixed use</option>
+            <option value="ushape">U-shaped / residential</option>
+            <option value="convex">Random convex hull</option>
+            <option value="concave">Random non-convex</option>
+            <option value="lobed">Deep-lobed / reference-like</option>
+            <option value="tshape">Randomized T-site</option>
+            <option value="free" selected>Random mixed family</option>
+          </select>
+          <label class="field-label" for="atriumPolicy">Atrium strategy</label>
+          <select id="atriumPolicy" class="select-input">
+            <option value="agent">Agent decides</option>
+            <option value="none">No atrium</option>
+            <option value="central">Fixed central atrium</option>
+          </select>
+          <div class="range-field"><div><label for="lobeCount">Deep-site lobes</label><output id="lobeCountOut">4</output></div><input id="lobeCount" type="range" min="2" max="7" value="4" step="1"></div>
+          <div class="range-field"><div><label for="boundaryVertices">Boundary vertices</label><output id="boundaryVerticesOut">17</output></div><input id="boundaryVertices" type="range" min="10" max="24" value="17" step="1"></div>
+          <div class="range-field"><div><label for="concavity">Notch depth</label><output id="concavityOut">62%</output></div><input id="concavity" type="range" min="0.25" max="0.82" value="0.62" step="0.01"></div>
+          <div class="range-field"><div><label for="lobeReach">Lobe reach</label><output id="lobeReachOut">1.55×</output></div><input id="lobeReach" type="range" min="1.1" max="2.2" value="1.55" step="0.05"></div>
+          <label class="switch-row" for="singleFloor">
+            <span><strong>Single-floor building</strong><small>Removes core and stacking objectives</small></span>
+            <input id="singleFloor" type="checkbox" role="switch">
+          </label>
+        </section>
+
+        <section class="control-section">
+          <div class="section-heading">
+            <span class="section-number">02</span>
+            <div><p class="eyebrow">MODULE GRAMMAR</p><h2>Fabrication limits</h2></div>
+          </div>
+          <div class="range-field"><div><label for="minEdge">Minimum edge</label><output id="minEdgeOut">1.0 m</output></div><input id="minEdge" type="range" min="1" max="3" value="1" step="0.5"></div>
+          <div class="range-field"><div><label for="maxEdge">Maximum edge</label><output id="maxEdgeOut">8.0 m</output></div><input id="maxEdge" type="range" min="4" max="9" value="8" step="0.5"></div>
+          <div class="range-field"><div><label for="maxEdges">Maximum sides</label><output id="maxEdgesOut">8</output></div><input id="maxEdges" type="range" min="4" max="8" value="8" step="1"></div>
+          <div class="range-field"><div><label for="dictCap">Dictionary cap</label><output id="dictCapOut">7 types</output></div><input id="dictCap" type="range" min="3" max="10" value="7" step="1"></div>
+          <label class="field-label" for="angleStep">Angle increment</label>
+          <select id="angleStep" class="select-input"><option value="15">15°</option><option value="10">10°</option><option value="7.5">7.5°</option></select>
+          <label class="field-label" for="orientationMode">Orientation basis</label>
+          <select id="orientationMode" class="select-input"><option value="random">Random per episode</option><option value="orthogonal">Orthogonal only</option></select>
+          <label class="switch-row" for="allowShear">
+            <span><strong>Sheared module families</strong><small>Creates fixed parallelogram modules</small></span>
+            <input id="allowShear" type="checkbox" role="switch" checked>
+          </label>
+        </section>
+
+        <section class="control-section">
+          <div class="section-heading">
+            <span class="section-number">03</span>
+            <div><p class="eyebrow">TRAINING</p><h2>Episode controls</h2></div>
+          </div>
+          <div class="range-field"><div><label for="maxModules">Module cap</label><output id="maxModulesOut">90</output></div><input id="maxModules" type="range" min="20" max="160" value="90" step="10"></div>
+          <div class="range-field"><div><label for="travelLimit">Max. core travel</label><output id="travelLimitOut">18 m</output></div><input id="travelLimit" type="range" min="8" max="30" value="18" step="1"></div>
+          <div class="range-field"><div><label for="learningRate">Learning rate</label><output id="learningRateOut">0.08</output></div><input id="learningRate" type="range" min="0.01" max="0.2" value="0.08" step="0.01"></div>
+          <div class="range-field"><div><label for="speed">Animation speed</label><output id="speedOut">6×</output></div><input id="speed" type="range" min="1" max="30" value="6" step="1"></div>
+          <button id="resetPolicyBtn" class="text-button" type="button">Reset learned policy</button>
+        </section>
+      </aside>
+
+      <section class="stage" aria-label="Floor plan training visualization">
+        <div class="stage-toolbar">
+          <div class="episode-readout"><span>EPISODE</span><strong id="episodeValue">000</strong><span class="divider">/</span><span>STEP</span><strong id="stepValue">000</strong></div>
+          <div class="view-actions">
+            <button id="zoomOutBtn" class="icon-button" type="button" aria-label="Zoom out">−</button>
+            <button id="fitBtn" class="icon-button fit-button" type="button" aria-label="Fit plan to view">FIT</button>
+            <button id="zoomInBtn" class="icon-button" type="button" aria-label="Zoom in">+</button>
+          </div>
+        </div>
+        <canvas id="planCanvas" aria-label="Animated modular floor plan showing site boundary, atriums, and placed modules"></canvas>
+        <div id="canvasEmpty" class="canvas-empty">
+          <div class="empty-glyph" aria-hidden="true"><span></span><span></span><span></span></div>
+          <strong>Policy environment initialized</strong>
+          <span>Press “Train policy” to begin placement</span>
+        </div>
+        <div class="canvas-legend" aria-label="Module classification legend">
+          <span><i class="legend-swatch swatch-room"></i>Room</span>
+          <span><i class="legend-swatch swatch-corridor"></i>Transition</span>
+          <span><i class="legend-swatch swatch-core"></i>Core</span>
+          <span><i class="legend-swatch swatch-atrium"></i>Atrium</span>
+        </div>
+        <div id="scaleBar" class="scale-bar" aria-label="Graphic distance scale"></div>
+        <div class="stage-caption"><span id="geometryAudit">EXACT GEOMETRY · 0 VIOLATIONS</span><span id="orientationCaption">ORIENTATION BASIS —°</span><span id="siteAreaCaption">NET SITE — m²</span></div>
+      </section>
+
+      <aside class="insight-panel" aria-label="Optimization metrics">
+        <section class="score-block">
+          <p class="eyebrow">CURRENT POLICY SCORE</p>
+          <div class="score-row"><strong id="scoreValue">0.0</strong><span>/100</span><em id="scoreDelta">BASELINE</em></div>
+          <svg id="scoreSparkline" viewBox="0 0 260 44" role="img" aria-label="Policy score history"><path class="spark-area" d=""></path><path class="spark-line" d=""></path></svg>
+        </section>
+
+        <section class="metrics-block">
+          <div class="metric-primary">
+            <div class="metric-head"><span>NET FILL RATIO</span><strong id="fillMetric">0.0%</strong></div>
+            <div class="progress-track"><i id="fillBar"></i></div>
+            <small id="areaMetric">0 / 0 m² placed</small>
+          </div>
+          <div class="metric-grid">
+            <div><span>MODULES</span><strong id="moduleMetric">0</strong><small id="moduleLimitMetric">of 90 cap</small></div>
+            <div><span>DICTIONARY</span><strong id="dictMetric">0</strong><small id="reuseMetric">0% reuse</small></div>
+            <div><span>DAYLIGHT</span><strong id="lightMetric">—</strong><small>≤ 6 m from edge</small></div>
+            <div><span>CIRCULATION</span><strong id="travelMetric">—</strong><small id="travelLimitMetric">corridor topology</small></div>
+          </div>
+        </section>
+
+        <section class="quality-block">
+          <div class="panel-heading"><div><p class="eyebrow">QUALITY VECTOR</p><h2>Reward components</h2></div><span id="rewardValue">+0.00</span></div>
+          <div id="qualityBars" class="quality-bars"></div>
+        </section>
+
+        <section class="dictionary-block">
+          <div class="panel-heading"><div><p class="eyebrow">LEARNED KIT</p><h2>Module dictionary</h2></div><span id="dictCount">0 / 7</span></div>
+          <div id="moduleDictionary" class="module-dictionary"><p class="dictionary-empty">Generated when training begins.</p></div>
+        </section>
+
+        <section class="policy-block">
+          <div class="panel-heading"><div><p class="eyebrow">POLICY WEIGHTS</p><h2>What the agent values</h2></div></div>
+          <div id="policyWeights" class="policy-weights"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="geometry.js"></script>
+  <script src="optimizer.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

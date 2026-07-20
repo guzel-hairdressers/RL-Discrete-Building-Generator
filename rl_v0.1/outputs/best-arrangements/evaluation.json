@@ -1,0 +1,7392 @@
+{
+  "generatedAt": "2026-07-12T13:58:56.464Z",
+  "settings": {
+    "boundaryType": "lobed",
+    "atriumPolicy": "agent",
+    "singleFloor": false,
+    "lobeCount": 5,
+    "boundaryVertices": 19,
+    "concavity": 0.6,
+    "lobeReach": 1.5,
+    "minEdge": 1,
+    "maxEdge": 8,
+    "maxEdges": 8,
+    "dictCap": 8,
+    "angleStep": 15,
+    "orientationMode": "random",
+    "allowShear": true,
+    "maxModules": 130,
+    "travelLimit": 20,
+    "learningRate": 0.075,
+    "speed": 30,
+    "edgeAlignment": true
+  },
+  "variants": {
+    "grid-proposals": {
+      "count": 40,
+      "min": 31.635547820556663,
+      "mean": 54.891020110146904,
+      "p50": 56.734229198068476,
+      "p90": 64.77571398553522,
+      "max": 72.76809799013834,
+      "components": {
+        "Fill": 0.36480383651736104,
+        "Circulation": 0.43047967409052934,
+        "Orientation": 0.5221353426698839,
+        "Atrium use": 0.3309375,
+        "Novelty": 0.5030986877419796,
+        "Shear use": 0.5474014154569711,
+        "Regularity": 0.7912638301363892,
+        "Reuse": 0.5644599464541037,
+        "Daylight": 0.9918366781101866,
+        "Buildability": 0.99599220695938,
+        "Compactness": 0.31487985853397166,
+        "Travel": 0.5702077249350261
+      }
+    },
+    "edge-heavy": {
+      "count": 40,
+      "min": 44.79407125358726,
+      "mean": 59.1429643885343,
+      "p50": 60.43681292320564,
+      "p90": 68.31841562151195,
+      "max": 74.20895697748098,
+      "components": {
+        "Fill": 0.4346817157245323,
+        "Circulation": 0.6619322608249238,
+        "Orientation": 0.4576927424268349,
+        "Atrium use": 0.5155313557410329,
+        "Novelty": 0.4730405955695768,
+        "Shear use": 0.5807488255130331,
+        "Regularity": 0.773133119724269,
+        "Reuse": 0.5898331030073096,
+        "Daylight": 0.9378028842327646,
+        "Buildability": 1,
+        "Compactness": 0.34145719655353296,
+        "Travel": 0.6068509279540887
+      }
+    },
+    "hybrid-proposals": {
+      "count": 40,
+      "min": 0,
+      "mean": 56.542465625968966,
+      "p50": 56.168852553588344,
+      "p90": 68.75980095468036,
+      "max": 75.02359096266395,
+      "components": {
+        "Fill": 0.4125320418405184,
+        "Circulation": 0.5749838973828105,
+        "Orientation": 0.4712395649738914,
+        "Atrium use": 0.4195148904914528,
+        "Novelty": 0.45224414128763063,
+        "Shear use": 0.49098782439056776,
+        "Regularity": 0.7637974196108498,
+        "Reuse": 0.5630503351416328,
+        "Daylight": 0.9566621336395864,
+        "Buildability": 0.9747463099630996,
+        "Compactness": 0.30280628759965084,
+        "Travel": 0.5531325553247041
+      }
+    },
+    "hybrid-search": {
+      "count": 208,
+      "min": 0,
+      "mean": 55.079625574077404,
+      "p50": 58.19526747007021,
+      "p90": 65.82482469417785,
+      "max": 74.12120711022952,
+      "components": {
+        "Fill": 0.39528065056011613,
+        "Circulation": 0.5413405038297939,
+        "Orientation": 0.4480679235733866,
+        "Atrium use": 0.5506714566149673,
+        "Novelty": 0.43900391835622454,
+        "Shear use": 0.4668465214981045,
+        "Regularity": 0.748157510112168,
+        "Reuse": 0.5553702716841447,
+        "Daylight": 0.8939652615445627,
+        "Buildability": 0.9562535015912199,
+        "Compactness": 0.28758942286268024,
+        "Travel": 0.5696405622388473
+      }
+    }
+  },
+  "selected": [
+    {
+      "variant": "hybrid-proposals",
+      "seed": 730000,
+      "episode": 9,
+      "score": 75.02359096266395,
+      "orientationBasis": 0,
+      "boundaryFamily": "deep-lobed star",
+      "site": {
+        "outer": [
+          {
+            "x": 6.4752416335102545,
+            "y": 11.003659226683064
+          },
+          {
+            "x": 5.496700948877402,
+            "y": 0
+          },
+          {
+            "x": 14.320495831290206,
+            "y": 7.79587297073947
+          },
+          {
+            "x": 19.887596751717737,
+            "y": 6.100024908591575
+          },
+          {
+            "x": 22.195986696620327,
+            "y": 9.326115352158286
+          },
+          {
+            "x": 26.26101796818288,
+            "y": 13.522185911430611
+          },
+          {
+            "x": 25.792277471332593,
+            "y": 18.329003293385345
+          },
+          {
+            "x": 20.943740785442063,
+            "y": 22.224867120278304
+          },
+          {
+            "x": 22.929922983459452,
+            "y": 31.247682803686228
+          },
+          {
+            "x": 15.103374896062228,
+            "y": 27.276697236723056
+          },
+          {
+            "x": 9.724044534306092,
+            "y": 32.00299281084739
+          },
+          {
+            "x": 0.3515472900517711,
+            "y": 33.1059583600851
+          },
+          {
+            "x": 4.423163991339846,
+            "y": 22.123734153621424
+          },
+          {
+            "x": 1.5978188054492986,
+            "y": 18.732747557852754
+          },
+          {
+            "x": 0,
+            "y": 13.204532204942737
+          }
+        ],
+        "holes": [],
+        "exactArea": 506.7392576716525,
+        "reflexVertices": 6,
+        "convexityRatio": 0.7559378831357059
+      },
+      "metrics": {
+        "filledArea": 377,
+        "siteArea": 506.7392576716525,
+        "fillRatio": 0.7439723571689041,
+        "exposedPerimeter": 114,
+        "envelopeEfficiency": 0.30238726790450926,
+        "moduleCount": 31,
+        "dictionaryUsed": 6,
+        "dictionaryLength": 8,
+        "reuse": 0.8333333333333334,
+        "daylight": 0.8063660477453581,
+        "constructibility": 1,
+        "compactness": 0.6812802750507929,
+        "connectivity": 1,
+        "components": 1,
+        "averageTravel": 8.674093455617491,
+        "travelQuality": 0.5662953272191255,
+        "sizeRatio": 0.3,
+        "regularity": 0.8999847777377654,
+        "orientationQuality": 0.5145161290322581,
+        "nonOrthogonality": 0,
+        "spatialNovelty": 0.31818996415770606,
+        "shearUse": 0.03225806451612903,
+        "circulationQuality": 0.7278846153846154,
+        "atriumUse": 0.7,
+        "servedRooms": 10,
+        "boundaryViolations": 0,
+        "overlapViolations": 0,
+        "qualities": {
+          "Fill": 0.7439723571689041,
+          "Reuse": 0.8333333333333334,
+          "Daylight": 0.8063660477453581,
+          "Buildability": 1,
+          "Compactness": 0.6812802750507929,
+          "Regularity": 0.8999847777377654,
+          "Orientation": 0.5145161290322581,
+          "Circulation": 0.7278846153846154,
+          "Atrium use": 0.7,
+          "Novelty": 0.31818996415770606,
+          "Shear use": 0.17921146953405018,
+          "Travel": 0.5662953272191255
+        },
+        "score": 75.02359096266395,
+        "outerPerimeter": 112.83262652562794,
+        "innerPerimeter": 0
+      },
+      "placements": [
+        {
+          "id": 0,
+          "poly": [
+            {
+              "x": 13,
+              "y": 18
+            },
+            {
+              "x": 17,
+              "y": 18
+            },
+            {
+              "x": 17,
+              "y": 22
+            },
+            {
+              "x": 13,
+              "y": 22
+            }
+          ],
+          "center": {
+            "x": 15,
+            "y": 20
+          },
+          "rotation": 0,
+          "module": {
+            "id": "C1",
+            "name": "Service core",
+            "category": "core",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 1,
+          "poly": [
+            {
+              "x": 17,
+              "y": 26
+            },
+            {
+              "x": 13,
+              "y": 26
+            },
+            {
+              "x": 13,
+              "y": 22
+            },
+            {
+              "x": 17,
+              "y": 22
+            }
+          ],
+          "center": {
+            "x": 15,
+            "y": 24
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 2,
+          "poly": [
+            {
+              "x": 9,
+              "y": 22
+            },
+            {
+              "x": 13,
+              "y": 22
+            },
+            {
+              "x": 13,
+              "y": 26
+            },
+            {
+              "x": 9,
+              "y": 26
+            }
+          ],
+          "center": {
+            "x": 11,
+            "y": 24
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 3,
+          "poly": [
+            {
+              "x": 13,
+              "y": 22
+            },
+            {
+              "x": 9,
+              "y": 22
+            },
+            {
+              "x": 9,
+              "y": 18
+            },
+            {
+              "x": 13,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 11,
+            "y": 20
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 4,
+          "poly": [
+            {
+              "x": 5,
+              "y": 18
+            },
+            {
+              "x": 9,
+              "y": 18
+            },
+            {
+              "x": 9,
+              "y": 22
+            },
+            {
+              "x": 5,
+              "y": 22
+            }
+          ],
+          "center": {
+            "x": 7,
+            "y": 20
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 5,
+          "poly": [
+            {
+              "x": 5,
+              "y": 22
+            },
+            {
+              "x": 9,
+              "y": 22
+            },
+            {
+              "x": 9,
+              "y": 26
+            },
+            {
+              "x": 5,
+              "y": 26
+            }
+          ],
+          "center": {
+            "x": 7,
+            "y": 24
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 6,
+          "poly": [
+            {
+              "x": 9,
+              "y": 30
+            },
+            {
+              "x": 5.000000000000001,
+              "y": 30
+            },
+            {
+              "x": 5,
+              "y": 26
+            },
+            {
+              "x": 9,
+              "y": 26
+            }
+          ],
+          "center": {
+            "x": 7,
+            "y": 28
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 7,
+          "poly": [
+            {
+              "x": 5,
+              "y": 14
+            },
+            {
+              "x": 9,
+              "y": 14
+            },
+            {
+              "x": 9,
+              "y": 18
+            },
+            {
+              "x": 5,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 7,
+            "y": 16
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 8,
+          "poly": [
+            {
+              "x": 13,
+              "y": 18
+            },
+            {
+              "x": 9,
+              "y": 18
+            },
+            {
+              "x": 9,
+              "y": 14
+            },
+            {
+              "x": 13,
+              "y": 14
+            }
+          ],
+          "center": {
+            "x": 11,
+            "y": 16
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 9,
+          "poly": [
+            {
+              "x": 13,
+              "y": 14
+            },
+            {
+              "x": 17,
+              "y": 14
+            },
+            {
+              "x": 17,
+              "y": 18
+            },
+            {
+              "x": 13,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 15,
+            "y": 16
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 10,
+          "poly": [
+            {
+              "x": 17,
+              "y": 14
+            },
+            {
+              "x": 13,
+              "y": 14
+            },
+            {
+              "x": 13,
+              "y": 10
+            },
+            {
+              "x": 17,
+              "y": 10
+            }
+          ],
+          "center": {
+            "x": 15,
+            "y": 12
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 11,
+          "poly": [
+            {
+              "x": 13,
+              "y": 14
+            },
+            {
+              "x": 9,
+              "y": 14
+            },
+            {
+              "x": 9,
+              "y": 10
+            },
+            {
+              "x": 13,
+              "y": 10
+            }
+          ],
+          "center": {
+            "x": 11,
+            "y": 12
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 12,
+          "poly": [
+            {
+              "x": 21,
+              "y": 14
+            },
+            {
+              "x": 17,
+              "y": 14
+            },
+            {
+              "x": 17,
+              "y": 10
+            },
+            {
+              "x": 21,
+              "y": 10
+            }
+          ],
+          "center": {
+            "x": 19,
+            "y": 12
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 13,
+          "poly": [
+            {
+              "x": 17,
+              "y": 14
+            },
+            {
+              "x": 21,
+              "y": 14
+            },
+            {
+              "x": 21,
+              "y": 18
+            },
+            {
+              "x": 17,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 19,
+            "y": 16
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 14,
+          "poly": [
+            {
+              "x": 21,
+              "y": 22
+            },
+            {
+              "x": 17,
+              "y": 22
+            },
+            {
+              "x": 17,
+              "y": 18
+            },
+            {
+              "x": 21,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 19,
+            "y": 20
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 15,
+          "poly": [
+            {
+              "x": 21,
+              "y": 14
+            },
+            {
+              "x": 25,
+              "y": 14
+            },
+            {
+              "x": 25,
+              "y": 18
+            },
+            {
+              "x": 21,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 23,
+            "y": 16
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 16,
+          "poly": [
+            {
+              "x": 9,
+              "y": 14
+            },
+            {
+              "x": 4,
+              "y": 14
+            },
+            {
+              "x": 4,
+              "y": 12
+            },
+            {
+              "x": 7,
+              "y": 12
+            },
+            {
+              "x": 7,
+              "y": 9
+            },
+            {
+              "x": 9,
+              "y": 9
+            }
+          ],
+          "center": {
+            "x": 6.666666666666667,
+            "y": 11.666666666666666
+          },
+          "rotation": 180,
+          "module": {
+            "id": "T3",
+            "name": "Elbow link",
+            "category": "corridor",
+            "family": "elbow",
+            "area": 16
+          }
+        },
+        {
+          "id": 17,
+          "poly": [
+            {
+              "x": 14,
+              "y": 28
+            },
+            {
+              "x": 9,
+              "y": 28
+            },
+            {
+              "x": 9,
+              "y": 26
+            },
+            {
+              "x": 14,
+              "y": 26
+            }
+          ],
+          "center": {
+            "x": 11.5,
+            "y": 27
+          },
+          "rotation": 180,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 10
+          }
+        },
+        {
+          "id": 18,
+          "poly": [
+            {
+              "x": 9,
+              "y": 8
+            },
+            {
+              "x": 14,
+              "y": 8
+            },
+            {
+              "x": 14,
+              "y": 10
+            },
+            {
+              "x": 9,
+              "y": 10
+            }
+          ],
+          "center": {
+            "x": 11.5,
+            "y": 9
+          },
+          "rotation": 0,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 10
+          }
+        },
+        {
+          "id": 19,
+          "poly": [
+            {
+              "x": 14,
+              "y": 8
+            },
+            {
+              "x": 19,
+              "y": 8
+            },
+            {
+              "x": 19,
+              "y": 10
+            },
+            {
+              "x": 14,
+              "y": 10
+            }
+          ],
+          "center": {
+            "x": 16.5,
+            "y": 9
+          },
+          "rotation": 0,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 10
+          }
+        },
+        {
+          "id": 20,
+          "poly": [
+            {
+              "x": 12,
+              "y": 30
+            },
+            {
+              "x": 9,
+              "y": 30
+            },
+            {
+              "x": 9,
+              "y": 28
+            },
+            {
+              "x": 12,
+              "y": 28
+            }
+          ],
+          "center": {
+            "x": 10.5,
+            "y": 29
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 21,
+          "poly": [
+            {
+              "x": 20,
+              "y": 24
+            },
+            {
+              "x": 17,
+              "y": 24
+            },
+            {
+              "x": 17,
+              "y": 22
+            },
+            {
+              "x": 20,
+              "y": 22
+            }
+          ],
+          "center": {
+            "x": 18.5,
+            "y": 23
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 22,
+          "poly": [
+            {
+              "x": 17,
+              "y": 24
+            },
+            {
+              "x": 20,
+              "y": 24
+            },
+            {
+              "x": 20,
+              "y": 26
+            },
+            {
+              "x": 17,
+              "y": 26
+            }
+          ],
+          "center": {
+            "x": 18.5,
+            "y": 25
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 23,
+          "poly": [
+            {
+              "x": 21,
+              "y": 12
+            },
+            {
+              "x": 24,
+              "y": 12
+            },
+            {
+              "x": 24,
+              "y": 14
+            },
+            {
+              "x": 21,
+              "y": 14
+            }
+          ],
+          "center": {
+            "x": 22.5,
+            "y": 13
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 24,
+          "poly": [
+            {
+              "x": 17,
+              "y": 26
+            },
+            {
+              "x": 20,
+              "y": 26
+            },
+            {
+              "x": 20,
+              "y": 28
+            },
+            {
+              "x": 17,
+              "y": 28
+            }
+          ],
+          "center": {
+            "x": 18.5,
+            "y": 27
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 25,
+          "poly": [
+            {
+              "x": 6,
+              "y": 5
+            },
+            {
+              "x": 11,
+              "y": 5
+            },
+            {
+              "x": 11.803847577293368,
+              "y": 8
+            },
+            {
+              "x": 6.803847577293368,
+              "y": 8
+            }
+          ],
+          "center": {
+            "x": 8.901923788646684,
+            "y": 6.5
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 26,
+          "poly": [
+            {
+              "x": 5,
+              "y": 16
+            },
+            {
+              "x": 2.0000000000000004,
+              "y": 16
+            },
+            {
+              "x": 2,
+              "y": 14
+            },
+            {
+              "x": 5,
+              "y": 14
+            }
+          ],
+          "center": {
+            "x": 3.5,
+            "y": 15
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 27,
+          "poly": [
+            {
+              "x": 2.0000000000000004,
+              "y": 16
+            },
+            {
+              "x": 5,
+              "y": 16
+            },
+            {
+              "x": 5,
+              "y": 18
+            },
+            {
+              "x": 2.0000000000000004,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 3.5,
+            "y": 17
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 28,
+          "poly": [
+            {
+              "x": 9,
+              "y": 32
+            },
+            {
+              "x": 6,
+              "y": 32
+            },
+            {
+              "x": 6,
+              "y": 30
+            },
+            {
+              "x": 9,
+              "y": 30
+            }
+          ],
+          "center": {
+            "x": 7.5,
+            "y": 31
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 29,
+          "poly": [
+            {
+              "x": 6,
+              "y": 32
+            },
+            {
+              "x": 3.0000000000000004,
+              "y": 32
+            },
+            {
+              "x": 3,
+              "y": 30
+            },
+            {
+              "x": 6,
+              "y": 30
+            }
+          ],
+          "center": {
+            "x": 4.5,
+            "y": 31
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 30,
+          "poly": [
+            {
+              "x": 5,
+              "y": 27
+            },
+            {
+              "x": 5,
+              "y": 30
+            },
+            {
+              "x": 3,
+              "y": 30
+            },
+            {
+              "x": 3,
+              "y": 27
+            }
+          ],
+          "center": {
+            "x": 4,
+            "y": 28.5
+          },
+          "rotation": 90,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        }
+      ],
+      "dictionary": [
+        {
+          "id": "C1",
+          "name": "Service core",
+          "category": "core",
+          "family": "square",
+          "area": 16,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "T3",
+          "name": "Elbow link",
+          "category": "corridor",
+          "family": "elbow",
+          "area": 16,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 5
+            },
+            {
+              "x": 0,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "id": "T1",
+          "name": "Linear link",
+          "category": "corridor",
+          "family": "linear",
+          "area": 10,
+          "uses": 3,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "name": "Square bay",
+          "category": "room",
+          "family": "square",
+          "area": 16,
+          "uses": 15,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R10",
+          "name": "Soft octagon",
+          "category": "room",
+          "family": "octagon",
+          "area": 14,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 1,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 1
+            },
+            {
+              "x": 4,
+              "y": 3
+            },
+            {
+              "x": 3,
+              "y": 4
+            },
+            {
+              "x": 1,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 3
+            },
+            {
+              "x": 0,
+              "y": 1
+            }
+          ]
+        },
+        {
+          "id": "R5",
+          "name": "Paired bay",
+          "category": "room",
+          "family": "paired",
+          "area": 20,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "name": "Compact bay",
+          "category": "room",
+          "family": "compact",
+          "area": 6,
+          "uses": 10,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R11",
+          "name": "Splayed room",
+          "category": "room",
+          "family": "sheared",
+          "area": 15,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5.803847577293368,
+              "y": 3
+            },
+            {
+              "x": 0.8038475772933681,
+              "y": 3
+            }
+          ]
+        }
+      ],
+      "rank": 1
+    },
+    {
+      "variant": "hybrid-search",
+      "seed": 760000,
+      "episode": 24,
+      "score": 74.12120711022952,
+      "orientationBasis": 60,
+      "boundaryFamily": "deep-lobed star",
+      "site": {
+        "outer": [
+          {
+            "x": 6.838741476792524,
+            "y": 2.9658912011253307
+          },
+          {
+            "x": 12.479251840984546,
+            "y": 0
+          },
+          {
+            "x": 17.451464213292994,
+            "y": 3.235726359184654
+          },
+          {
+            "x": 24.220123489448447,
+            "y": 3.887362674348174
+          },
+          {
+            "x": 27.454307539362738,
+            "y": 8.713210278752934
+          },
+          {
+            "x": 29.706548501166843,
+            "y": 15.623731470896981
+          },
+          {
+            "x": 32.08277415140649,
+            "y": 24.178186477823292
+          },
+          {
+            "x": 20.61029052559325,
+            "y": 23.493829321851486
+          },
+          {
+            "x": 21.074495054334538,
+            "y": 37.14984500771935
+          },
+          {
+            "x": 13.343522677311114,
+            "y": 25.452018655136957
+          },
+          {
+            "x": 4.824747799561996,
+            "y": 36.36366874037161
+          },
+          {
+            "x": 6.336228811344487,
+            "y": 22.30481542903072
+          },
+          {
+            "x": 1.0850017441306559,
+            "y": 19.61872701636841
+          },
+          {
+            "x": 0,
+            "y": 13.70277613110598
+          },
+          {
+            "x": 4.27287375259171,
+            "y": 8.772025556502747
+          }
+        ],
+        "holes": [],
+        "exactArea": 649.8175325882968,
+        "reflexVertices": 5,
+        "convexityRatio": 0.7432009141481389
+      },
+      "metrics": {
+        "filledArea": 437.9999999999999,
+        "siteArea": 649.8175325882968,
+        "fillRatio": 0.674035368444733,
+        "exposedPerimeter": 196,
+        "envelopeEfficiency": 0.447488584474886,
+        "moduleCount": 35,
+        "dictionaryUsed": 5,
+        "dictionaryLength": 8,
+        "reuse": 0.8823529411764706,
+        "daylight": 0.6666666666666669,
+        "constructibility": 1,
+        "compactness": 0.4271112150297214,
+        "connectivity": 1,
+        "components": 1,
+        "averageTravel": 9.522803026933222,
+        "travelQuality": 0.5238598486533389,
+        "sizeRatio": 0.3,
+        "regularity": 0.8012085795355621,
+        "orientationQuality": 0.8231722153090539,
+        "nonOrthogonality": 0.6857142857142858,
+        "spatialNovelty": 0.7758718219402413,
+        "shearUse": 0.34285714285714286,
+        "circulationQuality": 0.7999999999999999,
+        "atriumUse": 0.7,
+        "servedRooms": 10,
+        "boundaryViolations": 0,
+        "overlapViolations": 0,
+        "qualities": {
+          "Fill": 0.674035368444733,
+          "Reuse": 0.8823529411764706,
+          "Daylight": 0.6666666666666669,
+          "Buildability": 1,
+          "Compactness": 0.4271112150297214,
+          "Regularity": 0.8012085795355621,
+          "Orientation": 0.8231722153090539,
+          "Circulation": 0.7999999999999999,
+          "Atrium use": 0.7,
+          "Novelty": 0.7758718219402413,
+          "Shear use": 1,
+          "Travel": 0.5238598486533389
+        },
+        "score": 74.12120711022952,
+        "outerPerimeter": 133.00788946089537,
+        "innerPerimeter": 0
+      },
+      "placements": [
+        {
+          "id": 0,
+          "poly": [
+            {
+              "x": 14.000000000000002,
+              "y": 20.464101615137757
+            },
+            {
+              "x": 12,
+              "y": 17
+            },
+            {
+              "x": 15.464101615137753,
+              "y": 15
+            },
+            {
+              "x": 17.464101615137757,
+              "y": 18.464101615137753
+            }
+          ],
+          "center": {
+            "x": 14.732050807568877,
+            "y": 17.73205080756888
+          },
+          "rotation": 240,
+          "module": {
+            "id": "C1",
+            "name": "Service core",
+            "category": "core",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 1,
+          "poly": [
+            {
+              "x": 17.500000000000004,
+              "y": 18.526279441628823
+            },
+            {
+              "x": 15,
+              "y": 14.196152422706632
+            },
+            {
+              "x": 17.196152422706632,
+              "y": 12
+            },
+            {
+              "x": 19.696152422706632,
+              "y": 16.33012701892219
+            }
+          ],
+          "center": {
+            "x": 17.348076211353316,
+            "y": 15.263139720814412
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 2,
+          "poly": [
+            {
+              "x": 19.392304845413264,
+              "y": 9.803847577293366
+            },
+            {
+              "x": 21.892304845413264,
+              "y": 14.133974596215559
+            },
+            {
+              "x": 19.696152422706632,
+              "y": 16.33012701892219
+            },
+            {
+              "x": 17.196152422706632,
+              "y": 11.999999999999998
+            }
+          ],
+          "center": {
+            "x": 19.544228634059948,
+            "y": 13.06698729810778
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 3,
+          "poly": [
+            {
+              "x": 21.892304845413264,
+              "y": 14.133974596215559
+            },
+            {
+              "x": 19.39230484541326,
+              "y": 9.803847577293366
+            },
+            {
+              "x": 21.588457268119893,
+              "y": 7.607695154586734
+            },
+            {
+              "x": 24.088457268119896,
+              "y": 11.937822173508927
+            }
+          ],
+          "center": {
+            "x": 21.74038105676658,
+            "y": 10.870834875401147
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 4,
+          "poly": [
+            {
+              "x": 23.784609690826528,
+              "y": 5.411542731880102
+            },
+            {
+              "x": 26.284609690826528,
+              "y": 9.741669750802295
+            },
+            {
+              "x": 24.088457268119896,
+              "y": 11.937822173508927
+            },
+            {
+              "x": 21.588457268119896,
+              "y": 7.607695154586734
+            }
+          ],
+          "center": {
+            "x": 23.936533479473212,
+            "y": 8.674682452694515
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 5,
+          "poly": [
+            {
+              "x": 26.284609690826528,
+              "y": 9.741669750802295
+            },
+            {
+              "x": 28.784609690826528,
+              "y": 14.071796769724488
+            },
+            {
+              "x": 26.588457268119896,
+              "y": 16.267949192431118
+            },
+            {
+              "x": 24.088457268119896,
+              "y": 11.937822173508927
+            }
+          ],
+          "center": {
+            "x": 26.436533479473212,
+            "y": 13.004809471616706
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 6,
+          "poly": [
+            {
+              "x": 24.088457268119896,
+              "y": 11.937822173508927
+            },
+            {
+              "x": 26.588457268119896,
+              "y": 16.267949192431118
+            },
+            {
+              "x": 24.392304845413264,
+              "y": 18.46410161513775
+            },
+            {
+              "x": 21.892304845413264,
+              "y": 14.133974596215559
+            }
+          ],
+          "center": {
+            "x": 24.24038105676658,
+            "y": 15.200961894323338
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 7,
+          "poly": [
+            {
+              "x": 22.196152422706636,
+              "y": 20.660254037844382
+            },
+            {
+              "x": 19.696152422706632,
+              "y": 16.33012701892219
+            },
+            {
+              "x": 21.892304845413264,
+              "y": 14.133974596215559
+            },
+            {
+              "x": 24.392304845413264,
+              "y": 18.46410161513775
+            }
+          ],
+          "center": {
+            "x": 22.044228634059948,
+            "y": 17.39711431702997
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 8,
+          "poly": [
+            {
+              "x": 20.000000000000004,
+              "y": 22.856406460551014
+            },
+            {
+              "x": 17.5,
+              "y": 18.526279441628823
+            },
+            {
+              "x": 19.696152422706632,
+              "y": 16.33012701892219
+            },
+            {
+              "x": 22.196152422706632,
+              "y": 20.660254037844382
+            }
+          ],
+          "center": {
+            "x": 19.848076211353316,
+            "y": 19.593266739736602
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 9,
+          "poly": [
+            {
+              "x": 17.5,
+              "y": 18.526279441628823
+            },
+            {
+              "x": 20,
+              "y": 22.856406460551014
+            },
+            {
+              "x": 18.267949192431125,
+              "y": 23.856406460551014
+            },
+            {
+              "x": 16.767949192431125,
+              "y": 21.2583302491977
+            },
+            {
+              "x": 14.169872981077807,
+              "y": 22.7583302491977
+            },
+            {
+              "x": 13.169872981077807,
+              "y": 21.026279441628823
+            }
+          ],
+          "center": {
+            "x": 16.645940724502974,
+            "y": 21.713672050459177
+          },
+          "rotation": 60,
+          "module": {
+            "id": "T3",
+            "name": "Elbow link",
+            "category": "corridor",
+            "family": "elbow",
+            "area": 16
+          }
+        },
+        {
+          "id": 10,
+          "poly": [
+            {
+              "x": 26.892304845413268,
+              "y": 22.79422863405994
+            },
+            {
+              "x": 24.392304845413264,
+              "y": 18.46410161513775
+            },
+            {
+              "x": 26.588457268119896,
+              "y": 16.267949192431118
+            },
+            {
+              "x": 29.088457268119896,
+              "y": 20.59807621135331
+            }
+          ],
+          "center": {
+            "x": 26.74038105676658,
+            "y": 19.53108891324553
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 11,
+          "poly": [
+            {
+              "x": 12,
+              "y": 17
+            },
+            {
+              "x": 14.000000000000002,
+              "y": 20.464101615137753
+            },
+            {
+              "x": 10.535898384862247,
+              "y": 22.464101615137757
+            },
+            {
+              "x": 8.535898384862247,
+              "y": 19
+            }
+          ],
+          "center": {
+            "x": 11.267949192431125,
+            "y": 19.732050807568875
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 12,
+          "poly": [
+            {
+              "x": 9.839745962155614,
+              "y": 25.2583302491977
+            },
+            {
+              "x": 7.339745962155613,
+              "y": 20.928203230275507
+            },
+            {
+              "x": 9.07179676972449,
+              "y": 19.928203230275507
+            },
+            {
+              "x": 10.571796769724491,
+              "y": 22.526279441628823
+            },
+            {
+              "x": 13.169872981077807,
+              "y": 21.026279441628823
+            },
+            {
+              "x": 14.169872981077807,
+              "y": 22.758330249197698
+            }
+          ],
+          "center": {
+            "x": 10.693805237652638,
+            "y": 22.070937640367344
+          },
+          "rotation": 240,
+          "module": {
+            "id": "T3",
+            "name": "Elbow link",
+            "category": "corridor",
+            "family": "elbow",
+            "area": 16
+          }
+        },
+        {
+          "id": 13,
+          "poly": [
+            {
+              "x": 16.767949192431125,
+              "y": 21.2583302491977
+            },
+            {
+              "x": 18.267949192431125,
+              "y": 23.856406460551018
+            },
+            {
+              "x": 16.53589838486225,
+              "y": 24.856406460551018
+            },
+            {
+              "x": 15.035898384862248,
+              "y": 22.2583302491977
+            }
+          ],
+          "center": {
+            "x": 16.651923788646688,
+            "y": 23.05736835487436
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 14,
+          "poly": [
+            {
+              "x": 15.803847577293373,
+              "y": 27.588457268119896
+            },
+            {
+              "x": 13.303847577293372,
+              "y": 23.2583302491977
+            },
+            {
+              "x": 15.035898384862248,
+              "y": 22.2583302491977
+            },
+            {
+              "x": 16.53589838486225,
+              "y": 24.856406460551018
+            },
+            {
+              "x": 19.133974596215566,
+              "y": 23.356406460551014
+            },
+            {
+              "x": 20.133974596215566,
+              "y": 25.088457268119893
+            }
+          ],
+          "center": {
+            "x": 16.657906852790397,
+            "y": 24.401064659289535
+          },
+          "rotation": 240,
+          "module": {
+            "id": "T3",
+            "name": "Elbow link",
+            "category": "corridor",
+            "family": "elbow",
+            "area": 16
+          }
+        },
+        {
+          "id": 15,
+          "poly": [
+            {
+              "x": 6.5717967697244895,
+              "y": 15.598076211353314
+            },
+            {
+              "x": 9.07179676972449,
+              "y": 19.928203230275507
+            },
+            {
+              "x": 7.339745962155613,
+              "y": 20.928203230275507
+            },
+            {
+              "x": 5.839745962155613,
+              "y": 18.33012701892219
+            },
+            {
+              "x": 3.2416697508022967,
+              "y": 19.83012701892219
+            },
+            {
+              "x": 2.2416697508022967,
+              "y": 18.098076211353316
+            }
+          ],
+          "center": {
+            "x": 5.717737494227465,
+            "y": 18.78546882018367
+          },
+          "rotation": 60,
+          "module": {
+            "id": "T3",
+            "name": "Elbow link",
+            "category": "corridor",
+            "family": "elbow",
+            "area": 16
+          }
+        },
+        {
+          "id": 16,
+          "poly": [
+            {
+              "x": 8.535898384862247,
+              "y": 19
+            },
+            {
+              "x": 6.535898384862245,
+              "y": 15.535898384862248
+            },
+            {
+              "x": 9.999999999999998,
+              "y": 13.535898384862247
+            },
+            {
+              "x": 12,
+              "y": 17
+            }
+          ],
+          "center": {
+            "x": 9.267949192431121,
+            "y": 16.267949192431125
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 17,
+          "poly": [
+            {
+              "x": 13.464101615137753,
+              "y": 11.535898384862247
+            },
+            {
+              "x": 15.464101615137753,
+              "y": 15
+            },
+            {
+              "x": 11.999999999999998,
+              "y": 17
+            },
+            {
+              "x": 9.999999999999998,
+              "y": 13.535898384862247
+            }
+          ],
+          "center": {
+            "x": 12.732050807568877,
+            "y": 14.267949192431125
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 18,
+          "poly": [
+            {
+              "x": 5.839745962155613,
+              "y": 18.33012701892219
+            },
+            {
+              "x": 7.339745962155614,
+              "y": 20.928203230275507
+            },
+            {
+              "x": 5.607695154586736,
+              "y": 21.928203230275507
+            },
+            {
+              "x": 4.107695154586736,
+              "y": 19.33012701892219
+            }
+          ],
+          "center": {
+            "x": 5.723720558371174,
+            "y": 20.12916512459885
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 19,
+          "poly": [
+            {
+              "x": 15,
+              "y": 14.196152422706632
+            },
+            {
+              "x": 12.499999999999998,
+              "y": 9.866025403784441
+            },
+            {
+              "x": 14.696152422706628,
+              "y": 7.669872981077808
+            },
+            {
+              "x": 17.196152422706632,
+              "y": 12
+            }
+          ],
+          "center": {
+            "x": 14.848076211353316,
+            "y": 10.93301270189222
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 20,
+          "poly": [
+            {
+              "x": 16.892304845413264,
+              "y": 5.473720558371173
+            },
+            {
+              "x": 19.392304845413264,
+              "y": 9.803847577293366
+            },
+            {
+              "x": 17.196152422706632,
+              "y": 11.999999999999998
+            },
+            {
+              "x": 14.696152422706632,
+              "y": 7.6698729810778055
+            }
+          ],
+          "center": {
+            "x": 17.044228634059948,
+            "y": 8.736860279185585
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 21,
+          "poly": [
+            {
+              "x": 10,
+              "y": 13.535898384862248
+            },
+            {
+              "x": 7.999999999999998,
+              "y": 10.071796769724495
+            },
+            {
+              "x": 11.464101615137752,
+              "y": 8.071796769724493
+            },
+            {
+              "x": 13.464101615137753,
+              "y": 11.535898384862247
+            }
+          ],
+          "center": {
+            "x": 10.732050807568875,
+            "y": 10.803847577293372
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 22,
+          "poly": [
+            {
+              "x": 7.999999999999997,
+              "y": 10.071796769724493
+            },
+            {
+              "x": 9.999999999999998,
+              "y": 13.535898384862247
+            },
+            {
+              "x": 6.535898384862243,
+              "y": 15.535898384862248
+            },
+            {
+              "x": 4.535898384862243,
+              "y": 12.071796769724493
+            }
+          ],
+          "center": {
+            "x": 7.267949192431121,
+            "y": 12.80384757729337
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 23,
+          "poly": [
+            {
+              "x": 3.071796769724491,
+              "y": 17.53589838486225
+            },
+            {
+              "x": 1.071796769724489,
+              "y": 14.071796769724495
+            },
+            {
+              "x": 4.535898384862243,
+              "y": 12.071796769724493
+            },
+            {
+              "x": 6.535898384862245,
+              "y": 15.535898384862247
+            }
+          ],
+          "center": {
+            "x": 3.8038475772933666,
+            "y": 14.803847577293372
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 24,
+          "poly": [
+            {
+              "x": 12.499999999999996,
+              "y": 9.866025403784441
+            },
+            {
+              "x": 9.999999999999995,
+              "y": 5.535898384862248
+            },
+            {
+              "x": 12.196152422706625,
+              "y": 3.3397459621556163
+            },
+            {
+              "x": 14.696152422706628,
+              "y": 7.669872981077808
+            }
+          ],
+          "center": {
+            "x": 12.348076211353312,
+            "y": 6.602885682970029
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 25,
+          "poly": [
+            {
+              "x": 7.999999999999998,
+              "y": 10.071796769724495
+            },
+            {
+              "x": 5.9999999999999964,
+              "y": 6.607695154586741
+            },
+            {
+              "x": 9.46410161513775,
+              "y": 4.6076951545867395
+            },
+            {
+              "x": 11.464101615137752,
+              "y": 8.071796769724493
+            }
+          ],
+          "center": {
+            "x": 8.732050807568873,
+            "y": 7.339745962155617
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 26,
+          "poly": [
+            {
+              "x": 18.73205080756888,
+              "y": 26
+            },
+            {
+              "x": 20.23205080756888,
+              "y": 28.598076211353316
+            },
+            {
+              "x": 18.5,
+              "y": 29.598076211353316
+            },
+            {
+              "x": 17,
+              "y": 27
+            }
+          ],
+          "center": {
+            "x": 18.61602540378444,
+            "y": 27.799038105676658
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 27,
+          "poly": [
+            {
+              "x": 16.767949192431125,
+              "y": 30.598076211353316
+            },
+            {
+              "x": 15.267949192431123,
+              "y": 28
+            },
+            {
+              "x": 17,
+              "y": 27
+            },
+            {
+              "x": 18.5,
+              "y": 29.598076211353316
+            }
+          ],
+          "center": {
+            "x": 16.883974596215563,
+            "y": 28.799038105676658
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 28,
+          "poly": [
+            {
+              "x": 13.732050807568877,
+              "y": 2
+            },
+            {
+              "x": 15.232050807568879,
+              "y": 4.598076211353316
+            },
+            {
+              "x": 13.5,
+              "y": 5.598076211353316
+            },
+            {
+              "x": 12,
+              "y": 3
+            }
+          ],
+          "center": {
+            "x": 13.61602540378444,
+            "y": 3.799038105676658
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 29,
+          "poly": [
+            {
+              "x": 24.73205080756888,
+              "y": 20
+            },
+            {
+              "x": 26.23205080756888,
+              "y": 22.598076211353316
+            },
+            {
+              "x": 24.5,
+              "y": 23.598076211353316
+            },
+            {
+              "x": 23,
+              "y": 21
+            }
+          ],
+          "center": {
+            "x": 24.61602540378444,
+            "y": 21.799038105676658
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 30,
+          "poly": [
+            {
+              "x": 9.121320343559642,
+              "y": 27.535533905932738
+            },
+            {
+              "x": 7,
+              "y": 25.414213562373096
+            },
+            {
+              "x": 8.414213562373096,
+              "y": 24
+            },
+            {
+              "x": 10.535533905932738,
+              "y": 26.121320343559642
+            }
+          ],
+          "center": {
+            "x": 8.767766952966369,
+            "y": 25.76776695296637
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 31,
+          "poly": [
+            {
+              "x": 17,
+              "y": 30.5
+            },
+            {
+              "x": 19.598076211353316,
+              "y": 29
+            },
+            {
+              "x": 20.598076211353316,
+              "y": 30.732050807568875
+            },
+            {
+              "x": 18,
+              "y": 32.232050807568875
+            }
+          ],
+          "center": {
+            "x": 18.799038105676658,
+            "y": 30.616025403784434
+          },
+          "rotation": 330,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 32,
+          "poly": [
+            {
+              "x": 18.5,
+              "y": 7.598076211353316
+            },
+            {
+              "x": 17,
+              "y": 5.000000000000001
+            },
+            {
+              "x": 18.73205080756888,
+              "y": 4
+            },
+            {
+              "x": 20.23205080756888,
+              "y": 6.598076211353316
+            }
+          ],
+          "center": {
+            "x": 18.61602540378444,
+            "y": 5.799038105676658
+          },
+          "rotation": 240,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 33,
+          "poly": [
+            {
+              "x": 7.414213562373095,
+              "y": 26
+            },
+            {
+              "x": 9.535533905932738,
+              "y": 28.121320343559642
+            },
+            {
+              "x": 8.121320343559642,
+              "y": 29.535533905932738
+            },
+            {
+              "x": 6,
+              "y": 27.414213562373096
+            }
+          ],
+          "center": {
+            "x": 7.767766952966369,
+            "y": 27.76776695296637
+          },
+          "rotation": 45,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 34,
+          "poly": [
+            {
+              "x": 28.73205080756888,
+              "y": 15
+            },
+            {
+              "x": 30.23205080756888,
+              "y": 17.598076211353316
+            },
+            {
+              "x": 28.5,
+              "y": 18.598076211353316
+            },
+            {
+              "x": 27,
+              "y": 16
+            }
+          ],
+          "center": {
+            "x": 28.61602540378444,
+            "y": 16.799038105676658
+          },
+          "rotation": 60,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        }
+      ],
+      "dictionary": [
+        {
+          "id": "C1",
+          "name": "Service core",
+          "category": "core",
+          "family": "square",
+          "area": 16,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "T3",
+          "name": "Elbow link",
+          "category": "corridor",
+          "family": "elbow",
+          "area": 16,
+          "uses": 4,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 5
+            },
+            {
+              "x": 0,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "id": "T1",
+          "name": "Linear link",
+          "category": "corridor",
+          "family": "linear",
+          "area": 10,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "name": "Square bay",
+          "category": "room",
+          "family": "square",
+          "area": 16,
+          "uses": 7,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R10",
+          "name": "Soft octagon",
+          "category": "room",
+          "family": "octagon",
+          "area": 14,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 1,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 1
+            },
+            {
+              "x": 4,
+              "y": 3
+            },
+            {
+              "x": 3,
+              "y": 4
+            },
+            {
+              "x": 1,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 3
+            },
+            {
+              "x": 0,
+              "y": 1
+            }
+          ]
+        },
+        {
+          "id": "R5",
+          "name": "Paired bay",
+          "category": "room",
+          "family": "paired",
+          "area": 20,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "name": "Compact bay",
+          "category": "room",
+          "family": "compact",
+          "area": 6,
+          "uses": 11,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R11",
+          "name": "Splayed room",
+          "category": "room",
+          "family": "sheared",
+          "area": 15,
+          "uses": 12,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5.803847577293368,
+              "y": 3
+            },
+            {
+              "x": 0.8038475772933681,
+              "y": 3
+            }
+          ]
+        }
+      ],
+      "rank": 2
+    },
+    {
+      "variant": "hybrid-proposals",
+      "seed": 730173,
+      "episode": 6,
+      "score": 72.72534103745126,
+      "orientationBasis": 15,
+      "boundaryFamily": "deep-lobed star",
+      "site": {
+        "outer": [
+          {
+            "x": 14.952824073436432,
+            "y": 5.588449750418437
+          },
+          {
+            "x": 24.405259609601888,
+            "y": 0
+          },
+          {
+            "x": 22.331967044275135,
+            "y": 7.824338677800245
+          },
+          {
+            "x": 23.45218042626142,
+            "y": 10.932614918302864
+          },
+          {
+            "x": 23.089054431924726,
+            "y": 14.521802629200323
+          },
+          {
+            "x": 23.042362172082257,
+            "y": 18.075328778705856
+          },
+          {
+            "x": 17.215485148829856,
+            "y": 17.25130720372957
+          },
+          {
+            "x": 18.655519065581075,
+            "y": 28.105861131058536
+          },
+          {
+            "x": 12.309661187235694,
+            "y": 17.92825041083843
+          },
+          {
+            "x": 5.150342618839936,
+            "y": 23.927316006008855
+          },
+          {
+            "x": 8.377788072305677,
+            "y": 15.802735991068051
+          },
+          {
+            "x": 2.5846222433980266,
+            "y": 14.440705394285246
+          },
+          {
+            "x": 3.101502330362065,
+            "y": 11.362406344608189
+          },
+          {
+            "x": 6.413126515174159,
+            "y": 9.174457292297335
+          },
+          {
+            "x": 0,
+            "y": 0.12539602519747994
+          },
+          {
+            "x": 9.546396683266074,
+            "y": 6.304038225904851
+          },
+          {
+            "x": 12.282130634658387,
+            "y": 2.6891210722601553
+          }
+        ],
+        "holes": [],
+        "exactArea": 301.32355975406193,
+        "reflexVertices": 8,
+        "convexityRatio": 0.566946043193235
+      },
+      "metrics": {
+        "filledArea": 181.00000000000003,
+        "siteArea": 301.32355975406193,
+        "fillRatio": 0.600683199640051,
+        "exposedPerimeter": 96,
+        "envelopeEfficiency": 0.5303867403314916,
+        "moduleCount": 18,
+        "dictionaryUsed": 5,
+        "dictionaryLength": 8,
+        "reuse": 0.7647058823529411,
+        "daylight": 1,
+        "constructibility": 1,
+        "compactness": 0.5605676686280713,
+        "connectivity": 1,
+        "components": 1,
+        "averageTravel": 6.55334223737678,
+        "travelQuality": 0.672332888131161,
+        "sizeRatio": 0.3,
+        "regularity": 0.8063102367294824,
+        "orientationQuality": 0.6222222222222223,
+        "nonOrthogonality": 0.2962962962962962,
+        "spatialNovelty": 0.5842592592592594,
+        "shearUse": 0.16666666666666666,
+        "circulationQuality": 0.86,
+        "atriumUse": 0.7,
+        "servedRooms": 8,
+        "boundaryViolations": 0,
+        "overlapViolations": 0,
+        "qualities": {
+          "Fill": 0.600683199640051,
+          "Reuse": 0.7647058823529411,
+          "Daylight": 1,
+          "Buildability": 1,
+          "Compactness": 0.5605676686280713,
+          "Regularity": 0.8063102367294824,
+          "Orientation": 0.6222222222222223,
+          "Circulation": 0.86,
+          "Atrium use": 0.7,
+          "Novelty": 0.5842592592592594,
+          "Shear use": 0.9259259259259259,
+          "Travel": 0.672332888131161
+        },
+        "score": 72.72534103745126,
+        "outerPerimeter": 120.43115793198581,
+        "innerPerimeter": 0
+      },
+      "placements": [
+        {
+          "id": 0,
+          "poly": [
+            {
+              "x": 14.035276180410083,
+              "y": 8
+            },
+            {
+              "x": 17.898979485566358,
+              "y": 9.035276180410083
+            },
+            {
+              "x": 16.863703305156275,
+              "y": 12.898979485566356
+            },
+            {
+              "x": 13,
+              "y": 11.863703305156273
+            }
+          ],
+          "center": {
+            "x": 15.449489742783179,
+            "y": 10.449489742783177
+          },
+          "rotation": 15,
+          "module": {
+            "id": "C1",
+            "name": "Service core",
+            "category": "core",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 1,
+          "poly": [
+            {
+              "x": 13,
+              "y": 12
+            },
+            {
+              "x": 17.82962913144534,
+              "y": 13.294095225512603
+            },
+            {
+              "x": 17.82962913144534,
+              "y": 16.39992376674285
+            },
+            {
+              "x": 13,
+              "y": 15.105828541230249
+            }
+          ],
+          "center": {
+            "x": 15.41481456572267,
+            "y": 14.199961883371426
+          },
+          "rotation": 15,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 2,
+          "poly": [
+            {
+              "x": 21.693332436601615,
+              "y": 14.193074711078959
+            },
+            {
+              "x": 16.863703305156275,
+              "y": 12.898979485566358
+            },
+            {
+              "x": 17.898979485566358,
+              "y": 9.035276180410083
+            },
+            {
+              "x": 22.728608617011698,
+              "y": 10.329371405922686
+            }
+          ],
+          "center": {
+            "x": 19.796155961083986,
+            "y": 11.614175445744522
+          },
+          "rotation": 195,
+          "module": {
+            "id": "R5",
+            "name": "Paired bay",
+            "category": "room",
+            "family": "paired",
+            "area": 20
+          }
+        },
+        {
+          "id": 3,
+          "poly": [
+            {
+              "x": 22.659258262890685,
+              "y": 17.694018992255454
+            },
+            {
+              "x": 17.82962913144534,
+              "y": 16.39992376674285
+            },
+            {
+              "x": 17.82962913144534,
+              "y": 13.294095225512603
+            },
+            {
+              "x": 22.65925826289068,
+              "y": 14.588190451025206
+            }
+          ],
+          "center": {
+            "x": 20.24444369716801,
+            "y": 15.49405710888403
+          },
+          "rotation": 195,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 4,
+          "poly": [
+            {
+              "x": 9.205647048964742,
+              "y": 6.705904774487396
+            },
+            {
+              "x": 14.035276180410083,
+              "y": 8
+            },
+            {
+              "x": 13,
+              "y": 11.863703305156275
+            },
+            {
+              "x": 8.17037086855466,
+              "y": 10.56960807964367
+            }
+          ],
+          "center": {
+            "x": 11.102823524482371,
+            "y": 9.284804039821836
+          },
+          "rotation": 15,
+          "module": {
+            "id": "R5",
+            "name": "Paired bay",
+            "category": "room",
+            "family": "paired",
+            "area": 20
+          }
+        },
+        {
+          "id": 5,
+          "poly": [
+            {
+              "x": 8.17037086855466,
+              "y": 10.56960807964367
+            },
+            {
+              "x": 13,
+              "y": 11.863703305156275
+            },
+            {
+              "x": 13,
+              "y": 14.969531846386523
+            },
+            {
+              "x": 8.17037086855466,
+              "y": 13.675436620873919
+            }
+          ],
+          "center": {
+            "x": 10.585185434277328,
+            "y": 12.769569963015096
+          },
+          "rotation": 15,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 6,
+          "poly": [
+            {
+              "x": 12.48236190979496,
+              "y": 16.901383498964655
+            },
+            {
+              "x": 7.652732778349619,
+              "y": 15.607288273452056
+            },
+            {
+              "x": 8.17037086855466,
+              "y": 13.675436620873919
+            },
+            {
+              "x": 13.000000000000002,
+              "y": 14.96953184638652
+            }
+          ],
+          "center": {
+            "x": 10.32636638917481,
+            "y": 15.288410059919286
+          },
+          "rotation": 195,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 10
+          }
+        },
+        {
+          "id": 7,
+          "poly": [
+            {
+              "x": 18.829629131445344,
+              "y": 9.225946878090738
+            },
+            {
+              "x": 14,
+              "y": 7.931851652578136
+            },
+            {
+              "x": 14.51763809020504,
+              "y": 6
+            },
+            {
+              "x": 19.347267221650384,
+              "y": 7.294095225512601
+            }
+          ],
+          "center": {
+            "x": 16.673633610825192,
+            "y": 7.612973439045369
+          },
+          "rotation": 195,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 10
+          }
+        },
+        {
+          "id": 8,
+          "poly": [
+            {
+              "x": 11.619860611337835,
+              "y": 5.223542864692438
+            },
+            {
+              "x": 14.51763809020504,
+              "y": 6
+            },
+            {
+              "x": 13.999999999999998,
+              "y": 7.931851652578136
+            },
+            {
+              "x": 11.102222521132793,
+              "y": 7.155394517270574
+            }
+          ],
+          "center": {
+            "x": 12.809930305668917,
+            "y": 6.577697258635286
+          },
+          "rotation": 15,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 9,
+          "poly": [
+            {
+              "x": 19.347267221650384,
+              "y": 7.294095225512602
+            },
+            {
+              "x": 22.24504470051759,
+              "y": 8.070552360820164
+            },
+            {
+              "x": 21.72740661031255,
+              "y": 10.002404013398301
+            },
+            {
+              "x": 18.829629131445344,
+              "y": 9.225946878090738
+            }
+          ],
+          "center": {
+            "x": 20.537336915981466,
+            "y": 8.648249619455452
+          },
+          "rotation": 15,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 10,
+          "poly": [
+            {
+              "x": 5.272593389687454,
+              "y": 12.898979485566358
+            },
+            {
+              "x": 8.17037086855466,
+              "y": 13.67543662087392
+            },
+            {
+              "x": 7.652732778349618,
+              "y": 15.607288273452056
+            },
+            {
+              "x": 4.754955299482413,
+              "y": 14.830831138144495
+            }
+          ],
+          "center": {
+            "x": 6.462663084018535,
+            "y": 14.253133879509209
+          },
+          "rotation": 15,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 11,
+          "poly": [
+            {
+              "x": 22.24504470051759,
+              "y": 8.070552360820164
+            },
+            {
+              "x": 19.347267221650384,
+              "y": 7.294095225512603
+            },
+            {
+              "x": 19.864905311855424,
+              "y": 5.362243572934466
+            },
+            {
+              "x": 22.76268279072263,
+              "y": 6.138700708242027
+            }
+          ],
+          "center": {
+            "x": 21.054975006186506,
+            "y": 6.716397966877315
+          },
+          "rotation": 195,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 12,
+          "poly": [
+            {
+              "x": 19.347267221650384,
+              "y": 7.294095225512604
+            },
+            {
+              "x": 16.44948974278318,
+              "y": 6.517638090205042
+            },
+            {
+              "x": 16.96712783298822,
+              "y": 4.585786437626906
+            },
+            {
+              "x": 19.864905311855424,
+              "y": 5.362243572934467
+            }
+          ],
+          "center": {
+            "x": 18.1571975273193,
+            "y": 5.939940831569755
+          },
+          "rotation": 195,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 13,
+          "poly": [
+            {
+              "x": 22.76268279072263,
+              "y": 6.138700708242027
+            },
+            {
+              "x": 19.864905311855424,
+              "y": 5.3622435729344655
+            },
+            {
+              "x": 20.382543402060463,
+              "y": 3.430391920356329
+            },
+            {
+              "x": 23.28032088092767,
+              "y": 4.20684905566389
+            }
+          ],
+          "center": {
+            "x": 21.572613096391546,
+            "y": 4.7845463142991775
+          },
+          "rotation": 195,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 14,
+          "poly": [
+            {
+              "x": 16,
+              "y": 18
+            },
+            {
+              "x": 13,
+              "y": 18
+            },
+            {
+              "x": 13,
+              "y": 16
+            },
+            {
+              "x": 16,
+              "y": 16
+            }
+          ],
+          "center": {
+            "x": 14.5,
+            "y": 17
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 15,
+          "poly": [
+            {
+              "x": 8,
+              "y": 10
+            },
+            {
+              "x": 8,
+              "y": 13
+            },
+            {
+              "x": 6,
+              "y": 13
+            },
+            {
+              "x": 6,
+              "y": 10
+            }
+          ],
+          "center": {
+            "x": 7,
+            "y": 11.5
+          },
+          "rotation": 90,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 16,
+          "poly": [
+            {
+              "x": 8.517638090205041,
+              "y": 16
+            },
+            {
+              "x": 11.415415569072247,
+              "y": 16.776457135307563
+            },
+            {
+              "x": 10.897777478867205,
+              "y": 18.7083087878857
+            },
+            {
+              "x": 8,
+              "y": 17.931851652578136
+            }
+          ],
+          "center": {
+            "x": 9.707707784536122,
+            "y": 17.35415439394285
+          },
+          "rotation": 15,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 17,
+          "poly": [
+            {
+              "x": 14.517638090205041,
+              "y": 18
+            },
+            {
+              "x": 17.415415569072245,
+              "y": 18.776457135307563
+            },
+            {
+              "x": 16.897777478867205,
+              "y": 20.7083087878857
+            },
+            {
+              "x": 14,
+              "y": 19.931851652578136
+            }
+          ],
+          "center": {
+            "x": 15.707707784536122,
+            "y": 19.35415439394285
+          },
+          "rotation": 15,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        }
+      ],
+      "dictionary": [
+        {
+          "id": "C1",
+          "name": "Service core",
+          "category": "core",
+          "family": "square",
+          "area": 16,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "T3",
+          "name": "Elbow link",
+          "category": "corridor",
+          "family": "elbow",
+          "area": 16,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 5
+            },
+            {
+              "x": 0,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "id": "T1",
+          "name": "Linear link",
+          "category": "corridor",
+          "family": "linear",
+          "area": 10,
+          "uses": 2,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "name": "Square bay",
+          "category": "room",
+          "family": "square",
+          "area": 16,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R10",
+          "name": "Soft octagon",
+          "category": "room",
+          "family": "octagon",
+          "area": 14,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 1,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 1
+            },
+            {
+              "x": 4,
+              "y": 3
+            },
+            {
+              "x": 3,
+              "y": 4
+            },
+            {
+              "x": 1,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 3
+            },
+            {
+              "x": 0,
+              "y": 1
+            }
+          ]
+        },
+        {
+          "id": "R5",
+          "name": "Paired bay",
+          "category": "room",
+          "family": "paired",
+          "area": 20,
+          "uses": 2,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "name": "Compact bay",
+          "category": "room",
+          "family": "compact",
+          "area": 6,
+          "uses": 10,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R11",
+          "name": "Splayed room",
+          "category": "room",
+          "family": "sheared",
+          "area": 15,
+          "uses": 3,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5.803847577293368,
+              "y": 3
+            },
+            {
+              "x": 0.8038475772933681,
+              "y": 3
+            }
+          ]
+        }
+      ],
+      "rank": 3
+    },
+    {
+      "variant": "hybrid-search",
+      "seed": 760173,
+      "episode": 9,
+      "score": 70.23679432104142,
+      "orientationBasis": 30,
+      "boundaryFamily": "deep-lobed star",
+      "site": {
+        "outer": [
+          {
+            "x": 0,
+            "y": 0.8323308874783217
+          },
+          {
+            "x": 9.474129706428585,
+            "y": 5.604643939992719
+          },
+          {
+            "x": 12.678742144481696,
+            "y": 4.586089905503712
+          },
+          {
+            "x": 15.091317963165459,
+            "y": 7.7427474097627185
+          },
+          {
+            "x": 23.51485390548565,
+            "y": 0
+          },
+          {
+            "x": 17.307129645508414,
+            "y": 10.997354088413061
+          },
+          {
+            "x": 27.89818285937762,
+            "y": 11.245759110205753
+          },
+          {
+            "x": 18.21992006203392,
+            "y": 16.17054443639763
+          },
+          {
+            "x": 16.92287730563919,
+            "y": 19.15347273593097
+          },
+          {
+            "x": 18.064759972065303,
+            "y": 29.369937017877785
+          },
+          {
+            "x": 12.019385387171823,
+            "y": 22.146170684463943
+          },
+          {
+            "x": 8.147999927285408,
+            "y": 25.575557925533612
+          },
+          {
+            "x": 4.237117311176409,
+            "y": 26.416659478549985
+          },
+          {
+            "x": 4.285854782096617,
+            "y": 22.16153294310019
+          },
+          {
+            "x": 0.04479884370263143,
+            "y": 19.55625807270814
+          },
+          {
+            "x": 0.5692153117221945,
+            "y": 14.995885253450691
+          },
+          {
+            "x": 4.963562146323802,
+            "y": 12.302032858067566
+          }
+        ],
+        "holes": [],
+        "exactArea": 350.51477135632666,
+        "reflexVertices": 8,
+        "convexityRatio": 0.5410978333363508
+      },
+      "metrics": {
+        "filledArea": 199.00000000000006,
+        "siteArea": 350.51477135632666,
+        "fillRatio": 0.5677364158719018,
+        "exposedPerimeter": 158,
+        "envelopeEfficiency": 0.7939698492462309,
+        "moduleCount": 24,
+        "dictionaryUsed": 6,
+        "dictionaryLength": 8,
+        "reuse": 0.782608695652174,
+        "daylight": 0.9195979899497485,
+        "constructibility": 1,
+        "compactness": 0.3571325564472376,
+        "connectivity": 1,
+        "components": 1,
+        "averageTravel": 7.284415803418085,
+        "travelQuality": 0.6357792098290957,
+        "sizeRatio": 0.3,
+        "regularity": 0.8223480500815402,
+        "orientationQuality": 0.7355825398312321,
+        "nonOrthogonality": 0.7222222222222222,
+        "spatialNovelty": 0.4464949736193197,
+        "shearUse": 0.041666666666666664,
+        "circulationQuality": 0.8773026315789474,
+        "atriumUse": 0.7,
+        "servedRooms": 14,
+        "boundaryViolations": 0,
+        "overlapViolations": 0,
+        "qualities": {
+          "Fill": 0.5677364158719018,
+          "Reuse": 0.782608695652174,
+          "Daylight": 0.9195979899497485,
+          "Buildability": 1,
+          "Compactness": 0.3571325564472376,
+          "Regularity": 0.8223480500815402,
+          "Orientation": 0.7355825398312321,
+          "Circulation": 0.8773026315789474,
+          "Atrium use": 0.7,
+          "Novelty": 0.4464949736193197,
+          "Shear use": 0.23148148148148148,
+          "Travel": 0.6357792098290957
+        },
+        "score": 70.23679432104142,
+        "outerPerimeter": 127.06662839304427,
+        "innerPerimeter": 0
+      },
+      "placements": [
+        {
+          "id": 0,
+          "poly": [
+            {
+              "x": 13.464101615137753,
+              "y": 18.464101615137757
+            },
+            {
+              "x": 10,
+              "y": 16.464101615137753
+            },
+            {
+              "x": 12,
+              "y": 13
+            },
+            {
+              "x": 15.464101615137755,
+              "y": 15
+            }
+          ],
+          "center": {
+            "x": 12.732050807568877,
+            "y": 15.732050807568879
+          },
+          "rotation": 210,
+          "module": {
+            "id": "C1",
+            "name": "Service core",
+            "category": "core",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 1,
+          "poly": [
+            {
+              "x": 12.552914270615124,
+              "y": 18
+            },
+            {
+              "x": 16.088448176547864,
+              "y": 21.535533905932738
+            },
+            {
+              "x": 14.535533905932738,
+              "y": 24.2252603224369
+            },
+            {
+              "x": 11,
+              "y": 20.68972641650416
+            }
+          ],
+          "center": {
+            "x": 13.544224088273932,
+            "y": 21.112630161218448
+          },
+          "rotation": 45,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 2,
+          "poly": [
+            {
+              "x": 11,
+              "y": 10
+            },
+            {
+              "x": 13.598076211353316,
+              "y": 11.5
+            },
+            {
+              "x": 12.598076211353316,
+              "y": 13.232050807568877
+            },
+            {
+              "x": 10,
+              "y": 11.732050807568877
+            }
+          ],
+          "center": {
+            "x": 11.799038105676658,
+            "y": 11.616025403784437
+          },
+          "rotation": 30,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 3,
+          "poly": [
+            {
+              "x": 13.598076211353316,
+              "y": 11.5
+            },
+            {
+              "x": 17.92820323027551,
+              "y": 14
+            },
+            {
+              "x": 16.92820323027551,
+              "y": 15.732050807568877
+            },
+            {
+              "x": 12.598076211353316,
+              "y": 13.232050807568877
+            }
+          ],
+          "center": {
+            "x": 15.263139720814413,
+            "y": 13.616025403784437
+          },
+          "rotation": 30,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 10
+          }
+        },
+        {
+          "id": 4,
+          "poly": [
+            {
+              "x": 10,
+              "y": 16.464101615137757
+            },
+            {
+              "x": 5.669872981077807,
+              "y": 13.964101615137755
+            },
+            {
+              "x": 7.669872981077807,
+              "y": 10.5
+            },
+            {
+              "x": 12,
+              "y": 13
+            }
+          ],
+          "center": {
+            "x": 8.834936490538905,
+            "y": 13.482050807568879
+          },
+          "rotation": 210,
+          "module": {
+            "id": "R5",
+            "name": "Paired bay",
+            "category": "room",
+            "family": "paired",
+            "area": 20
+          }
+        },
+        {
+          "id": 5,
+          "poly": [
+            {
+              "x": 15,
+              "y": 10
+            },
+            {
+              "x": 17.598076211353316,
+              "y": 11.5
+            },
+            {
+              "x": 16.598076211353316,
+              "y": 13.232050807568877
+            },
+            {
+              "x": 14,
+              "y": 11.732050807568877
+            }
+          ],
+          "center": {
+            "x": 15.799038105676658,
+            "y": 11.616025403784437
+          },
+          "rotation": 30,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 6,
+          "poly": [
+            {
+              "x": 7.414213562373095,
+              "y": 15
+            },
+            {
+              "x": 10.949747468305834,
+              "y": 18.535533905932738
+            },
+            {
+              "x": 9.535533905932738,
+              "y": 19.949747468305834
+            },
+            {
+              "x": 6,
+              "y": 16.414213562373096
+            }
+          ],
+          "center": {
+            "x": 8.474873734152917,
+            "y": 17.474873734152915
+          },
+          "rotation": 45,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 10
+          }
+        },
+        {
+          "id": 7,
+          "poly": [
+            {
+              "x": 7.414213562373095,
+              "y": 18
+            },
+            {
+              "x": 9.535533905932738,
+              "y": 20.121320343559642
+            },
+            {
+              "x": 8.121320343559642,
+              "y": 21.535533905932738
+            },
+            {
+              "x": 6,
+              "y": 19.414213562373096
+            }
+          ],
+          "center": {
+            "x": 7.767766952966369,
+            "y": 19.76776695296637
+          },
+          "rotation": 45,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 8,
+          "poly": [
+            {
+              "x": 12.401923788646684,
+              "y": 8.5
+            },
+            {
+              "x": 15,
+              "y": 10
+            },
+            {
+              "x": 14,
+              "y": 11.732050807568877
+            },
+            {
+              "x": 11.401923788646684,
+              "y": 10.232050807568877
+            }
+          ],
+          "center": {
+            "x": 13.200961894323342,
+            "y": 10.116025403784437
+          },
+          "rotation": 30,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 9,
+          "poly": [
+            {
+              "x": 5.708308787885699,
+              "y": 16.517638090205043
+            },
+            {
+              "x": 4.931851652578136,
+              "y": 19.415415569072245
+            },
+            {
+              "x": 3,
+              "y": 18.897777478867205
+            },
+            {
+              "x": 3.776457135307562,
+              "y": 16
+            }
+          ],
+          "center": {
+            "x": 4.354154393942849,
+            "y": 17.707707784536126
+          },
+          "rotation": 105,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 10,
+          "poly": [
+            {
+              "x": 11.401923788646684,
+              "y": 10.232050807568879
+            },
+            {
+              "x": 8.803847577293368,
+              "y": 8.732050807568877
+            },
+            {
+              "x": 9.803847577293368,
+              "y": 7
+            },
+            {
+              "x": 12.401923788646684,
+              "y": 8.5
+            }
+          ],
+          "center": {
+            "x": 10.602885682970026,
+            "y": 8.61602540378444
+          },
+          "rotation": 210,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 11,
+          "poly": [
+            {
+              "x": 17.598076211353316,
+              "y": 11.5
+            },
+            {
+              "x": 20.196152422706632,
+              "y": 13
+            },
+            {
+              "x": 19.196152422706632,
+              "y": 14.732050807568877
+            },
+            {
+              "x": 16.598076211353316,
+              "y": 13.232050807568877
+            }
+          ],
+          "center": {
+            "x": 18.397114317029974,
+            "y": 13.116025403784437
+          },
+          "rotation": 30,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 12,
+          "poly": [
+            {
+              "x": 12.401923788646684,
+              "y": 8.5
+            },
+            {
+              "x": 9.803847577293368,
+              "y": 7
+            },
+            {
+              "x": 10.803847577293368,
+              "y": 5.267949192431122
+            },
+            {
+              "x": 13.401923788646684,
+              "y": 6.767949192431123
+            }
+          ],
+          "center": {
+            "x": 11.602885682970026,
+            "y": 6.883974596215561
+          },
+          "rotation": 210,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 13,
+          "poly": [
+            {
+              "x": 16.732050807568875,
+              "y": 11
+            },
+            {
+              "x": 12.401923788646684,
+              "y": 8.5
+            },
+            {
+              "x": 13.401923788646684,
+              "y": 6.767949192431122
+            },
+            {
+              "x": 16,
+              "y": 8.267949192431121
+            },
+            {
+              "x": 17.5,
+              "y": 5.669872981077807
+            },
+            {
+              "x": 19.232050807568875,
+              "y": 6.669872981077807
+            }
+          ],
+          "center": {
+            "x": 15.877991532071851,
+            "y": 7.812607391169643
+          },
+          "rotation": 210,
+          "module": {
+            "id": "T3",
+            "name": "Elbow link",
+            "category": "corridor",
+            "family": "elbow",
+            "area": 16
+          }
+        },
+        {
+          "id": 14,
+          "poly": [
+            {
+              "x": 4,
+              "y": 13
+            },
+            {
+              "x": 6.598076211353316,
+              "y": 14.5
+            },
+            {
+              "x": 5.598076211353316,
+              "y": 16.23205080756888
+            },
+            {
+              "x": 3,
+              "y": 14.732050807568877
+            }
+          ],
+          "center": {
+            "x": 4.799038105676658,
+            "y": 14.61602540378444
+          },
+          "rotation": 30,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 15,
+          "poly": [
+            {
+              "x": 10,
+              "y": 11.732050807568879
+            },
+            {
+              "x": 7.401923788646684,
+              "y": 10.232050807568877
+            },
+            {
+              "x": 8.401923788646684,
+              "y": 8.5
+            },
+            {
+              "x": 11,
+              "y": 10
+            }
+          ],
+          "center": {
+            "x": 9.200961894323342,
+            "y": 10.11602540378444
+          },
+          "rotation": 210,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 16,
+          "poly": [
+            {
+              "x": 10.242640687119284,
+              "y": 23.65685424949238
+            },
+            {
+              "x": 8.121320343559642,
+              "y": 21.535533905932738
+            },
+            {
+              "x": 9.535533905932738,
+              "y": 20.121320343559642
+            },
+            {
+              "x": 11.65685424949238,
+              "y": 22.242640687119284
+            }
+          ],
+          "center": {
+            "x": 9.88908729652601,
+            "y": 21.889087296526014
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 17,
+          "poly": [
+            {
+              "x": 17.232050807568875,
+              "y": 16
+            },
+            {
+              "x": 15.732050807568877,
+              "y": 18.598076211353316
+            },
+            {
+              "x": 14,
+              "y": 17.598076211353316
+            },
+            {
+              "x": 15.5,
+              "y": 15
+            }
+          ],
+          "center": {
+            "x": 15.616025403784437,
+            "y": 16.799038105676658
+          },
+          "rotation": 120,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 18,
+          "poly": [
+            {
+              "x": 3.776457135307562,
+              "y": 16
+            },
+            {
+              "x": 2.9999999999999996,
+              "y": 18.897777478867205
+            },
+            {
+              "x": 1.0681483474218632,
+              "y": 18.380139388662165
+            },
+            {
+              "x": 1.8446054827294256,
+              "y": 15.482361909794959
+            }
+          ],
+          "center": {
+            "x": 2.4223027413647125,
+            "y": 17.190069694331083
+          },
+          "rotation": 105,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 19,
+          "poly": [
+            {
+              "x": 6.121320343559643,
+              "y": 22.535533905932738
+            },
+            {
+              "x": 4,
+              "y": 20.414213562373096
+            },
+            {
+              "x": 5.414213562373095,
+              "y": 19
+            },
+            {
+              "x": 7.535533905932738,
+              "y": 21.121320343559642
+            }
+          ],
+          "center": {
+            "x": 5.767766952966369,
+            "y": 20.76776695296637
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 20,
+          "poly": [
+            {
+              "x": 8.803847577293368,
+              "y": 8.732050807568879
+            },
+            {
+              "x": 4.473720558371175,
+              "y": 6.232050807568877
+            },
+            {
+              "x": 5.473720558371175,
+              "y": 4.5
+            },
+            {
+              "x": 9.803847577293368,
+              "y": 7
+            }
+          ],
+          "center": {
+            "x": 7.138784067832272,
+            "y": 6.616025403784439
+          },
+          "rotation": 210,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 10
+          }
+        },
+        {
+          "id": 21,
+          "poly": [
+            {
+              "x": 8.242640687119286,
+              "y": 24.65685424949238
+            },
+            {
+              "x": 6.121320343559643,
+              "y": 22.535533905932738
+            },
+            {
+              "x": 7.535533905932738,
+              "y": 21.121320343559642
+            },
+            {
+              "x": 9.65685424949238,
+              "y": 23.242640687119284
+            }
+          ],
+          "center": {
+            "x": 7.889087296526012,
+            "y": 22.889087296526014
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 22,
+          "poly": [
+            {
+              "x": 7.401923788646684,
+              "y": 10.232050807568879
+            },
+            {
+              "x": 4.803847577293368,
+              "y": 8.732050807568877
+            },
+            {
+              "x": 5.803847577293368,
+              "y": 7
+            },
+            {
+              "x": 8.401923788646684,
+              "y": 8.5
+            }
+          ],
+          "center": {
+            "x": 6.602885682970026,
+            "y": 8.61602540378444
+          },
+          "rotation": 210,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 23,
+          "poly": [
+            {
+              "x": 2.875644347017859,
+              "y": 3
+            },
+            {
+              "x": 5.473720558371175,
+              "y": 4.5
+            },
+            {
+              "x": 4.473720558371175,
+              "y": 6.232050807568877
+            },
+            {
+              "x": 1.8756443470178592,
+              "y": 4.732050807568878
+            }
+          ],
+          "center": {
+            "x": 3.674682452694517,
+            "y": 4.616025403784438
+          },
+          "rotation": 30,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        }
+      ],
+      "dictionary": [
+        {
+          "id": "C1",
+          "name": "Service core",
+          "category": "core",
+          "family": "square",
+          "area": 16,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "T3",
+          "name": "Elbow link",
+          "category": "corridor",
+          "family": "elbow",
+          "area": 16,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 5
+            },
+            {
+              "x": 0,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "id": "T1",
+          "name": "Linear link",
+          "category": "corridor",
+          "family": "linear",
+          "area": 10,
+          "uses": 3,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "name": "Square bay",
+          "category": "room",
+          "family": "square",
+          "area": 16,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R10",
+          "name": "Soft octagon",
+          "category": "room",
+          "family": "octagon",
+          "area": 14,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 1,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 1
+            },
+            {
+              "x": 4,
+              "y": 3
+            },
+            {
+              "x": 3,
+              "y": 4
+            },
+            {
+              "x": 1,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 3
+            },
+            {
+              "x": 0,
+              "y": 1
+            }
+          ]
+        },
+        {
+          "id": "R5",
+          "name": "Paired bay",
+          "category": "room",
+          "family": "paired",
+          "area": 20,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "name": "Compact bay",
+          "category": "room",
+          "family": "compact",
+          "area": 6,
+          "uses": 17,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R11",
+          "name": "Splayed room",
+          "category": "room",
+          "family": "sheared",
+          "area": 15,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5.803847577293368,
+              "y": 3
+            },
+            {
+              "x": 0.8038475772933681,
+              "y": 3
+            }
+          ]
+        }
+      ],
+      "rank": 4
+    },
+    {
+      "variant": "edge-heavy",
+      "seed": 730000,
+      "episode": 7,
+      "score": 70.21450159936232,
+      "orientationBasis": 0,
+      "boundaryFamily": "deep-lobed star",
+      "site": {
+        "outer": [
+          {
+            "x": 6.4752416335102545,
+            "y": 11.003659226683064
+          },
+          {
+            "x": 5.496700948877402,
+            "y": 0
+          },
+          {
+            "x": 14.320495831290206,
+            "y": 7.79587297073947
+          },
+          {
+            "x": 19.887596751717737,
+            "y": 6.100024908591575
+          },
+          {
+            "x": 22.195986696620327,
+            "y": 9.326115352158286
+          },
+          {
+            "x": 26.26101796818288,
+            "y": 13.522185911430611
+          },
+          {
+            "x": 25.792277471332593,
+            "y": 18.329003293385345
+          },
+          {
+            "x": 20.943740785442063,
+            "y": 22.224867120278304
+          },
+          {
+            "x": 22.929922983459452,
+            "y": 31.247682803686228
+          },
+          {
+            "x": 15.103374896062228,
+            "y": 27.276697236723056
+          },
+          {
+            "x": 9.724044534306092,
+            "y": 32.00299281084739
+          },
+          {
+            "x": 0.3515472900517711,
+            "y": 33.1059583600851
+          },
+          {
+            "x": 4.423163991339846,
+            "y": 22.123734153621424
+          },
+          {
+            "x": 1.5978188054492986,
+            "y": 18.732747557852754
+          },
+          {
+            "x": 0,
+            "y": 13.204532204942737
+          }
+        ],
+        "holes": [
+          [
+            {
+              "x": 8,
+              "y": 15
+            },
+            {
+              "x": 12,
+              "y": 15
+            },
+            {
+              "x": 12,
+              "y": 20
+            },
+            {
+              "x": 8,
+              "y": 20
+            }
+          ],
+          [
+            {
+              "x": 18.06705741168562,
+              "y": 15
+            },
+            {
+              "x": 14.06705741168562,
+              "y": 15
+            },
+            {
+              "x": 14.06705741168562,
+              "y": 20
+            },
+            {
+              "x": 18.06705741168562,
+              "y": 20
+            }
+          ]
+        ],
+        "exactArea": 466.7392576716526,
+        "reflexVertices": 6,
+        "convexityRatio": 0.7559378831357059
+      },
+      "metrics": {
+        "filledArea": 310,
+        "siteArea": 466.7392576716526,
+        "fillRatio": 0.6641823992831616,
+        "exposedPerimeter": 168,
+        "envelopeEfficiency": 0.5419354838709678,
+        "moduleCount": 29,
+        "dictionaryUsed": 5,
+        "dictionaryLength": 8,
+        "reuse": 0.8571428571428571,
+        "daylight": 1,
+        "constructibility": 1,
+        "compactness": 0.4192099252775955,
+        "connectivity": 1,
+        "components": 1,
+        "averageTravel": 9.68113074681025,
+        "travelQuality": 0.5159434626594874,
+        "sizeRatio": 0.3,
+        "regularity": 0.8117724144577592,
+        "orientationQuality": 0.3631019810069132,
+        "nonOrthogonality": 0.011494252873563218,
+        "spatialNovelty": 0.5005165077448359,
+        "shearUse": 0.27586206896551724,
+        "circulationQuality": 0.7333333333333333,
+        "atriumUse": 0.41527777777777775,
+        "servedRooms": 3,
+        "boundaryViolations": 0,
+        "overlapViolations": 0,
+        "qualities": {
+          "Fill": 0.6641823992831616,
+          "Reuse": 0.8571428571428571,
+          "Daylight": 1,
+          "Buildability": 1,
+          "Compactness": 0.4192099252775955,
+          "Regularity": 0.8117724144577592,
+          "Orientation": 0.3631019810069132,
+          "Circulation": 0.7333333333333333,
+          "Atrium use": 0.41527777777777775,
+          "Novelty": 0.5005165077448359,
+          "Shear use": 1,
+          "Travel": 0.5159434626594874
+        },
+        "score": 70.21450159936232,
+        "outerPerimeter": 112.83262652562794,
+        "innerPerimeter": 36
+      },
+      "placements": [
+        {
+          "id": 0,
+          "poly": [
+            {
+              "x": 13,
+              "y": 25
+            },
+            {
+              "x": 9,
+              "y": 25
+            },
+            {
+              "x": 9,
+              "y": 21
+            },
+            {
+              "x": 13,
+              "y": 21
+            }
+          ],
+          "center": {
+            "x": 11,
+            "y": 23
+          },
+          "rotation": 180,
+          "module": {
+            "id": "C1",
+            "name": "Service core",
+            "category": "core",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 1,
+          "poly": [
+            {
+              "x": 17.829629131445344,
+              "y": 25.39992376674285
+            },
+            {
+              "x": 13,
+              "y": 24.10582854123025
+            },
+            {
+              "x": 13,
+              "y": 21
+            },
+            {
+              "x": 17.829629131445344,
+              "y": 22.294095225512603
+            }
+          ],
+          "center": {
+            "x": 15.414814565722672,
+            "y": 23.199961883371426
+          },
+          "rotation": 195,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 2,
+          "poly": [
+            {
+              "x": 9,
+              "y": 25
+            },
+            {
+              "x": 5.000000000000001,
+              "y": 25
+            },
+            {
+              "x": 5,
+              "y": 21
+            },
+            {
+              "x": 9,
+              "y": 21
+            }
+          ],
+          "center": {
+            "x": 7,
+            "y": 23
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 3,
+          "poly": [
+            {
+              "x": 5.000000000000001,
+              "y": 25
+            },
+            {
+              "x": 9,
+              "y": 25
+            },
+            {
+              "x": 9,
+              "y": 29
+            },
+            {
+              "x": 5.000000000000001,
+              "y": 29
+            }
+          ],
+          "center": {
+            "x": 7,
+            "y": 27
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 4,
+          "poly": [
+            {
+              "x": 13,
+              "y": 29
+            },
+            {
+              "x": 9,
+              "y": 29
+            },
+            {
+              "x": 9,
+              "y": 25
+            },
+            {
+              "x": 13,
+              "y": 25
+            }
+          ],
+          "center": {
+            "x": 11,
+            "y": 27
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 5,
+          "poly": [
+            {
+              "x": 5,
+              "y": 29
+            },
+            {
+              "x": 10,
+              "y": 29
+            },
+            {
+              "x": 10,
+              "y": 31
+            },
+            {
+              "x": 5,
+              "y": 31
+            }
+          ],
+          "center": {
+            "x": 7.5,
+            "y": 30
+          },
+          "rotation": 0,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 10
+          }
+        },
+        {
+          "id": 6,
+          "poly": [
+            {
+              "x": 8,
+              "y": 21
+            },
+            {
+              "x": 4.000000000000001,
+              "y": 21
+            },
+            {
+              "x": 4,
+              "y": 17
+            },
+            {
+              "x": 8,
+              "y": 17
+            }
+          ],
+          "center": {
+            "x": 6,
+            "y": 19
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 7,
+          "poly": [
+            {
+              "x": 8,
+              "y": 17
+            },
+            {
+              "x": 4,
+              "y": 17
+            },
+            {
+              "x": 3.999999999999999,
+              "y": 13
+            },
+            {
+              "x": 7.999999999999999,
+              "y": 13
+            }
+          ],
+          "center": {
+            "x": 6,
+            "y": 15
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 16
+          }
+        },
+        {
+          "id": 8,
+          "poly": [
+            {
+              "x": 5,
+              "y": 31
+            },
+            {
+              "x": 2.0000000000000004,
+              "y": 31
+            },
+            {
+              "x": 2,
+              "y": 29
+            },
+            {
+              "x": 5,
+              "y": 29
+            }
+          ],
+          "center": {
+            "x": 3.5,
+            "y": 30
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 9,
+          "poly": [
+            {
+              "x": 13,
+              "y": 25
+            },
+            {
+              "x": 16,
+              "y": 25
+            },
+            {
+              "x": 16,
+              "y": 27
+            },
+            {
+              "x": 13,
+              "y": 27
+            }
+          ],
+          "center": {
+            "x": 14.5,
+            "y": 26
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 10,
+          "poly": [
+            {
+              "x": 8,
+              "y": 12
+            },
+            {
+              "x": 13,
+              "y": 12
+            },
+            {
+              "x": 13.803847577293368,
+              "y": 15
+            },
+            {
+              "x": 8.803847577293368,
+              "y": 15
+            }
+          ],
+          "center": {
+            "x": 10.901923788646684,
+            "y": 13.5
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 11,
+          "poly": [
+            {
+              "x": 18.803847577293368,
+              "y": 15
+            },
+            {
+              "x": 13.803847577293368,
+              "y": 15
+            },
+            {
+              "x": 13,
+              "y": 12
+            },
+            {
+              "x": 18,
+              "y": 12
+            }
+          ],
+          "center": {
+            "x": 15.901923788646684,
+            "y": 13.5
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 12,
+          "poly": [
+            {
+              "x": 13,
+              "y": 12
+            },
+            {
+              "x": 8,
+              "y": 12
+            },
+            {
+              "x": 7.196152422706632,
+              "y": 9
+            },
+            {
+              "x": 12.196152422706632,
+              "y": 9
+            }
+          ],
+          "center": {
+            "x": 10.098076211353316,
+            "y": 10.5
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 13,
+          "poly": [
+            {
+              "x": 12.196152422706632,
+              "y": 9
+            },
+            {
+              "x": 17.196152422706632,
+              "y": 9
+            },
+            {
+              "x": 18,
+              "y": 12
+            },
+            {
+              "x": 13,
+              "y": 12
+            }
+          ],
+          "center": {
+            "x": 15.098076211353316,
+            "y": 10.5
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 14,
+          "poly": [
+            {
+              "x": 12.196152422706632,
+              "y": 9
+            },
+            {
+              "x": 7.196152422706632,
+              "y": 9
+            },
+            {
+              "x": 6.392304845413264,
+              "y": 6.000000000000001
+            },
+            {
+              "x": 11.392304845413264,
+              "y": 6
+            }
+          ],
+          "center": {
+            "x": 9.294228634059948,
+            "y": 7.5
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 15,
+          "poly": [
+            {
+              "x": 18,
+              "y": 12
+            },
+            {
+              "x": 23,
+              "y": 12
+            },
+            {
+              "x": 23.803847577293368,
+              "y": 15
+            },
+            {
+              "x": 18.803847577293368,
+              "y": 15
+            }
+          ],
+          "center": {
+            "x": 20.901923788646684,
+            "y": 13.5
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 16,
+          "poly": [
+            {
+              "x": 18.803847577293368,
+              "y": 15
+            },
+            {
+              "x": 23.803847577293368,
+              "y": 15
+            },
+            {
+              "x": 24.607695154586736,
+              "y": 18
+            },
+            {
+              "x": 19.607695154586736,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 21.705771365940052,
+            "y": 16.5
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 15
+          }
+        },
+        {
+          "id": 17,
+          "poly": [
+            {
+              "x": 18,
+              "y": 10
+            },
+            {
+              "x": 21,
+              "y": 10
+            },
+            {
+              "x": 21,
+              "y": 12
+            },
+            {
+              "x": 18,
+              "y": 12
+            }
+          ],
+          "center": {
+            "x": 19.5,
+            "y": 11
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 18,
+          "poly": [
+            {
+              "x": 21,
+              "y": 10
+            },
+            {
+              "x": 18,
+              "y": 10
+            },
+            {
+              "x": 18,
+              "y": 8
+            },
+            {
+              "x": 21,
+              "y": 8
+            }
+          ],
+          "center": {
+            "x": 19.5,
+            "y": 9
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 19,
+          "poly": [
+            {
+              "x": 19,
+              "y": 18
+            },
+            {
+              "x": 22,
+              "y": 18
+            },
+            {
+              "x": 22,
+              "y": 20
+            },
+            {
+              "x": 19,
+              "y": 20
+            }
+          ],
+          "center": {
+            "x": 20.5,
+            "y": 19
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 20,
+          "poly": [
+            {
+              "x": 5,
+              "y": 26
+            },
+            {
+              "x": 5,
+              "y": 29
+            },
+            {
+              "x": 3,
+              "y": 29
+            },
+            {
+              "x": 3,
+              "y": 26
+            }
+          ],
+          "center": {
+            "x": 4,
+            "y": 27.5
+          },
+          "rotation": 90,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 21,
+          "poly": [
+            {
+              "x": 7,
+              "y": 4
+            },
+            {
+              "x": 10,
+              "y": 4
+            },
+            {
+              "x": 10,
+              "y": 6
+            },
+            {
+              "x": 7,
+              "y": 6
+            }
+          ],
+          "center": {
+            "x": 8.5,
+            "y": 5
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 22,
+          "poly": [
+            {
+              "x": 20,
+              "y": 22
+            },
+            {
+              "x": 17,
+              "y": 22
+            },
+            {
+              "x": 17,
+              "y": 20
+            },
+            {
+              "x": 20,
+              "y": 20
+            }
+          ],
+          "center": {
+            "x": 18.5,
+            "y": 21
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 23,
+          "poly": [
+            {
+              "x": 20,
+              "y": 22
+            },
+            {
+              "x": 20,
+              "y": 25
+            },
+            {
+              "x": 18,
+              "y": 25
+            },
+            {
+              "x": 18,
+              "y": 22
+            }
+          ],
+          "center": {
+            "x": 19,
+            "y": 23.5
+          },
+          "rotation": 90,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 24,
+          "poly": [
+            {
+              "x": 4,
+              "y": 16
+            },
+            {
+              "x": 1.0000000000000004,
+              "y": 16
+            },
+            {
+              "x": 1,
+              "y": 14
+            },
+            {
+              "x": 4,
+              "y": 14
+            }
+          ],
+          "center": {
+            "x": 2.5,
+            "y": 15
+          },
+          "rotation": 180,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 25,
+          "poly": [
+            {
+              "x": 18,
+              "y": 25
+            },
+            {
+              "x": 21,
+              "y": 25
+            },
+            {
+              "x": 21,
+              "y": 27
+            },
+            {
+              "x": 18,
+              "y": 27
+            }
+          ],
+          "center": {
+            "x": 19.5,
+            "y": 26
+          },
+          "rotation": 0,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 26,
+          "poly": [
+            {
+              "x": 12,
+              "y": 18
+            },
+            {
+              "x": 12,
+              "y": 15
+            },
+            {
+              "x": 14,
+              "y": 15
+            },
+            {
+              "x": 14,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 13,
+            "y": 16.5
+          },
+          "rotation": 270,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 27,
+          "poly": [
+            {
+              "x": 12,
+              "y": 21
+            },
+            {
+              "x": 12,
+              "y": 18
+            },
+            {
+              "x": 14,
+              "y": 18
+            },
+            {
+              "x": 14,
+              "y": 21
+            }
+          ],
+          "center": {
+            "x": 13,
+            "y": 19.5
+          },
+          "rotation": 270,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        },
+        {
+          "id": 28,
+          "poly": [
+            {
+              "x": 2.0000000000000004,
+              "y": 19
+            },
+            {
+              "x": 2,
+              "y": 16
+            },
+            {
+              "x": 4,
+              "y": 16
+            },
+            {
+              "x": 4,
+              "y": 19
+            }
+          ],
+          "center": {
+            "x": 3,
+            "y": 17.5
+          },
+          "rotation": 270,
+          "module": {
+            "id": "R3",
+            "name": "Compact bay",
+            "category": "room",
+            "family": "compact",
+            "area": 6
+          }
+        }
+      ],
+      "dictionary": [
+        {
+          "id": "C1",
+          "name": "Service core",
+          "category": "core",
+          "family": "square",
+          "area": 16,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "T3",
+          "name": "Elbow link",
+          "category": "corridor",
+          "family": "elbow",
+          "area": 16,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 5
+            },
+            {
+              "x": 0,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "id": "T1",
+          "name": "Linear link",
+          "category": "corridor",
+          "family": "linear",
+          "area": 10,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "name": "Square bay",
+          "category": "room",
+          "family": "square",
+          "area": 16,
+          "uses": 5,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R10",
+          "name": "Soft octagon",
+          "category": "room",
+          "family": "octagon",
+          "area": 14,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 1,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 1
+            },
+            {
+              "x": 4,
+              "y": 3
+            },
+            {
+              "x": 3,
+              "y": 4
+            },
+            {
+              "x": 1,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 3
+            },
+            {
+              "x": 0,
+              "y": 1
+            }
+          ]
+        },
+        {
+          "id": "R5",
+          "name": "Paired bay",
+          "category": "room",
+          "family": "paired",
+          "area": 20,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 4
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "name": "Compact bay",
+          "category": "room",
+          "family": "compact",
+          "area": 6,
+          "uses": 14,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 0
+            },
+            {
+              "x": 3,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R11",
+          "name": "Splayed room",
+          "category": "room",
+          "family": "sheared",
+          "area": 15,
+          "uses": 8,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5.803847577293368,
+              "y": 3
+            },
+            {
+              "x": 0.8038475772933681,
+              "y": 3
+            }
+          ]
+        }
+      ],
+      "rank": 5
+    },
+    {
+      "variant": "hybrid-search",
+      "seed": 760692,
+      "episode": 24,
+      "score": 69.74127640336427,
+      "orientationBasis": 45,
+      "boundaryFamily": "deep-lobed star",
+      "site": {
+        "outer": [
+          {
+            "x": 27.949282511517485,
+            "y": 24.439302083690624
+          },
+          {
+            "x": 28.772325691924422,
+            "y": 34.564409797469125
+          },
+          {
+            "x": 24.678046653702292,
+            "y": 25.59605191391154
+          },
+          {
+            "x": 18.556512858597095,
+            "y": 38.278418502107925
+          },
+          {
+            "x": 15.004682132883664,
+            "y": 31.963627292061553
+          },
+          {
+            "x": 14.332979612351064,
+            "y": 27.95515705223235
+          },
+          {
+            "x": 18.966228258759752,
+            "y": 21.136933348098566
+          },
+          {
+            "x": 0,
+            "y": 18.281823684639765
+          },
+          {
+            "x": 18.733346705763193,
+            "y": 17.43550848910807
+          },
+          {
+            "x": 14.321905894544281,
+            "y": 11.663065090303261
+          },
+          {
+            "x": 16.319489794678052,
+            "y": 7.5644967535846925
+          },
+          {
+            "x": 20.5423690147465,
+            "y": 3.9681735639307547
+          },
+          {
+            "x": 25.05034537521623,
+            "y": 5.84957508107442
+          },
+          {
+            "x": 28.762034900140442,
+            "y": 5.88099161527086
+          },
+          {
+            "x": 37.90556595413516,
+            "y": 0
+          },
+          {
+            "x": 29.552197602152336,
+            "y": 15.43141808560585
+          },
+          {
+            "x": 35.81739125711954,
+            "y": 15.713729193169097
+          },
+          {
+            "x": 38.638289243148314,
+            "y": 19.523170669619947
+          },
+          {
+            "x": 30.82698149855532,
+            "y": 21.77219583692077
+          },
+          {
+            "x": 41.35797816614824,
+            "y": 33.513857930100855
+          }
+        ],
+        "holes": [],
+        "exactArea": 490.5249855133319,
+        "reflexVertices": 8,
+        "convexityRatio": 0.47976423913412664
+      },
+      "metrics": {
+        "filledArea": 258.00000000000006,
+        "siteArea": 490.5249855133319,
+        "fillRatio": 0.5259670916253213,
+        "exposedPerimeter": 150,
+        "envelopeEfficiency": 0.5813953488372092,
+        "moduleCount": 16,
+        "dictionaryUsed": 6,
+        "dictionaryLength": 8,
+        "reuse": 0.6666666666666666,
+        "daylight": 1,
+        "constructibility": 1,
+        "compactness": 0.42833009077890705,
+        "connectivity": 1,
+        "components": 1,
+        "averageTravel": 8.810949501481856,
+        "travelQuality": 0.5594525249259072,
+        "sizeRatio": 0.26666666666666666,
+        "regularity": 0.797890558726313,
+        "orientationQuality": 0.9312500000000001,
+        "nonOrthogonality": 1,
+        "spatialNovelty": 0.7798611111111111,
+        "shearUse": 0.125,
+        "circulationQuality": 0.7048076923076922,
+        "atriumUse": 0.7,
+        "servedRooms": 4,
+        "boundaryViolations": 0,
+        "overlapViolations": 0,
+        "qualities": {
+          "Fill": 0.5259670916253213,
+          "Reuse": 0.6666666666666666,
+          "Daylight": 1,
+          "Buildability": 1,
+          "Compactness": 0.42833009077890705,
+          "Regularity": 0.797890558726313,
+          "Orientation": 0.9312500000000001,
+          "Circulation": 0.7048076923076922,
+          "Atrium use": 0.7,
+          "Novelty": 0.7798611111111111,
+          "Shear use": 0.6944444444444444,
+          "Travel": 0.5594525249259072
+        },
+        "score": 69.74127640336427,
+        "outerPerimeter": 197.0753558968725,
+        "innerPerimeter": 0
+      },
+      "placements": [
+        {
+          "id": 0,
+          "poly": [
+            {
+              "x": 23.535533905932738,
+              "y": 18
+            },
+            {
+              "x": 27.071067811865476,
+              "y": 21.535533905932738
+            },
+            {
+              "x": 23.535533905932738,
+              "y": 25.071067811865476
+            },
+            {
+              "x": 20,
+              "y": 21.535533905932738
+            }
+          ],
+          "center": {
+            "x": 23.535533905932738,
+            "y": 21.535533905932738
+          },
+          "rotation": 45,
+          "module": {
+            "id": "C1",
+            "name": "Service core",
+            "category": "core",
+            "family": "square",
+            "area": 25
+          }
+        },
+        {
+          "id": 1,
+          "poly": [
+            {
+              "x": 19.070552360820166,
+              "y": 21
+            },
+            {
+              "x": 23.31319304793945,
+              "y": 25.242640687119284
+            },
+            {
+              "x": 21.242640687119284,
+              "y": 28.8289425757915
+            },
+            {
+              "x": 17,
+              "y": 24.586301888672214
+            }
+          ],
+          "center": {
+            "x": 20.156596523969725,
+            "y": 24.91447128789575
+          },
+          "rotation": 45,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 24
+          }
+        },
+        {
+          "id": 2,
+          "poly": [
+            {
+              "x": 19.172088326299118,
+              "y": 32.41524446446371
+            },
+            {
+              "x": 14.929447639179834,
+              "y": 28.172603777344428
+            },
+            {
+              "x": 17,
+              "y": 24.586301888672214
+            },
+            {
+              "x": 21.242640687119284,
+              "y": 28.828942575791498
+            }
+          ],
+          "center": {
+            "x": 18.08604416314956,
+            "y": 28.500773176567964
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R11",
+            "name": "Splayed room",
+            "category": "room",
+            "family": "sheared",
+            "area": 24
+          }
+        },
+        {
+          "id": 3,
+          "poly": [
+            {
+              "x": 27.071067811865476,
+              "y": 21.535533905932738
+            },
+            {
+              "x": 23.535533905932738,
+              "y": 18
+            },
+            {
+              "x": 27.071067811865476,
+              "y": 14.464466094067262
+            },
+            {
+              "x": 30.606601717798213,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 27.071067811865476,
+            "y": 18
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 25
+          }
+        },
+        {
+          "id": 4,
+          "poly": [
+            {
+              "x": 23.535533905932738,
+              "y": 10.928932188134524
+            },
+            {
+              "x": 27.071067811865476,
+              "y": 14.464466094067262
+            },
+            {
+              "x": 23.535533905932738,
+              "y": 18
+            },
+            {
+              "x": 20,
+              "y": 14.464466094067262
+            }
+          ],
+          "center": {
+            "x": 23.535533905932738,
+            "y": 14.464466094067262
+          },
+          "rotation": 45,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 25
+          }
+        },
+        {
+          "id": 5,
+          "poly": [
+            {
+              "x": 27.071067811865476,
+              "y": 7.393398282201787
+            },
+            {
+              "x": 30.606601717798213,
+              "y": 10.928932188134524
+            },
+            {
+              "x": 27.071067811865476,
+              "y": 14.464466094067262
+            },
+            {
+              "x": 23.535533905932738,
+              "y": 10.928932188134524
+            }
+          ],
+          "center": {
+            "x": 27.071067811865476,
+            "y": 10.928932188134524
+          },
+          "rotation": 45,
+          "module": {
+            "id": "R2",
+            "name": "Square bay",
+            "category": "room",
+            "family": "square",
+            "area": 25
+          }
+        },
+        {
+          "id": 6,
+          "poly": [
+            {
+              "x": 19.29289321881345,
+              "y": 6.68629150101524
+            },
+            {
+              "x": 23.535533905932738,
+              "y": 10.928932188134524
+            },
+            {
+              "x": 20,
+              "y": 14.464466094067262
+            },
+            {
+              "x": 15.757359312880714,
+              "y": 10.221825406947978
+            }
+          ],
+          "center": {
+            "x": 19.646446609406723,
+            "y": 10.575378797541251
+          },
+          "rotation": 45,
+          "module": {
+            "id": "R5",
+            "name": "Paired bay",
+            "category": "room",
+            "family": "paired",
+            "area": 30
+          }
+        },
+        {
+          "id": 7,
+          "poly": [
+            {
+              "x": 20.70710678118655,
+              "y": 5.272077938642145
+            },
+            {
+              "x": 24.949747468305834,
+              "y": 9.514718625761429
+            },
+            {
+              "x": 23.535533905932738,
+              "y": 10.928932188134524
+            },
+            {
+              "x": 19.292893218813454,
+              "y": 6.68629150101524
+            }
+          ],
+          "center": {
+            "x": 22.121320343559645,
+            "y": 8.100505063388335
+          },
+          "rotation": 45,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 12
+          }
+        },
+        {
+          "id": 8,
+          "poly": [
+            {
+              "x": 18.585786437626908,
+              "y": 15.878679656440358
+            },
+            {
+              "x": 14.34314575050762,
+              "y": 11.636038969321074
+            },
+            {
+              "x": 15.757359312880716,
+              "y": 10.221825406947978
+            },
+            {
+              "x": 20,
+              "y": 14.464466094067262
+            }
+          ],
+          "center": {
+            "x": 17.17157287525381,
+            "y": 13.050252531694168
+          },
+          "rotation": 225,
+          "module": {
+            "id": "T1",
+            "name": "Linear link",
+            "category": "corridor",
+            "family": "linear",
+            "area": 12
+          }
+        },
+        {
+          "id": 9,
+          "poly": [
+            {
+              "x": 24.82842712474619,
+              "y": 8.828427124746192
+            },
+            {
+              "x": 22,
+              "y": 6.000000000000001
+            },
+            {
+              "x": 27.65685424949238,
+              "y": 6
+            }
+          ],
+          "center": {
+            "x": 24.828427124746188,
+            "y": 6.942809041582064
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R7",
+            "name": "Tip infill",
+            "category": "room",
+            "family": "triangle",
+            "area": 8
+          }
+        },
+        {
+          "id": 10,
+          "poly": [
+            {
+              "x": 27.82842712474619,
+              "y": 21
+            },
+            {
+              "x": 30.65685424949238,
+              "y": 23.82842712474619
+            },
+            {
+              "x": 25,
+              "y": 23.82842712474619
+            }
+          ],
+          "center": {
+            "x": 27.828427124746188,
+            "y": 22.88561808316413
+          },
+          "rotation": 45,
+          "module": {
+            "id": "R7",
+            "name": "Tip infill",
+            "category": "room",
+            "family": "triangle",
+            "area": 8
+          }
+        },
+        {
+          "id": 11,
+          "poly": [
+            {
+              "x": 27.828427124746188,
+              "y": 21.000000000000004
+            },
+            {
+              "x": 30.656854249492376,
+              "y": 18.171572875253812
+            },
+            {
+              "x": 30.65685424949238,
+              "y": 23.82842712474619
+            }
+          ],
+          "center": {
+            "x": 29.714045207910317,
+            "y": 21.000000000000004
+          },
+          "rotation": 315,
+          "module": {
+            "id": "R7",
+            "name": "Tip infill",
+            "category": "room",
+            "family": "triangle",
+            "area": 8
+          }
+        },
+        {
+          "id": 12,
+          "poly": [
+            {
+              "x": 29.82842712474619,
+              "y": 9.828427124746192
+            },
+            {
+              "x": 27,
+              "y": 7.000000000000001
+            },
+            {
+              "x": 32.65685424949238,
+              "y": 7
+            }
+          ],
+          "center": {
+            "x": 29.828427124746195,
+            "y": 7.942809041582064
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R7",
+            "name": "Tip infill",
+            "category": "room",
+            "family": "triangle",
+            "area": 8
+          }
+        },
+        {
+          "id": 13,
+          "poly": [
+            {
+              "x": 31.82842712474619,
+              "y": 18.82842712474619
+            },
+            {
+              "x": 29,
+              "y": 16
+            },
+            {
+              "x": 34.65685424949238,
+              "y": 16
+            }
+          ],
+          "center": {
+            "x": 31.828427124746195,
+            "y": 16.942809041582063
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R7",
+            "name": "Tip infill",
+            "category": "room",
+            "family": "triangle",
+            "area": 8
+          }
+        },
+        {
+          "id": 14,
+          "poly": [
+            {
+              "x": 34.65685424949238,
+              "y": 16
+            },
+            {
+              "x": 37.48528137423857,
+              "y": 18.82842712474619
+            },
+            {
+              "x": 31.82842712474619,
+              "y": 18.82842712474619
+            }
+          ],
+          "center": {
+            "x": 34.656854249492376,
+            "y": 17.88561808316413
+          },
+          "rotation": 45,
+          "module": {
+            "id": "R7",
+            "name": "Tip infill",
+            "category": "room",
+            "family": "triangle",
+            "area": 8
+          }
+        },
+        {
+          "id": 15,
+          "poly": [
+            {
+              "x": 19.82842712474619,
+              "y": 20.82842712474619
+            },
+            {
+              "x": 17,
+              "y": 18
+            },
+            {
+              "x": 22.65685424949238,
+              "y": 18
+            }
+          ],
+          "center": {
+            "x": 19.828427124746188,
+            "y": 18.942809041582063
+          },
+          "rotation": 225,
+          "module": {
+            "id": "R7",
+            "name": "Tip infill",
+            "category": "room",
+            "family": "triangle",
+            "area": 8
+          }
+        }
+      ],
+      "dictionary": [
+        {
+          "id": "C1",
+          "name": "Service core",
+          "category": "core",
+          "family": "square",
+          "area": 25,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 5
+            },
+            {
+              "x": 0,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "id": "T3",
+          "name": "Elbow link",
+          "category": "corridor",
+          "family": "elbow",
+          "area": 20,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 6,
+              "y": 0
+            },
+            {
+              "x": 6,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 2
+            },
+            {
+              "x": 2,
+              "y": 6
+            },
+            {
+              "x": 0,
+              "y": 6
+            }
+          ]
+        },
+        {
+          "id": "T1",
+          "name": "Linear link",
+          "category": "corridor",
+          "family": "linear",
+          "area": 12,
+          "uses": 2,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 6,
+              "y": 0
+            },
+            {
+              "x": 6,
+              "y": 2
+            },
+            {
+              "x": 0,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "name": "Square bay",
+          "category": "room",
+          "family": "square",
+          "area": 25,
+          "uses": 3,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 0
+            },
+            {
+              "x": 5,
+              "y": 5
+            },
+            {
+              "x": 0,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "id": "R5",
+          "name": "Paired bay",
+          "category": "room",
+          "family": "paired",
+          "area": 30,
+          "uses": 1,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 6,
+              "y": 0
+            },
+            {
+              "x": 6,
+              "y": 5
+            },
+            {
+              "x": 0,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "id": "R6",
+          "name": "Balanced bay",
+          "category": "room",
+          "family": "balanced",
+          "area": 30,
+          "uses": 0,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 6,
+              "y": 0
+            },
+            {
+              "x": 6,
+              "y": 5
+            },
+            {
+              "x": 0,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "id": "R7",
+          "name": "Tip infill",
+          "category": "room",
+          "family": "triangle",
+          "area": 8,
+          "uses": 7,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 0,
+              "y": 4
+            }
+          ]
+        },
+        {
+          "id": "R11",
+          "name": "Splayed room",
+          "category": "room",
+          "family": "sheared",
+          "area": 24,
+          "uses": 2,
+          "poly": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 6,
+              "y": 0
+            },
+            {
+              "x": 7.071796769724491,
+              "y": 4
+            },
+            {
+              "x": 1.0717967697244908,
+              "y": 4
+            }
+          ]
+        }
+      ],
+      "rank": 6
+    }
+  ]
+}

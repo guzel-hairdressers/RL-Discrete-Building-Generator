@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module Lab v0.2 — GPU Floor Plan Optimizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+</head>
+<body>
+<div class="stage">
+  <div class="canvas-wrapper">
+    <div id="planCanvasContainer"></div>
+    <div id="canvasEmpty">Connecting to PyTorch backend...</div>
+    <div class="hud">
+      <div class="hud-top">
+        <h1 id="titleCaption">Modular Space Filling Prototype</h1>
+        <div id="siteAreaCaption">FILLED 0 m² · INITIALIZING</div>
+      </div>
+      <div class="hud-metrics">
+        <div class="hud-stat">SCORE <strong id="scoreValue">0.0</strong> <span id="scoreDelta">BASELINE</span></div>
+        <div class="hud-stat">FILL <strong id="fillMetric">0%</strong></div>
+        <div class="hud-stat">RENTABLE <strong id="rentableMetric">0%</strong></div>
+        <div class="hud-stat">EPISODE <strong id="episodeValue">000</strong></div>
+        <div class="hud-stat">STEP <strong id="stepValue">000</strong></div>
+      </div>
+      <div id="scaleBar" class="scale-bar"></div>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <h2>Simulation Status</h2>
+  <div class="ctrl-row" style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Disconnected</span>
+    </div>
+    <span id="deviceStatus" style="font-size:9.5px;color:#888;font-family:'Space Mono',monospace;">Device: unknown</span>
+  </div>
+  <div class="btn-row">
+    <button class="btn" id="trainBtn">Pause training</button>
+    <button class="btn" id="newSiteBtn">New Site</button>
+    <button class="btn" id="resetPolicyBtn">Reset Weights</button>
+    <button class="btn" id="saveCheckpointBtn">Save Weights</button>
+  </div>
+
+  <h2>Boundary Settings</h2>
+  <div class="ctrl-row">
+    <label>Boundary Type</label>
+    <select id="boundaryType">
+      <option value="lobed">Deep-lobed star</option>
+      <option value="lshape">L-shape</option>
+      <option value="ushape">U-shape</option>
+      <option value="tshape">Randomized T</option>
+      <option value="convex">Convex Hull</option>
+      <option value="rect">Rectangle</option>
+      <option value="free">Mixed Random</option>
+    </select>
+  </div>
+  <div class="ctrl-row">
+    <label>Atrium Strategy</label>
+    <select id="atriumPolicy">
+      <option value="agent">Agent decision</option>
+      <option value="central">Central atrium</option>
+      <option value="none">No atrium</option>
+    </select>
+  </div>
+  <div class="ctrl-row">
+    <label>Single Floor Mode</label>
+    <input type="checkbox" id="singleFloor">
+  </div>
+  <div class="ctrl-row">
+    <label>Public/Office Mode</label>
+    <input type="checkbox" id="publicMode">
+  </div>
+
+  <h2>Parameters (with Keyboard Entry)</h2>
+  <div class="param-group">
+    <div class="ctrl-row">
+      <label>Min edge (m)</label>
+      <input type="range" id="minEdge" min="0.0" max="30.0" step="0.5" value="1.5">
+      <input type="number" id="minEdgeNum" min="0.0" max="30.0" step="0.5" value="1.5" class="num-input">
+    </div>
+    <div class="ctrl-row">
+      <label>Max edge (m)</label>
+      <input type="range" id="maxEdge" min="0.0" max="30.0" step="0.5" value="9.0">
+      <input type="number" id="maxEdgeNum" min="0.0" max="30.0" step="0.5" value="9.0" class="num-input">
+    </div>
+    <div class="ctrl-row">
+      <label>Max edges (sides)</label>
+      <input type="range" id="maxEdges" min="3" max="12" step="1" value="8">
+      <input type="number" id="maxEdgesNum" min="3" max="12" step="1" value="8" class="num-input">
+    </div>
+    <div class="ctrl-row">
+      <label>Dictionary cap</label>
+      <input type="range" id="dictCap" min="3" max="20" step="1" value="10">
+      <input type="number" id="dictCapNum" min="3" max="20" step="1" value="10" class="num-input">
+    </div>
+    <div class="ctrl-row">
+      <label>Angle step (deg)</label>
+      <input type="range" id="angleStep" min="0.0" max="90.0" step="0.5" value="15.0">
+      <input type="number" id="angleStepNum" min="0.0" max="90.0" step="0.5" value="15.0" class="num-input">
+    </div>
+    <div class="ctrl-row">
+      <label>Max modules</label>
+      <input type="range" id="maxModules" min="10" max="300" step="5" value="130">
+      <input type="number" id="maxModulesNum" min="10" max="300" step="5" value="130" class="num-input">
+    </div>
+    <div class="ctrl-row">
+      <label>Travel limit (m)</label>
+      <input type="range" id="travelLimit" min="5" max="60" step="1" value="12">
+      <input type="number" id="travelLimitNum" min="5" max="60" step="1" value="12" class="num-input">
+    </div>
+    <div class="ctrl-row">
+      <label>Learning Rate</label>
+      <input type="range" id="learningRate" min="0.01" max="0.3" step="0.01" value="0.05">
+      <input type="number" id="learningRateNum" min="0.01" max="0.3" step="0.01" value="0.05" class="num-input">
+    </div>
+    <div class="ctrl-row">
+      <label>Animation speed</label>
+      <input type="range" id="speed" min="1" max="100" step="1" value="30">
+      <input type="number" id="speedNum" min="1" max="100" step="1" value="30" class="num-input">
+    </div>
+  </div>
+
+  <hr class="sep">
+  <h2>Procedural Dictionary</h2>
+  <div id="dictCount" style="font-size:9.5px;color:#777;margin-bottom:4px"></div>
+  <div id="moduleDictionary"></div>
+</div>
+
+<script src="app.js?v=5"></script>
+</body>
+</html>

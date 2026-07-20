@@ -1,0 +1,23 @@
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#ffffff;font-family:'Space Grotesk',sans-serif;overflow:hidden;color:#333}
+canvas.p5Canvas,#defaultCanvas0{display:block;position:absolute;top:0;left:0}
+#controls{
+  position:fixed;top:0;right:0;width:340px;height:100vh;
+  background:#ffffff;border-left:1px solid #111;
+  overflow-y:auto;z-index:10;padding:14px 16px;
+}
+#controls h2{font-size:10px;color:#111;text-transform:uppercase;letter-spacing:1.5px;margin:14px 0 6px;border-bottom:1px solid #111;padding-bottom:3px}
+#controls h2:first-child{margin-top:0}
+.ctrl-row{display:flex;align-items:center;justify-content:space-between;margin:4px 0;font-size:11px}
+.ctrl-row label{color:#222;flex:1}
+.ctrl-row input[type=range]{width:100px;accent-color:#111}
+.ctrl-row .val{width:36px;text-align:right;color:#333;font-family:'Space Mono',monospace;font-size:10px}
+.btn{background:#fff;border:1px solid #111;color:#111;padding:5px 10px;border-radius:3px;font-size:9px;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin:2px}
+.btn:hover{background:#000;color:#fff;border-color:#000}
+.btn-row{display:flex;flex-wrap:wrap;gap:2px;margin:5px 0}
+#dict-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:6px 0}
+.dict-cell{background:#ffffff;border:1px solid #111;border-radius:3px;padding:4px;text-align:center;font-size:7.5px;color:#555;overflow:hidden}
+.dict-cell canvas{display:block!important;position:static!important;margin:0 auto 2px!important}
+#stats{font-size:9px;color:#222;line-height:1.7}
+#stats .v{color:#111;font-family:'Space Mono',monospace}
+.sep{border:none;border-top:1px solid #111;margin:8px 0}

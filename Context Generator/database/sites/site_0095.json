@@ -1,0 +1,957 @@
+{
+  "id": "site_0095",
+  "city": "buenos_aires",
+  "zone": "microcentro",
+  "coordinates": {
+    "lat": -34.599017,
+    "lon": -58.369086
+  },
+  "density_tier": "high",
+  "typology": "strict_grid",
+  "area_tier": "L",
+  "site_area_m2": 1426.3,
+  "default_height": 35.0,
+  "radius_m": 100.0,
+  "verification_links": {
+    "google_maps": "https://www.google.com/maps?q=-34.599017,-58.369086",
+    "openstreetmap": "https://www.openstreetmap.org/#map=18/-34.599017/-58.369086"
+  },
+  "site_boundary": {
+    "name": "Edificio Bouchard 710",
+    "vertices_2d": [
+      [
+        -83.94,
+        8.1
+      ],
+      [
+        -80.54,
+        -33.06
+      ],
+      [
+        -45.06,
+        -28.22
+      ],
+      [
+        -49.82,
+        11.61
+      ],
+      [
+        -83.94,
+        8.1
+      ]
+    ],
+    "centroid": [
+      -68.66,
+      -6.694
+    ],
+    "original_height": 57.0
+  },
+  "context_buildings": [
+    {
+      "id": 54117823,
+      "name": "Torre Fortabat",
+      "vertices_2d": [
+        [
+          -61.78,
+          -57.04
+        ],
+        [
+          -58.42,
+          -89.2
+        ],
+        [
+          -56.07,
+          -91.55
+        ],
+        [
+          -41.19,
+          -89.7
+        ],
+        [
+          -38.7,
+          -86.77
+        ],
+        [
+          -42.49,
+          -54.68
+        ],
+        [
+          -44.51,
+          -52.63
+        ],
+        [
+          -59.88,
+          -54.72
+        ],
+        [
+          -61.78,
+          -57.04
+        ]
+      ],
+      "centroid": [
+        -51.646666666666675,
+        -70.37
+      ],
+      "height": 85.0,
+      "height_source": "tag_height"
+    },
+    {
+      "id": 477556345,
+      "name": "Embajada De Espa\u00f1a",
+      "vertices_2d": [
+        [
+          -77.14,
+          -76.58
+        ],
+        [
+          -74.78,
+          -97.71
+        ],
+        [
+          -64.31,
+          -96.54
+        ],
+        [
+          -68.74,
+          -56.76
+        ],
+        [
+          -79.24,
+          -58.05
+        ],
+        [
+          -77.14,
+          -76.58
+        ]
+      ],
+      "centroid": [
+        -73.55833333333334,
+        -77.03666666666666
+      ],
+      "height": 35.0,
+      "height_source": "default"
+    },
+    {
+      "id": 262327258,
+      "name": "Edificio Alas",
+      "vertices_2d": [
+        [
+          -87.89,
+          -37.85
+        ],
+        [
+          -138.73,
+          -42.8
+        ],
+        [
+          -145.08,
+          1.2
+        ],
+        [
+          -93.62,
+          5.91
+        ],
+        [
+          -87.89,
+          -37.85
+        ]
+      ],
+      "centroid": [
+        -110.64200000000001,
+        -22.278000000000002
+      ],
+      "height": 35.0,
+      "height_source": "default"
+    },
+    {
+      "id": 262166985,
+      "name": "Edificio Rep\u00fablica",
+      "vertices_2d": [
+        [
+          -3.56,
+          -143.13
+        ],
+        [
+          -5.24,
+          -141.56
+        ],
+        [
+          -7.5,
+          -140.72
+        ],
+        [
+          -9.68,
+          -140.18
+        ],
+        [
+          -11.54,
+          -139.98
+        ],
+        [
+          -13.59,
+          -140.1
+        ],
+        [
+          -19.26,
+          -87.82
+        ],
+        [
+          -7.74,
+          -95.17
+        ],
+        [
+          1.59,
+          -104.04
+        ],
+        [
+          9.48,
+          -114.54
+        ],
+        [
+          14.69,
+          -125.69
+        ],
+        [
+          18.3,
+          -136.81
+        ],
+        [
+          19.87,
+          -147.35
+        ],
+        [
+          0.08,
+          -150.45
+        ],
+        [
+          -0.33,
+          -148.69
+        ],
+        [
+          -0.96,
+          -146.91
+        ],
+        [
+          -2.04,
+          -144.89
+        ],
+        [
+          -3.56,
+          -143.13
+        ]
+      ],
+      "centroid": [
+        -1.1661111111111109,
+        -132.8422222222222
+      ],
+      "height": 77.0,
+      "height_source": "tag_levels"
+    },
+    {
+      "id": 526369541,
+      "name": "Building 526369541",
+      "vertices_2d": [
+        [
+          -10.93,
+          96.53
+        ],
+        [
+          -1.34,
+          95.17
+        ],
+        [
+          -33.67,
+          192.01
+        ],
+        [
+          -42.88,
+          192.14
+        ],
+        [
+          -10.93,
+          96.53
+        ]
+      ],
+      "centroid": [
+        -19.95,
+        134.47599999999997
+      ],
+      "height": 35.0,
+      "height_source": "default"
+    }
+  ],
+  "roads": [
+    {
+      "id": 23648316,
+      "name": "Avenida C\u00f3rdoba",
+      "highway_type": "primary",
+      "polyline_2d": [
+        [
+          -41.87,
+          83.68
+        ],
+        [
+          -57.56,
+          82.94
+        ],
+        [
+          -138.25,
+          75.16
+        ],
+        [
+          -163.42,
+          72.26
+        ],
+        [
+          -172.78,
+          71.12
+        ]
+      ]
+    },
+    {
+      "id": 47081323,
+      "name": "Avenida Eduardo Madero",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          -37.94,
+          68.32
+        ],
+        [
+          -27.59,
+          27.64
+        ],
+        [
+          -8.57,
+          -26.66
+        ]
+      ]
+    },
+    {
+      "id": 47084331,
+      "name": "Bouchard",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -37.94,
+          68.32
+        ],
+        [
+          -42.6,
+          30.46
+        ],
+        [
+          -34.99,
+          -41.09
+        ]
+      ]
+    },
+    {
+      "id": 47084332,
+      "name": "Viamonte",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -34.99,
+          -41.09
+        ],
+        [
+          -4.65,
+          -37.01
+        ]
+      ]
+    },
+    {
+      "id": 48101523,
+      "name": "Bouchard",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -34.99,
+          -41.09
+        ],
+        [
+          -20.42,
+          -166.47
+        ]
+      ]
+    },
+    {
+      "id": 83225189,
+      "name": "Viamonte",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -146.25,
+          -55.08
+        ],
+        [
+          -34.99,
+          -41.09
+        ]
+      ]
+    },
+    {
+      "id": 203012948,
+      "name": "Avenida Eduardo Madero",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          -4.65,
+          -37.01
+        ],
+        [
+          -1.34,
+          -45.77
+        ],
+        [
+          33.1,
+          -145.81
+        ],
+        [
+          36.44,
+          -155.52
+        ],
+        [
+          41.38,
+          -168.63
+        ],
+        [
+          53.23,
+          -204.08
+        ],
+        [
+          56.45,
+          -214.76
+        ],
+        [
+          58.75,
+          -224.66
+        ],
+        [
+          60.29,
+          -233.66
+        ],
+        [
+          65.76,
+          -284.79
+        ],
+        [
+          66.22,
+          -289.04
+        ],
+        [
+          68.1,
+          -302.84
+        ],
+        [
+          68.8,
+          -312.65
+        ],
+        [
+          71.09,
+          -336.84
+        ],
+        [
+          76.59,
+          -395.03
+        ],
+        [
+          77.96,
+          -408.45
+        ]
+      ]
+    },
+    {
+      "id": 266940127,
+      "name": "Road (service)",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          -27.83,
+          111.89
+        ],
+        [
+          -22.79,
+          107.35
+        ],
+        [
+          -19.35,
+          97.57
+        ],
+        [
+          -19.59,
+          89.03
+        ],
+        [
+          -23.25,
+          83.95
+        ]
+      ]
+    },
+    {
+      "id": 266940129,
+      "name": "Cecilia Grierson",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          -23.25,
+          83.95
+        ],
+        [
+          -41.87,
+          83.68
+        ]
+      ]
+    },
+    {
+      "id": 403159053,
+      "name": "Mariquita S\u00e1nchez de Thompson",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          4.21,
+          -35.47
+        ],
+        [
+          16.26,
+          -33.97
+        ],
+        [
+          31.68,
+          -32.06
+        ],
+        [
+          39.07,
+          -31.15
+        ],
+        [
+          51.5,
+          -29.61
+        ],
+        [
+          61.92,
+          -28.32
+        ],
+        [
+          71.1,
+          -27.71
+        ],
+        [
+          75.22,
+          -27.44
+        ],
+        [
+          75.85,
+          -27.4
+        ]
+      ]
+    },
+    {
+      "id": 526369540,
+      "name": "Road (service)",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          11.7,
+          78.58
+        ],
+        [
+          8.3,
+          90.81
+        ],
+        [
+          5.42,
+          100.83
+        ],
+        [
+          4.43,
+          113.37
+        ]
+      ]
+    },
+    {
+      "id": 555611533,
+      "name": "Cecilia Grierson",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          11.7,
+          78.58
+        ],
+        [
+          -8.01,
+          81.73
+        ],
+        [
+          -11.81,
+          82.29
+        ],
+        [
+          -23.25,
+          83.95
+        ]
+      ]
+    },
+    {
+      "id": 692675894,
+      "name": "Avenida Eduardo Madero",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          4.21,
+          -35.47
+        ],
+        [
+          6.94,
+          -44.98
+        ],
+        [
+          12.54,
+          -61.44
+        ],
+        [
+          21.44,
+          -87.6
+        ],
+        [
+          28.72,
+          -108.98
+        ],
+        [
+          35.32,
+          -128.37
+        ],
+        [
+          37.5,
+          -134.77
+        ],
+        [
+          40.46,
+          -143.21
+        ],
+        [
+          48.36,
+          -165.35
+        ],
+        [
+          60.34,
+          -201.84
+        ],
+        [
+          62.5,
+          -208.33
+        ],
+        [
+          63.54,
+          -211.43
+        ],
+        [
+          66.49,
+          -222.25
+        ],
+        [
+          68.08,
+          -233.79
+        ],
+        [
+          73.86,
+          -288.3
+        ]
+      ]
+    },
+    {
+      "id": 723919907,
+      "name": "Cecilia Grierson",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          89.08,
+          66.3
+        ],
+        [
+          82.46,
+          66.06
+        ],
+        [
+          73.15,
+          67.03
+        ],
+        [
+          69.97,
+          67.24
+        ],
+        [
+          48.04,
+          71.66
+        ],
+        [
+          27.65,
+          75.43
+        ],
+        [
+          11.7,
+          78.58
+        ]
+      ]
+    },
+    {
+      "id": 723919910,
+      "name": "Mariquita S\u00e1nchez de Thompson",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          75.85,
+          -27.4
+        ],
+        [
+          95.0,
+          -25.34
+        ]
+      ]
+    },
+    {
+      "id": 879508806,
+      "name": "Avenida Eduardo Madero",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          -8.57,
+          -26.66
+        ],
+        [
+          -4.65,
+          -37.01
+        ]
+      ]
+    },
+    {
+      "id": 879508810,
+      "name": "Avenida Eduardo Madero",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          -67.09,
+          164.36
+        ],
+        [
+          -55.19,
+          129.79
+        ],
+        [
+          -46.88,
+          103.29
+        ],
+        [
+          -41.87,
+          83.68
+        ]
+      ]
+    },
+    {
+      "id": 1188172181,
+      "name": "Paseo del Bajo - Presidente Dr. Ra\u00fal R. Alfons\u00edn",
+      "highway_type": "motorway",
+      "polyline_2d": [
+        [
+          59.81,
+          50.93
+        ],
+        [
+          77.42,
+          -11.94
+        ]
+      ]
+    },
+    {
+      "id": 1301074002,
+      "name": "Paseo del Bajo - Presidente Dr. Ra\u00fal R. Alfons\u00edn",
+      "highway_type": "motorway",
+      "polyline_2d": [
+        [
+          85.52,
+          -9.68
+        ],
+        [
+          68.67,
+          49.66
+        ]
+      ]
+    },
+    {
+      "id": 1301074003,
+      "name": "Paseo del Bajo - Presidente Dr. Ra\u00fal R. Alfons\u00edn",
+      "highway_type": "motorway",
+      "polyline_2d": [
+        [
+          94.88,
+          -42.66
+        ],
+        [
+          85.52,
+          -9.68
+        ]
+      ]
+    },
+    {
+      "id": 1301074004,
+      "name": "Paseo del Bajo - Presidente Dr. Ra\u00fal R. Alfons\u00edn",
+      "highway_type": "motorway",
+      "polyline_2d": [
+        [
+          86.77,
+          -44.84
+        ],
+        [
+          106.8,
+          -120.56
+        ]
+      ]
+    },
+    {
+      "id": 1301074005,
+      "name": "Paseo del Bajo - Presidente Dr. Ra\u00fal R. Alfons\u00edn",
+      "highway_type": "motorway",
+      "polyline_2d": [
+        [
+          77.42,
+          -11.94
+        ],
+        [
+          86.77,
+          -44.84
+        ]
+      ]
+    },
+    {
+      "id": 1301074006,
+      "name": "Paseo del Bajo - Presidente Dr. Ra\u00fal R. Alfons\u00edn",
+      "highway_type": "motorway",
+      "polyline_2d": [
+        [
+          48.86,
+          89.24
+        ],
+        [
+          59.81,
+          50.93
+        ]
+      ]
+    },
+    {
+      "id": 1301074009,
+      "name": "Paseo del Bajo - Presidente Dr. Ra\u00fal R. Alfons\u00edn",
+      "highway_type": "motorway",
+      "polyline_2d": [
+        [
+          68.67,
+          49.66
+        ],
+        [
+          58.5,
+          87.14
+        ]
+      ]
+    },
+    {
+      "id": 1337852929,
+      "name": "Avenida Eduardo Madero",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          -41.87,
+          83.68
+        ],
+        [
+          -37.94,
+          68.32
+        ]
+      ]
+    },
+    {
+      "id": 1337852930,
+      "name": "Mariquita S\u00e1nchez de Thompson",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -4.65,
+          -37.01
+        ],
+        [
+          4.21,
+          -35.47
+        ]
+      ]
+    },
+    {
+      "id": 1423665578,
+      "name": "Avenida Eduardo Madero",
+      "highway_type": "secondary",
+      "polyline_2d": [
+        [
+          -37.94,
+          68.32
+        ],
+        [
+          -29.63,
+          52.1
+        ],
+        [
+          -23.06,
+          39.26
+        ],
+        [
+          -19.38,
+          32.06
+        ],
+        [
+          -14.54,
+          18.81
+        ],
+        [
+          -7.98,
+          0.83
+        ],
+        [
+          0.23,
+          -21.65
+        ],
+        [
+          1.58,
+          -26.38
+        ],
+        [
+          4.21,
+          -35.47
+        ]
+      ]
+    },
+    {
+      "id": 1451027773,
+      "name": "Mariquita S\u00e1nchez de Thompson",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          95.0,
+          -25.34
+        ],
+        [
+          99.1,
+          -24.89
+        ]
+      ]
+    }
+  ],
+  "metrics": {
+    "building_count": 5,
+    "far": 2.4,
+    "gcr": 0.18,
+    "avg_height": 53.4,
+    "max_height": 85.0,
+    "min_height": 35.0,
+    "height_data_ratio": 0.4,
+    "site_area_m2": 1426.3,
+    "area_tier": "L"
+  },
+  "fetched_at": "2026-07-28T01:45:30.652349+00:00"
+}

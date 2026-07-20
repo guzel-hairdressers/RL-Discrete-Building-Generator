@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Modular Space Filling Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="p5.min.js"></script>
+</head>
+<body>
+<div id="controls">
+  <h2>Boundary Type</h2>
+  <div class="btn-row" id="bnd-btns"></div>
+  <h2>Parameters</h2>
+  <div class="ctrl-row"><label>Max sides</label><input type="range" id="sl-sides" min="3" max="10" value="8"><span class="val" id="v-sides">8</span></div>
+  <div class="ctrl-row"><label>Edge grid (m)</label><input type="range" id="sl-egrid" min="1" max="4" value="2" step="0.5"><span class="val" id="v-egrid">2.0</span></div>
+  <div class="ctrl-row"><label>Max edge (m)</label><input type="range" id="sl-maxe" min="4" max="14" value="8" step="1"><span class="val" id="v-maxe">8</span></div>
+  <div class="ctrl-row"><label>Area ratio</label><input type="range" id="sl-aratio" min="0.05" max="0.5" value="0.2" step="0.05"><span class="val" id="v-aratio">0.20</span></div>
+  <div class="ctrl-row"><label>Max modules</label><input type="range" id="sl-maxsh" min="30" max="500" value="250" step="10"><span class="val" id="v-maxsh">250</span></div>
+  <div class="ctrl-row"><label>Dict cap (N)</label><input type="range" id="sl-nmax" min="3" max="20" value="10"><span class="val" id="v-nmax">10</span></div>
+  <div class="ctrl-row"><label>Speed</label><input type="range" id="sl-spd" min="1" max="30" value="5"><span class="val" id="v-spd">5</span></div>
+  <div class="btn-row">
+    <button class="btn" onclick="initDemo()">Reset (R)</button>
+    <button class="btn" onclick="nextBoundary()">Next (Space)</button>
+  </div>
+  <hr class="sep">
+  <h2>Shape Dictionary</h2>
+  <div id="dict-info" style="font-size:10px;color:#888;margin-bottom:4px"></div>
+  <div id="dict-grid"></div>
+</div>
+
+<script src="geom.js"></script>
+<script src="sketch.js"></script>
+</body>
+</html>

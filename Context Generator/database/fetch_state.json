@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "total_candidates": 709,
+  "current_index": 709,
+  "accepted": 137,
+  "rejected": 273,
+  "failed_api": 299,
+  "last_updated": "2026-07-28T07:46:33.575216+00:00"
+}
