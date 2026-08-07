@@ -226,13 +226,10 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
 
 
 def select_device() -> torch.device:
-    """Choose CUDA, then Apple MPS, with a CPU fallback."""
+    """Choose CUDA, with a CPU fallback for fast scalar RL operations."""
 
     if torch.cuda.is_available():
         return torch.device("cuda")
-    mps_backend = getattr(torch.backends, "mps", None)
-    if mps_backend is not None and mps_backend.is_available():
-        return torch.device("mps")
     return torch.device("cpu")
 
 

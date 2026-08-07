@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import copy
 import ctypes
+import functools
 import os
 import hashlib
 import json
@@ -31,6 +32,13 @@ try:
             ctypes.POINTER(_CPoint), ctypes.c_int
         ]
         _libfast_geo.polygons_overlap_c.restype = ctypes.c_int
+
+        _libfast_geo.polygon_inside_site_c.argtypes = [
+            ctypes.POINTER(_CPoint), ctypes.c_int,
+            ctypes.POINTER(_CPoint), ctypes.c_int,
+            ctypes.POINTER(_CPoint), ctypes.POINTER(ctypes.c_int), ctypes.c_int
+        ]
+        _libfast_geo.polygon_inside_site_c.restype = ctypes.c_int
 except Exception:
     _libfast_geo = None
 
@@ -670,6 +678,19 @@ def is_convex_polygon(poly: Sequence[dict]) -> bool:
     return True
 
 
+class _LazyRotationDict(dict):
+    """Lazy dictionary that rasterizes polygon cells only on demand."""
+    def __getitem__(self, key):
+        if key == "cells" and "cells" not in self:
+            self["cells"] = rasterize_polygon(self["poly"])
+        return super().__getitem__(key)
+
+    def get(self, key, default=None):
+        if key == "cells" and "cells" not in self:
+            self["cells"] = rasterize_polygon(self["poly"])
+        return super().get(key, default)
+
+
 def normalize_rotations(
     poly: Sequence[dict],
     angle_step: float,
@@ -718,14 +739,15 @@ def normalize_rotations(
         signatures.add(signature)
         box = bounds_of(rotated)
         rotations.append(
-            {
-                "rotation": index,
-                "angle": angle,
-                "poly": rotated,
-                "cells": rasterize_polygon(rotated),
-                "width": box["maxX"] - box["minX"],
-                "height": box["maxY"] - box["minY"],
-            }
+            _LazyRotationDict(
+                {
+                    "rotation": index,
+                    "angle": angle,
+                    "poly": rotated,
+                    "width": box["maxX"] - box["minX"],
+                    "height": box["maxY"] - box["minY"],
+                }
+            )
         )
     return rotations
 
@@ -865,8 +887,27 @@ def polygon_inside_site(poly: Sequence[dict], outer: Sequence[dict], holes: Sequ
     """
 
     holes = holes or []
-    if not is_simple_polygon(poly) or len(outer) < 3:
+    if len(outer) < 3:
         return False
+
+    if _libfast_geo is not None:
+        c_poly = (_CPoint * len(poly))(*[_CPoint(pt["x"], pt["y"]) for pt in poly])
+        c_outer = (_CPoint * len(outer))(*[_CPoint(pt["x"], pt["y"]) for pt in outer])
+        
+        flat_holes = []
+        hole_counts = []
+        for h in holes:
+            hole_counts.append(len(h))
+            flat_holes.extend([_CPoint(pt["x"], pt["y"]) for pt in h])
+        
+        c_holes = (_CPoint * len(flat_holes))(*flat_holes) if flat_holes else None
+        c_counts = (ctypes.c_int * len(hole_counts))(*hole_counts) if hole_counts else None
+        
+        return bool(_libfast_geo.polygon_inside_site_c(
+            c_poly, len(poly),
+            c_outer, len(outer),
+            c_holes, c_counts, len(holes)
+        ))
     for point in poly:
         if not (point_in_polygon(point, outer) or point_on_polygon(point, outer)):
             return False
@@ -2129,31 +2170,24 @@ def _parametric_polygon(shape_type: str, width: float, height: float, angle: flo
     raise ValueError(f"unsupported parametric shape type: {shape_type}")
 
 
-def enumerate_parametric_proposals(settings: dict, category: str) -> list[dict]:
-    """Enumerate valid factorized policy actions without materializing modules.
-
-    Every result is an index tuple over width, height, angle, and type palettes.
-    Invalid or architecturally illegible tuples are masked before policy
-    sampling, so the learned action can never create a self-intersection or an
-    edge outside the active 1m..9m constraints.
-    """
-
+@functools.lru_cache(maxsize=128)
+def _cached_enumerate_parametric_proposals(
+    category: str, minimum: float, maximum: float, max_edges: int, active_step: float
+) -> tuple[dict, ...]:
     category = str(category).lower()
     if category not in {"core", "corridor", "room", "special"}:
         raise ValueError(f"unsupported module category: {category}")
-    minimum = max(1.0, float(settings.get("minEdge", 1.0)))
-    maximum = min(9.0, float(settings.get("maxEdge", 9.0)))
-    max_edges = min(8, int(settings.get("maxEdges", 8)))
     edge_indices = [
         index for index, value in enumerate(EDGE_PALETTE) if minimum - EPSILON <= value <= maximum + EPSILON
     ]
     proposals: list[dict] = []
     seen_geometry: set[str] = set()
+    dummy_settings = {"angleStep": active_step}
     for type_index, shape_type in enumerate(PARAMETRIC_SHAPE_TYPES):
         vertex_count = 3 if shape_type == "triangle" else 4
         if vertex_count > max_edges:
             continue
-        angle_indices = active_angle_indices(settings)
+        angle_indices = active_angle_indices(dummy_settings)
         if shape_type == "rectangle":
             angle_indices = [ANGLE_PALETTE.index(90.0)]
         for width_index in edge_indices:
@@ -2167,9 +2201,6 @@ def enumerate_parametric_proposals(settings: dict, category: str) -> list[dict]:
                         continue
                     edges = _edge_lengths(poly)
                     angles = internal_angles(poly)
-                    active_step = float(settings.get("angleStep", 15.0))
-                    if active_step <= EPSILON:
-                        active_step = 15.0
                     if any(
                         min(abs(edge - palette_edge) for palette_edge in EDGE_PALETTE) > 1.0e-6
                         for edge in edges
@@ -2205,7 +2236,29 @@ def enumerate_parametric_proposals(settings: dict, category: str) -> list[dict]:
                             "geometrySignature": geometry_signature,
                         }
                     )
-    return proposals
+    return tuple(proposals)
+
+
+def enumerate_parametric_proposals(settings: dict, category: str) -> list[dict]:
+    """Enumerate valid factorized policy actions without materializing modules.
+
+    Every result is an index tuple over width, height, angle, and type palettes.
+    Invalid or architecturally illegible tuples are masked before policy
+    sampling, so the learned action can never create a self-intersection or an
+    edge outside the active 1m..9m constraints.
+    """
+
+    minimum = max(1.0, float(settings.get("minEdge", 1.0)))
+    maximum = min(9.0, float(settings.get("maxEdge", 9.0)))
+    max_edges = min(8, int(settings.get("maxEdges", 8)))
+    active_step = float(settings.get("angleStep", 15.0))
+    if active_step <= EPSILON:
+        active_step = 15.0
+
+    cached = _cached_enumerate_parametric_proposals(
+        str(category).lower(), minimum, maximum, max_edges, active_step
+    )
+    return list(cached)
 
 
 def synthesize_parametric_module(

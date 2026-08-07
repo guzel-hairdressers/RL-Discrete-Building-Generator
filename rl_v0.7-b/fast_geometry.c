@@ -51,6 +51,14 @@ static inline int point_in_polygon_c(Point pt, const Point* poly, int count) {
 }
 
 static inline int point_on_segment(Point p, Point a, Point b) {
+    double min_x = a.x < b.x ? a.x : b.x;
+    double max_x = a.x > b.x ? a.x : b.x;
+    if (p.x < min_x - COLLINEAR_EPSILON || p.x > max_x + COLLINEAR_EPSILON) return 0;
+
+    double min_y = a.y < b.y ? a.y : b.y;
+    double max_y = a.y > b.y ? a.y : b.y;
+    if (p.y < min_y - COLLINEAR_EPSILON || p.y > max_y + COLLINEAR_EPSILON) return 0;
+
     double cross = (p.y - a.y) * (b.x - a.x) - (p.x - a.x) * (b.y - a.y);
     if (fabs(cross) > EPSILON) return 0;
     double dot = (p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y);
@@ -188,4 +196,44 @@ int polygons_overlap_c(const Point* poly1, int n1, const Point* poly2, int n2) {
     }
 
     return 0;
+}
+
+// C implementation of polygon_inside_site
+int polygon_inside_site_c(
+    const Point* poly, int n,
+    const Point* outer, int n_outer,
+    const Point* holes_flat, const int* hole_counts, int num_holes
+) {
+    if (n < 3 || n_outer < 3) return 0;
+
+    // 1. All vertices must be inside or on outer boundary
+    for (int i = 0; i < n; i++) {
+        Point pt = poly[i];
+        if (!point_in_polygon_c(pt, outer, n_outer) && !point_on_polygon_c(pt, outer, n_outer)) {
+            return 0;
+        }
+    }
+
+    // 2. Segment midpoints against outer
+    for (int i = 0; i < n; i++) {
+        Point p1 = poly[i];
+        Point p2 = poly[(i + 1) % n];
+        Point mid = {(p1.x + p2.x) * 0.5, (p1.y + p2.y) * 0.5};
+        if (!point_in_polygon_c(mid, outer, n_outer) && !point_on_polygon_c(mid, outer, n_outer)) {
+            return 0;
+        }
+    }
+
+    // 3. Holes overlap check
+    int offset = 0;
+    for (int h = 0; h < num_holes; h++) {
+        int h_count = hole_counts[h];
+        const Point* hole_poly = &holes_flat[offset];
+        if (polygons_overlap_c(poly, n, hole_poly, h_count)) {
+            return 0;
+        }
+        offset += h_count;
+    }
+
+    return 1;
 }

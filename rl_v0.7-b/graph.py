@@ -254,8 +254,17 @@ def extract_layout_graph(placements: list[dict], playground_id: int = 0) -> Layo
     for i in range(n_placements):
         pid_a = pids[i]
         ports_a = all_ports[pid_a]
+        bounds_a = G.bounds_of(nodes[pid_a]["poly"])
         for j in range(i + 1, n_placements):
             pid_b = pids[j]
+            bounds_b = G.bounds_of(nodes[pid_b]["poly"])
+            if (
+                bounds_a["maxX"] < bounds_b["minX"] - 0.5
+                or bounds_b["maxX"] < bounds_a["minX"] - 0.5
+                or bounds_a["maxY"] < bounds_b["minY"] - 0.5
+                or bounds_b["maxY"] < bounds_a["minY"] - 0.5
+            ):
+                continue
             ports_b = all_ports[pid_b]
             
             for pa in ports_a:
