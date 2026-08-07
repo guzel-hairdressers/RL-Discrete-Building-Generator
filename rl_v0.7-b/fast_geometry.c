@@ -237,3 +237,48 @@ int polygon_inside_site_c(
 
     return 1;
 }
+
+double get_shared_overlap_c(const Point* poly1, int n1, const Point* poly2, int n2) {
+    if (n1 < 3 || n2 < 3) return 0.0;
+    double total = 0.0;
+    for (int i = 0; i < n1; i++) {
+        Point a = poly1[i];
+        Point b = poly1[(i + 1) % n1];
+        for (int j = 0; j < n2; j++) {
+            Point c = poly2[j];
+            Point d = poly2[(j + 1) % n2];
+            if (segments_collinear(a, b, c, d)) {
+                double overlap = collinear_overlap_length(a, b, c, d);
+                if (overlap > COLLINEAR_EPSILON) {
+                    total += overlap;
+                }
+            }
+        }
+    }
+    return total;
+}
+
+void shared_overlap_pair_c(const Point* poly1, int n1, const Point* poly2, int n2, double* max_ovlp, double* total_ovlp) {
+    double max_o = 0.0;
+    double total_o = 0.0;
+    if (n1 >= 3 && n2 >= 3) {
+        for (int i = 0; i < n1; i++) {
+            Point a = poly1[i];
+            Point b = poly1[(i + 1) % n1];
+            for (int j = 0; j < n2; j++) {
+                Point c = poly2[j];
+                Point d = poly2[(j + 1) % n2];
+                if (segments_collinear(a, b, c, d)) {
+                    double overlap = collinear_overlap_length(a, b, c, d);
+                    if (overlap > COLLINEAR_EPSILON) {
+                        if (overlap > max_o) max_o = overlap;
+                        total_o += overlap;
+                    }
+                }
+            }
+        }
+    }
+    *max_ovlp = max_o;
+    *total_ovlp = total_o;
+}
+

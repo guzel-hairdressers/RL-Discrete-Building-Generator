@@ -39,6 +39,19 @@ try:
             ctypes.POINTER(_CPoint), ctypes.POINTER(ctypes.c_int), ctypes.c_int
         ]
         _libfast_geo.polygon_inside_site_c.restype = ctypes.c_int
+
+        _libfast_geo.get_shared_overlap_c.argtypes = [
+            ctypes.POINTER(_CPoint), ctypes.c_int,
+            ctypes.POINTER(_CPoint), ctypes.c_int
+        ]
+        _libfast_geo.get_shared_overlap_c.restype = ctypes.c_double
+
+        _libfast_geo.shared_overlap_pair_c.argtypes = [
+            ctypes.POINTER(_CPoint), ctypes.c_int,
+            ctypes.POINTER(_CPoint), ctypes.c_int,
+            ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)
+        ]
+        _libfast_geo.shared_overlap_pair_c.restype = None
 except Exception:
     _libfast_geo = None
 
@@ -928,12 +941,11 @@ def polygon_inside_site(poly: Sequence[dict], outer: Sequence[dict], holes: Sequ
 
 
 def get_shared_overlap(first_poly: Sequence[dict], second_poly: Sequence[dict]) -> float:
-    """Return exact total length of truly coincident boundary intervals.
-
-    Collinearity uses a tight floating-point tolerance and checks both lines and
-    both endpoints.  Near-parallel edges and separated parallel edges contribute
-    zero.  No 0.5 m policy threshold is embedded here; graph callers apply it.
-    """
+    """Return exact total length of truly coincident boundary intervals."""
+    if _libfast_geo is not None:
+        c1 = (_CPoint * len(first_poly))(*[_CPoint(pt["x"], pt["y"]) for pt in first_poly])
+        c2 = (_CPoint * len(second_poly))(*[_CPoint(pt["x"], pt["y"]) for pt in second_poly])
+        return float(_libfast_geo.get_shared_overlap_c(c1, len(first_poly), c2, len(second_poly)))
 
     overlaps = []
     for first_index, first in enumerate(first_poly):
@@ -944,8 +956,6 @@ def get_shared_overlap(first_poly: Sequence[dict], second_poly: Sequence[dict]) 
                 overlap = _collinear_overlap_length(first, second, third, fourth)
                 if overlap > COLLINEAR_EPSILON:
                     overlaps.append(overlap)
-    # Sorting plus fsum keeps the already-symmetric pair set bitwise stable when
-    # callers reverse argument order.
     return math.fsum(sorted(overlaps))
 
 
@@ -970,12 +980,17 @@ def max_shared_overlap(first_poly: Sequence[dict], second_poly: Sequence[dict]) 
 def shared_overlap_pair(
     first_poly: Sequence[dict], second_poly: Sequence[dict]
 ) -> tuple[float, float]:
-    """Return ``(max_single_overlap, total_overlap)`` in a single edge-pair pass.
-
-    Equivalent to calling :func:`max_shared_overlap` and
-    :func:`get_shared_overlap` separately, but iterates the edge pairs and
-    collinearity checks only once.
-    """
+    """Return ``(max_single_overlap, total_overlap)`` in a single edge-pair pass."""
+    if _libfast_geo is not None:
+        c1 = (_CPoint * len(first_poly))(*[_CPoint(pt["x"], pt["y"]) for pt in first_poly])
+        c2 = (_CPoint * len(second_poly))(*[_CPoint(pt["x"], pt["y"]) for pt in second_poly])
+        max_o = ctypes.c_double(0.0)
+        tot_o = ctypes.c_double(0.0)
+        _libfast_geo.shared_overlap_pair_c(
+            c1, len(first_poly), c2, len(second_poly),
+            ctypes.byref(max_o), ctypes.byref(tot_o)
+        )
+        return float(max_o.value), float(tot_o.value)
 
     longest = 0.0
     overlaps: list[float] = []

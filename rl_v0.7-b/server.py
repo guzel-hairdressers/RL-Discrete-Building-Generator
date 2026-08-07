@@ -967,13 +967,17 @@ class FloorEnvironment:
         bounds = {"minX": min_x, "maxX": max_x, "minY": min_y, "maxY": max_y}
 
         t_overlap = time.perf_counter()
-        nearby_ids = {
-            identifier
-            for identifier in self._nearby_placement_ids(bounds)
-            if self._bounds_intersect(bounds, self.placement_bounds[identifier])
-        }
-        nearby = [self.placement_by_id[identifier] for identifier in nearby_ids]
-        has_overlap = any(G.polygons_overlap(poly, placement["poly"]) for placement in nearby)
+        if not self.placements:
+            nearby = []
+            has_overlap = False
+        else:
+            nearby_ids = {
+                identifier
+                for identifier in self._nearby_placement_ids(bounds)
+                if self._bounds_intersect(bounds, self.placement_bounds[identifier])
+            }
+            nearby = [self.placement_by_id[identifier] for identifier in nearby_ids]
+            has_overlap = any(G.polygons_overlap(poly, placement["poly"]) for placement in nearby)
         if cg_sub_totals is not None:
             cg_sub_totals["cgOverlapCollisions"] += time.perf_counter() - t_overlap
         if has_overlap:
