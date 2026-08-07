@@ -2783,69 +2783,9 @@ class ParallelTrainer:
         self.step_profiler.record("placement", time.perf_counter() - t_placement_start)
 
         self.step_number += 1
-        
-        # Compute current BPE merges for visualization when paused
-        t_bpe_start = time.perf_counter()
-        layout_graphs = []
-        for idx, environment in enumerate(self.environments):
-            layout_graphs.append(graph.extract_layout_graph(environment.placements, idx))
-            
-        merged_vocab, _ = graph.bpe_merge(
-            layout_graphs,
-            min_frequency=2,
-            max_rounds=20,
-            max_vocab_size=30
-        )
-        self.step_profiler.record("bpeMerge", time.perf_counter() - t_bpe_start)
-        
+        self.step_profiler.record("bpeMerge", 0.0)
         merged_placements_formatted = []
-        for env_idx, layout_graph in enumerate(layout_graphs):
-            environment = self.environments[env_idx]
-            dx, dy = environment.offset
-            for node in layout_graph.nodes.values():
-                category = node.get("category", "room")
-                if "shapeType" in node and node["shapeType"].startswith("M_round"):
-                    category = "room"
-                poly = node["poly"]
-                world_poly = G.translate_polygon(poly, dx, dy)
-                
-                components_formatted = []
-                if "components" in node:
-                    for comp in node["components"]:
-                        comp_world_poly = G.translate_polygon(comp["poly"], dx, dy)
-                        components_formatted.append({
-                            "id": comp["id"],
-                            "poly": comp_world_poly,
-                            "instanceIdx": env_idx,
-                            "center": G.polygon_centroid(comp_world_poly),
-                            "module": {
-                                "id": comp.get("shapeType", comp.get("moduleId", comp["id"])),
-                                "category": comp.get("category", "room"),
-                            }
-                        })
-                else:
-                    components_formatted.append({
-                        "id": node["id"],
-                        "poly": world_poly,
-                        "instanceIdx": env_idx,
-                        "center": G.polygon_centroid(world_poly),
-                        "module": {
-                            "id": node.get("shapeType", node.get("moduleId", node["id"])),
-                            "category": category,
-                        }
-                    })
-                    
-                merged_placements_formatted.append({
-                    "id": node["id"],
-                    "poly": world_poly,
-                    "instanceIdx": env_idx,
-                    "center": G.polygon_centroid(world_poly),
-                    "module": {
-                        "id": node.get("shapeType", node.get("moduleId", node["id"])),
-                        "category": category,
-                    },
-                    "components": components_formatted
-                })
+        merged_vocab = []
 
         metrics = self._aggregate_online()
         self.step_profiler.record("stepTotal", time.perf_counter() - t_step_start)
