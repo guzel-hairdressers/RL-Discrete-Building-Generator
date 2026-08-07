@@ -1072,28 +1072,39 @@ class FloorEnvironment:
 
         candidate_poly = rotation["poly"]
         angle_period = int(round(math.pi * ATTACHMENT_ANGLE_SCALE))
-        for candidate_index in self._attachment_indices(module, candidate_poly):
+        poly_len = len(candidate_poly)
+        for candidate_index in range(poly_len):
             candidate_first = candidate_poly[candidate_index]
-            candidate_second = candidate_poly[(candidate_index + 1) % len(candidate_poly)]
+            candidate_second = candidate_poly[(candidate_index + 1) % poly_len]
             candidate_dx = candidate_second["x"] - candidate_first["x"]
             candidate_dy = candidate_second["y"] - candidate_first["y"]
             candidate_length = math.hypot(candidate_dx, candidate_dy)
             if candidate_length < MIN_SHARED_EDGE:
                 continue
             angle_key = self._attachment_angle_key(candidate_first, candidate_second)
-            raw_edge_ids: set[int] = set()
+            
+            pref_ids: list[int] = []
+            norm_ids: list[int] = []
+            seen_eids: set[int] = set()
             for delta in (-2, -1, 0, 1, 2):
                 lookup = (angle_key + delta) % angle_period
-                raw_edge_ids.update(self.attachment_by_angle.get(lookup, ()))
-            edge_ids = {eid for eid in raw_edge_ids if eid in self.attachment_edges}
-            prioritized = sorted(
-                edge_ids,
-                key=lambda edge_id: (
-                    bool(self.attachment_edges[edge_id]["preferred"]),
-                    edge_id,
-                ),
-                reverse=True,
-            )[:ATTACHMENT_MATCH_LIMIT]
+                eids = self.attachment_by_angle.get(lookup)
+                if eids:
+                    for eid in eids:
+                        if eid in seen_eids:
+                            continue
+                        seen_eids.add(eid)
+                        edge = self.attachment_edges.get(eid)
+                        if edge is not None:
+                            if edge["preferred"]:
+                                pref_ids.append(eid)
+                            else:
+                                norm_ids.append(eid)
+
+            pref_ids.sort(reverse=True)
+            norm_ids.sort(reverse=True)
+            prioritized = (pref_ids + norm_ids)[:ATTACHMENT_MATCH_LIMIT]
+
             for edge_id in prioritized:
                 edge = self.attachment_edges[edge_id]
                 placed_first = edge["a"]
