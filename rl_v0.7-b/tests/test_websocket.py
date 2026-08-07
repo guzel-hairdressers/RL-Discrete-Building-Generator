@@ -55,6 +55,7 @@ class WebSocketProtocolTests(unittest.TestCase):
     def test_settings_site_step_stale_guard_and_new_generation(self) -> None:
         with TestClient(server.app) as client:
             with client.websocket_connect("/ws") as websocket:
+                websocket.receive_json()  # Drain initial site event on connect
                 websocket.send_json(
                     {
                         "cmd": "updateSettings",
@@ -110,6 +111,7 @@ class WebSocketProtocolTests(unittest.TestCase):
     def test_complete_episode_backpropagates_across_worker_thread_steps(self) -> None:
         with TestClient(server.app) as client:
             with client.websocket_connect("/ws") as websocket:
+                websocket.receive_json()  # Drain initial site event on connect
                 websocket.send_json(
                     {
                         "cmd": "updateSettings",

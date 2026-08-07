@@ -211,9 +211,7 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
             raise SettingsError(
                 "minEdge is incompatible with a 1.5m corridor and the 40° minimum-angle rule"
             )
-        # Path B deliberately emits only triangles and quads.  Using maxEdges
-        # directly here would overestimate the feasible area for caps above four
-        # and accept transactions that cannot produce the required core module.
+    if not merged.get("singleFloor", False):
         basic_edge_count = min(int(merged["maxEdges"]), 4)
         maximum_core_area = (
             basic_edge_count
@@ -944,9 +942,18 @@ class FloorEnvironment:
         room_core_costs: dict[str, int],
         cg_sub_totals: dict[str, float] | None = None,
     ) -> PlacementCandidate | None:
-        t_overlap = time.perf_counter()
         poly = G.translate_polygon(rotation["poly"], anchor_x, anchor_y)
         bounds = G.bounds_of(poly)
+        site_bounds = self.site["bounds"]
+        if (
+            bounds["minX"] < site_bounds["minX"] - 1.0e-7
+            or bounds["maxX"] > site_bounds["maxX"] + 1.0e-7
+            or bounds["minY"] < site_bounds["minY"] - 1.0e-7
+            or bounds["maxY"] > site_bounds["maxY"] + 1.0e-7
+        ):
+            return None
+
+        t_overlap = time.perf_counter()
         nearby_ids = {
             identifier
             for identifier in self._nearby_placement_ids(bounds)
@@ -961,15 +968,12 @@ class FloorEnvironment:
 
         t_boundary = time.perf_counter()
         inside = G.polygon_inside_site(poly, self.site["outer"], self.site["holes"])
-        if inside:
-            cells = G.rasterize_polygon(poly)
-            valid_cells = cells and not any(_cell_key(cell) not in self.site["cellSet"] for cell in cells)
-        else:
-            valid_cells = False
         if cg_sub_totals is not None:
             cg_sub_totals["cgSiteBoundary"] += time.perf_counter() - t_boundary
-        if not valid_cells:
+        if not inside:
             return None
+
+        cells: list[dict] = []
 
         category = module["category"]
         if category == "corridor" and G.min_polygon_width(poly) > MAX_CORRIDOR_WIDTH + 1.0e-8:
@@ -1389,13 +1393,15 @@ class FloorEnvironment:
 
         identifier = f"f{self.index}:p{len(self.placements)}"
         center = G.polygon_centroid(candidate.poly)
+        placed_cells = candidate.cells or G.rasterize_polygon(candidate.poly)
         placement = {
             "id": identifier,
             "moduleId": candidate.module["id"],
+            "shapeType": candidate.module.get("shapeType", candidate.module.get("type", candidate.module["id"])),
             "category": candidate.module["category"],
             "family": candidate.module.get("family", "procedural"),
             "poly": candidate.poly,
-            "cells": candidate.cells,
+            "cells": placed_cells,
             "center": center,
             "rotation": float(candidate.rotation.get("angle", 0.0)),
             "area": float(candidate.module["area"]),
@@ -1411,7 +1417,7 @@ class FloorEnvironment:
         self.adjacency_map[identifier] = set(candidate.neighbors)
         for neighbor in candidate.neighbors:
             self.adjacency_map.setdefault(neighbor, set()).add(identifier)
-        for cell in candidate.cells:
+        for cell in placed_cells:
             self.occupied[_cell_key(cell)] = identifier
         prior_uses = self.module_uses.get(candidate.module["id"], 0)
         self.module_uses[candidate.module["id"]] = prior_uses + 1
@@ -1667,6 +1673,7 @@ class ParallelTrainer:
         self.generation_id = 0
         self.episode = 0
         self.step_number = 0
+        self.episode_start_time: float | None = None
         self.environments: list[FloorEnvironment] = []
         self.dictionary: list[dict] = []
         self.shape_log_probs: list[torch.Tensor] = []
@@ -2605,7 +2612,7 @@ class ParallelTrainer:
                     "instanceIdx": env_idx,
                     "center": G.polygon_centroid(world_poly),
                     "module": {
-                        "id": placement.get("shapeType", placement.get("moduleId", placement["id"])),
+                        "id": placement["moduleId"],
                         "category": placement.get("category", "room"),
                     },
                 })
@@ -2676,7 +2683,10 @@ class ParallelTrainer:
                 })
                 
         self.step_profiler.record("episodeFormatting", time.perf_counter() - t_ep_format_start)
-        self.step_profiler.record("episodeTotal", time.perf_counter() - t_episode_start)
+        
+        ep_duration = (time.perf_counter() - self.episode_start_time) if self.episode_start_time is not None else (time.perf_counter() - t_episode_start)
+        self.step_profiler.record("episodeTotal", ep_duration)
+        self.episode_start_time = None
         
         metrics["performanceTimings"] = self.step_profiler.summary()
 
@@ -2697,6 +2707,8 @@ class ParallelTrainer:
 
     def step(self, generation_id: Any, episode: Any) -> dict[str, Any]:
         """Advance every active floor with one batched placement-policy call."""
+        if self.episode_start_time is None:
+            self.episode_start_time = time.perf_counter()
         t_step_start = time.perf_counter()
 
         if (
