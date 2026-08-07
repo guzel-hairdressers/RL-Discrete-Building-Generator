@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 from collections import deque
 import copy
+import concurrent.futures
 import heapq
 import json
 import math
@@ -942,16 +943,28 @@ class FloorEnvironment:
         room_core_costs: dict[str, int],
         cg_sub_totals: dict[str, float] | None = None,
     ) -> PlacementCandidate | None:
-        poly = G.translate_polygon(rotation["poly"], anchor_x, anchor_y)
-        bounds = G.bounds_of(poly)
+        rot_poly = rotation["poly"]
+        rot_bounds = rotation.get("bounds")
+        if rot_bounds is None:
+            rot_bounds = G.bounds_of(rot_poly)
+            rotation["bounds"] = rot_bounds
+
+        min_x = rot_bounds["minX"] + anchor_x
+        max_x = rot_bounds["maxX"] + anchor_x
+        min_y = rot_bounds["minY"] + anchor_y
+        max_y = rot_bounds["maxY"] + anchor_y
+
         site_bounds = self.site["bounds"]
         if (
-            bounds["minX"] < site_bounds["minX"] - 1.0e-7
-            or bounds["maxX"] > site_bounds["maxX"] + 1.0e-7
-            or bounds["minY"] < site_bounds["minY"] - 1.0e-7
-            or bounds["maxY"] > site_bounds["maxY"] + 1.0e-7
+            min_x < site_bounds["minX"] - 1.0e-7
+            or max_x > site_bounds["maxX"] + 1.0e-7
+            or min_y < site_bounds["minY"] - 1.0e-7
+            or max_y > site_bounds["maxY"] + 1.0e-7
         ):
             return None
+
+        poly = G.translate_polygon(rot_poly, anchor_x, anchor_y)
+        bounds = {"minX": min_x, "maxX": max_x, "minY": min_y, "maxY": max_y}
 
         t_overlap = time.perf_counter()
         nearby_ids = {
@@ -1670,6 +1683,7 @@ class ParallelTrainer:
         self.step_profiler = StepProfiler()
         self.model = PolicyModel().to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=float(self.settings["learningRate"]))
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
         self.generation_id = 0
         self.episode = 0
         self.step_number = 0
@@ -2736,21 +2750,25 @@ class ParallelTrainer:
         # Twelve exact actions per floor preserve enough geometric diversity
         # for each environment to reach its requested episode cap.
         per_environment_limit = max(12, 48 // max(1, len(self.environments)))
-        for environment in self.environments:
-            if environment.done:
-                continue
-            if len(environment.placements) >= int(self.settings["maxModules"]):
-                environment.done = True
-                continue
-            generation_started = time.perf_counter()
-            candidates = environment.generate_candidates(
+        active_envs = [
+            env for env in self.environments 
+            if not env.done and len(env.placements) < int(self.settings["maxModules"])
+        ]
+        
+        def _gen(env: FloorEnvironment) -> tuple[FloorEnvironment, list[PlacementCandidate], float]:
+            g_start = time.perf_counter()
+            cands = env.generate_candidates(
                 self.settings, orientation_basis, limit=per_environment_limit, profiler=self.step_profiler
             )
-            self._record_frontier_sample(
-                environment,
-                time.perf_counter() - generation_started,
-            )
-            # candidateGeneration is now recorded inside generate_candidates()
+            return env, cands, time.perf_counter() - g_start
+
+        if len(active_envs) > 1:
+            gen_results = list(self.executor.map(_gen, active_envs))
+        else:
+            gen_results = [_gen(env) for env in active_envs]
+
+        for environment, candidates, gen_duration in gen_results:
+            self._record_frontier_sample(environment, gen_duration)
             if not candidates:
                 environment.done = True
                 continue
