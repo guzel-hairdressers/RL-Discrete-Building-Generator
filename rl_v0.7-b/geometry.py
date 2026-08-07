@@ -11,10 +11,28 @@ are implicitly closed from their final vertex back to their first vertex.
 from __future__ import annotations
 
 import copy
+import ctypes
+import os
 import hashlib
 import json
 import math
 from typing import Callable, Iterable, Sequence
+
+class _CPoint(ctypes.Structure):
+    _fields_ = [("x", ctypes.c_double), ("y", ctypes.c_double)]
+
+_libfast_geo = None
+try:
+    _so_path = os.path.join(os.path.dirname(__file__), "libfast_geometry.so")
+    if os.path.exists(_so_path):
+        _libfast_geo = ctypes.CDLL(_so_path)
+        _libfast_geo.polygons_overlap_c.argtypes = [
+            ctypes.POINTER(_CPoint), ctypes.c_int,
+            ctypes.POINTER(_CPoint), ctypes.c_int
+        ]
+        _libfast_geo.polygons_overlap_c.restype = ctypes.c_int
+except Exception:
+    _libfast_geo = None
 
 
 EPSILON = 1.0e-9
@@ -773,6 +791,11 @@ def polygons_overlap(first_poly: Sequence[dict], second_poly: Sequence[dict]) ->
 
     if len(first_poly) < 3 or len(second_poly) < 3:
         return False
+
+    if _libfast_geo is not None:
+        c1 = (_CPoint * len(first_poly))(*[_CPoint(pt["x"], pt["y"]) for pt in first_poly])
+        c2 = (_CPoint * len(second_poly))(*[_CPoint(pt["x"], pt["y"]) for pt in second_poly])
+        return bool(_libfast_geo.polygons_overlap_c(c1, len(first_poly), c2, len(second_poly)))
     first_box = bounds_of(first_poly)
     second_box = bounds_of(second_poly)
     if (
