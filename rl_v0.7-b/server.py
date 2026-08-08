@@ -24,6 +24,8 @@ import time
 from dataclasses import dataclass
 from typing import Any, Iterable, Sequence
 
+from frontier_graph import FrontierGraph
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -428,9 +430,9 @@ class FloorEnvironment:
         self.filled_area = 0.0
         self.rentable_area = 0.0
         self.repeated_uses = 0
-        self.done = False
         self.last_candidate_evaluations = 0
         self.last_unique_frontier_count = 0
+        self.frontier_graph = FrontierGraph()
 
     def reset(self, dictionary: Sequence[dict]) -> None:
         """Reset episode state while retaining the exact same local site."""
@@ -450,9 +452,9 @@ class FloorEnvironment:
         self.attachment_order = deque()
         self.next_attachment_id = 0
         self.filled_area = 0.0
-        self.rentable_area = 0.0
         self.repeated_uses = 0
         self.done = False
+        self.frontier_graph.clear()
         self.last_candidate_evaluations = 0
         self.last_unique_frontier_count = 0
 
@@ -1300,7 +1302,7 @@ class FloorEnvironment:
                         for cell in rotation_cells
                     ]
                 else:
-                    anchors_list = list(self._edge_alignment_anchors(module, rotation, include_edge_id=True))
+                    anchors_list = self.frontier_graph.propose_topological_anchors(module, rotation)
                 cg_sub_totals["cgAnchorSearch"] += time.perf_counter() - t_anchor_start
                 for anchor_x, anchor_y, edge_id in anchors_list:
                     if edge_id is not None:
@@ -1458,6 +1460,7 @@ class FloorEnvironment:
             self.core_ids.add(identifier)
         self._index_placement(placement)
         self._update_attachment_frontier(placement, candidate.module, candidate.neighbors)
+        self.frontier_graph.add_placement_edges(placement, preferred=bool(candidate.module["category"] == "core"))
 
         dx, dy = self.offset
         world_center = {"x": center["x"] + dx, "y": center["y"] + dy}
