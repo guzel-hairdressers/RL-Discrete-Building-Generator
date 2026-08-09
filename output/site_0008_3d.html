@@ -189,6 +189,7 @@ scene.add(ground);
 const sharedShadowMat = new THREE.ShadowMaterial({
   color: 0x000000,
   opacity: 0.12,
+  depthWrite: false, // Prevents depth occlusion so shadows overlay roads & ground in Top view!
   polygonOffset: true,
   polygonOffsetFactor: -1.0,
   polygonOffsetUnits: -1.0,
@@ -196,7 +197,7 @@ const sharedShadowMat = new THREE.ShadowMaterial({
 
 const shadowPlane = new THREE.Mesh(groundGeom, sharedShadowMat);
 shadowPlane.rotation.x = -Math.PI / 2;
-shadowPlane.position.y = -0.04;
+shadowPlane.position.y = 0.05; // Placed above ground (-0.05) & roads (0.01) so shadows render in Top view
 shadowPlane.receiveShadow = true;
 scene.add(shadowPlane);
 

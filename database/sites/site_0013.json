@@ -1,0 +1,2330 @@
+{
+  "site_id": "site_0013",
+  "created_at": "2026-08-09T05:24:47.724225+00:00",
+  "city": "tokyo",
+  "zone": "akihabara",
+  "density_tier": "high",
+  "coordinates": {
+    "lat": 35.6983,
+    "lon": 139.7731
+  },
+  "radius_m": 100.0,
+  "metrics": {
+    "far": 2.37,
+    "gcr": 0.378,
+    "building_count": 34,
+    "max_height": 35.0,
+    "avg_height": 21.6,
+    "site_area_m2": 2067.5,
+    "area_tier": "L"
+  },
+  "site_boundary": {
+    "name": "\u79cb\u8449\u539f",
+    "vertices_2d": [
+      [
+        -29.67,
+        5.98
+      ],
+      [
+        -30.71,
+        -3.32
+      ],
+      [
+        -20.05,
+        -4.65
+      ],
+      [
+        -21.2,
+        -14.95
+      ],
+      [
+        18.81,
+        -19.16
+      ],
+      [
+        24.03,
+        -13.76
+      ],
+      [
+        60.02,
+        -17.22
+      ],
+      [
+        102.61,
+        -19.98
+      ],
+      [
+        103.91,
+        -7.49
+      ],
+      [
+        -29.67,
+        5.98
+      ]
+    ],
+    "centroid": [
+      17.808,
+      -8.856999999999998
+    ],
+    "original_height": 14.0
+  },
+  "context_buildings": [
+    {
+      "id": 175678877,
+      "name": "Building 175678877",
+      "vertices_2d": [
+        [
+          9.1,
+          -18.96
+        ],
+        [
+          17.91,
+          -19.9
+        ],
+        [
+          16.57,
+          -32.38
+        ],
+        [
+          7.77,
+          -31.44
+        ],
+        [
+          6.36,
+          -44.51
+        ],
+        [
+          -11.19,
+          -42.61
+        ],
+        [
+          -9.79,
+          -29.54
+        ],
+        [
+          -8.45,
+          -17.07
+        ],
+        [
+          9.1,
+          -18.96
+        ]
+      ],
+      "centroid": [
+        4.153333333333332,
+        -28.374444444444446
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "train_station",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 89028752,
+      "name": "\u79cb\u8449\u539f",
+      "vertices_2d": [
+        [
+          27.22,
+          22.13
+        ],
+        [
+          22.63,
+          27.83
+        ],
+        [
+          24.73,
+          48.3
+        ],
+        [
+          -12.72,
+          52.13
+        ],
+        [
+          -13.76,
+          41.97
+        ],
+        [
+          10.72,
+          39.46
+        ],
+        [
+          9.68,
+          29.35
+        ],
+        [
+          -14.82,
+          31.86
+        ],
+        [
+          -15.67,
+          23.58
+        ],
+        [
+          -28.09,
+          24.86
+        ],
+        [
+          -28.49,
+          20.91
+        ],
+        [
+          112.46,
+          6.4
+        ],
+        [
+          112.76,
+          9.31
+        ],
+        [
+          116.79,
+          8.89
+        ],
+        [
+          117.2,
+          12.84
+        ],
+        [
+          70.24,
+          17.77
+        ],
+        [
+          27.22,
+          22.13
+        ]
+      ],
+      "centroid": [
+        31.65294117647059,
+        25.865882352941174
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:block_number": "17",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:housenumber": "6",
+        "addr:neighbourhood": "\u5916\u795e\u7530\u4e00\u4e01\u76ee",
+        "addr:postcode": "101-0021",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "train_station",
+        "layer": "4",
+        "name": "\u79cb\u8449\u539f",
+        "name:de": "Akihabara",
+        "name:en": "Akihabara",
+        "name:es": "Akihabara",
+        "name:fr": "Akihabara",
+        "name:it": "Akihabara",
+        "name:ja": "\u79cb\u8449\u539f",
+        "name:ja-Hira": "\u3042\u304d\u306f\u3070\u3089",
+        "name:ja-Latn": "Akihabara",
+        "name:ko": "\uc544\ud0a4\ud558\ubc14\ub77c",
+        "name:ko-Hani": "\u79cb\u8449\u539f",
+        "name:zh": "\u79cb\u53f6\u539f",
+        "name:zh-Hans": "\u79cb\u53f6\u539f",
+        "name:zh-Hant": "\u79cb\u8449\u539f",
+        "name:zh-Latn-pinyin": "Q\u012bu Y\u00e8 Y\u00faan",
+        "operator": "\u6771\u65e5\u672c\u65c5\u5ba2\u9244\u9053",
+        "public_transport": "station",
+        "source": "Bing, 2007-04",
+        "wikidata": "Q800374",
+        "wikimedia_commons": "Category:Akihabara Station",
+        "wikipedia": "ja:\u79cb\u8449\u539f\u99c5"
+      }
+    },
+    {
+      "id": 602007011,
+      "name": "JR\u6771\u65e5\u672c\u30db\u30c6\u30eb\u30e1\u30c3\u30c4 \u79cb\u8449\u539f",
+      "vertices_2d": [
+        [
+          -44.85,
+          -8.04
+        ],
+        [
+          -29.96,
+          -8.89
+        ],
+        [
+          -30.81,
+          -18.15
+        ],
+        [
+          -35.69,
+          -71.4
+        ],
+        [
+          -46.44,
+          -70.79
+        ],
+        [
+          -45.4,
+          -29.74
+        ],
+        [
+          -44.85,
+          -8.04
+        ]
+      ],
+      "centroid": [
+        -39.714285714285715,
+        -30.72142857142857
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:block_number": "17",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:housenumber": "4",
+        "addr:neighbourhood": "\u5916\u795e\u7530\u4e00\u4e01\u76ee",
+        "addr:postcode": "101-0021",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "yes",
+        "name": "JR\u6771\u65e5\u672c\u30db\u30c6\u30eb\u30e1\u30c3\u30c4 \u79cb\u8449\u539f"
+      }
+    },
+    {
+      "id": 686374718,
+      "name": "Building 686374718",
+      "vertices_2d": [
+        [
+          -24.97,
+          53.13
+        ],
+        [
+          -20.56,
+          52.65
+        ],
+        [
+          -19.54,
+          61.98
+        ],
+        [
+          -12.13,
+          61.18
+        ],
+        [
+          -16.19,
+          24.16
+        ],
+        [
+          -28.01,
+          25.45
+        ],
+        [
+          -24.97,
+          53.13
+        ]
+      ],
+      "centroid": [
+        -20.91,
+        47.38285714285714
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:block_number": "17",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:housenumber": "6",
+        "addr:neighbourhood": "\u5916\u795e\u7530\u4e00\u4e01\u76ee",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "retail"
+      }
+    },
+    {
+      "id": 208431936,
+      "name": "Building 208431936",
+      "vertices_2d": [
+        [
+          45.83,
+          40.02
+        ],
+        [
+          45.31,
+          34.88
+        ],
+        [
+          46.3,
+          34.78
+        ],
+        [
+          46.07,
+          32.46
+        ],
+        [
+          47.23,
+          32.34
+        ],
+        [
+          46.1,
+          21.22
+        ],
+        [
+          38.13,
+          22.03
+        ],
+        [
+          40.03,
+          40.61
+        ],
+        [
+          45.83,
+          40.02
+        ]
+      ],
+      "centroid": [
+        44.53666666666666,
+        33.15111111111111
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "layer": "3"
+      }
+    },
+    {
+      "id": 190375720,
+      "name": "DANKEAKIHABARA\u30d3\u30eb",
+      "vertices_2d": [
+        [
+          33.21,
+          -32.91
+        ],
+        [
+          41.19,
+          -33.75
+        ],
+        [
+          37.06,
+          -72.49
+        ],
+        [
+          29.09,
+          -71.63
+        ],
+        [
+          33.21,
+          -32.91
+        ]
+      ],
+      "centroid": [
+        34.752,
+        -48.73799999999999
+      ],
+      "height": 31.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "9",
+        "name": "DANKEAKIHABARA\u30d3\u30eb",
+        "name:en": "DANKE AKIHABARA Building"
+      }
+    },
+    {
+      "id": 679198821,
+      "name": "Building 679198821",
+      "vertices_2d": [
+        [
+          -28.74,
+          -70.49
+        ],
+        [
+          11.63,
+          -71.39
+        ],
+        [
+          14.77,
+          -47.36
+        ],
+        [
+          -26.78,
+          -46.39
+        ],
+        [
+          -28.74,
+          -70.49
+        ]
+      ],
+      "centroid": [
+        -11.572,
+        -61.224000000000004
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:block_number": "3",
+        "building": "retail"
+      }
+    },
+    {
+      "id": 679198820,
+      "name": "Building 679198820",
+      "vertices_2d": [
+        [
+          27.48,
+          -72.35
+        ],
+        [
+          14.21,
+          -70.89
+        ],
+        [
+          17.78,
+          -38.47
+        ],
+        [
+          31.05,
+          -39.93
+        ],
+        [
+          27.48,
+          -72.35
+        ]
+      ],
+      "centroid": [
+        23.6,
+        -58.798
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:block_number": "6",
+        "addr:housenumber": "4",
+        "building": "retail"
+      }
+    },
+    {
+      "id": 89028748,
+      "name": "\u30a2\u30c8\u30ec\u79cb\u8449\u539f1",
+      "vertices_2d": [
+        [
+          -64.64,
+          24.62
+        ],
+        [
+          -64.4,
+          26.99
+        ],
+        [
+          -59.01,
+          31.39
+        ],
+        [
+          -51.97,
+          30.86
+        ],
+        [
+          -28.4,
+          29.05
+        ],
+        [
+          -32.52,
+          -7.75
+        ],
+        [
+          -42.36,
+          -7.32
+        ],
+        [
+          -42.5,
+          -5.78
+        ],
+        [
+          -46.1,
+          -5.68
+        ],
+        [
+          -46.28,
+          -4.22
+        ],
+        [
+          -53.7,
+          -4.05
+        ],
+        [
+          -83.6,
+          -3.36
+        ],
+        [
+          -97.64,
+          -3.04
+        ],
+        [
+          -108.55,
+          -2.79
+        ],
+        [
+          -105.37,
+          29.05
+        ],
+        [
+          -80.68,
+          26.37
+        ],
+        [
+          -64.64,
+          24.62
+        ]
+      ],
+      "centroid": [
+        -63.080000000000005,
+        10.52705882352941
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:block_number": "17",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:housenumber": "6",
+        "addr:neighbourhood": "\u5916\u795e\u75301\u4e01\u76ee",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "retail",
+        "building:levels": "5",
+        "layer": "4",
+        "name": "\u30a2\u30c8\u30ec\u79cb\u8449\u539f1",
+        "name:en": "Atre Akihabara 1",
+        "name:es": "Atre Akihabara 1",
+        "name:ko": "Atre \uc544\ud0a4\ud558\ubc14\ub77c 1",
+        "name:zh": "Atre\u79cb\u8449\u539f1",
+        "shop": "mall",
+        "source": "Knowledge"
+      }
+    },
+    {
+      "id": 190375721,
+      "name": "TX\u79cb\u8449\u539f\u962a\u6025\u30d3\u30eb",
+      "vertices_2d": [
+        [
+          45.07,
+          -18.42
+        ],
+        [
+          74.49,
+          -21.45
+        ],
+        [
+          68.87,
+          -40.85
+        ],
+        [
+          68.39,
+          -42.59
+        ],
+        [
+          61.26,
+          -67.31
+        ],
+        [
+          53.19,
+          -73.26
+        ],
+        [
+          39.43,
+          -71.69
+        ],
+        [
+          45.07,
+          -18.42
+        ]
+      ],
+      "centroid": [
+        56.97125,
+        -44.24875
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:block_number": "6",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:housenumber": "5",
+        "addr:neighbourhood": "\u795e\u7530\u4f50\u4e45\u9593\u753a\u4e00\u4e01\u76ee",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "yes",
+        "name": "TX\u79cb\u8449\u539f\u962a\u6025\u30d3\u30eb",
+        "name:en": "TX Akihabara Hankyu building"
+      }
+    },
+    {
+      "id": 89023087,
+      "name": "\u30bb\u30ac\u79cb\u8449\u539f",
+      "vertices_2d": [
+        [
+          -66.74,
+          -22.4
+        ],
+        [
+          -59.32,
+          -22.43
+        ],
+        [
+          -55.93,
+          -25.95
+        ],
+        [
+          -55.97,
+          -33.77
+        ],
+        [
+          -56.0,
+          -40.55
+        ],
+        [
+          -65.74,
+          -40.51
+        ],
+        [
+          -65.8,
+          -51.5
+        ],
+        [
+          -70.29,
+          -51.47
+        ],
+        [
+          -70.22,
+          -35.68
+        ],
+        [
+          -66.81,
+          -35.7
+        ],
+        [
+          -66.74,
+          -22.4
+        ]
+      ],
+      "centroid": [
+        -63.596363636363655,
+        -34.76
+      ],
+      "height": 24.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "commercial",
+        "building:levels": "7",
+        "name": "\u30bb\u30ac\u79cb\u8449\u539f",
+        "name:en": "SEGA Akihabara",
+        "name:es": "SEGA Akihabara",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 89023096,
+      "name": "Building 89023096",
+      "vertices_2d": [
+        [
+          -56.04,
+          -41.36
+        ],
+        [
+          -64.86,
+          -41.32
+        ],
+        [
+          -64.89,
+          -47.44
+        ],
+        [
+          -56.07,
+          -47.48
+        ],
+        [
+          -56.04,
+          -41.36
+        ]
+      ],
+      "centroid": [
+        -59.580000000000005,
+        -43.791999999999994
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "commercial",
+        "building:levels": "4",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 686374719,
+      "name": "Building 686374719",
+      "vertices_2d": [
+        [
+          -19.04,
+          65.71
+        ],
+        [
+          -17.2,
+          76.34
+        ],
+        [
+          -15.09,
+          88.59
+        ],
+        [
+          0.71,
+          85.86
+        ],
+        [
+          -3.25,
+          62.98
+        ],
+        [
+          -19.04,
+          65.71
+        ]
+      ],
+      "centroid": [
+        -12.151666666666666,
+        74.19833333333334
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "retail"
+      }
+    },
+    {
+      "id": 89023078,
+      "name": "Building 89023078",
+      "vertices_2d": [
+        [
+          -64.06,
+          -48.1
+        ],
+        [
+          -56.55,
+          -48.18
+        ],
+        [
+          -56.62,
+          -55.07
+        ],
+        [
+          -64.13,
+          -54.98
+        ],
+        [
+          -64.06,
+          -48.1
+        ]
+      ],
+      "centroid": [
+        -61.08399999999999,
+        -50.885999999999996
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "commercial",
+        "building:levels": "4",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 89023098,
+      "name": "Building 89023098",
+      "vertices_2d": [
+        [
+          -83.67,
+          -22.41
+        ],
+        [
+          -83.75,
+          -34.55
+        ],
+        [
+          -67.77,
+          -34.66
+        ],
+        [
+          -67.69,
+          -22.51
+        ],
+        [
+          -83.67,
+          -22.41
+        ]
+      ],
+      "centroid": [
+        -77.31,
+        -27.308
+      ],
+      "height": 24.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "commercial",
+        "building:levels": "7",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 47127857,
+      "name": "BiTO AKIBA PLAZA",
+      "vertices_2d": [
+        [
+          -78.46,
+          63.83
+        ],
+        [
+          -81.35,
+          38.51
+        ],
+        [
+          -69.49,
+          37.14
+        ],
+        [
+          -66.34,
+          39.21
+        ],
+        [
+          -65.8,
+          40.36
+        ],
+        [
+          -63.32,
+          62.09
+        ],
+        [
+          -78.46,
+          63.83
+        ]
+      ],
+      "centroid": [
+        -71.88857142857142,
+        49.28142857142857
+      ],
+      "height": 28.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:block_number": "18",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:housenumber": "18",
+        "addr:neighbourhood": "\u5916\u795e\u75301\u4e01\u76ee",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "retail",
+        "building:levels": "8",
+        "name": "BiTO AKIBA PLAZA",
+        "roof:shape": "flat",
+        "source": "estimated"
+      }
+    },
+    {
+      "id": 89023095,
+      "name": "\u592a\u5e73\u5802\u30d3\u30eb",
+      "vertices_2d": [
+        [
+          -64.3,
+          -55.87
+        ],
+        [
+          -56.66,
+          -55.95
+        ],
+        [
+          -56.83,
+          -71.65
+        ],
+        [
+          -64.47,
+          -71.57
+        ],
+        [
+          -64.3,
+          -55.87
+        ]
+      ],
+      "centroid": [
+        -61.312,
+        -62.181999999999995
+      ],
+      "height": 24.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "commercial",
+        "building:levels": "7",
+        "name": "\u592a\u5e73\u5802\u30d3\u30eb",
+        "name:en": "Taiheiyo Building",
+        "name:es": "Edificio Taiheiyo",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 89023076,
+      "name": "Building 89023076",
+      "vertices_2d": [
+        [
+          -84.41,
+          -22.66
+        ],
+        [
+          -87.82,
+          -22.68
+        ],
+        [
+          -87.76,
+          -34.35
+        ],
+        [
+          -84.35,
+          -34.34
+        ],
+        [
+          -84.41,
+          -22.66
+        ]
+      ],
+      "centroid": [
+        -85.75,
+        -27.338
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "commercial",
+        "building:levels": "3",
+        "disused": "yes",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 244952110,
+      "name": "\u661f\u91ce\u30d3\u30eb",
+      "vertices_2d": [
+        [
+          -87.77,
+          -42.7
+        ],
+        [
+          -71.0,
+          -42.85
+        ],
+        [
+          -70.94,
+          -35.63
+        ],
+        [
+          -87.71,
+          -35.49
+        ],
+        [
+          -87.77,
+          -42.7
+        ]
+      ],
+      "centroid": [
+        -81.03799999999998,
+        -39.874
+      ],
+      "height": 7.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "2",
+        "name": "\u661f\u91ce\u30d3\u30eb",
+        "name:en": "Hoshino Building",
+        "name:es": "Edificio Hoshino",
+        "name:ko": "\ud638\uc2dc\ub178 \ube4c\ub529"
+      }
+    },
+    {
+      "id": 89023090,
+      "name": "Building 89023090",
+      "vertices_2d": [
+        [
+          -75.12,
+          -52.45
+        ],
+        [
+          -65.17,
+          -52.55
+        ],
+        [
+          -65.35,
+          -71.59
+        ],
+        [
+          -75.29,
+          -71.49
+        ],
+        [
+          -75.12,
+          -52.45
+        ]
+      ],
+      "centroid": [
+        -71.21000000000001,
+        -60.105999999999995
+      ],
+      "height": 31.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "commercial",
+        "building:levels": "9",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 89023089,
+      "name": "Building 89023089",
+      "vertices_2d": [
+        [
+          -87.6,
+          -43.56
+        ],
+        [
+          -71.54,
+          -43.69
+        ],
+        [
+          -71.6,
+          -49.27
+        ],
+        [
+          -87.65,
+          -49.14
+        ],
+        [
+          -87.6,
+          -43.56
+        ]
+      ],
+      "centroid": [
+        -81.19800000000001,
+        -45.84400000000001
+      ],
+      "height": 7.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "commercial",
+        "building:levels": "2",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 686374720,
+      "name": "Building 686374720",
+      "vertices_2d": [
+        [
+          -14.95,
+          89.32
+        ],
+        [
+          0.83,
+          86.67
+        ],
+        [
+          4.24,
+          106.88
+        ],
+        [
+          -11.55,
+          109.54
+        ],
+        [
+          -14.95,
+          89.32
+        ]
+      ],
+      "centroid": [
+        -7.275999999999999,
+        96.346
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "retail"
+      }
+    },
+    {
+      "id": 89023083,
+      "name": "Building 89023083",
+      "vertices_2d": [
+        [
+          -87.66,
+          -50.29
+        ],
+        [
+          -75.87,
+          -50.37
+        ],
+        [
+          -75.91,
+          -56.96
+        ],
+        [
+          -87.71,
+          -56.87
+        ],
+        [
+          -87.66,
+          -50.29
+        ]
+      ],
+      "centroid": [
+        -82.96199999999999,
+        -52.956
+      ],
+      "height": 24.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "commercial",
+        "building:levels": "7",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 691845628,
+      "name": "Building 691845628",
+      "vertices_2d": [
+        [
+          -9.73,
+          -95.27
+        ],
+        [
+          -9.88,
+          -103.32
+        ],
+        [
+          -4.65,
+          -103.42
+        ],
+        [
+          -4.5,
+          -95.37
+        ],
+        [
+          -9.73,
+          -95.27
+        ]
+      ],
+      "centroid": [
+        -7.697999999999999,
+        -98.53
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "retail"
+      }
+    },
+    {
+      "id": 80511957,
+      "name": "\u65b0\u79cb\u8449\u539f\u30d3\u30eb",
+      "vertices_2d": [
+        [
+          -79.77,
+          63.3
+        ],
+        [
+          -82.25,
+          40.8
+        ],
+        [
+          -86.2,
+          41.24
+        ],
+        [
+          -92.13,
+          41.89
+        ],
+        [
+          -91.88,
+          44.17
+        ],
+        [
+          -94.43,
+          44.45
+        ],
+        [
+          -93.75,
+          50.67
+        ],
+        [
+          -94.69,
+          50.78
+        ],
+        [
+          -93.15,
+          64.77
+        ],
+        [
+          -79.77,
+          63.3
+        ]
+      ],
+      "centroid": [
+        -88.80199999999999,
+        50.537000000000006
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:block_number": "18",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:housenumber": "19",
+        "addr:neighbourhood": "\u5916\u795e\u7530\u4e00\u4e01\u76ee",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "yes",
+        "name": "\u65b0\u79cb\u8449\u539f\u30d3\u30eb",
+        "name:en": "Shin Akihabara Building",
+        "name:ko": "\uc2e0\uc544\ud0a4\ud558\ubc14\ub77c\ube4c\ub529",
+        "source": "estimated"
+      }
+    },
+    {
+      "id": 679198823,
+      "name": "Building 679198823",
+      "vertices_2d": [
+        [
+          -1.77,
+          -95.85
+        ],
+        [
+          -4.38,
+          -112.66
+        ],
+        [
+          6.57,
+          -112.86
+        ],
+        [
+          8.84,
+          -96.19
+        ],
+        [
+          -1.77,
+          -95.85
+        ]
+      ],
+      "centroid": [
+        1.498,
+        -102.68199999999999
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "retail"
+      }
+    },
+    {
+      "id": 679198822,
+      "name": "Building 679198822",
+      "vertices_2d": [
+        [
+          -20.18,
+          -94.69
+        ],
+        [
+          -20.74,
+          -111.71
+        ],
+        [
+          -11.19,
+          -112.03
+        ],
+        [
+          -10.63,
+          -95.01
+        ],
+        [
+          -20.18,
+          -94.69
+        ]
+      ],
+      "centroid": [
+        -16.584,
+        -101.62599999999999
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:block_number": "7",
+        "addr:housenumber": "3",
+        "building": "retail"
+      }
+    },
+    {
+      "id": 89023080,
+      "name": "Building 89023080",
+      "vertices_2d": [
+        [
+          -87.93,
+          -57.84
+        ],
+        [
+          -76.04,
+          -58.01
+        ],
+        [
+          -76.23,
+          -71.61
+        ],
+        [
+          -88.12,
+          -71.44
+        ],
+        [
+          -87.93,
+          -57.84
+        ]
+      ],
+      "centroid": [
+        -83.25000000000001,
+        -63.348
+      ],
+      "height": 24.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:block_number": "15",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:country": "JP",
+        "addr:housenumber": "15",
+        "addr:neighbourhood": "\u5916\u795e\u7530\u4e00\u4e01\u76ee",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "commercial",
+        "building:levels": "7",
+        "name:en": "Yamamoto Musen Building",
+        "name:ja": "\u5c71\u672c\u7121\u7dda\u30d3\u30eb",
+        "name:zh": "\u5c71\u672c\u65e0\u7ebf\u5927\u53a6",
+        "source": "Bing, 2007-04"
+      }
+    },
+    {
+      "id": 679198825,
+      "name": "Building 679198825",
+      "vertices_2d": [
+        [
+          17.39,
+          -96.47
+        ],
+        [
+          13.97,
+          -117.75
+        ],
+        [
+          7.92,
+          -117.53
+        ],
+        [
+          11.06,
+          -96.25
+        ],
+        [
+          17.39,
+          -96.47
+        ]
+      ],
+      "centroid": [
+        13.546000000000001,
+        -104.894
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:block_number": "8",
+        "addr:housenumber": "6",
+        "building": "retail"
+      }
+    },
+    {
+      "id": 47127856,
+      "name": "\u79cb\u8449\u539f\u30e9\u30b8\u30aa\u4f1a\u9928",
+      "vertices_2d": [
+        [
+          -115.68,
+          -21.93
+        ],
+        [
+          -116.26,
+          -70.87
+        ],
+        [
+          -92.27,
+          -71.14
+        ],
+        [
+          -91.7,
+          -22.21
+        ],
+        [
+          -100.19,
+          -22.11
+        ],
+        [
+          -115.68,
+          -21.93
+        ]
+      ],
+      "centroid": [
+        -105.29666666666667,
+        -38.365
+      ],
+      "height": 35.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:block_number": "15",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:country": "JP",
+        "addr:housename": "\u79cb\u8449\u539f\u30e9\u30b8\u30aa\u4f1a\u9928",
+        "addr:housenumber": "16",
+        "addr:neighbourhood": "\u5916\u795e\u7530\u4e00\u4e01\u76ee",
+        "addr:postcode": "101-0021",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "retail",
+        "building:levels": "10",
+        "building:levels:underground": "1",
+        "name": "\u79cb\u8449\u539f\u30e9\u30b8\u30aa\u4f1a\u9928",
+        "name:en": "Akihabara Radio Kaikan",
+        "name:es": "Akihabara Radio Kaikan",
+        "name:it": "Akihabara Radio Kaikan",
+        "name:ja": "\u79cb\u8449\u539f\u30e9\u30b8\u30aa\u4f1a\u9928",
+        "name:ko": "\ub77c\ub514\uc624\ud68c\uad00",
+        "name:zh": "\u79cb\u8449\u539f\u7121\u7dda\u96fb\u6703\u9928",
+        "opening_hours": "Mo-Su 10:00-20:00",
+        "operator": "\u682a\u5f0f\u4f1a\u793e\u79cb\u8449\u539f\u30e9\u30b8\u30aa\u4f1a\u9928",
+        "shop": "mall",
+        "website": "https://www.akihabara-radiokaikan.co.jp/",
+        "wikidata": "Q5363328",
+        "wikimedia_commons": "Category:Akihabara Radio Kaikan",
+        "wikipedia": "ja:\u79cb\u8449\u539f\u30e9\u30b8\u30aa\u4f1a\u9928"
+      }
+    },
+    {
+      "id": 460004162,
+      "name": "\u30cb\u30e5\u30fc\u79cb\u8449\u539f\u30bb\u30f3\u30bf\u30fc",
+      "vertices_2d": [
+        [
+          -31.98,
+          -93.79
+        ],
+        [
+          -21.9,
+          -93.88
+        ],
+        [
+          -22.24,
+          -132.58
+        ],
+        [
+          -32.34,
+          -132.48
+        ],
+        [
+          -31.98,
+          -93.79
+        ]
+      ],
+      "centroid": [
+        -28.088,
+        -109.304
+      ],
+      "height": 7.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "2",
+        "name": "\u30cb\u30e5\u30fc\u79cb\u8449\u539f\u30bb\u30f3\u30bf\u30fc",
+        "name:en": "New Akihabara Center"
+      }
+    },
+    {
+      "id": 195493283,
+      "name": "Building 195493283",
+      "vertices_2d": [
+        [
+          24.14,
+          -100.61
+        ],
+        [
+          24.67,
+          -96.81
+        ],
+        [
+          17.39,
+          -96.47
+        ],
+        [
+          13.97,
+          -117.75
+        ],
+        [
+          7.92,
+          -117.53
+        ],
+        [
+          6.41,
+          -128.02
+        ],
+        [
+          22.31,
+          -128.46
+        ],
+        [
+          23.94,
+          -123.49
+        ],
+        [
+          24.75,
+          -123.44
+        ],
+        [
+          25.76,
+          -120.8
+        ],
+        [
+          26.09,
+          -102.56
+        ],
+        [
+          25.6,
+          -100.74
+        ],
+        [
+          24.14,
+          -100.61
+        ]
+      ],
+      "centroid": [
+        20.545384615384613,
+        -112.09923076923074
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes"
+      }
+    },
+    {
+      "id": 150777702,
+      "name": "\u7b2c\u4e00\u963f\u90e8\u30d3\u30eb",
+      "vertices_2d": [
+        [
+          41.78,
+          -95.5
+        ],
+        [
+          41.36,
+          -128.33
+        ],
+        [
+          28.52,
+          -128.16
+        ],
+        [
+          28.96,
+          -95.33
+        ],
+        [
+          41.78,
+          -95.5
+        ]
+      ],
+      "centroid": [
+        36.480000000000004,
+        -108.564
+      ],
+      "height": 35.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:block_number": "8",
+        "addr:city": "\u5343\u4ee3\u7530\u533a",
+        "addr:housenumber": "2",
+        "addr:neighbourhood": "\u795e\u7530\u4f50\u4e45\u9593\u753a\u4e00\u4e01\u76ee",
+        "addr:postcode": "101-0025",
+        "addr:province": "\u6771\u4eac\u90fd",
+        "building": "yes",
+        "building:levels": "10",
+        "name": "\u7b2c\u4e00\u963f\u90e8\u30d3\u30eb",
+        "source": "Bing, 2007-03"
+      }
+    },
+    {
+      "id": 89023315,
+      "name": "\u30cb\u30e5\u30fc\u79cb\u8449\u539f\u30bb\u30f3\u30bf\u30fc",
+      "vertices_2d": [
+        [
+          -40.6,
+          -93.71
+        ],
+        [
+          -31.98,
+          -93.79
+        ],
+        [
+          -32.34,
+          -132.48
+        ],
+        [
+          -40.95,
+          -132.4
+        ],
+        [
+          -40.6,
+          -93.71
+        ]
+      ],
+      "centroid": [
+        -37.294,
+        -109.218
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "name": "\u30cb\u30e5\u30fc\u79cb\u8449\u539f\u30bb\u30f3\u30bf\u30fc",
+        "source": "Bing, 2007-04"
+      }
+    }
+  ],
+  "roads": [
+    {
+      "id": 31610667,
+      "name": "Road (tertiary)",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          68.63,
+          -80.34
+        ],
+        [
+          71.72,
+          -69.62
+        ],
+        [
+          85.6,
+          -21.69
+        ]
+      ]
+    },
+    {
+      "id": 32122515,
+      "name": "Road (unclassified)",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          -44.82,
+          -86.03
+        ],
+        [
+          -51.67,
+          -79.73
+        ]
+      ]
+    },
+    {
+      "id": 33625005,
+      "name": "\u74b0\u72b62\u53f7\u7dda",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          -167.36,
+          -73.89
+        ],
+        [
+          -151.75,
+          -77.22
+        ],
+        [
+          -118.12,
+          -77.85
+        ],
+        [
+          -90.32,
+          -79.0
+        ],
+        [
+          -64.27,
+          -79.49
+        ],
+        [
+          -58.83,
+          -79.64
+        ],
+        [
+          -51.67,
+          -79.73
+        ]
+      ]
+    },
+    {
+      "id": 80512208,
+      "name": "Road (service)",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          -14.75,
+          137.05
+        ],
+        [
+          -15.78,
+          128.54
+        ],
+        [
+          -20.79,
+          98.06
+        ],
+        [
+          -22.23,
+          93.41
+        ],
+        [
+          -24.1,
+          91.65
+        ],
+        [
+          -27.47,
+          90.86
+        ],
+        [
+          -35.23,
+          91.01
+        ]
+      ]
+    },
+    {
+      "id": 112289643,
+      "name": "Road (unclassified)",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          59.65,
+          80.68
+        ],
+        [
+          61.04,
+          83.61
+        ],
+        [
+          63.58,
+          85.73
+        ],
+        [
+          67.34,
+          86.36
+        ],
+        [
+          76.02,
+          85.37
+        ],
+        [
+          78.64,
+          83.86
+        ],
+        [
+          79.78,
+          81.26
+        ],
+        [
+          80.31,
+          79.19
+        ],
+        [
+          78.4,
+          58.81
+        ],
+        [
+          78.91,
+          54.57
+        ],
+        [
+          80.54,
+          52.02
+        ],
+        [
+          82.88,
+          50.51
+        ],
+        [
+          86.82,
+          49.54
+        ],
+        [
+          92.33,
+          49.35
+        ],
+        [
+          95.79,
+          49.74
+        ],
+        [
+          98.1,
+          50.73
+        ],
+        [
+          100.84,
+          53.63
+        ]
+      ]
+    },
+    {
+      "id": 438080424,
+      "name": "Road (service)",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          -89.78,
+          -13.11
+        ],
+        [
+          -89.78,
+          -19.36
+        ],
+        [
+          -90.27,
+          -72.91
+        ],
+        [
+          -90.32,
+          -79.0
+        ],
+        [
+          -90.38,
+          -86.71
+        ]
+      ]
+    },
+    {
+      "id": 642623529,
+      "name": "Road (service)",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          67.34,
+          86.36
+        ],
+        [
+          70.24,
+          80.92
+        ],
+        [
+          67.01,
+          46.21
+        ],
+        [
+          64.89,
+          44.74
+        ],
+        [
+          62.41,
+          43.65
+        ],
+        [
+          59.22,
+          43.38
+        ]
+      ]
+    },
+    {
+      "id": 682262115,
+      "name": "\u74b0\u72b62\u53f7\u7dda",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          58.45,
+          -87.82
+        ],
+        [
+          -37.59,
+          -86.11
+        ],
+        [
+          -43.01,
+          -86.06
+        ],
+        [
+          -44.82,
+          -86.03
+        ]
+      ]
+    },
+    {
+      "id": 753544146,
+      "name": "Road (tertiary)",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          85.6,
+          -21.69
+        ],
+        [
+          93.73,
+          19.11
+        ]
+      ]
+    },
+    {
+      "id": 753544147,
+      "name": "Road (tertiary)",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          92.61,
+          -20.42
+        ],
+        [
+          91.75,
+          -23.96
+        ],
+        [
+          79.83,
+          -64.94
+        ],
+        [
+          78.41,
+          -69.81
+        ],
+        [
+          75.61,
+          -80.5
+        ],
+        [
+          68.61,
+          -87.96
+        ]
+      ]
+    },
+    {
+      "id": 753544148,
+      "name": "Road (tertiary)",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          101.97,
+          17.67
+        ],
+        [
+          92.61,
+          -20.42
+        ]
+      ]
+    },
+    {
+      "id": 753544149,
+      "name": "Road (tertiary)",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          93.73,
+          19.11
+        ],
+        [
+          95.28,
+          27.41
+        ],
+        [
+          96.32,
+          32.36
+        ]
+      ]
+    },
+    {
+      "id": 1021405848,
+      "name": "Road (unclassified)",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          96.32,
+          32.36
+        ],
+        [
+          95.28,
+          34.8
+        ],
+        [
+          94.07,
+          36.39
+        ],
+        [
+          92.44,
+          37.92
+        ],
+        [
+          90.48,
+          38.64
+        ],
+        [
+          72.39,
+          40.34
+        ]
+      ]
+    },
+    {
+      "id": 1021405849,
+      "name": "Road (unclassified)",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          72.39,
+          40.34
+        ],
+        [
+          64.35,
+          41.37
+        ],
+        [
+          61.54,
+          42.19
+        ],
+        [
+          59.22,
+          43.38
+        ],
+        [
+          57.58,
+          45.22
+        ],
+        [
+          56.73,
+          47.51
+        ],
+        [
+          56.5,
+          49.82
+        ],
+        [
+          57.91,
+          63.64
+        ]
+      ]
+    },
+    {
+      "id": 1021665639,
+      "name": "Road (service)",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          -35.23,
+          91.01
+        ],
+        [
+          -38.27,
+          92.65
+        ],
+        [
+          -39.43,
+          95.63
+        ],
+        [
+          -39.67,
+          101.35
+        ],
+        [
+          -37.41,
+          112.8
+        ],
+        [
+          -25.23,
+          119.99
+        ],
+        [
+          -21.98,
+          124.91
+        ],
+        [
+          -20.83,
+          128.83
+        ],
+        [
+          -14.75,
+          137.05
+        ]
+      ]
+    },
+    {
+      "id": 1057067191,
+      "name": "Road (unclassified)",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          57.91,
+          63.64
+        ],
+        [
+          59.65,
+          80.68
+        ]
+      ]
+    },
+    {
+      "id": 1310782522,
+      "name": "Road (unclassified)",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          -51.67,
+          -79.73
+        ],
+        [
+          -51.6,
+          -73.52
+        ],
+        [
+          -51.58,
+          -71.69
+        ],
+        [
+          -51.08,
+          -18.38
+        ],
+        [
+          -57.55,
+          -13.54
+        ],
+        [
+          -83.73,
+          -13.18
+        ],
+        [
+          -89.78,
+          -13.11
+        ],
+        [
+          -97.91,
+          -13.04
+        ],
+        [
+          -117.39,
+          -12.79
+        ],
+        [
+          -146.8,
+          -12.3
+        ],
+        [
+          -152.74,
+          -12.27
+        ],
+        [
+          -161.67,
+          -11.82
+        ]
+      ]
+    },
+    {
+      "id": 1310782523,
+      "name": "\u74b0\u72b62\u53f7\u7dda",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          -51.67,
+          -79.73
+        ],
+        [
+          -43.01,
+          -79.74
+        ],
+        [
+          53.14,
+          -80.23
+        ],
+        [
+          58.54,
+          -80.25
+        ],
+        [
+          68.63,
+          -80.34
+        ]
+      ]
+    },
+    {
+      "id": 1310782524,
+      "name": "\u74b0\u72b62\u53f7\u7dda",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          -44.82,
+          -86.03
+        ],
+        [
+          -58.91,
+          -86.22
+        ],
+        [
+          -90.38,
+          -86.71
+        ],
+        [
+          -118.09,
+          -85.63
+        ],
+        [
+          -129.38,
+          -85.55
+        ],
+        [
+          -136.34,
+          -85.5
+        ],
+        [
+          -150.01,
+          -85.47
+        ],
+        [
+          -152.61,
+          -85.37
+        ],
+        [
+          -162.04,
+          -84.64
+        ],
+        [
+          -169.87,
+          -83.1
+        ]
+      ]
+    },
+    {
+      "id": 1410539130,
+      "name": "\u30a2\u30c8\u30ec\u79cb\u8449\u539f1;\u642c\u5165\u53e3",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          -97.91,
+          -13.04
+        ],
+        [
+          -97.82,
+          -9.65
+        ],
+        [
+          -97.74,
+          -6.89
+        ],
+        [
+          -97.67,
+          -3.97
+        ],
+        [
+          -97.64,
+          -3.04
+        ],
+        [
+          -97.58,
+          -0.22
+        ]
+      ]
+    },
+    {
+      "id": 1419630299,
+      "name": "Road (unclassified)",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          91.75,
+          -23.96
+        ],
+        [
+          97.66,
+          -24.13
+        ],
+        [
+          99.89,
+          -24.25
+        ]
+      ]
+    }
+  ]
+}
