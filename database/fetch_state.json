@@ -1,0 +1,9 @@
+{
+  "status": "running",
+  "total_candidates": 25,
+  "current_index": 11,
+  "accepted": 6,
+  "rejected": 4,
+  "failed_api": 1,
+  "target_count": 10
+}

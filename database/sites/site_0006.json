@@ -1,0 +1,8574 @@
+{
+  "site_id": "site_0006",
+  "created_at": "2026-08-09T05:18:43.443220+00:00",
+  "city": "london",
+  "zone": "soho_west_end",
+  "density_tier": "high",
+  "coordinates": {
+    "lat": 51.5137,
+    "lon": -0.1337
+  },
+  "radius_m": 100.0,
+  "metrics": {
+    "far": 3.26,
+    "gcr": 0.64,
+    "building_count": 138,
+    "max_height": 24.5,
+    "avg_height": 17.7,
+    "site_area_m2": 917.2,
+    "area_tier": "M"
+  },
+  "site_boundary": {
+    "name": "Soho Lofts",
+    "vertices_2d": [
+      [
+        -0.91,
+        -21.44
+      ],
+      [
+        1.86,
+        -20.17
+      ],
+      [
+        -6.33,
+        1.78
+      ],
+      [
+        19.2,
+        11.33
+      ],
+      [
+        33.14,
+        -16.59
+      ],
+      [
+        12.9,
+        -24.01
+      ],
+      [
+        1.35,
+        -28.25
+      ],
+      [
+        -0.91,
+        -21.44
+      ]
+    ],
+    "centroid": [
+      7.5375000000000005,
+      -14.84875
+    ],
+    "original_height": 17.5
+  },
+  "context_buildings": [
+    {
+      "id": 157779567,
+      "name": "100 Wardour Street",
+      "vertices_2d": [
+        [
+          -12.23,
+          -25.77
+        ],
+        [
+          -15.3,
+          -17.77
+        ],
+        [
+          -17.33,
+          -17.23
+        ],
+        [
+          -22.41,
+          -3.96
+        ],
+        [
+          -12.94,
+          -0.33
+        ],
+        [
+          -7.57,
+          -14.36
+        ],
+        [
+          -4.13,
+          -13.05
+        ],
+        [
+          -0.91,
+          -21.44
+        ],
+        [
+          -12.23,
+          -25.77
+        ]
+      ],
+      "centroid": [
+        -11.672222222222222,
+        -15.519999999999998
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "100",
+        "addr:postcode": "W1F 0TN",
+        "addr:street": "Wardour Street",
+        "amenity": "restaurant",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "fhrs:confidence_management": "10",
+        "fhrs:hygiene": "10",
+        "fhrs:id": "412189",
+        "fhrs:local_authority_id": "00688/0100/0/000",
+        "fhrs:rating": "3",
+        "fhrs:structural": "10",
+        "name": "100 Wardour Street",
+        "phone": "+44 20 7314 4000",
+        "roof:colour": "grey",
+        "source": "Bing;photographic_survey",
+        "website": "https://www.100wardourst.com/about/"
+      }
+    },
+    {
+      "id": 157779682,
+      "name": "Building 157779682",
+      "vertices_2d": [
+        [
+          -12.94,
+          -0.33
+        ],
+        [
+          -15.23,
+          4.89
+        ],
+        [
+          -17.15,
+          9.76
+        ],
+        [
+          -18.28,
+          12.95
+        ],
+        [
+          -22.82,
+          23.82
+        ],
+        [
+          -24.08,
+          26.83
+        ],
+        [
+          -24.68,
+          28.25
+        ],
+        [
+          -27.02,
+          33.86
+        ],
+        [
+          -27.54,
+          35.12
+        ],
+        [
+          -36.1,
+          31.94
+        ],
+        [
+          -32.8,
+          23.35
+        ],
+        [
+          -32.23,
+          21.89
+        ],
+        [
+          -31.64,
+          20.34
+        ],
+        [
+          -27.28,
+          9.02
+        ],
+        [
+          -26.16,
+          6.21
+        ],
+        [
+          -24.23,
+          1.32
+        ],
+        [
+          -22.41,
+          -3.96
+        ],
+        [
+          -12.94,
+          -0.33
+        ]
+      ],
+      "centroid": [
+        -24.19611111111111,
+        15.82944444444444
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "roof:colour": "grey",
+        "roof:levels": "1",
+        "source": "Bing;photographic_survey"
+      }
+    },
+    {
+      "id": 157779659,
+      "name": "Soho Lofts",
+      "vertices_2d": [
+        [
+          -9.39,
+          -32.33
+        ],
+        [
+          -10.48,
+          -31.06
+        ],
+        [
+          -12.71,
+          -25.6
+        ],
+        [
+          -12.23,
+          -25.77
+        ],
+        [
+          -0.91,
+          -21.44
+        ],
+        [
+          1.35,
+          -28.25
+        ],
+        [
+          -9.39,
+          -32.33
+        ]
+      ],
+      "centroid": [
+        -7.68,
+        -28.111428571428576
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "name": "Soho Lofts",
+        "operator": "Manhattan Loft Corporation Ltd",
+        "ref:GB:uprn": "100023471910",
+        "source": "Bing;photographic_survey"
+      }
+    },
+    {
+      "id": 184421879,
+      "name": "Building 184421879",
+      "vertices_2d": [
+        [
+          23.15,
+          18.46
+        ],
+        [
+          27.65,
+          7.78
+        ],
+        [
+          37.17,
+          11.78
+        ],
+        [
+          32.5,
+          22.52
+        ],
+        [
+          23.15,
+          18.46
+        ]
+      ],
+      "centroid": [
+        28.724,
+        15.8
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "ref:GB:uprn": "100023472119;10033579836;10033579837"
+      }
+    },
+    {
+      "id": 184419082,
+      "name": "Building 184419082",
+      "vertices_2d": [
+        [
+          -21.41,
+          29.37
+        ],
+        [
+          -18.19,
+          21.53
+        ],
+        [
+          -14.56,
+          23.04
+        ],
+        [
+          -12.43,
+          23.89
+        ],
+        [
+          -14.16,
+          28.45
+        ],
+        [
+          -15.18,
+          31.25
+        ],
+        [
+          -17.43,
+          37.5
+        ],
+        [
+          -23.74,
+          35.33
+        ],
+        [
+          -21.41,
+          29.37
+        ]
+      ],
+      "centroid": [
+        -17.612222222222226,
+        28.85888888888889
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes"
+      }
+    },
+    {
+      "id": 184410863,
+      "name": "Building 184410863",
+      "vertices_2d": [
+        [
+          -21.41,
+          29.37
+        ],
+        [
+          -24.68,
+          28.25
+        ],
+        [
+          -27.02,
+          33.86
+        ],
+        [
+          -23.74,
+          35.33
+        ],
+        [
+          -21.41,
+          29.37
+        ]
+      ],
+      "centroid": [
+        -23.651999999999997,
+        31.236
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:postcode": "W1F 0TS",
+        "building": "yes",
+        "ref:GB:uprn": "10033581631;10033549153;100023471569;100023471567;100023471568;100023471565;100023471566;100023471563;10033581625;100023471564;10091944497;10033545332;10091944498;10033581633;100023471570;10033598927;10033589014;10033581629;10091946490"
+      }
+    },
+    {
+      "id": 184421890,
+      "name": "Building 184421890",
+      "vertices_2d": [
+        [
+          5.42,
+          39.06
+        ],
+        [
+          24.18,
+          46.73
+        ],
+        [
+          27.85,
+          37.78
+        ],
+        [
+          29.39,
+          34.02
+        ],
+        [
+          18.05,
+          29.39
+        ],
+        [
+          17.29,
+          31.25
+        ],
+        [
+          9.86,
+          28.21
+        ],
+        [
+          5.42,
+          39.06
+        ]
+      ],
+      "centroid": [
+        17.1825,
+        35.6875
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "9-11",
+        "addr:street": "Richmond Buildings",
+        "building": "office",
+        "building:levels": "5"
+      }
+    },
+    {
+      "id": 184421886,
+      "name": "Building 184421886",
+      "vertices_2d": [
+        [
+          18.05,
+          29.39
+        ],
+        [
+          23.15,
+          18.46
+        ],
+        [
+          32.5,
+          22.52
+        ],
+        [
+          40.11,
+          25.85
+        ],
+        [
+          39.97,
+          26.17
+        ],
+        [
+          35.7,
+          36.59
+        ],
+        [
+          29.39,
+          34.02
+        ],
+        [
+          18.05,
+          29.39
+        ]
+      ],
+      "centroid": [
+        29.615000000000002,
+        27.798750000000005
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "1",
+        "addr:postcode": "W1D 3DA",
+        "addr:street": "Richmond Mews",
+        "building": "apartments",
+        "ref:GB:uprn": "10033600756;100023472375;10033652767;10033652768;10033652766"
+      }
+    },
+    {
+      "id": 184419081,
+      "name": "The Soho Hotel",
+      "vertices_2d": [
+        [
+          9.86,
+          28.21
+        ],
+        [
+          19.2,
+          11.33
+        ],
+        [
+          -6.33,
+          1.78
+        ],
+        [
+          -14.56,
+          23.04
+        ],
+        [
+          -12.43,
+          23.89
+        ],
+        [
+          -14.16,
+          28.45
+        ],
+        [
+          -9.38,
+          30.15
+        ],
+        [
+          -10.41,
+          33.18
+        ],
+        [
+          -15.18,
+          31.25
+        ],
+        [
+          -17.43,
+          37.5
+        ],
+        [
+          -26.44,
+          57.75
+        ],
+        [
+          -24.28,
+          58.63
+        ],
+        [
+          -20.63,
+          60.32
+        ],
+        [
+          -16.88,
+          61.95
+        ],
+        [
+          -13.6,
+          63.36
+        ],
+        [
+          -10.33,
+          64.73
+        ],
+        [
+          -7.24,
+          66.02
+        ],
+        [
+          1.02,
+          49.09
+        ],
+        [
+          5.42,
+          39.06
+        ],
+        [
+          9.86,
+          28.21
+        ]
+      ],
+      "centroid": [
+        -8.696000000000002,
+        39.895
+      ],
+      "height": 21.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "4",
+        "addr:postcode": "W1D 3DH",
+        "addr:street": "Richmond Mews",
+        "building": "yes",
+        "building:levels": "6",
+        "check_date": "2025-06-13",
+        "fhrs:confidence_management": "5",
+        "fhrs:hygiene": "5",
+        "fhrs:id": "414548",
+        "fhrs:local_authority_id": "04/00390/COMM",
+        "fhrs:rating": "4",
+        "fhrs:structural": "10",
+        "name": "The Soho Hotel",
+        "name:en": "The Soho Hotel",
+        "name:zh": "\u7d22\u970d\u9152\u5e97",
+        "operator": "Firmdale Hotels",
+        "source:addr": "Firmdale Hotels website",
+        "source:postcode": "Firmhdale Hotels website",
+        "tourism": "hotel",
+        "website": "https://www.firmdalehotels.com/london/the-soho-hotel"
+      }
+    },
+    {
+      "id": 157779641,
+      "name": "MOI Restaurant",
+      "vertices_2d": [
+        [
+          -6.12,
+          -40.89
+        ],
+        [
+          16.09,
+          -32.28
+        ],
+        [
+          19.65,
+          -41.04
+        ],
+        [
+          -2.23,
+          -50.84
+        ],
+        [
+          -6.12,
+          -40.89
+        ]
+      ],
+      "centroid": [
+        4.254,
+        -41.188
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "84-86",
+        "addr:postcode": "W1F 0TQ",
+        "addr:street": "Wardour Street",
+        "amenity": "restaurant",
+        "building": "retail",
+        "fhrs:id": "1802756",
+        "fhrs:local_authority_id": "00688/0084/0/002",
+        "level": "0",
+        "name": "MOI Restaurant",
+        "note": "Premises has closed down and is in process of being converted into something else, so have deleted FHRS ratings tags, have left the ID tags for the moment, as the ID might be reused for the new business here",
+        "old_name": "Profile",
+        "source": "photograph",
+        "source:addr": "FHRS Open Data"
+      }
+    },
+    {
+      "id": 274002596,
+      "name": "MPC",
+      "vertices_2d": [
+        [
+          -48.01,
+          -24.38
+        ],
+        [
+          -56.93,
+          -3.71
+        ],
+        [
+          -38.86,
+          4.14
+        ],
+        [
+          -37.74,
+          1.54
+        ],
+        [
+          -30.18,
+          -17.1
+        ],
+        [
+          -48.01,
+          -24.38
+        ]
+      ],
+      "centroid": [
+        -43.288333333333334,
+        -10.648333333333333
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "127-133",
+        "addr:street": "Wardour Street",
+        "amenity": "studio",
+        "building": "yes",
+        "building:levels": "5",
+        "building:material": "stone",
+        "check_date": "2025-07-20",
+        "name": "MPC",
+        "roof:colour": "lightgrey",
+        "studio": "video",
+        "website": "https://www.moving-picture.com/",
+        "wikidata": "Q3866664",
+        "wikipedia": "en:Moving Picture Company"
+      }
+    },
+    {
+      "id": 184421893,
+      "name": "WB De Lane Lea",
+      "vertices_2d": [
+        [
+          36.41,
+          -2.25
+        ],
+        [
+          32.44,
+          -3.62
+        ],
+        [
+          27.65,
+          7.78
+        ],
+        [
+          37.17,
+          11.78
+        ],
+        [
+          44.79,
+          14.96
+        ],
+        [
+          64.68,
+          23.29
+        ],
+        [
+          68.83,
+          13.26
+        ],
+        [
+          59.97,
+          9.54
+        ],
+        [
+          45.39,
+          3.61
+        ],
+        [
+          45.99,
+          1.79
+        ],
+        [
+          36.41,
+          -2.25
+        ]
+      ],
+      "centroid": [
+        45.43,
+        7.080909090909092
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "75",
+        "addr:street": "Dean Street",
+        "amenity": "studio",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "name": "WB De Lane Lea",
+        "studio": "audio",
+        "website": "https://www.wbsound.com/london/",
+        "wikidata": "Q843535",
+        "wikipedia": "en:De Lane Lea Studios"
+      }
+    },
+    {
+      "id": 157779686,
+      "name": "Building 157779686",
+      "vertices_2d": [
+        [
+          22.93,
+          -48.09
+        ],
+        [
+          23.58,
+          -49.38
+        ],
+        [
+          27.18,
+          -57.77
+        ],
+        [
+          9.19,
+          -70.03
+        ],
+        [
+          8.54,
+          -71.0
+        ],
+        [
+          7.68,
+          -71.44
+        ],
+        [
+          6.44,
+          -71.22
+        ],
+        [
+          5.76,
+          -70.29
+        ],
+        [
+          1.39,
+          -59.72
+        ],
+        [
+          -2.23,
+          -50.84
+        ],
+        [
+          -6.12,
+          -40.89
+        ],
+        [
+          -9.39,
+          -32.33
+        ],
+        [
+          1.35,
+          -28.25
+        ],
+        [
+          12.9,
+          -24.01
+        ],
+        [
+          33.14,
+          -16.59
+        ],
+        [
+          36.31,
+          -24.21
+        ],
+        [
+          36.74,
+          -24.96
+        ],
+        [
+          39.06,
+          -28.93
+        ],
+        [
+          32.68,
+          -31.47
+        ],
+        [
+          28.47,
+          -23.44
+        ],
+        [
+          15.02,
+          -29.21
+        ],
+        [
+          16.09,
+          -32.28
+        ],
+        [
+          19.65,
+          -41.04
+        ],
+        [
+          22.93,
+          -48.09
+        ]
+      ],
+      "centroid": [
+        16.220416666666665,
+        -43.56166666666667
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "roof:colour": "grey",
+        "roof:levels": "2",
+        "source": "Bing;photographic_survey"
+      }
+    },
+    {
+      "id": 117623601,
+      "name": "Lipsync",
+      "vertices_2d": [
+        [
+          -37.28,
+          -44.17
+        ],
+        [
+          -43.16,
+          -46.63
+        ],
+        [
+          -44.93,
+          -42.4
+        ],
+        [
+          -47.18,
+          -37.07
+        ],
+        [
+          -49.18,
+          -32.23
+        ],
+        [
+          -51.33,
+          -26.72
+        ],
+        [
+          -51.74,
+          -25.88
+        ],
+        [
+          -48.01,
+          -24.38
+        ],
+        [
+          -30.18,
+          -17.1
+        ],
+        [
+          -27.32,
+          -24.12
+        ],
+        [
+          -23.67,
+          -33.06
+        ],
+        [
+          -21.73,
+          -37.7
+        ],
+        [
+          -37.28,
+          -44.17
+        ]
+      ],
+      "centroid": [
+        -39.46076923076923,
+        -33.510000000000005
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housename": "Screen House",
+        "addr:street": "Wardour Street",
+        "building": "office",
+        "building:levels": "5",
+        "name": "Lipsync",
+        "office": "company",
+        "roof:colour": "grey",
+        "roof:levels": "1",
+        "website": "http://www.lipsync.co.uk/"
+      }
+    },
+    {
+      "id": 157779664,
+      "name": "The Ship",
+      "vertices_2d": [
+        [
+          -40.98,
+          38.13
+        ],
+        [
+          -40.17,
+          36.52
+        ],
+        [
+          -39.07,
+          34.45
+        ],
+        [
+          -36.92,
+          34.35
+        ],
+        [
+          -26.74,
+          39.52
+        ],
+        [
+          -29.0,
+          44.42
+        ],
+        [
+          -32.05,
+          42.8
+        ],
+        [
+          -40.98,
+          38.13
+        ]
+      ],
+      "centroid": [
+        -35.73875,
+        38.540000000000006
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "116",
+        "addr:postcode": "W1F 0TT",
+        "addr:street": "Wardour Street",
+        "amenity": "pub",
+        "brand": "Fuller's",
+        "brand:wikidata": "Q5253950",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "fhrs:id": "427890",
+        "name": "The Ship",
+        "opening_hours": "Mo-Fr 12:00-23:00, Sa 13:00-23:00",
+        "operator": "Fullers",
+        "outdoor_seating": "no",
+        "roof:colour": "grey",
+        "source": "Bing;photographic_survey",
+        "toilets": "yes",
+        "toilets:access": "customers",
+        "website": "https://www.shipsoho.co.uk/",
+        "wheelchair": "yes",
+        "wikidata": "Q113728208"
+      }
+    },
+    {
+      "id": 566269645,
+      "name": "Building 566269645",
+      "vertices_2d": [
+        [
+          36.74,
+          -24.96
+        ],
+        [
+          44.59,
+          -21.63
+        ],
+        [
+          53.66,
+          -17.6
+        ],
+        [
+          58.17,
+          -15.62
+        ],
+        [
+          60.87,
+          -21.84
+        ],
+        [
+          59.17,
+          -22.53
+        ],
+        [
+          40.28,
+          -30.26
+        ],
+        [
+          36.74,
+          -24.96
+        ]
+      ],
+      "centroid": [
+        48.7775,
+        -22.425
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes"
+      }
+    },
+    {
+      "id": 184421892,
+      "name": "Building 184421892",
+      "vertices_2d": [
+        [
+          24.18,
+          46.73
+        ],
+        [
+          27.85,
+          37.78
+        ],
+        [
+          31.05,
+          38.96
+        ],
+        [
+          31.73,
+          37.23
+        ],
+        [
+          37.29,
+          39.47
+        ],
+        [
+          36.53,
+          41.43
+        ],
+        [
+          39.37,
+          42.55
+        ],
+        [
+          38.67,
+          44.29
+        ],
+        [
+          36.86,
+          49.13
+        ],
+        [
+          36.38,
+          50.35
+        ],
+        [
+          36.0,
+          51.65
+        ],
+        [
+          24.18,
+          46.73
+        ]
+      ],
+      "centroid": [
+        33.340833333333336,
+        43.85833333333333
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "12-13",
+        "addr:street": "Richmond Buildings",
+        "building": "office",
+        "building:levels": "4",
+        "building:material": "brick"
+      }
+    },
+    {
+      "id": 274456441,
+      "name": "Royalty Mansions",
+      "vertices_2d": [
+        [
+          22.93,
+          -48.09
+        ],
+        [
+          30.16,
+          -43.23
+        ],
+        [
+          42.83,
+          -34.7
+        ],
+        [
+          48.53,
+          -43.25
+        ],
+        [
+          35.61,
+          -52.04
+        ],
+        [
+          27.18,
+          -57.77
+        ],
+        [
+          23.58,
+          -49.38
+        ],
+        [
+          22.93,
+          -48.09
+        ]
+      ],
+      "centroid": [
+        31.71875,
+        -47.068749999999994
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housename": "Royalty Mansions",
+        "addr:street": "Meard Street",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "name": "Royalty Mansions",
+        "roof:levels": "1",
+        "source": "Bing;photographic_survey"
+      }
+    },
+    {
+      "id": 274458673,
+      "name": "Hammer House",
+      "vertices_2d": [
+        [
+          -37.28,
+          -44.17
+        ],
+        [
+          -21.73,
+          -37.7
+        ],
+        [
+          -21.25,
+          -38.79
+        ],
+        [
+          -19.17,
+          -43.59
+        ],
+        [
+          -18.16,
+          -45.89
+        ],
+        [
+          -16.88,
+          -48.74
+        ],
+        [
+          -16.09,
+          -50.43
+        ],
+        [
+          -15.7,
+          -51.53
+        ],
+        [
+          -23.37,
+          -55.26
+        ],
+        [
+          -24.0,
+          -54.16
+        ],
+        [
+          -24.94,
+          -52.18
+        ],
+        [
+          -39.44,
+          -58.92
+        ],
+        [
+          -40.36,
+          -57.17
+        ],
+        [
+          -40.84,
+          -56.27
+        ],
+        [
+          -42.01,
+          -53.64
+        ],
+        [
+          -34.58,
+          -50.35
+        ],
+        [
+          -36.79,
+          -45.36
+        ],
+        [
+          -37.28,
+          -44.17
+        ]
+      ],
+      "centroid": [
+        -28.32611111111111,
+        -49.3511111111111
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housename": "Hammer House",
+        "addr:housenumber": "113-117",
+        "addr:postcode": "W1F 0UJ",
+        "addr:street": "Wardour Street",
+        "building": "yes",
+        "building:levels": "5",
+        "building:material": "stone",
+        "name": "Hammer House",
+        "ref:GB:uprn": "10033558153",
+        "roof:levels": "1"
+      }
+    },
+    {
+      "id": 566252854,
+      "name": "Royalty House",
+      "vertices_2d": [
+        [
+          59.97,
+          9.54
+        ],
+        [
+          61.87,
+          5.04
+        ],
+        [
+          47.23,
+          -1.14
+        ],
+        [
+          45.99,
+          1.79
+        ],
+        [
+          36.41,
+          -2.25
+        ],
+        [
+          44.59,
+          -21.63
+        ],
+        [
+          53.66,
+          -17.6
+        ],
+        [
+          51.85,
+          -13.14
+        ],
+        [
+          66.49,
+          -6.96
+        ],
+        [
+          68.03,
+          -10.63
+        ],
+        [
+          77.02,
+          -6.57
+        ],
+        [
+          68.83,
+          13.26
+        ],
+        [
+          59.97,
+          9.54
+        ]
+      ],
+      "centroid": [
+        57.07000000000001,
+        -3.134615384615385
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "72-74",
+        "addr:street": "Dean Street",
+        "building": "office",
+        "building:levels": "4",
+        "name": "Royalty House"
+      }
+    },
+    {
+      "id": 184410854,
+      "name": "John Pearse",
+      "vertices_2d": [
+        [
+          48.33,
+          -31.1
+        ],
+        [
+          47.79,
+          -30.05
+        ],
+        [
+          45.7,
+          -30.99
+        ],
+        [
+          46.19,
+          -32.0
+        ],
+        [
+          45.34,
+          -32.45
+        ],
+        [
+          43.51,
+          -29.22
+        ],
+        [
+          40.5,
+          -30.84
+        ],
+        [
+          42.83,
+          -34.7
+        ],
+        [
+          48.53,
+          -43.25
+        ],
+        [
+          50.75,
+          -42.25
+        ],
+        [
+          53.43,
+          -41.15
+        ],
+        [
+          48.33,
+          -31.1
+        ]
+      ],
+      "centroid": [
+        46.76916666666667,
+        -34.09166666666667
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "6",
+        "addr:postcode": "W1F 0EG",
+        "addr:street": "Meard Street",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "name": "John Pearse",
+        "ref:GB:uprn": "10033636043;100023471616;100023607872;10033636044;10033584095;10033636407;10033636406;10033538247",
+        "shop": "tailor",
+        "website": "https://www.johnpearse.co.uk/"
+      }
+    },
+    {
+      "id": 184421883,
+      "name": "Soho House",
+      "vertices_2d": [
+        [
+          64.68,
+          23.29
+        ],
+        [
+          59.95,
+          34.73
+        ],
+        [
+          39.97,
+          26.17
+        ],
+        [
+          40.11,
+          25.85
+        ],
+        [
+          44.79,
+          14.96
+        ],
+        [
+          64.68,
+          23.29
+        ]
+      ],
+      "centroid": [
+        52.363333333333344,
+        24.715
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "76",
+        "addr:postcode": "W1D 3SQ",
+        "addr:street": "Dean Street",
+        "alt_name": "Soho House 76 Dean Street",
+        "building": "yes",
+        "club": "members\u2019_club",
+        "name": "Soho House",
+        "ref:GB:uprn": "10033533224;100023472095;10033533223;10033533222",
+        "website": "https://www.sohohousedeanstreet.com/house"
+      }
+    },
+    {
+      "id": 157779705,
+      "name": "Building 157779705",
+      "vertices_2d": [
+        [
+          -40.98,
+          38.13
+        ],
+        [
+          -43.7,
+          43.3
+        ],
+        [
+          -44.39,
+          44.59
+        ],
+        [
+          -44.81,
+          45.37
+        ],
+        [
+          -34.7,
+          50.78
+        ],
+        [
+          -33.38,
+          48.32
+        ],
+        [
+          -34.76,
+          47.98
+        ],
+        [
+          -32.05,
+          42.8
+        ],
+        [
+          -40.98,
+          38.13
+        ]
+      ],
+      "centroid": [
+        -38.861111111111114,
+        44.37777777777778
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "118-120",
+        "addr:street": "Wardour Street",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "roof:colour": "grey",
+        "roof:levels": "1",
+        "source": "Bing;photographic_survey",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "id": 156620052,
+      "name": "Building 156620052",
+      "vertices_2d": [
+        [
+          -53.75,
+          -21.75
+        ],
+        [
+          -51.74,
+          -25.88
+        ],
+        [
+          -51.33,
+          -26.72
+        ],
+        [
+          -57.92,
+          -30.05
+        ],
+        [
+          -60.5,
+          -25.08
+        ],
+        [
+          -53.75,
+          -21.75
+        ]
+      ],
+      "centroid": [
+        -54.83166666666667,
+        -25.205
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 184421885,
+      "name": "The Seafood Bar",
+      "vertices_2d": [
+        [
+          59.95,
+          34.73
+        ],
+        [
+          55.84,
+          44.68
+        ],
+        [
+          40.92,
+          38.67
+        ],
+        [
+          35.7,
+          36.59
+        ],
+        [
+          39.97,
+          26.17
+        ],
+        [
+          59.95,
+          34.73
+        ]
+      ],
+      "centroid": [
+        48.72166666666667,
+        35.928333333333335
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "77",
+        "addr:postcode": "W1D 3SH",
+        "addr:street": "Dean Street",
+        "amenity": "restaurant",
+        "building": "yes",
+        "check_date": "2024-10-22",
+        "cuisine": "fish",
+        "indoor_seating": "yes",
+        "name": "The Seafood Bar",
+        "outdoor_seating": "no",
+        "ref:GB:uprn": "10033533225;10033533226;100023472319;10033548510;100023601738;100023601737;10033592030;10033592017",
+        "survey:date": "2023-02-28",
+        "website": "https://www.redfort.co.uk/"
+      }
+    },
+    {
+      "id": 156620054,
+      "name": "Building 156620054",
+      "vertices_2d": [
+        [
+          -56.34,
+          -16.78
+        ],
+        [
+          -53.75,
+          -21.75
+        ],
+        [
+          -60.5,
+          -25.08
+        ],
+        [
+          -63.0,
+          -19.89
+        ],
+        [
+          -56.34,
+          -16.78
+        ]
+      ],
+      "centroid": [
+        -57.986000000000004,
+        -20.056
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 61936008,
+      "name": "Building 61936008",
+      "vertices_2d": [
+        [
+          -65.25,
+          32.28
+        ],
+        [
+          -58.12,
+          37.5
+        ],
+        [
+          -55.97,
+          37.61
+        ],
+        [
+          -53.81,
+          36.7
+        ],
+        [
+          -52.37,
+          34.9
+        ],
+        [
+          -48.75,
+          26.81
+        ],
+        [
+          -46.06,
+          20.69
+        ],
+        [
+          -38.86,
+          4.14
+        ],
+        [
+          -56.93,
+          -3.71
+        ],
+        [
+          -66.81,
+          19.02
+        ],
+        [
+          -68.74,
+          20.47
+        ],
+        [
+          -61.37,
+          24.15
+        ],
+        [
+          -65.25,
+          32.28
+        ]
+      ],
+      "centroid": [
+        -56.791538461538465,
+        24.833846153846146
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "141",
+        "addr:street": "Wardour Street",
+        "building": "office",
+        "building:levels": "5",
+        "roof:colour": "grey",
+        "roof:levels": "1"
+      }
+    },
+    {
+      "id": 156620046,
+      "name": "Building 156620046",
+      "vertices_2d": [
+        [
+          -58.71,
+          -12.1
+        ],
+        [
+          -56.34,
+          -16.78
+        ],
+        [
+          -63.0,
+          -19.89
+        ],
+        [
+          -65.31,
+          -15.42
+        ],
+        [
+          -58.71,
+          -12.1
+        ]
+      ],
+      "centroid": [
+        -60.414,
+        -15.258
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "3",
+        "roof:colour": "grey",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 274456440,
+      "name": "Honest Burgers",
+      "vertices_2d": [
+        [
+          58.99,
+          -38.79
+        ],
+        [
+          53.48,
+          -25.67
+        ],
+        [
+          52.67,
+          -25.98
+        ],
+        [
+          50.41,
+          -26.85
+        ],
+        [
+          51.64,
+          -29.76
+        ],
+        [
+          48.33,
+          -31.1
+        ],
+        [
+          53.43,
+          -41.15
+        ],
+        [
+          58.99,
+          -38.79
+        ]
+      ],
+      "centroid": [
+        53.4925,
+        -32.261250000000004
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "4",
+        "addr:postcode": "W1F 0EF",
+        "addr:street": "Meard Street",
+        "amenity": "restaurant",
+        "brand": "Honest Burgers",
+        "brand:wikidata": "Q110061173",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "cuisine": "burger",
+        "diet:gluten_free": "yes",
+        "diet:halal": "yes",
+        "diet:vegan": "yes",
+        "diet:vegetarian": "yes",
+        "indoor_seating": "yes",
+        "name": "Honest Burgers",
+        "opening_hours": "Mo-Sa 11:00-23:00; Su 11:00-22:30",
+        "outdoor_seating": "yes",
+        "ref:GB:uprn": "100023471879;100023607870;100022780497;100022780498;10033538246;10033538245",
+        "website": "https://honestburgers.co.uk/",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "id": 156620058,
+      "name": "Building 156620058",
+      "vertices_2d": [
+        [
+          -61.49,
+          -6.46
+        ],
+        [
+          -58.71,
+          -12.1
+        ],
+        [
+          -65.31,
+          -15.42
+        ],
+        [
+          -68.21,
+          -10.07
+        ],
+        [
+          -61.49,
+          -6.46
+        ]
+      ],
+      "centroid": [
+        -63.041999999999994,
+        -10.102
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "3",
+        "roof:colour": "grey",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 184421888,
+      "name": "Building 184421888",
+      "vertices_2d": [
+        [
+          55.84,
+          44.68
+        ],
+        [
+          53.54,
+          50.25
+        ],
+        [
+          38.67,
+          44.29
+        ],
+        [
+          39.37,
+          42.55
+        ],
+        [
+          40.92,
+          38.67
+        ],
+        [
+          55.84,
+          44.68
+        ]
+      ],
+      "centroid": [
+        47.363333333333344,
+        44.18666666666667
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "78",
+        "addr:postcode": "W1D 3SQ",
+        "addr:street": "Dean Street",
+        "building": "yes",
+        "ref:GB:uprn": "100023472516;10033563169;10033616188;10033616187;10033616186;10033616185"
+      }
+    },
+    {
+      "id": 566252853,
+      "name": "Building 566252853",
+      "vertices_2d": [
+        [
+          41.67,
+          55.76
+        ],
+        [
+          35.3,
+          53.24
+        ],
+        [
+          36.0,
+          51.65
+        ],
+        [
+          36.38,
+          50.35
+        ],
+        [
+          38.16,
+          51.07
+        ],
+        [
+          38.64,
+          49.88
+        ],
+        [
+          43.27,
+          51.74
+        ],
+        [
+          41.67,
+          55.76
+        ]
+      ],
+      "centroid": [
+        38.88625,
+        52.43125
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "14",
+        "addr:postcode": "W1D 3SJ",
+        "addr:street": "Richmond Buildings",
+        "building": "yes",
+        "ref:GB:uprn": "100023472519;10033533227;10033592050;10033592046;10033628214;10033592065;10033643332;100022740934;10033643333"
+      }
+    },
+    {
+      "id": 156620048,
+      "name": "Building 156620048",
+      "vertices_2d": [
+        [
+          -63.74,
+          -1.65
+        ],
+        [
+          -61.49,
+          -6.46
+        ],
+        [
+          -68.21,
+          -10.07
+        ],
+        [
+          -70.74,
+          -4.94
+        ],
+        [
+          -63.74,
+          -1.65
+        ]
+      ],
+      "centroid": [
+        -65.584,
+        -4.954
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "3",
+        "roof:colour": "grey",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 274456455,
+      "name": "Building 274456455",
+      "vertices_2d": [
+        [
+          58.99,
+          -38.79
+        ],
+        [
+          64.36,
+          -36.29
+        ],
+        [
+          59.42,
+          -24.45
+        ],
+        [
+          59.04,
+          -23.31
+        ],
+        [
+          56.2,
+          -24.41
+        ],
+        [
+          53.48,
+          -25.67
+        ],
+        [
+          58.99,
+          -38.79
+        ]
+      ],
+      "centroid": [
+        58.64,
+        -30.244285714285716
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:postcode": "W1F 0EE",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "ref:GB:uprn": "100023607868;100023471852;10033584097;10033579348;10033538236"
+      }
+    },
+    {
+      "id": 156620037,
+      "name": "Reign Vintage",
+      "vertices_2d": [
+        [
+          -66.54,
+          -34.51
+        ],
+        [
+          -63.31,
+          -39.56
+        ],
+        [
+          -49.18,
+          -32.23
+        ],
+        [
+          -51.33,
+          -26.72
+        ],
+        [
+          -57.92,
+          -30.05
+        ],
+        [
+          -66.54,
+          -34.51
+        ]
+      ],
+      "centroid": [
+        -59.13666666666668,
+        -32.93
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "12",
+        "addr:postcode": "W1F 0PL",
+        "addr:street": "Berwick Street",
+        "building": "retail",
+        "clothes": "vintage",
+        "name": "Reign Vintage",
+        "note": "With offices above",
+        "old_name": "Falber & Sons",
+        "phone": "+44 20 3417 0276",
+        "ref:GB:uprn": "10033622623;10033622622;10033622621;10033620902;100022726157;10033622620;10033590432",
+        "shop": "clothes",
+        "source": "Bing",
+        "website": "https://reignvintage.com/",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "id": 283943390,
+      "name": "Be Health",
+      "vertices_2d": [
+        [
+          51.55,
+          55.07
+        ],
+        [
+          53.54,
+          50.25
+        ],
+        [
+          38.67,
+          44.29
+        ],
+        [
+          36.86,
+          49.13
+        ],
+        [
+          38.64,
+          49.88
+        ],
+        [
+          43.27,
+          51.74
+        ],
+        [
+          51.55,
+          55.07
+        ]
+      ],
+      "centroid": [
+        44.86857142857143,
+        50.77571428571428
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "79",
+        "addr:street": "Dean Street",
+        "building": "yes",
+        "check_date": "2024-10-22",
+        "description": "Chinese Medical Centre",
+        "healthcare": "alternative",
+        "name": "Be Health",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 156620055,
+      "name": "Building 156620055",
+      "vertices_2d": [
+        [
+          -66.05,
+          3.41
+        ],
+        [
+          -63.74,
+          -1.65
+        ],
+        [
+          -70.74,
+          -4.94
+        ],
+        [
+          -72.93,
+          0.04
+        ],
+        [
+          -66.05,
+          3.41
+        ]
+      ],
+      "centroid": [
+        -67.902,
+        0.054000000000000006
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 117623606,
+      "name": "Building 117623606",
+      "vertices_2d": [
+        [
+          -29.33,
+          -65.13
+        ],
+        [
+          -35.31,
+          -67.73
+        ],
+        [
+          -45.28,
+          -73.16
+        ],
+        [
+          -47.73,
+          -68.52
+        ],
+        [
+          -39.87,
+          -64.38
+        ],
+        [
+          -22.97,
+          -56.06
+        ],
+        [
+          -23.37,
+          -55.26
+        ],
+        [
+          -15.7,
+          -51.53
+        ],
+        [
+          -14.67,
+          -53.64
+        ],
+        [
+          -12.85,
+          -57.81
+        ],
+        [
+          -29.33,
+          -65.13
+        ]
+      ],
+      "centroid": [
+        -28.764545454545456,
+        -61.66818181818182
+      ],
+      "height": 21.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "111",
+        "addr:postcode": "W1F 0UH",
+        "addr:street": "Wardour Street",
+        "building": "commercial",
+        "building:levels": "6",
+        "building:material": "stone",
+        "ref:GB:uprn": "10033633630;10033633620;10033633631;10033633627;10033633617;10033633628;10033633625;10033633626;10033633623;10033633624;10033633621;10033633632;10033633622;10033633618;10033633629;10033633619"
+      }
+    },
+    {
+      "id": 40952618,
+      "name": "Soho Fitness Lab",
+      "vertices_2d": [
+        [
+          -24.28,
+          58.63
+        ],
+        [
+          -29.04,
+          69.33
+        ],
+        [
+          -25.42,
+          71.01
+        ],
+        [
+          -20.63,
+          60.32
+        ],
+        [
+          -24.28,
+          58.63
+        ]
+      ],
+      "centroid": [
+        -24.73,
+        63.584
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "leisure": "fitness_centre",
+        "name": "Soho Fitness Lab"
+      }
+    },
+    {
+      "id": 156620057,
+      "name": "The Breakfast Club",
+      "vertices_2d": [
+        [
+          -63.31,
+          -39.56
+        ],
+        [
+          -60.92,
+          -43.87
+        ],
+        [
+          -54.19,
+          -40.51
+        ],
+        [
+          -47.18,
+          -37.07
+        ],
+        [
+          -49.18,
+          -32.23
+        ],
+        [
+          -63.31,
+          -39.56
+        ]
+      ],
+      "centroid": [
+        -56.348333333333336,
+        -38.8
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "11",
+        "addr:street": "Berwick Street",
+        "amenity": "restaurant",
+        "brand": "The Breakfast Club",
+        "brand:wikidata": "Q56045915",
+        "breakfast": "yes",
+        "building": "yes",
+        "check_date:opening_hours": "2025-07-14",
+        "cuisine": "american",
+        "diet:vegetarian": "no",
+        "name": "The Breakfast Club",
+        "opening_hours:signed": "no",
+        "payment:cash": "no",
+        "source": "Bing;photographic_survey",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "id": 184421877,
+      "name": "Building 184421877",
+      "vertices_2d": [
+        [
+          77.02,
+          -6.57
+        ],
+        [
+          80.2,
+          -14.27
+        ],
+        [
+          63.98,
+          -20.64
+        ],
+        [
+          62.22,
+          -20.19
+        ],
+        [
+          60.66,
+          -19.27
+        ],
+        [
+          60.04,
+          -17.52
+        ],
+        [
+          59.97,
+          -15.61
+        ],
+        [
+          60.43,
+          -14.15
+        ],
+        [
+          68.03,
+          -10.63
+        ],
+        [
+          77.02,
+          -6.57
+        ]
+      ],
+      "centroid": [
+        66.95699999999998,
+        -14.541999999999998
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes"
+      }
+    },
+    {
+      "id": 156620032,
+      "name": "Islamic Centre",
+      "vertices_2d": [
+        [
+          -60.92,
+          -43.87
+        ],
+        [
+          -58.03,
+          -49.16
+        ],
+        [
+          -50.14,
+          -45.02
+        ],
+        [
+          -44.93,
+          -42.4
+        ],
+        [
+          -47.18,
+          -37.07
+        ],
+        [
+          -54.19,
+          -40.51
+        ],
+        [
+          -60.92,
+          -43.87
+        ]
+      ],
+      "centroid": [
+        -53.75857142857143,
+        -43.12857142857143
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "10",
+        "addr:postcode": "W1F 0PX",
+        "addr:street": "Berwick Street",
+        "amenity": "place_of_worship",
+        "building": "yes",
+        "name": "Islamic Centre",
+        "ref:GB:uprn": "200001858959",
+        "religion": "muslim",
+        "source": "Bing",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "id": 157779546,
+      "name": "C\u00f4te Brasserie",
+      "vertices_2d": [
+        [
+          -44.81,
+          45.37
+        ],
+        [
+          -51.2,
+          57.02
+        ],
+        [
+          -50.81,
+          59.05
+        ],
+        [
+          -34.94,
+          66.58
+        ],
+        [
+          -33.65,
+          63.69
+        ],
+        [
+          -37.61,
+          61.75
+        ],
+        [
+          -33.1,
+          51.74
+        ],
+        [
+          -34.7,
+          50.78
+        ],
+        [
+          -44.81,
+          45.37
+        ]
+      ],
+      "centroid": [
+        -40.62555555555556,
+        55.705555555555556
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "124-126",
+        "addr:postcode": "W1F 0TY",
+        "addr:street": "Wardour Street",
+        "air_conditioning": "yes",
+        "amenity": "restaurant",
+        "brand": "C\u00f4te Brasserie",
+        "brand:wikidata": "Q48699908",
+        "brand:wikipedia": "en:C\u00f4te",
+        "building": "retail",
+        "building:levels": "4",
+        "building:material": "brick",
+        "cuisine": "french",
+        "diet:gluten_free": "yes",
+        "diet:vegan": "yes",
+        "diet:vegetarian": "yes",
+        "fhrs:id": "732356",
+        "indoor_seating": "yes",
+        "name": "C\u00f4te Brasserie",
+        "outdoor_seating": "no",
+        "ref:GB:uprn": "100023471930;10033570827;100022814757;100022814758;100022814759;100022814760",
+        "roof:colour": "grey",
+        "roof:levels": "1",
+        "source": "Bing;photographic_survey",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "id": 275102865,
+      "name": "Wacky Haircutters",
+      "vertices_2d": [
+        [
+          -16.88,
+          61.95
+        ],
+        [
+          -21.89,
+          72.66
+        ],
+        [
+          -18.62,
+          74.18
+        ],
+        [
+          -13.6,
+          63.36
+        ],
+        [
+          -16.88,
+          61.95
+        ]
+      ],
+      "centroid": [
+        -17.573999999999998,
+        66.82000000000001
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "name": "Wacky Haircutters",
+        "shop": "hairdresser",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "id": 275102861,
+      "name": "Kova Patisserie",
+      "vertices_2d": [
+        [
+          -29.04,
+          69.33
+        ],
+        [
+          -24.28,
+          58.63
+        ],
+        [
+          -26.44,
+          57.75
+        ],
+        [
+          -27.98,
+          57.07
+        ],
+        [
+          -32.66,
+          67.64
+        ],
+        [
+          -29.04,
+          69.33
+        ]
+      ],
+      "centroid": [
+        -28.24,
+        63.291666666666664
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "9-12",
+        "addr:postcode": "W1F 0BB",
+        "addr:street": "St Anne's Court",
+        "addr:unit": "5",
+        "amenity": "cafe",
+        "building": "yes",
+        "fhrs:id": "915572",
+        "indoor_seating": "yes",
+        "name": "Kova Patisserie",
+        "outdoor_seating": "yes",
+        "shop": "pastry",
+        "website": "https://www.kovapatisserie.com/"
+      }
+    },
+    {
+      "id": 275102862,
+      "name": "Sendean Cameras",
+      "vertices_2d": [
+        [
+          -13.6,
+          63.36
+        ],
+        [
+          -18.62,
+          74.18
+        ],
+        [
+          -15.2,
+          75.78
+        ],
+        [
+          -10.33,
+          64.73
+        ],
+        [
+          -13.6,
+          63.36
+        ]
+      ],
+      "centroid": [
+        -14.27,
+        68.28200000000001
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "9-12",
+        "addr:street": "Saint Anne's Court",
+        "building": "yes",
+        "camera:repair": "yes",
+        "description": "Camera repairers",
+        "name": "Sendean Cameras",
+        "phone": "+44 843 289 1267",
+        "shop": "camera",
+        "website": "https://www.sendeancameras.co.uk/"
+      }
+    },
+    {
+      "id": 156620017,
+      "name": "Building 156620017",
+      "vertices_2d": [
+        [
+          -58.03,
+          -49.16
+        ],
+        [
+          -55.25,
+          -54.47
+        ],
+        [
+          -47.14,
+          -50.21
+        ],
+        [
+          -48.37,
+          -47.86
+        ],
+        [
+          -45.54,
+          -46.38
+        ],
+        [
+          -46.56,
+          -44.43
+        ],
+        [
+          -49.6,
+          -46.03
+        ],
+        [
+          -50.14,
+          -45.02
+        ],
+        [
+          -58.03,
+          -49.16
+        ]
+      ],
+      "centroid": [
+        -50.962222222222216,
+        -48.07999999999999
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "9",
+        "addr:postcode": "W1F 0PJ",
+        "addr:street": "Berwick Street",
+        "building": "yes",
+        "ref:GB:uprn": "100023471813;100023471701;100023471702;100023471699;100023471700;10033617681;10033530451;10033590402;10033590424"
+      }
+    },
+    {
+      "id": 156620050,
+      "name": "Building 156620050",
+      "vertices_2d": [
+        [
+          -68.56,
+          8.53
+        ],
+        [
+          -66.05,
+          3.41
+        ],
+        [
+          -72.93,
+          0.04
+        ],
+        [
+          -75.57,
+          4.96
+        ],
+        [
+          -68.56,
+          8.53
+        ]
+      ],
+      "centroid": [
+        -70.334,
+        5.093999999999999
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "roof:colour": "grey",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 275102857,
+      "name": "Court Security Locksmiths",
+      "vertices_2d": [
+        [
+          -10.33,
+          64.73
+        ],
+        [
+          -15.2,
+          75.78
+        ],
+        [
+          -11.51,
+          77.51
+        ],
+        [
+          -7.24,
+          66.02
+        ],
+        [
+          -10.33,
+          64.73
+        ]
+      ],
+      "centroid": [
+        -10.922,
+        69.75399999999999
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "check_date": "2024-08-21",
+        "craft": "locksmith",
+        "name": "Court Security Locksmiths",
+        "opening_hours": "Mo-Fr 08:30-18:00; Sa-Su off",
+        "phone": "+44 20 7734 2109",
+        "website": "https://www.courtsecurity.co.uk/"
+      }
+    },
+    {
+      "id": 274458679,
+      "name": "Pathe Building",
+      "vertices_2d": [
+        [
+          -12.85,
+          -57.81
+        ],
+        [
+          -11.66,
+          -60.51
+        ],
+        [
+          -6.73,
+          -71.69
+        ],
+        [
+          -6.17,
+          -72.97
+        ],
+        [
+          -10.9,
+          -75.36
+        ],
+        [
+          -11.83,
+          -73.33
+        ],
+        [
+          -23.23,
+          -78.62
+        ],
+        [
+          -23.79,
+          -77.61
+        ],
+        [
+          -29.33,
+          -65.13
+        ],
+        [
+          -12.85,
+          -57.81
+        ]
+      ],
+      "centroid": [
+        -14.934000000000001,
+        -69.08399999999999
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "apartments",
+        "name": "Pathe Building"
+      }
+    },
+    {
+      "id": 275102860,
+      "name": "Walk-in backrubs",
+      "vertices_2d": [
+        [
+          -21.89,
+          72.66
+        ],
+        [
+          -16.88,
+          61.95
+        ],
+        [
+          -20.63,
+          60.32
+        ],
+        [
+          -25.42,
+          71.01
+        ],
+        [
+          -21.89,
+          72.66
+        ]
+      ],
+      "centroid": [
+        -21.342,
+        67.72
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "9-12",
+        "addr:postcode": "W1F 0BB",
+        "addr:street": "St. Anne's Court",
+        "building": "yes",
+        "name": "Walk-in backrubs",
+        "opening_hours": "Mo-Fr 11:00-19:00, Sa-Su 12:00-18:00",
+        "phone": "+44 20 7734 4095",
+        "ref:GB:uprn": "10033558820;10033581252;10033583100;100023471677;10033583098;10092022328;10092022327;10033543556;10092034195;10033543555;10033543554;10033543553;10092022329;10033543552;10033525823;10033583097;10033583096",
+        "shop": "massage",
+        "website": "https://walkinbackrub.co.uk/"
+      }
+    },
+    {
+      "id": 156620039,
+      "name": "bubble",
+      "vertices_2d": [
+        [
+          -69.12,
+          -29.56
+        ],
+        [
+          -66.54,
+          -34.51
+        ],
+        [
+          -57.92,
+          -30.05
+        ],
+        [
+          -60.5,
+          -25.08
+        ],
+        [
+          -69.12,
+          -29.56
+        ]
+      ],
+      "centroid": [
+        -64.64000000000001,
+        -29.752
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "13",
+        "addr:postcode": "W1F 0PN",
+        "addr:street": "Berwick Street",
+        "amenity": "studio",
+        "building": "yes",
+        "name": "bubble",
+        "ref:GB:uprn": "10033621027;10033621026;10033590391;10033621025;10033621024;10033530393;10033530394;100023471707",
+        "source": "Bing",
+        "studio": "audio"
+      }
+    },
+    {
+      "id": 184421889,
+      "name": "Soho Canna Museum",
+      "vertices_2d": [
+        [
+          43.27,
+          51.74
+        ],
+        [
+          41.67,
+          55.76
+        ],
+        [
+          41.32,
+          56.64
+        ],
+        [
+          49.53,
+          59.95
+        ],
+        [
+          51.55,
+          55.07
+        ],
+        [
+          43.27,
+          51.74
+        ]
+      ],
+      "centroid": [
+        45.10166666666666,
+        55.15
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "80",
+        "addr:postcode": "W1D 3SL",
+        "addr:street": "Dean Street",
+        "building": "commercial",
+        "check_date": "2025-06-13",
+        "name": "Soho Canna Museum",
+        "shop": "health_food",
+        "source": "visit and www"
+      }
+    },
+    {
+      "id": 156620041,
+      "name": "Building 156620041",
+      "vertices_2d": [
+        [
+          -72.35,
+          -24.57
+        ],
+        [
+          -69.12,
+          -29.56
+        ],
+        [
+          -60.5,
+          -25.08
+        ],
+        [
+          -63.0,
+          -19.89
+        ],
+        [
+          -72.35,
+          -24.57
+        ]
+      ],
+      "centroid": [
+        -67.46400000000001,
+        -24.733999999999998
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "14",
+        "addr:street": "Berwick Street",
+        "building": "retail",
+        "disused:shop": "fabric",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 156620059,
+      "name": "Building 156620059",
+      "vertices_2d": [
+        [
+          -55.25,
+          -54.47
+        ],
+        [
+          -52.22,
+          -59.83
+        ],
+        [
+          -44.29,
+          -55.74
+        ],
+        [
+          -41.73,
+          -54.44
+        ],
+        [
+          -42.05,
+          -53.81
+        ],
+        [
+          -43.7,
+          -50.59
+        ],
+        [
+          -46.33,
+          -51.95
+        ],
+        [
+          -47.14,
+          -50.21
+        ],
+        [
+          -55.25,
+          -54.47
+        ]
+      ],
+      "centroid": [
+        -47.551111111111105,
+        -53.94555555555556
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 274456443,
+      "name": "Building 274456443",
+      "vertices_2d": [
+        [
+          46.02,
+          -49.62
+        ],
+        [
+          45.19,
+          -50.1
+        ],
+        [
+          41.28,
+          -52.41
+        ],
+        [
+          47.8,
+          -62.34
+        ],
+        [
+          48.92,
+          -64.05
+        ],
+        [
+          52.78,
+          -61.45
+        ],
+        [
+          46.02,
+          -49.62
+        ]
+      ],
+      "centroid": [
+        46.85857142857143,
+        -55.65571428571428
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "11",
+        "addr:postcode": "W1F 0ER",
+        "addr:street": "Meard Street",
+        "building": "house",
+        "building:levels": "3",
+        "building:material": "brick",
+        "ref:GB:uprn": "100022780505",
+        "roof:colour": "brown",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 156620040,
+      "name": "Soho Dry Cleaners",
+      "vertices_2d": [
+        [
+          -74.72,
+          -19.84
+        ],
+        [
+          -72.35,
+          -24.57
+        ],
+        [
+          -63.0,
+          -19.89
+        ],
+        [
+          -65.31,
+          -15.42
+        ],
+        [
+          -74.72,
+          -19.84
+        ]
+      ],
+      "centroid": [
+        -70.02000000000001,
+        -19.912
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "15",
+        "addr:postcode": "W1F 0PR",
+        "addr:street": "Berwick Street",
+        "building": "retail",
+        "check_date": "2024-01-03",
+        "name": "Soho Dry Cleaners",
+        "ref:GB:uprn": "10033562009;10033562011;10033562010;100023471709",
+        "shop": "dry_cleaning",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 274002585,
+      "name": "Sounds of the Universe",
+      "vertices_2d": [
+        [
+          -65.25,
+          32.28
+        ],
+        [
+          -71.96,
+          29.04
+        ],
+        [
+          -72.29,
+          28.07
+        ],
+        [
+          -68.74,
+          20.47
+        ],
+        [
+          -61.37,
+          24.15
+        ],
+        [
+          -65.25,
+          32.28
+        ]
+      ],
+      "centroid": [
+        -67.47666666666667,
+        27.715
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "7",
+        "addr:postcode": "W1F 0DA",
+        "addr:street": "Broadwick Street",
+        "building": "retail",
+        "building:levels": "3",
+        "check_date": "2024-09-10",
+        "name": "Sounds of the Universe",
+        "opening_hours": "Mo-Sa 10:00-18:30; Su 11:00-17:30",
+        "phone": "+44 20 7734 3430",
+        "ref:GB:uprn": "100023471317;10033579011;10033639823",
+        "roof:levels": "1",
+        "shop": "music",
+        "source": "Bing;photograph",
+        "website": "https://soundsoftheuniverse.com/",
+        "wheelchair": "yes",
+        "wikidata": "Q116143147"
+      }
+    },
+    {
+      "id": 156620051,
+      "name": "Building 156620051",
+      "vertices_2d": [
+        [
+          -70.94,
+          13.44
+        ],
+        [
+          -68.56,
+          8.53
+        ],
+        [
+          -75.57,
+          4.96
+        ],
+        [
+          -78.03,
+          10.14
+        ],
+        [
+          -70.94,
+          13.44
+        ]
+      ],
+      "centroid": [
+        -72.808,
+        10.102
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "roof:colour": "grey",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 184410856,
+      "name": "Dean Street Townhouse",
+      "vertices_2d": [
+        [
+          65.48,
+          -38.95
+        ],
+        [
+          86.98,
+          -30.68
+        ],
+        [
+          80.2,
+          -14.27
+        ],
+        [
+          63.98,
+          -20.64
+        ],
+        [
+          60.87,
+          -21.84
+        ],
+        [
+          59.17,
+          -22.53
+        ],
+        [
+          65.48,
+          -38.95
+        ]
+      ],
+      "centroid": [
+        68.88000000000001,
+        -26.837142857142858
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "69-71",
+        "addr:postcode": "W1D 3SE",
+        "addr:street": "Dean Street",
+        "building": "yes",
+        "building:colour": "white",
+        "building:levels": "5",
+        "building:material": "plaster",
+        "fhrs:id": "412883",
+        "name": "Dean Street Townhouse",
+        "phone": "+44 20 7434 1775",
+        "ref:GB:uprn": "10033616868",
+        "tourism": "hotel",
+        "website": "https://www.deanstreettownhouse.com/"
+      }
+    },
+    {
+      "id": 156620030,
+      "name": "Borovick Fabrics",
+      "vertices_2d": [
+        [
+          -77.27,
+          -14.78
+        ],
+        [
+          -74.72,
+          -19.84
+        ],
+        [
+          -65.31,
+          -15.42
+        ],
+        [
+          -68.21,
+          -10.07
+        ],
+        [
+          -77.27,
+          -14.78
+        ]
+      ],
+      "centroid": [
+        -72.556,
+        -14.978
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "16",
+        "addr:street": "Berwick Street",
+        "building": "yes",
+        "name": "Borovick Fabrics",
+        "opening_hours": "Mo-Fr 08:30-06:00, Sa 08:30-17:00",
+        "payment:american_express": "yes",
+        "payment:credit_cards": "yes",
+        "payment:debit_cards": "yes",
+        "phone": "+44 20 7437 0520",
+        "shop": "fabric",
+        "source": "survey",
+        "website": "https://borovickfabricsltd.co.uk/",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "id": 274456444,
+      "name": "Building 274456444",
+      "vertices_2d": [
+        [
+          36.5,
+          -55.98
+        ],
+        [
+          35.59,
+          -56.63
+        ],
+        [
+          32.32,
+          -59.0
+        ],
+        [
+          38.64,
+          -68.42
+        ],
+        [
+          41.25,
+          -72.02
+        ],
+        [
+          43.02,
+          -70.72
+        ],
+        [
+          40.5,
+          -67.17
+        ],
+        [
+          42.93,
+          -65.47
+        ],
+        [
+          36.5,
+          -55.98
+        ]
+      ],
+      "centroid": [
+        38.58333333333334,
+        -63.48777777777778
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "15",
+        "addr:postcode": "W1F 0ET",
+        "addr:street": "Meard Street",
+        "building": "house",
+        "building:levels": "3",
+        "building:material": "brick",
+        "ref:GB:uprn": "100022780508",
+        "roof:colour": "grey",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 274456450,
+      "name": "Building 274456450",
+      "vertices_2d": [
+        [
+          53.05,
+          -51.13
+        ],
+        [
+          50.97,
+          -47.39
+        ],
+        [
+          46.02,
+          -49.62
+        ],
+        [
+          52.78,
+          -61.45
+        ],
+        [
+          56.89,
+          -59.24
+        ],
+        [
+          53.05,
+          -51.13
+        ]
+      ],
+      "centroid": [
+        52.126666666666665,
+        -53.326666666666675
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "9",
+        "addr:postcode": "W1F 0EP",
+        "addr:street": "Meard Street",
+        "building": "house",
+        "building:levels": "3",
+        "building:material": "brick",
+        "ref:GB:uprn": "100022780504",
+        "roof:colour": "brown",
+        "source": "Bing;survey"
+      }
+    },
+    {
+      "id": 274456445,
+      "name": "Building 274456445",
+      "vertices_2d": [
+        [
+          32.32,
+          -59.0
+        ],
+        [
+          31.18,
+          -59.76
+        ],
+        [
+          27.84,
+          -62.13
+        ],
+        [
+          33.93,
+          -71.33
+        ],
+        [
+          36.68,
+          -75.19
+        ],
+        [
+          39.13,
+          -73.54
+        ],
+        [
+          36.61,
+          -69.78
+        ],
+        [
+          38.64,
+          -68.42
+        ],
+        [
+          32.32,
+          -59.0
+        ]
+      ],
+      "centroid": [
+        34.294444444444444,
+        -66.46111111111111
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "17",
+        "addr:postcode": "W1F 0EU",
+        "addr:street": "Meard Street",
+        "building": "house",
+        "building:levels": "3",
+        "building:material": "brick",
+        "ref:GB:uprn": "100022780509",
+        "roof:colour": "grey",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 274456439,
+      "name": "Building 274456439",
+      "vertices_2d": [
+        [
+          41.28,
+          -52.41
+        ],
+        [
+          36.5,
+          -55.98
+        ],
+        [
+          42.93,
+          -65.47
+        ],
+        [
+          45.01,
+          -68.37
+        ],
+        [
+          46.91,
+          -67.14
+        ],
+        [
+          45.01,
+          -64.14
+        ],
+        [
+          47.8,
+          -62.34
+        ],
+        [
+          41.28,
+          -52.41
+        ]
+      ],
+      "centroid": [
+        43.34,
+        -61.0325
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "13",
+        "addr:postcode": "W1F 0ES",
+        "addr:street": "Meard Street",
+        "building": "retail",
+        "building:levels": "3",
+        "building:material": "brick",
+        "check_date": "2025-06-09",
+        "disused:shop": "yes",
+        "ref:GB:uprn": "100023471448;100023471614;10033570805;100023471445",
+        "roof:colour": "grey",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 156620061,
+      "name": "Building 156620061",
+      "vertices_2d": [
+        [
+          -52.22,
+          -59.83
+        ],
+        [
+          -48.38,
+          -67.25
+        ],
+        [
+          -47.73,
+          -68.52
+        ],
+        [
+          -39.87,
+          -64.38
+        ],
+        [
+          -40.57,
+          -63.05
+        ],
+        [
+          -41.41,
+          -61.46
+        ],
+        [
+          -38.82,
+          -60.1
+        ],
+        [
+          -39.44,
+          -58.92
+        ],
+        [
+          -40.36,
+          -57.17
+        ],
+        [
+          -42.85,
+          -58.48
+        ],
+        [
+          -44.29,
+          -55.74
+        ],
+        [
+          -52.22,
+          -59.83
+        ]
+      ],
+      "centroid": [
+        -44.01333333333333,
+        -61.22750000000001
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "7",
+        "addr:postcode": "W1F 0DR",
+        "addr:street": "Berwick Street",
+        "building": "yes",
+        "ref:GB:uprn": "10033657845",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 274456446,
+      "name": "Building 274456446",
+      "vertices_2d": [
+        [
+          27.84,
+          -62.13
+        ],
+        [
+          27.26,
+          -62.51
+        ],
+        [
+          23.42,
+          -65.08
+        ],
+        [
+          29.6,
+          -74.33
+        ],
+        [
+          32.61,
+          -78.9
+        ],
+        [
+          34.64,
+          -77.56
+        ],
+        [
+          31.56,
+          -72.9
+        ],
+        [
+          33.93,
+          -71.33
+        ],
+        [
+          27.84,
+          -62.13
+        ]
+      ],
+      "centroid": [
+        29.855555555555554,
+        -69.65222222222224
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "19",
+        "addr:postcode": "W1F 0EX",
+        "addr:street": "Meard Street",
+        "building": "house",
+        "building:levels": "3",
+        "building:material": "brick",
+        "ref:GB:uprn": "100023471449;100023471446;100023471451;100022780510",
+        "roof:colour": "grey",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 156620024,
+      "name": "Flat White",
+      "vertices_2d": [
+        [
+          -80.1,
+          -9.82
+        ],
+        [
+          -77.27,
+          -14.78
+        ],
+        [
+          -68.21,
+          -10.07
+        ],
+        [
+          -70.74,
+          -4.94
+        ],
+        [
+          -80.1,
+          -9.82
+        ]
+      ],
+      "centroid": [
+        -75.28399999999999,
+        -9.886
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "17",
+        "addr:postcode": "W1F 0PT",
+        "addr:street": "Berwick Street",
+        "air_conditioning": "yes",
+        "amenity": "cafe",
+        "building": "retail",
+        "building:levels": "4",
+        "check_date": "2024-08-07",
+        "contact:instagram": "flatwhitesoho",
+        "cuisine": "coffee_shop",
+        "diet:vegan": "yes",
+        "diet:vegetarian": "yes",
+        "fhrs:id": "772522",
+        "indoor_seating": "yes",
+        "name": "Flat White",
+        "opening_hours": "Mo-Fr 08:30-17:00; Sa 09:00-18:00; Su 09:30-17:30",
+        "outdoor_seating": "no",
+        "payment:credit_cards": "yes",
+        "payment:debit_cards": "yes",
+        "phone": "+44 20 7734 0370",
+        "ref:GB:uprn": "10033530397;10033530398;10033530399;100023471710;10033530395;10033530396",
+        "reservation": "no",
+        "roof:levels": "1",
+        "source": "Bing",
+        "takeaway": "yes",
+        "toilets": "yes",
+        "toilets:access": "customers",
+        "website": "https://www.flatwhitesoho.co.uk/",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "id": 156620049,
+      "name": "Building 156620049",
+      "vertices_2d": [
+        [
+          -72.88,
+          17.86
+        ],
+        [
+          -70.94,
+          13.44
+        ],
+        [
+          -78.03,
+          10.14
+        ],
+        [
+          -80.04,
+          14.3
+        ],
+        [
+          -72.88,
+          17.86
+        ]
+      ],
+      "centroid": [
+        -74.954,
+        14.719999999999999
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:postcode": "W1F 0HT",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "ref:GB:uprn": "100023471163;10033592295;10033622111;10033622110",
+        "roof:colour": "grey",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 283943389,
+      "name": "Building 283943389",
+      "vertices_2d": [
+        [
+          28.04,
+          72.19
+        ],
+        [
+          32.26,
+          62.36
+        ],
+        [
+          25.47,
+          59.48
+        ],
+        [
+          17.24,
+          79.48
+        ],
+        [
+          22.91,
+          82.01
+        ],
+        [
+          23.7,
+          79.99
+        ],
+        [
+          26.97,
+          71.82
+        ],
+        [
+          28.04,
+          72.19
+        ]
+      ],
+      "centroid": [
+        25.578749999999996,
+        72.44
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housename": "Douglas House",
+        "addr:postcode": "W1D 3AZ",
+        "addr:street": "Richmond Buildings",
+        "building": "yes",
+        "ref:GB:uprn": "10033641368;10033641367;10033641378;10033641366;10033641377;10033641365;10033641376;10033641823;10033641369;100023472303;10033641824;10033641371;10033641370;10033641364;10033641375;10033641363;10033641374;10033641362;10033641373;10033641361;10033641372"
+      }
+    },
+    {
+      "id": 274456453,
+      "name": "Grenson",
+      "vertices_2d": [
+        [
+          23.42,
+          -65.08
+        ],
+        [
+          22.47,
+          -65.72
+        ],
+        [
+          19.01,
+          -68.09
+        ],
+        [
+          18.16,
+          -68.67
+        ],
+        [
+          14.67,
+          -71.07
+        ],
+        [
+          19.0,
+          -77.4
+        ],
+        [
+          20.89,
+          -80.17
+        ],
+        [
+          22.85,
+          -79.0
+        ],
+        [
+          24.57,
+          -81.6
+        ],
+        [
+          26.58,
+          -80.23
+        ],
+        [
+          28.29,
+          -79.15
+        ],
+        [
+          26.8,
+          -76.44
+        ],
+        [
+          29.6,
+          -74.33
+        ],
+        [
+          23.42,
+          -65.08
+        ]
+      ],
+      "centroid": [
+        22.837857142857143,
+        -73.71642857142858
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "21-23",
+        "addr:street": "Meard Street",
+        "building": "commercial",
+        "building:levels": "3",
+        "building:material": "brick",
+        "check_date": "2025-05-07",
+        "name": "Grenson",
+        "roof:colour": "grey",
+        "shop": "shoes"
+      }
+    },
+    {
+      "id": 156620033,
+      "name": "Mediterranean Cafe",
+      "vertices_2d": [
+        [
+          -82.72,
+          -4.91
+        ],
+        [
+          -80.1,
+          -9.82
+        ],
+        [
+          -70.74,
+          -4.94
+        ],
+        [
+          -72.93,
+          0.04
+        ],
+        [
+          -82.72,
+          -4.91
+        ]
+      ],
+      "centroid": [
+        -77.84200000000001,
+        -4.908
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "18",
+        "addr:postcode": "W1F 0PX",
+        "addr:street": "Berwick Street",
+        "amenity": "cafe",
+        "building": "retail",
+        "cuisine": "mediterranean",
+        "name": "Mediterranean Cafe",
+        "outdoor_seating": "yes",
+        "phone": "+44 20 7437 0560",
+        "source": "Bing",
+        "website": "http://www.mediterraneancafe.co.uk/",
+        "wheelchair": "limited",
+        "wikimedia_commons": "File:Berwick_Street_-_restaurants.jpg"
+      }
+    },
+    {
+      "id": 157779674,
+      "name": "Ben & Jerry's",
+      "vertices_2d": [
+        [
+          10.75,
+          -82.3
+        ],
+        [
+          8.35,
+          -76.88
+        ],
+        [
+          8.53,
+          -75.67
+        ],
+        [
+          14.67,
+          -71.07
+        ],
+        [
+          19.0,
+          -77.4
+        ],
+        [
+          10.75,
+          -82.3
+        ]
+      ],
+      "centroid": [
+        12.008333333333335,
+        -77.60333333333334
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "74",
+        "addr:postcode": "W1F 0TE",
+        "addr:street": "Wardour Street",
+        "amenity": "ice_cream",
+        "brand": "Ben & Jerry's",
+        "brand:wikidata": "Q816412",
+        "brand:wikipedia": "en:Ben & Jerry's",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "check_date": "2025-05-07",
+        "cuisine": "ice_cream",
+        "indoor_seating": "yes",
+        "name": "Ben & Jerry's",
+        "outdoor_seating": "no",
+        "ref:GB:uprn": "100023471578;100023471579;100023471610;100023471580;10033570804",
+        "roof:colour": "grey",
+        "source": "Bing;photographic_survey",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "id": 156620047,
+      "name": "Bar Bruno",
+      "vertices_2d": [
+        [
+          -8.93,
+          -84.83
+        ],
+        [
+          -2.18,
+          -81.33
+        ],
+        [
+          -6.17,
+          -72.97
+        ],
+        [
+          -10.9,
+          -75.36
+        ],
+        [
+          -13.07,
+          -76.47
+        ],
+        [
+          -8.93,
+          -84.83
+        ]
+      ],
+      "centroid": [
+        -8.363333333333333,
+        -79.29833333333333
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "101",
+        "addr:street": "Wardour Street",
+        "amenity": "cafe",
+        "building": "yes",
+        "check_date": "2025-05-07",
+        "name": "Bar Bruno",
+        "phone": "+44 20 7734 3750"
+      }
+    },
+    {
+      "id": 156620018,
+      "name": "Building 156620018",
+      "vertices_2d": [
+        [
+          -85.31,
+          0.03
+        ],
+        [
+          -82.72,
+          -4.91
+        ],
+        [
+          -72.93,
+          0.04
+        ],
+        [
+          -75.57,
+          4.96
+        ],
+        [
+          -85.31,
+          0.03
+        ]
+      ],
+      "centroid": [
+        -80.368,
+        0.03000000000000002
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "19",
+        "addr:postcode": "W1F 0PX",
+        "addr:street": "Berwick Street",
+        "building": "retail",
+        "ref:GB:uprn": "10033530400;10033530401;100023471712;10033647801;100023598617;10033590428;10033590388;10033604291",
+        "source": "Bing",
+        "wikimedia_commons": "File:Berwick_Street_-_restaurants.jpg"
+      }
+    },
+    {
+      "id": 283943393,
+      "name": "Hall & Partners",
+      "vertices_2d": [
+        [
+          28.04,
+          72.19
+        ],
+        [
+          32.17,
+          73.87
+        ],
+        [
+          30.34,
+          78.47
+        ],
+        [
+          40.23,
+          82.45
+        ],
+        [
+          45.4,
+          69.94
+        ],
+        [
+          45.18,
+          68.97
+        ],
+        [
+          44.79,
+          68.17
+        ],
+        [
+          44.18,
+          67.43
+        ],
+        [
+          32.26,
+          62.36
+        ],
+        [
+          28.04,
+          72.19
+        ]
+      ],
+      "centroid": [
+        37.063,
+        71.604
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "81",
+        "addr:street": "Dean Street",
+        "alt_name": "H&P",
+        "building": "yes",
+        "building:levels": "5",
+        "name": "Hall & Partners",
+        "office": "company",
+        "website": "https://www.hallandpartners.com/"
+      }
+    },
+    {
+      "id": 274456449,
+      "name": "Building 274456449",
+      "vertices_2d": [
+        [
+          58.46,
+          -48.51
+        ],
+        [
+          53.67,
+          -50.53
+        ],
+        [
+          53.05,
+          -51.13
+        ],
+        [
+          56.89,
+          -59.24
+        ],
+        [
+          58.21,
+          -61.15
+        ],
+        [
+          61.14,
+          -59.86
+        ],
+        [
+          62.67,
+          -62.73
+        ],
+        [
+          64.77,
+          -61.68
+        ],
+        [
+          58.46,
+          -48.51
+        ]
+      ],
+      "centroid": [
+        58.591111111111104,
+        -55.92666666666667
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "7",
+        "addr:postcode": "W1F 0EW",
+        "addr:street": "Meard Street",
+        "building": "house",
+        "building:levels": "4",
+        "building:material": "brick",
+        "ref:GB:uprn": "100023471841;10033570820;10033538251;10033538250;10033538249;10033538248",
+        "roof:colour": "brown",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 274002594,
+      "name": "Building 274002594",
+      "vertices_2d": [
+        [
+          -73.83,
+          38.69
+        ],
+        [
+          -69.5,
+          40.73
+        ],
+        [
+          -65.79,
+          42.62
+        ],
+        [
+          -61.32,
+          44.83
+        ],
+        [
+          -63.44,
+          49.23
+        ],
+        [
+          -65.34,
+          52.77
+        ],
+        [
+          -70.0,
+          50.53
+        ],
+        [
+          -67.98,
+          46.97
+        ],
+        [
+          -71.78,
+          45.05
+        ],
+        [
+          -75.72,
+          43.06
+        ],
+        [
+          -73.83,
+          38.69
+        ]
+      ],
+      "centroid": [
+        -68.95727272727274,
+        44.833636363636366
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housename": "Arlette House",
+        "addr:housenumber": "143",
+        "addr:street": "Meard Street",
+        "building": "retail",
+        "building:levels": "4",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 117623604,
+      "name": "Supreme",
+      "vertices_2d": [
+        [
+          -17.28,
+          -89.38
+        ],
+        [
+          -8.93,
+          -84.83
+        ],
+        [
+          -13.07,
+          -76.47
+        ],
+        [
+          -10.9,
+          -75.36
+        ],
+        [
+          -11.83,
+          -73.33
+        ],
+        [
+          -23.23,
+          -78.62
+        ],
+        [
+          -17.28,
+          -89.38
+        ]
+      ],
+      "centroid": [
+        -14.645714285714286,
+        -81.05285714285712
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "2-3",
+        "addr:postcode": "W1F 0AA",
+        "addr:street": "Peter Street",
+        "building": "yes",
+        "building:levels": "3",
+        "building:material": "brick",
+        "check_date": "2025-05-07",
+        "name": "Supreme",
+        "note": "Clothers store",
+        "ref:GB:uprn": "100023471549;100023471547;100023618153;10033594716;100023610257;10033594714",
+        "roof:colour": "grey",
+        "roof:levels": "1",
+        "shop": "clothes",
+        "website": "https://www.supremenewyork.com/"
+      }
+    },
+    {
+      "id": 156620043,
+      "name": "Red Dog Saloon",
+      "vertices_2d": [
+        [
+          -88.07,
+          4.92
+        ],
+        [
+          -85.31,
+          0.03
+        ],
+        [
+          -75.57,
+          4.96
+        ],
+        [
+          -78.03,
+          10.14
+        ],
+        [
+          -80.82,
+          8.78
+        ],
+        [
+          -88.07,
+          4.92
+        ]
+      ],
+      "centroid": [
+        -82.645,
+        5.625
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:country": "GB",
+        "addr:housenumber": "20",
+        "addr:postcode": "W1F 0PY",
+        "addr:street": "Berwick Street",
+        "amenity": "fast_food",
+        "building": "retail",
+        "cuisine": "barbecue",
+        "fhrs:id": "411336",
+        "fhrs:local_authority_id": "00335/0020/0/001",
+        "fhrs:rating": "5",
+        "name": "Red Dog Saloon",
+        "outdoor_seating": "no",
+        "source": "Bing",
+        "website": "https://www.reddogsaloon.co.uk/",
+        "wheelchair": "yes",
+        "wikimedia_commons": "File:Berwick_Street_-_Nicolas,_The_Dining_Plaice.jpg"
+      }
+    },
+    {
+      "id": 275102868,
+      "name": "Building 275102868",
+      "vertices_2d": [
+        [
+          -38.53,
+          69.35
+        ],
+        [
+          -35.39,
+          70.87
+        ],
+        [
+          -39.34,
+          79.45
+        ],
+        [
+          -42.61,
+          78.03
+        ],
+        [
+          -38.53,
+          69.35
+        ]
+      ],
+      "centroid": [
+        -38.88,
+        73.41000000000001
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:postcode": "W1F 0BG",
+        "building": "yes",
+        "ref:GB:uprn": "100023471903;10033585348",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 156620020,
+      "name": "Studio Nicholson",
+      "vertices_2d": [
+        [
+          -86.87,
+          21.3
+        ],
+        [
+          -77.03,
+          26.47
+        ],
+        [
+          -72.88,
+          17.86
+        ],
+        [
+          -80.04,
+          14.3
+        ],
+        [
+          -80.5,
+          15.46
+        ],
+        [
+          -83.22,
+          14.1
+        ],
+        [
+          -86.87,
+          21.3
+        ]
+      ],
+      "centroid": [
+        -81.05857142857143,
+        18.684285714285714
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "9-11",
+        "addr:postcode": "W1F 0DB",
+        "addr:street": "Broadwick Street",
+        "building": "commercial",
+        "building:levels": "4",
+        "building:material": "brick",
+        "name": "Studio Nicholson",
+        "ref:GB:uprn": "100023471307;10033530801;10033530802;10033648391;10033648390;10033648388;10033648389",
+        "roof:levels": "1",
+        "shop": "clothes",
+        "source": "Bing;photographic_survey"
+      }
+    },
+    {
+      "id": 274456448,
+      "name": "Building 274456448",
+      "vertices_2d": [
+        [
+          64.14,
+          -46.0
+        ],
+        [
+          63.08,
+          -46.6
+        ],
+        [
+          58.46,
+          -48.51
+        ],
+        [
+          64.77,
+          -61.68
+        ],
+        [
+          67.06,
+          -60.69
+        ],
+        [
+          65.57,
+          -57.8
+        ],
+        [
+          68.83,
+          -56.45
+        ],
+        [
+          64.14,
+          -46.0
+        ]
+      ],
+      "centroid": [
+        64.50625,
+        -52.96625
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "5",
+        "addr:postcode": "W1F 0EN",
+        "addr:street": "Meard Street",
+        "building": "house",
+        "building:levels": "4",
+        "building:material": "brick",
+        "ref:GB:uprn": "100022780499",
+        "roof:colour": "brown",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 157779574,
+      "name": "GAIL's",
+      "vertices_2d": [
+        [
+          -53.99,
+          63.13
+        ],
+        [
+          -52.28,
+          62.74
+        ],
+        [
+          -42.15,
+          67.62
+        ],
+        [
+          -44.25,
+          72.26
+        ],
+        [
+          -46.5,
+          71.3
+        ],
+        [
+          -45.68,
+          69.62
+        ],
+        [
+          -47.17,
+          68.91
+        ],
+        [
+          -47.87,
+          70.71
+        ],
+        [
+          -55.96,
+          66.78
+        ],
+        [
+          -53.99,
+          63.13
+        ]
+      ],
+      "centroid": [
+        -48.984,
+        67.62
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "128",
+        "addr:postcode": "W1F 8ZL",
+        "addr:street": "Wardour Street",
+        "brand": "GAIL's Bakery",
+        "brand:wikidata": "Q110662562",
+        "building": "retail",
+        "building:levels": "4",
+        "check_date:opening_hours": "2024-09-03",
+        "fhrs:confidence_management": "5",
+        "fhrs:hygiene": "0",
+        "fhrs:id": "412196",
+        "fhrs:local_authority_id": "00688/0128/0/000",
+        "fhrs:rating": "4",
+        "fhrs:structural": "10",
+        "indoor_seating": "yes",
+        "name": "GAIL's",
+        "opening_hours:signed": "no",
+        "outdoor_seating": "yes",
+        "payment:cash": "no",
+        "phone": "+44 20 7287 1324",
+        "ref:GB:uprn": "100023471904;10033580348",
+        "roof:colour": "grey",
+        "roof:levels": "1",
+        "shop": "bakery",
+        "source": "Bing;photographic_survey",
+        "website": "https://gails.com/pages/soho",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "id": 157779696,
+      "name": "Pickle & Toast",
+      "vertices_2d": [
+        [
+          10.75,
+          -82.3
+        ],
+        [
+          19.0,
+          -77.4
+        ],
+        [
+          20.89,
+          -80.17
+        ],
+        [
+          19.7,
+          -81.01
+        ],
+        [
+          20.94,
+          -82.81
+        ],
+        [
+          13.14,
+          -87.27
+        ],
+        [
+          10.75,
+          -82.3
+        ]
+      ],
+      "centroid": [
+        16.452857142857145,
+        -81.89428571428572
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:postcode": "W1F 0TD",
+        "amenity": "fast_food",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "check_date": "2022-10-28",
+        "name": "Pickle & Toast",
+        "old_name": "The Hobbit",
+        "ref:GB:uprn": "100023471611;10033581869;10033625855;10033581867;100023614383;100023614382;10033624589;10033624590",
+        "roof:colour": "grey",
+        "source": "Bing;photographic_survey",
+        "website": "https://pickleandtoast.com/",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "id": 275102863,
+      "name": "Tanning Shop",
+      "vertices_2d": [
+        [
+          -42.15,
+          67.62
+        ],
+        [
+          -38.53,
+          69.35
+        ],
+        [
+          -42.61,
+          78.03
+        ],
+        [
+          -46.05,
+          76.28
+        ],
+        [
+          -44.25,
+          72.26
+        ],
+        [
+          -42.15,
+          67.62
+        ]
+      ],
+      "centroid": [
+        -42.623333333333335,
+        71.86
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "16",
+        "addr:street": "St. Anne's Court",
+        "beauty": "tanning",
+        "brand": "Tanning Shop",
+        "brand:wikidata": "Q123101132",
+        "building": "yes",
+        "name": "Tanning Shop",
+        "shop": "beauty",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 156620036,
+      "name": "My Place",
+      "vertices_2d": [
+        [
+          -82.9,
+          13.41
+        ],
+        [
+          -80.82,
+          8.78
+        ],
+        [
+          -88.07,
+          4.92
+        ],
+        [
+          -90.47,
+          9.31
+        ],
+        [
+          -82.9,
+          13.41
+        ]
+      ],
+      "centroid": [
+        -85.032,
+        9.966
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "21",
+        "addr:postcode": "W1F 0PZ",
+        "addr:street": "Berwick Street",
+        "amenity": "restaurant",
+        "building": "retail",
+        "building:colour": "brown",
+        "building:levels": "3",
+        "building:material": "brick",
+        "indoor_seating": "yes",
+        "name": "My Place",
+        "outdoor_seating": "no",
+        "ref:GB:uprn": "100023471799;10033579690;10033590396;100023617487;10033628096;10033628097",
+        "roof:colour": "grey",
+        "source": "Bing",
+        "website": "https://www.myplacesoho.com/",
+        "wheelchair": "yes",
+        "wikimedia_commons": "File:Berwick_Street_-_Nicolas,_The_Dining_Plaice.jpg"
+      }
+    },
+    {
+      "id": 280980550,
+      "name": "The Crown & Two Chairmen",
+      "vertices_2d": [
+        [
+          81.76,
+          12.48
+        ],
+        [
+          83.55,
+          11.94
+        ],
+        [
+          93.39,
+          17.03
+        ],
+        [
+          89.76,
+          25.65
+        ],
+        [
+          78.35,
+          20.44
+        ],
+        [
+          81.76,
+          12.48
+        ]
+      ],
+      "centroid": [
+        84.76166666666666,
+        16.669999999999998
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "31-32",
+        "addr:postcode": "W1D 3SB",
+        "addr:street": "Dean Street",
+        "amenity": "pub",
+        "brewery": "various",
+        "building": "yes",
+        "building:colour": "white",
+        "building:levels": "3",
+        "check_date": "2025-06-13",
+        "fhrs:id": "427978",
+        "food": "yes",
+        "indoor_seating": "yes",
+        "live_sport": "yes",
+        "name": "The Crown & Two Chairmen",
+        "outdoor_seating": "yes",
+        "payment:cash": "yes",
+        "payment:mastercard": "yes",
+        "payment:visa": "yes",
+        "payment:visa_debit": "yes",
+        "source": "Bing;photograph",
+        "toilets": "yes",
+        "wheelchair": "no",
+        "wikidata": "Q121745465"
+      }
+    },
+    {
+      "id": 274458675,
+      "name": "Jungle",
+      "vertices_2d": [
+        [
+          -65.34,
+          52.77
+        ],
+        [
+          -65.43,
+          57.35
+        ],
+        [
+          -73.73,
+          53.21
+        ],
+        [
+          -73.49,
+          48.91
+        ],
+        [
+          -70.0,
+          50.53
+        ],
+        [
+          -65.34,
+          52.77
+        ]
+      ],
+      "centroid": [
+        -68.88833333333334,
+        52.589999999999996
+      ],
+      "height": 24.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "145",
+        "addr:postcode": "W1F 8WB",
+        "addr:street": "Wardour Street",
+        "building": "office",
+        "building:levels": "7",
+        "name": "Jungle",
+        "ref:GB:uprn": "100023471736;10033545252;10033581811",
+        "roof:levels": "0",
+        "website": "http://www.thejunglegroup.co.uk/"
+      }
+    },
+    {
+      "id": 156620044,
+      "name": "Salt House",
+      "vertices_2d": [
+        [
+          -45.28,
+          -73.16
+        ],
+        [
+          -43.64,
+          -76.16
+        ],
+        [
+          -41.82,
+          -79.52
+        ],
+        [
+          -40.93,
+          -80.94
+        ],
+        [
+          -37.75,
+          -86.72
+        ],
+        [
+          -32.01,
+          -97.45
+        ],
+        [
+          -22.38,
+          -92.19
+        ],
+        [
+          -17.28,
+          -89.38
+        ],
+        [
+          -23.23,
+          -78.62
+        ],
+        [
+          -23.79,
+          -77.61
+        ],
+        [
+          -28.72,
+          -80.28
+        ],
+        [
+          -31.28,
+          -75.62
+        ],
+        [
+          -33.56,
+          -70.92
+        ],
+        [
+          -35.31,
+          -67.73
+        ],
+        [
+          -45.28,
+          -73.16
+        ]
+      ],
+      "centroid": [
+        -33.484,
+        -79.964
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "5",
+        "addr:street": "Peter Street",
+        "building": "apartments",
+        "building:levels": "5",
+        "name": "Salt House",
+        "roof:colour": "grey"
+      }
+    },
+    {
+      "id": 288394418,
+      "name": "Sunset Strip",
+      "vertices_2d": [
+        [
+          78.35,
+          20.44
+        ],
+        [
+          76.25,
+          25.53
+        ],
+        [
+          87.66,
+          30.85
+        ],
+        [
+          89.15,
+          27.2
+        ],
+        [
+          89.76,
+          25.65
+        ],
+        [
+          78.35,
+          20.44
+        ]
+      ],
+      "centroid": [
+        83.25333333333333,
+        25.01833333333333
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "amenity": "stripclub",
+        "building": "yes",
+        "name": "Sunset Strip",
+        "source": "Bing;photograph",
+        "website": "https://www.sunsetstrip.co.uk/",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "id": 274456447,
+      "name": "Building 274456447",
+      "vertices_2d": [
+        [
+          69.07,
+          -44.17
+        ],
+        [
+          64.14,
+          -46.0
+        ],
+        [
+          68.83,
+          -56.45
+        ],
+        [
+          71.35,
+          -55.43
+        ],
+        [
+          73.2,
+          -59.95
+        ],
+        [
+          75.58,
+          -58.52
+        ],
+        [
+          69.07,
+          -44.17
+        ]
+      ],
+      "centroid": [
+        70.17714285714285,
+        -52.098571428571425
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "3",
+        "addr:postcode": "W1F 0EL",
+        "addr:street": "Meard Street",
+        "building": "house",
+        "building:levels": "4",
+        "building:material": "brick",
+        "ref:GB:uprn": "100023471613;100022780493;10033564794;10033564793;10033538242;10033633205;10033538241;10033584096;10033538240;10033538244;10033538243",
+        "roof:colour": "brown",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 157779693,
+      "name": "acai berry",
+      "vertices_2d": [
+        [
+          -55.96,
+          66.78
+        ],
+        [
+          -57.65,
+          70.28
+        ],
+        [
+          -58.28,
+          71.6
+        ],
+        [
+          -46.51,
+          77.13
+        ],
+        [
+          -44.25,
+          72.26
+        ],
+        [
+          -46.5,
+          71.3
+        ],
+        [
+          -47.87,
+          70.71
+        ],
+        [
+          -55.96,
+          66.78
+        ]
+      ],
+      "centroid": [
+        -51.622499999999995,
+        70.85499999999999
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "130",
+        "addr:postcode": "W1F 8ZN",
+        "addr:street": "Wardour Street",
+        "amenity": "fast_food",
+        "building": "yes",
+        "name": "acai berry",
+        "ref:GB:uprn": "10033622507;10033579520;10033621329;10033622506;10033622505;100023614429;10033628759;100023471585;10033589017;10033622509;10033622508;10033628758;10033570803;10033628760"
+      }
+    },
+    {
+      "id": 288394416,
+      "name": "Quo Vadis",
+      "vertices_2d": [
+        [
+          67.46,
+          45.77
+        ],
+        [
+          76.32,
+          49.79
+        ],
+        [
+          77.9,
+          50.55
+        ],
+        [
+          78.9,
+          48.3
+        ],
+        [
+          80.01,
+          45.82
+        ],
+        [
+          80.37,
+          46.01
+        ],
+        [
+          83.83,
+          37.77
+        ],
+        [
+          85.0,
+          38.25
+        ],
+        [
+          87.38,
+          32.82
+        ],
+        [
+          86.91,
+          32.65
+        ],
+        [
+          87.66,
+          30.85
+        ],
+        [
+          76.25,
+          25.53
+        ],
+        [
+          72.81,
+          33.65
+        ],
+        [
+          68.52,
+          43.35
+        ],
+        [
+          67.46,
+          45.77
+        ]
+      ],
+      "centroid": [
+        78.452,
+        40.458666666666666
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "26-29",
+        "addr:postcode": "W1D 3LL",
+        "addr:street": "Dean Street",
+        "amenity": "restaurant",
+        "building": "yes",
+        "email": "reception@quovadissoho.co.uk",
+        "fhrs:confidence_management": "5",
+        "fhrs:hygiene": "5",
+        "fhrs:id": "412866",
+        "fhrs:local_authority_id": "00953/0026/0/000",
+        "fhrs:rating": "4",
+        "fhrs:structural": "10",
+        "heritage": "2",
+        "heritage:operator": "he",
+        "heritage:website": "https://historicengland.org.uk/listing/the-list/list-entry/1290584",
+        "listed_status": "Grade I",
+        "name": "Quo Vadis",
+        "opening_hours": "Mo-Sa 12:00-14:30, 17:00-22:00",
+        "outdoor_seating": "yes",
+        "phone": "+44 20 7437 9585",
+        "ref:GB:nhle": "1290584",
+        "source:postcode": "FSA Food Hygiene Ratings Database",
+        "website": "https://www.quovadissoho.co.uk/",
+        "wheelchair": "no",
+        "wikidata": "Q7272809"
+      }
+    },
+    {
+      "id": 156620019,
+      "name": "Ronning",
+      "vertices_2d": [
+        [
+          -37.75,
+          -86.72
+        ],
+        [
+          -40.93,
+          -80.94
+        ],
+        [
+          -31.28,
+          -75.62
+        ],
+        [
+          -28.72,
+          -80.28
+        ],
+        [
+          -28.1,
+          -81.4
+        ],
+        [
+          -37.75,
+          -86.72
+        ]
+      ],
+      "centroid": [
+        -34.08833333333333,
+        -81.94666666666667
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "check_date": "2026-05-08",
+        "level": "0",
+        "name": "Ronning",
+        "shop": "clothes",
+        "source": "photograph",
+        "wikimedia_commons": "File:Berwick_Street_shops_2.jpg"
+      }
+    },
+    {
+      "id": 280980559,
+      "name": "Doppo",
+      "vertices_2d": [
+        [
+          92.8,
+          8.15
+        ],
+        [
+          84.93,
+          4.09
+        ],
+        [
+          84.53,
+          3.12
+        ],
+        [
+          86.28,
+          -0.9
+        ],
+        [
+          87.01,
+          -2.55
+        ],
+        [
+          95.71,
+          1.85
+        ],
+        [
+          92.8,
+          8.15
+        ]
+      ],
+      "centroid": [
+        89.15142857142857,
+        3.13
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "33",
+        "addr:postcode": "W1D 4PW",
+        "addr:street": "Dean Street",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "italian",
+        "fhrs:id": "1537476",
+        "indoor_seating": "yes",
+        "name": "Doppo",
+        "outdoor_seating": "yes",
+        "survey:date": "2023-02-28"
+      }
+    },
+    {
+      "id": 274456442,
+      "name": "Building 274456442",
+      "vertices_2d": [
+        [
+          69.07,
+          -44.17
+        ],
+        [
+          75.56,
+          -41.76
+        ],
+        [
+          75.56,
+          -42.32
+        ],
+        [
+          77.72,
+          -47.7
+        ],
+        [
+          79.27,
+          -51.71
+        ],
+        [
+          76.05,
+          -53.11
+        ],
+        [
+          78.21,
+          -58.0
+        ],
+        [
+          75.94,
+          -59.39
+        ],
+        [
+          75.58,
+          -58.52
+        ],
+        [
+          69.07,
+          -44.17
+        ]
+      ],
+      "centroid": [
+        75.203,
+        -50.084999999999994
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "1",
+        "addr:postcode": "W1F 0EJ",
+        "addr:street": "Meard Street",
+        "building": "house",
+        "building:levels": "4",
+        "building:material": "brick",
+        "ref:GB:uprn": "100023471428;10033567471;10033567473;10033567472",
+        "roof:colour": "brown",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 274456454,
+      "name": "Building 274456454",
+      "vertices_2d": [
+        [
+          78.49,
+          -39.85
+        ],
+        [
+          89.12,
+          -35.44
+        ],
+        [
+          91.97,
+          -41.81
+        ],
+        [
+          77.72,
+          -47.7
+        ],
+        [
+          75.56,
+          -42.32
+        ],
+        [
+          79.19,
+          -41.01
+        ],
+        [
+          78.49,
+          -39.85
+        ]
+      ],
+      "centroid": [
+        81.50571428571429,
+        -41.14
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "68",
+        "addr:postcode": "W1D 4QJ",
+        "addr:street": "Dean Street",
+        "building": "yes",
+        "ref:GB:uprn": "100022740931",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 184419079,
+      "name": "Building 184419079",
+      "vertices_2d": [
+        [
+          17.24,
+          79.48
+        ],
+        [
+          22.91,
+          82.01
+        ],
+        [
+          23.7,
+          79.99
+        ],
+        [
+          28.96,
+          82.19
+        ],
+        [
+          30.34,
+          78.47
+        ],
+        [
+          40.23,
+          82.45
+        ],
+        [
+          33.29,
+          99.25
+        ],
+        [
+          31.84,
+          100.14
+        ],
+        [
+          30.53,
+          99.88
+        ],
+        [
+          23.8,
+          96.99
+        ],
+        [
+          12.03,
+          91.95
+        ],
+        [
+          17.24,
+          79.48
+        ]
+      ],
+      "centroid": [
+        26.009166666666662,
+        87.69
+      ],
+      "height": 21.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:colour": "white",
+        "building:levels": "6"
+      }
+    },
+    {
+      "id": 156620042,
+      "name": "The Blue Posts",
+      "vertices_2d": [
+        [
+          -94.25,
+          15.2
+        ],
+        [
+          -94.27,
+          16.25
+        ],
+        [
+          -93.75,
+          17.58
+        ],
+        [
+          -86.87,
+          21.3
+        ],
+        [
+          -83.22,
+          14.1
+        ],
+        [
+          -82.9,
+          13.41
+        ],
+        [
+          -90.47,
+          9.31
+        ],
+        [
+          -92.49,
+          12.01
+        ],
+        [
+          -93.23,
+          13.57
+        ],
+        [
+          -94.25,
+          15.2
+        ]
+      ],
+      "centroid": [
+        -90.57000000000001,
+        14.792999999999997
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "22",
+        "addr:postcode": "W1F 0QA",
+        "addr:street": "Berwick Street",
+        "amenity": "pub",
+        "building": "retail",
+        "building:colour": "brown",
+        "building:levels": "3",
+        "building:material": "brick",
+        "fhrs:id": "411338",
+        "fhrs:local_authority_id": "00335/0022/0/000",
+        "indoor_seating": "yes",
+        "name": "The Blue Posts",
+        "opening_hours": "Mo-Sa 11:30-23:00; Su 11:30-22:30",
+        "outdoor_seating": "no",
+        "phone": "+44 20 7437 5008",
+        "ref:GB:uprn": "10033653053;100022726168",
+        "roof:colour": "grey",
+        "roof:levels": "1",
+        "source": "Bing",
+        "website": "https://www.theblueposts.net/"
+      }
+    },
+    {
+      "id": 157779605,
+      "name": "Building 157779605",
+      "vertices_2d": [
+        [
+          13.14,
+          -87.27
+        ],
+        [
+          20.94,
+          -82.81
+        ],
+        [
+          23.43,
+          -81.41
+        ],
+        [
+          25.58,
+          -85.19
+        ],
+        [
+          26.56,
+          -84.63
+        ],
+        [
+          30.88,
+          -92.25
+        ],
+        [
+          31.75,
+          -93.7
+        ],
+        [
+          19.99,
+          -100.71
+        ],
+        [
+          19.15,
+          -98.77
+        ],
+        [
+          13.14,
+          -87.27
+        ]
+      ],
+      "centroid": [
+        22.456,
+        -89.401
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:country": "GB",
+        "addr:housenumber": "68-70",
+        "addr:postcode": "W1F 0TB",
+        "addr:street": "Wardour Street",
+        "building": "yes",
+        "building:levels": "5",
+        "building:material": "brick",
+        "ref:GB:uprn": "100023471758;10033581592;100023471612;10033635413;10033589005;10033545288;10033581623;10033545289;10033581621;10033589010;10033635416;10033635415;10033635414",
+        "roof:colour": "grey",
+        "source": "Bing;photographic_survey"
+      }
+    },
+    {
+      "id": 117623605,
+      "name": "Building 117623605",
+      "vertices_2d": [
+        [
+          -9.09,
+          -90.89
+        ],
+        [
+          -0.22,
+          -85.27
+        ],
+        [
+          1.42,
+          -85.58
+        ],
+        [
+          5.5,
+          -94.79
+        ],
+        [
+          -4.03,
+          -99.5
+        ],
+        [
+          -4.75,
+          -99.83
+        ],
+        [
+          -9.09,
+          -90.89
+        ]
+      ],
+      "centroid": [
+        -2.8942857142857146,
+        -92.39285714285714
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "97",
+        "addr:postcode": "W1F 0UF",
+        "addr:street": "Wardour Street",
+        "building": "yes",
+        "building:levels": "3",
+        "check_date": "2025-05-07",
+        "ref:GB:uprn": "100023471911;10033584609;10033526287;10033615186;10033605255;10033605256;10033605257;10033605258;10033605253;10033605254",
+        "roof:levels": "1",
+        "wheelchair": "limited",
+        "wikidata": "Q28791927",
+        "wikimedia_commons": "File:Corner_of_Peter_Street_and_Berwick_Street,_Soho,_London.jpg"
+      }
+    },
+    {
+      "id": 275102869,
+      "name": "Building 275102869",
+      "vertices_2d": [
+        [
+          -19.07,
+          94.57
+        ],
+        [
+          -22.36,
+          93.15
+        ],
+        [
+          -25.28,
+          91.83
+        ],
+        [
+          -28.55,
+          99.11
+        ],
+        [
+          -38.25,
+          94.43
+        ],
+        [
+          -28.74,
+          74.07
+        ],
+        [
+          -13.43,
+          81.44
+        ],
+        [
+          -15.21,
+          85.58
+        ],
+        [
+          -19.07,
+          94.57
+        ]
+      ],
+      "centroid": [
+        -23.32888888888889,
+        89.86111111111114
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:postcode": "W1F 0BJ",
+        "building": "yes",
+        "ref:GB:uprn": "10033553822",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 156620060,
+      "name": "Building 156620060",
+      "vertices_2d": [
+        [
+          -86.92,
+          32.02
+        ],
+        [
+          -84.12,
+          33.33
+        ],
+        [
+          -73.83,
+          38.69
+        ],
+        [
+          -75.72,
+          43.06
+        ],
+        [
+          -77.26,
+          46.06
+        ],
+        [
+          -78.32,
+          45.57
+        ],
+        [
+          -80.65,
+          49.95
+        ],
+        [
+          -84.72,
+          47.97
+        ],
+        [
+          -86.37,
+          47.17
+        ],
+        [
+          -87.36,
+          46.69
+        ],
+        [
+          -85.2,
+          42.37
+        ],
+        [
+          -90.25,
+          38.68
+        ],
+        [
+          -86.92,
+          32.02
+        ]
+      ],
+      "centroid": [
+        -82.89538461538463,
+        41.81384615384616
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "8-12",
+        "addr:street": "Broadwick Street",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 478967748,
+      "name": "The Duck and Rice",
+      "vertices_2d": [
+        [
+          -82.09,
+          -26.52
+        ],
+        [
+          -86.7,
+          -18.07
+        ],
+        [
+          -89.85,
+          -19.87
+        ],
+        [
+          -102.81,
+          -27.03
+        ],
+        [
+          -98.27,
+          -35.05
+        ],
+        [
+          -85.37,
+          -28.29
+        ],
+        [
+          -82.09,
+          -26.52
+        ]
+      ],
+      "centroid": [
+        -89.59714285714286,
+        -25.907142857142862
+      ],
+      "height": 7.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "90",
+        "addr:postcode": "W1F 0QB",
+        "addr:street": "Berwick Street",
+        "amenity": "restaurant",
+        "building": "retail",
+        "building:levels": "2",
+        "check_date": "2025-09-26",
+        "cuisine": "chinese",
+        "email": "reservations@theduckandrice.com",
+        "name": "The Duck and Rice",
+        "old_name": "The Endurance",
+        "opening_hours": "Mo-Th 12:00-23:30; Fr-Sa 12:00-00:00; Su 12:00-22:30",
+        "payment:apple_pay": "yes",
+        "payment:cash": "yes",
+        "payment:contactless": "yes",
+        "payment:credit_cards": "yes",
+        "payment:debit_cards": "yes",
+        "payment:google_pay": "yes",
+        "phone": "+44 20 3327 7888",
+        "ref:GB:uprn": "10033530452;10033644095;10033644096",
+        "website": "https://theduckandrice.com/"
+      }
+    },
+    {
+      "id": 275102858,
+      "name": "Building 275102858",
+      "vertices_2d": [
+        [
+          -44.94,
+          91.44
+        ],
+        [
+          -39.34,
+          79.45
+        ],
+        [
+          -35.39,
+          70.87
+        ],
+        [
+          -28.74,
+          74.07
+        ],
+        [
+          -38.25,
+          94.43
+        ],
+        [
+          -41.1,
+          93.12
+        ],
+        [
+          -44.94,
+          91.44
+        ]
+      ],
+      "centroid": [
+        -38.957142857142856,
+        84.9742857142857
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "17",
+        "addr:street": "Saint Anne's Court",
+        "building": "office",
+        "ref:GB:uprn": "10033580350;100023612779;100023471597;10033628665;10033628666;10033587175;10033587178;10033587177;100023612780",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 157779627,
+      "name": "Cocomelt",
+      "vertices_2d": [
+        [
+          -58.28,
+          71.6
+        ],
+        [
+          -60.99,
+          76.63
+        ],
+        [
+          -52.69,
+          80.43
+        ],
+        [
+          -48.57,
+          82.31
+        ],
+        [
+          -46.51,
+          77.13
+        ],
+        [
+          -58.28,
+          71.6
+        ]
+      ],
+      "centroid": [
+        -54.220000000000006,
+        76.61666666666667
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "132",
+        "addr:postcode": "W1F 8ZW",
+        "addr:street": "Wardour Street",
+        "amenity": "cafe",
+        "building": "retail",
+        "diet:vegetarian": "no",
+        "indoor_seating": "yes",
+        "name": "Cocomelt",
+        "opening_hours": "Mo-Sa 10:00-23:00; Su 10:00-22:00",
+        "outdoor_seating": "no",
+        "payment:credit_cards": "yes",
+        "payment:debit_cards": "yes",
+        "ref:GB:uprn": "10033586304;100023471791;10033629367;10033629366",
+        "source": "Bing;photographic_survey",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "id": 288394415,
+      "name": "Building 288394415",
+      "vertices_2d": [
+        [
+          68.13,
+          69.65
+        ],
+        [
+          68.67,
+          68.26
+        ],
+        [
+          69.17,
+          66.97
+        ],
+        [
+          77.36,
+          70.63
+        ],
+        [
+          78.62,
+          67.69
+        ],
+        [
+          80.59,
+          63.08
+        ],
+        [
+          81.01,
+          62.12
+        ],
+        [
+          79.02,
+          61.14
+        ],
+        [
+          81.26,
+          55.73
+        ],
+        [
+          81.4,
+          55.45
+        ],
+        [
+          75.22,
+          52.64
+        ],
+        [
+          76.32,
+          49.79
+        ],
+        [
+          67.46,
+          45.77
+        ],
+        [
+          66.17,
+          48.87
+        ],
+        [
+          61.57,
+          60.41
+        ],
+        [
+          59.83,
+          64.42
+        ],
+        [
+          59.2,
+          65.86
+        ],
+        [
+          68.13,
+          69.65
+        ]
+      ],
+      "centroid": [
+        72.1738888888889,
+        61.00722222222222
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "22",
+        "addr:street": "Dean Street",
+        "building": "yes",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 280997376,
+      "name": "Building 280997376",
+      "vertices_2d": [
+        [
+          95.71,
+          1.85
+        ],
+        [
+          96.21,
+          0.79
+        ],
+        [
+          97.27,
+          -1.42
+        ],
+        [
+          100.54,
+          0.17
+        ],
+        [
+          101.57,
+          -2.2
+        ],
+        [
+          89.53,
+          -8.35
+        ],
+        [
+          87.55,
+          -3.78
+        ],
+        [
+          87.01,
+          -2.55
+        ],
+        [
+          95.71,
+          1.85
+        ]
+      ],
+      "centroid": [
+        94.56666666666666,
+        -1.5155555555555553
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:postcode": "W1D 4PP",
+        "building": "retail",
+        "building:levels": "4",
+        "building:material": "brick",
+        "ref:GB:uprn": "10033551080;10033551081;10033619580;10033626938;10033626937;10033632370;100023472120;10033626940;10033632369;10033554058",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 280980553,
+      "name": "Building 280980553",
+      "vertices_2d": [
+        [
+          93.39,
+          17.03
+        ],
+        [
+          98.01,
+          19.43
+        ],
+        [
+          92.18,
+          32.75
+        ],
+        [
+          89.81,
+          31.75
+        ],
+        [
+          91.25,
+          28.17
+        ],
+        [
+          89.15,
+          27.2
+        ],
+        [
+          89.76,
+          25.65
+        ],
+        [
+          93.39,
+          17.03
+        ]
+      ],
+      "centroid": [
+        92.1175,
+        24.87625
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "13",
+        "addr:street": "Bateman Street",
+        "building": "yes",
+        "building:colour": "white",
+        "building:levels": "3",
+        "roof:levels": "1",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 428716363,
+      "name": "90-104 Berwick Street",
+      "vertices_2d": [
+        [
+          -64.74,
+          -64.49
+        ],
+        [
+          -84.21,
+          -29.19
+        ],
+        [
+          -84.73,
+          -29.4
+        ],
+        [
+          -85.37,
+          -28.29
+        ],
+        [
+          -98.27,
+          -35.05
+        ],
+        [
+          -102.91,
+          -37.41
+        ],
+        [
+          -83.58,
+          -73.38
+        ],
+        [
+          -82.2,
+          -72.74
+        ],
+        [
+          -64.74,
+          -64.49
+        ]
+      ],
+      "centroid": [
+        -83.41666666666669,
+        -48.271111111111104
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "hotel",
+        "name": "90-104 Berwick Street"
+      }
+    },
+    {
+      "id": 156620023,
+      "name": "Namaiki",
+      "vertices_2d": [
+        [
+          -91.73,
+          29.27
+        ],
+        [
+          -87.64,
+          31.54
+        ],
+        [
+          -86.92,
+          32.02
+        ],
+        [
+          -90.25,
+          38.68
+        ],
+        [
+          -91.11,
+          40.49
+        ],
+        [
+          -92.49,
+          39.97
+        ],
+        [
+          -90.91,
+          36.71
+        ],
+        [
+          -92.73,
+          35.97
+        ],
+        [
+          -93.19,
+          35.78
+        ],
+        [
+          -92.32,
+          33.75
+        ],
+        [
+          -91.73,
+          29.27
+        ]
+      ],
+      "centroid": [
+        -91.00181818181818,
+        34.85909090909092
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "14",
+        "addr:postcode": "W1F 8HP",
+        "addr:street": "Broadwick Street",
+        "amenity": "restaurant",
+        "building": "retail",
+        "building:colour": "grey",
+        "building:levels": "4",
+        "building:material": "stone",
+        "check_date": "2024-08-21",
+        "cuisine": "sushi",
+        "fhrs:id": "1576233",
+        "indoor_seating": "yes",
+        "name": "Namaiki",
+        "outdoor_seating": "no",
+        "phone": "+44 7502 868876",
+        "roof:levels": "1",
+        "source": "Bing;photographic_survey",
+        "website": "https://namaiki.co.uk/"
+      }
+    },
+    {
+      "id": 283943399,
+      "name": "Building 283943399",
+      "vertices_2d": [
+        [
+          91.97,
+          -41.81
+        ],
+        [
+          94.33,
+          -47.1
+        ],
+        [
+          81.45,
+          -53.83
+        ],
+        [
+          80.2,
+          -51.2
+        ],
+        [
+          79.27,
+          -51.71
+        ],
+        [
+          77.72,
+          -47.7
+        ],
+        [
+          91.97,
+          -41.81
+        ]
+      ],
+      "centroid": [
+        85.27285714285713,
+        -47.88
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:postcode": "W1D 4QH",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "brick",
+        "ref:GB:uprn": "10033563168;100023472394;100023472493;10033570853",
+        "roof:colour": "brown",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 283943394,
+      "name": "12 Bourchier Street",
+      "vertices_2d": [
+        [
+          56.35,
+          -67.8
+        ],
+        [
+          33.14,
+          -82.99
+        ],
+        [
+          39.86,
+          -93.88
+        ],
+        [
+          41.91,
+          -97.0
+        ],
+        [
+          45.56,
+          -94.52
+        ],
+        [
+          46.89,
+          -94.79
+        ],
+        [
+          48.35,
+          -94.2
+        ],
+        [
+          49.05,
+          -92.91
+        ],
+        [
+          48.81,
+          -91.68
+        ],
+        [
+          47.21,
+          -88.44
+        ],
+        [
+          68.43,
+          -73.11
+        ],
+        [
+          63.69,
+          -66.21
+        ],
+        [
+          58.14,
+          -70.09
+        ],
+        [
+          56.35,
+          -67.8
+        ]
+      ],
+      "centroid": [
+        50.26714285714286,
+        -83.95857142857142
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "12",
+        "addr:street": "Bourchier Street",
+        "building": "apartments",
+        "building:levels": "5",
+        "name": "12 Bourchier Street",
+        "roof:levels": "0",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 280980551,
+      "name": "Gopal's of Soho",
+      "vertices_2d": [
+        [
+          98.49,
+          11.0
+        ],
+        [
+          92.8,
+          8.15
+        ],
+        [
+          95.71,
+          1.85
+        ],
+        [
+          96.21,
+          0.79
+        ],
+        [
+          97.27,
+          -1.42
+        ],
+        [
+          100.54,
+          0.17
+        ],
+        [
+          101.57,
+          -2.2
+        ],
+        [
+          104.46,
+          -0.72
+        ],
+        [
+          98.49,
+          11.0
+        ]
+      ],
+      "centroid": [
+        98.39333333333333,
+        3.18
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "12",
+        "addr:postcode": "W1D 4AH",
+        "addr:street": "Bateman Street",
+        "amenity": "restaurant",
+        "building": "yes",
+        "building:colour": "white",
+        "building:levels": "4",
+        "building:material": "plaster",
+        "check_date": "2025-06-13",
+        "cuisine": "indian",
+        "indoor_seating": "yes",
+        "name": "Gopal's of Soho",
+        "outdoor_seating": "no",
+        "payment:american_express": "yes",
+        "ref:GB:uprn": "100023471999;10033589965;10033529403;10033529402;10033573132",
+        "source": "Bing;photograph",
+        "website": "http://www.gopalsofsoho.co.uk/"
+      }
+    },
+    {
+      "id": 117623609,
+      "name": "Bone Daddies",
+      "vertices_2d": [
+        [
+          -19.01,
+          -96.69
+        ],
+        [
+          -9.09,
+          -90.89
+        ],
+        [
+          -4.75,
+          -99.83
+        ],
+        [
+          -14.17,
+          -104.89
+        ],
+        [
+          -19.01,
+          -96.69
+        ]
+      ],
+      "centroid": [
+        -13.206,
+        -97.79799999999999
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "30-31",
+        "addr:postcode": "W1F 0AP",
+        "addr:street": "Peter Street",
+        "amenity": "restaurant",
+        "brand": "Bone Daddies",
+        "brand:wikidata": "Q111204601",
+        "building": "retail",
+        "check_date": "2024-04-24",
+        "cuisine": "ramen",
+        "diet:vegan": "yes",
+        "diet:vegetarian": "yes",
+        "dog": "yes",
+        "fhrs:id": "411585",
+        "image:menu": "010e99f5-ec77-4a73-97f1-8a672ad760da",
+        "image:menu:0": "205e6a39-6bfe-480d-bf9f-5c47f0eeb49c",
+        "indoor_seating": "yes",
+        "name": "Bone Daddies",
+        "opening_hours": "Su-We 11:30-22:00; Th-Sa 11:30-23:00",
+        "outdoor_seating": "no",
+        "payment:cash": "no",
+        "payment:credit_cards": "yes",
+        "payment:debit_cards": "yes",
+        "reservation": "no",
+        "source:addr": "FHRS Open Data",
+        "takeaway": "yes",
+        "wheelchair": "no",
+        "wikimedia_commons": "File:Corner_of_Peter_Street_and_Berwick_Street,_Soho,_London.jpg"
+      }
+    },
+    {
+      "id": 275102859,
+      "name": "Good Housekeeping Institute",
+      "vertices_2d": [
+        [
+          9.54,
+          96.48
+        ],
+        [
+          4.73,
+          107.98
+        ],
+        [
+          -1.61,
+          105.15
+        ],
+        [
+          -4.34,
+          103.93
+        ],
+        [
+          -11.65,
+          100.72
+        ],
+        [
+          -20.14,
+          96.88
+        ],
+        [
+          -19.07,
+          94.57
+        ],
+        [
+          -15.21,
+          85.58
+        ],
+        [
+          9.54,
+          96.48
+        ]
+      ],
+      "centroid": [
+        -5.3566666666666665,
+        98.64111111111112
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "21-25",
+        "addr:postcode": "W1F 0BJ",
+        "addr:street": "Saint Anne's Court",
+        "building": "school",
+        "building:levels": "3",
+        "building:material": "brick",
+        "description": "Cookery school",
+        "name": "Good Housekeeping Institute",
+        "ref:GB:uprn": "10033524320;100023471598;10033543551;10033543550;10033625852;10033524319",
+        "roof:colour": "grey",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 280997364,
+      "name": "Building 280997364",
+      "vertices_2d": [
+        [
+          89.53,
+          -8.35
+        ],
+        [
+          94.32,
+          -19.31
+        ],
+        [
+          94.79,
+          -20.37
+        ],
+        [
+          103.29,
+          -16.16
+        ],
+        [
+          102.88,
+          -15.21
+        ],
+        [
+          110.03,
+          -11.74
+        ],
+        [
+          104.46,
+          -0.72
+        ],
+        [
+          101.57,
+          -2.2
+        ],
+        [
+          89.53,
+          -8.35
+        ]
+      ],
+      "centroid": [
+        98.93333333333334,
+        -11.378888888888888
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "35",
+        "addr:postcode": "W1D 4PR",
+        "addr:street": "Dean Street",
+        "building": "yes",
+        "building:levels": "5",
+        "ref:GB:uprn": "10033629280;10033629281;100023472314;10033573822;10033646380;10033629279;10033570847;10033570848;10033533196;10033646379;10033573821;10033573820",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 283943392,
+      "name": "The 7 Stars",
+      "vertices_2d": [
+        [
+          94.33,
+          -47.1
+        ],
+        [
+          97.82,
+          -54.86
+        ],
+        [
+          69.25,
+          -74.48
+        ],
+        [
+          68.43,
+          -73.11
+        ],
+        [
+          63.69,
+          -66.21
+        ],
+        [
+          75.94,
+          -59.39
+        ],
+        [
+          78.21,
+          -58.0
+        ],
+        [
+          82.22,
+          -55.54
+        ],
+        [
+          81.45,
+          -53.83
+        ],
+        [
+          94.33,
+          -47.1
+        ]
+      ],
+      "centroid": [
+        80.56700000000001,
+        -58.962
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "65-66",
+        "addr:postcode": "W1D 4HX",
+        "addr:street": "Dean Street",
+        "building": "office",
+        "building:levels": "4",
+        "contact:website": "http://www.the7stars.co.uk/",
+        "name": "The 7 Stars",
+        "office": "company",
+        "ref:GB:uprn": "10033553528",
+        "roof:colour": "grey",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 156620026,
+      "name": "Good News",
+      "vertices_2d": [
+        [
+          -97.85,
+          26.1
+        ],
+        [
+          -99.81,
+          29.87
+        ],
+        [
+          -94.78,
+          32.48
+        ],
+        [
+          -92.32,
+          33.75
+        ],
+        [
+          -91.73,
+          29.27
+        ],
+        [
+          -97.85,
+          26.1
+        ]
+      ],
+      "centroid": [
+        -95.72333333333334,
+        29.595
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "23",
+        "addr:street": "Berwick Street",
+        "building": "retail",
+        "building:colour": "brown",
+        "building:levels": "4",
+        "building:material": "brick",
+        "check_date": "2025-07-18",
+        "name": "Good News",
+        "shop": "newsagent",
+        "source": "Bing;photographic_survey",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "id": 280980556,
+      "name": "Salon64",
+      "vertices_2d": [
+        [
+          98.01,
+          19.43
+        ],
+        [
+          102.83,
+          21.92
+        ],
+        [
+          98.54,
+          31.56
+        ],
+        [
+          97.24,
+          30.96
+        ],
+        [
+          95.71,
+          34.25
+        ],
+        [
+          94.27,
+          33.64
+        ],
+        [
+          92.18,
+          32.75
+        ],
+        [
+          98.01,
+          19.43
+        ]
+      ],
+      "centroid": [
+        97.09875,
+        27.9925
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "14",
+        "addr:street": "Bateman Street",
+        "building": "yes",
+        "building:levels": "5",
+        "building:material": "brick",
+        "check_date": "2025-06-13",
+        "name": "Salon64",
+        "shop": "hairdresser",
+        "source": "Bing;photograph",
+        "source:addr": "extrapolation",
+        "website": "https://www.japaneseknifecompany.com/"
+      }
+    },
+    {
+      "id": 157779708,
+      "name": "inamo",
+      "vertices_2d": [
+        [
+          -60.99,
+          76.63
+        ],
+        [
+          -65.01,
+          85.39
+        ],
+        [
+          -56.81,
+          89.16
+        ],
+        [
+          -56.2,
+          87.82
+        ],
+        [
+          -52.29,
+          89.61
+        ],
+        [
+          -50.7,
+          90.34
+        ],
+        [
+          -50.16,
+          89.14
+        ],
+        [
+          -48.02,
+          84.49
+        ],
+        [
+          -53.42,
+          82.01
+        ],
+        [
+          -52.69,
+          80.43
+        ],
+        [
+          -60.99,
+          76.63
+        ]
+      ],
+      "centroid": [
+        -55.20727272727272,
+        84.69545454545454
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "134-136",
+        "addr:postcode": "W1F 8ZS",
+        "addr:street": "Wardour Street",
+        "amenity": "restaurant",
+        "building": "retail",
+        "fhrs:confidence_management": "5",
+        "fhrs:hygiene": "5",
+        "fhrs:id": "412198",
+        "fhrs:local_authority_id": "00688/0136/0/000",
+        "fhrs:rating": "5",
+        "fhrs:structural": "5",
+        "indoor_seating": "yes",
+        "name": "inamo",
+        "outdoor_seating": "no",
+        "payment:american_express": "yes",
+        "source": "Bing;photographic_survey",
+        "source:postcode": "FSA Food Hygiene Ratings Database",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "id": 40858235,
+      "name": "Kemp House",
+      "vertices_2d": [
+        [
+          -82.2,
+          -72.74
+        ],
+        [
+          -64.74,
+          -64.49
+        ],
+        [
+          -62.66,
+          -67.83
+        ],
+        [
+          -59.17,
+          -74.47
+        ],
+        [
+          -54.85,
+          -82.7
+        ],
+        [
+          -52.93,
+          -85.79
+        ],
+        [
+          -70.58,
+          -94.87
+        ],
+        [
+          -82.2,
+          -72.74
+        ]
+      ],
+      "centroid": [
+        -66.16625,
+        -76.95375
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housename": "Kemp House",
+        "addr:street": "Berwick Street",
+        "building": "residential",
+        "name": "Kemp House"
+      }
+    },
+    {
+      "id": 149173479,
+      "name": "Soho Theatre",
+      "vertices_2d": [
+        [
+          66.51,
+          92.7
+        ],
+        [
+          50.85,
+          85.99
+        ],
+        [
+          59.2,
+          65.86
+        ],
+        [
+          68.13,
+          69.65
+        ],
+        [
+          74.82,
+          72.51
+        ],
+        [
+          66.51,
+          92.7
+        ]
+      ],
+      "centroid": [
+        64.33666666666666,
+        79.90166666666667
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "21",
+        "addr:postcode": "W1D 3NE",
+        "addr:street": "Dean Street",
+        "amenity": "theatre",
+        "bar": "yes",
+        "building": "yes",
+        "check_date": "2024-11-06",
+        "food": "yes",
+        "name": "Soho Theatre",
+        "phone": "+44 20 7478 0100",
+        "website": "https://www.sohotheatre.com/",
+        "wikidata": "Q7554776",
+        "wikipedia": "en:Soho Theatre"
+      }
+    },
+    {
+      "id": 275102867,
+      "name": "Building 275102867",
+      "vertices_2d": [
+        [
+          9.54,
+          96.48
+        ],
+        [
+          15.92,
+          99.32
+        ],
+        [
+          10.86,
+          110.75
+        ],
+        [
+          4.73,
+          107.98
+        ],
+        [
+          9.54,
+          96.48
+        ]
+      ],
+      "centroid": [
+        10.117999999999999,
+        102.20200000000001
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "26",
+        "addr:postcode": "W1F 0BL",
+        "addr:street": "St. Anne's Court",
+        "building": "yes",
+        "building:levels": "3",
+        "building:material": "brick",
+        "ref:GB:uprn": "10033580364;100023471899",
+        "roof:colour": "grey",
+        "roof:levels": "1",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 156620021,
+      "name": "A Day's March",
+      "vertices_2d": [
+        [
+          -99.81,
+          29.87
+        ],
+        [
+          -104.59,
+          39.05
+        ],
+        [
+          -97.09,
+          42.77
+        ],
+        [
+          -96.26,
+          42.98
+        ],
+        [
+          -92.73,
+          35.97
+        ],
+        [
+          -93.19,
+          35.78
+        ],
+        [
+          -95.84,
+          34.32
+        ],
+        [
+          -94.78,
+          32.48
+        ],
+        [
+          -99.81,
+          29.87
+        ]
+      ],
+      "centroid": [
+        -97.12222222222223,
+        35.89888888888889
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "24",
+        "addr:postcode": "W1F 8RG",
+        "addr:street": "Berwick Street",
+        "building": "retail",
+        "building:colour": "brown",
+        "building:levels": "3",
+        "building:material": "brick",
+        "check_date": "2024-07-03",
+        "name": "A Day's March",
+        "opening_hours": "Mo-Sa 11:00-19:00; Su 11:00-18:00",
+        "payment:credit_cards": "yes",
+        "payment:debit_cards": "yes",
+        "ref:GB:uprn": "100023471302;10033629354;10033629353",
+        "shop": "clothes",
+        "website": "https://www.adaysmarch.com/",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "id": 157779587,
+      "name": "Cinema House",
+      "vertices_2d": [
+        [
+          -4.03,
+          -99.5
+        ],
+        [
+          -1.5,
+          -104.66
+        ],
+        [
+          -2.27,
+          -105.33
+        ],
+        [
+          -1.21,
+          -107.66
+        ],
+        [
+          -0.15,
+          -109.98
+        ],
+        [
+          11.82,
+          -107.31
+        ],
+        [
+          10.02,
+          -104.04
+        ],
+        [
+          5.5,
+          -94.79
+        ],
+        [
+          -4.03,
+          -99.5
+        ]
+      ],
+      "centroid": [
+        1.572222222222222,
+        -103.64111111111112
+      ],
+      "height": 14.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:country": "GB",
+        "addr:housename": "Cinema House",
+        "addr:housenumber": "93-95",
+        "addr:street": "Wardour Street",
+        "building": "yes",
+        "building:levels": "4",
+        "building:material": "stone",
+        "name": "Cinema House",
+        "roof:levels": "1"
+      }
+    },
+    {
+      "id": 274458674,
+      "name": "Fora",
+      "vertices_2d": [
+        [
+          -65.43,
+          57.35
+        ],
+        [
+          -70.88,
+          68.23
+        ],
+        [
+          -73.06,
+          72.56
+        ],
+        [
+          -75.94,
+          78.25
+        ],
+        [
+          -77.82,
+          82.72
+        ],
+        [
+          -94.63,
+          74.14
+        ],
+        [
+          -93.64,
+          72.17
+        ],
+        [
+          -92.45,
+          69.81
+        ],
+        [
+          -91.34,
+          67.63
+        ],
+        [
+          -90.59,
+          66.15
+        ],
+        [
+          -91.35,
+          65.66
+        ],
+        [
+          -91.08,
+          64.2
+        ],
+        [
+          -90.43,
+          62.65
+        ],
+        [
+          -88.41,
+          59.39
+        ],
+        [
+          -87.34,
+          58.02
+        ],
+        [
+          -85.61,
+          55.95
+        ],
+        [
+          -85.2,
+          56.13
+        ],
+        [
+          -85.0,
+          55.75
+        ],
+        [
+          -84.75,
+          55.3
+        ],
+        [
+          -84.46,
+          54.74
+        ],
+        [
+          -86.8,
+          53.67
+        ],
+        [
+          -89.04,
+          52.69
+        ],
+        [
+          -86.91,
+          48.39
+        ],
+        [
+          -86.37,
+          47.17
+        ],
+        [
+          -80.65,
+          49.95
+        ],
+        [
+          -78.36,
+          51.03
+        ],
+        [
+          -73.73,
+          53.21
+        ],
+        [
+          -65.43,
+          57.35
+        ]
+      ],
+      "centroid": [
+        -83.8107142857143,
+        61.08071428571429
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "151",
+        "addr:postcode": "W1F 8WD",
+        "addr:street": "Wardour Street",
+        "building": "yes",
+        "building:levels": "5",
+        "name": "Fora",
+        "ref:GB:uprn": "10033526844",
+        "source": "Bing;photograph",
+        "website": "https://www.foraspace.com/london-workspaces/wardour-street"
+      }
+    },
+    {
+      "id": 156620035,
+      "name": "Natural Wellness",
+      "vertices_2d": [
+        [
+          -18.4,
+          -107.39
+        ],
+        [
+          -14.17,
+          -104.89
+        ],
+        [
+          -19.01,
+          -96.69
+        ],
+        [
+          -23.26,
+          -99.17
+        ],
+        [
+          -18.4,
+          -107.39
+        ]
+      ],
+      "centroid": [
+        -18.648000000000003,
+        -103.10600000000002
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:country": "GB",
+        "addr:housenumber": "29",
+        "addr:postcode": "W1F 0AN",
+        "addr:street": "Peter Street",
+        "building": "yes",
+        "description": "\"Acupuncture, Massage, Chinese Medicine\"",
+        "healthcare": "alternative",
+        "name": "Natural Wellness",
+        "ref:GB:uprn": "10033540972;10033569894;10033634846;10033634847;100023610267",
+        "wikimedia_commons": "File:Corner_of_Peter_Street_and_Berwick_Street,_Soho,_London.jpg"
+      }
+    },
+    {
+      "id": 288394432,
+      "name": "Building 288394432",
+      "vertices_2d": [
+        [
+          80.59,
+          63.08
+        ],
+        [
+          87.66,
+          66.26
+        ],
+        [
+          88.0,
+          65.48
+        ],
+        [
+          96.18,
+          69.13
+        ],
+        [
+          103.85,
+          51.76
+        ],
+        [
+          98.6,
+          49.35
+        ],
+        [
+          100.35,
+          45.22
+        ],
+        [
+          98.96,
+          44.52
+        ],
+        [
+          100.89,
+          39.55
+        ],
+        [
+          93.48,
+          36.41
+        ],
+        [
+          84.65,
+          57.41
+        ],
+        [
+          81.26,
+          55.73
+        ],
+        [
+          79.02,
+          61.14
+        ],
+        [
+          81.01,
+          62.12
+        ],
+        [
+          80.59,
+          63.08
+        ]
+      ],
+      "centroid": [
+        90.33933333333333,
+        55.349333333333334
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "source": "Bing"
+      }
+    },
+    {
+      "id": 156620022,
+      "name": "Centrepoint",
+      "vertices_2d": [
+        [
+          -89.37,
+          52.51
+        ],
+        [
+          -89.04,
+          52.69
+        ],
+        [
+          -86.91,
+          48.39
+        ],
+        [
+          -92.62,
+          45.56
+        ],
+        [
+          -93.06,
+          46.45
+        ],
+        [
+          -97.76,
+          44.13
+        ],
+        [
+          -97.09,
+          42.77
+        ],
+        [
+          -104.59,
+          39.05
+        ],
+        [
+          -106.97,
+          43.87
+        ],
+        [
+          -98.56,
+          48.03
+        ],
+        [
+          -89.37,
+          52.51
+        ]
+      ],
+      "centroid": [
+        -95.0309090909091,
+        46.90545454545454
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "25",
+        "addr:postcode": "W1F 8RF",
+        "addr:street": "Berwick Street",
+        "amenity": "social_facility",
+        "building": "yes",
+        "building:colour": "brown",
+        "building:levels": "3",
+        "building:material": "brick",
+        "name": "Centrepoint",
+        "ref:GB:uprn": "100022726169",
+        "roof:levels": "1",
+        "social_facility": "shelter",
+        "social_facility:for": "homeless",
+        "source": "Bing;photographic_survey",
+        "website": "https://www.homeless.org.uk/homeless-england/service/centrepoint-berwick-street"
+      }
+    },
+    {
+      "id": 157779620,
+      "name": "National House",
+      "vertices_2d": [
+        [
+          31.75,
+          -93.7
+        ],
+        [
+          33.96,
+          -92.22
+        ],
+        [
+          36.63,
+          -95.87
+        ],
+        [
+          39.86,
+          -93.88
+        ],
+        [
+          41.91,
+          -97.0
+        ],
+        [
+          42.64,
+          -98.35
+        ],
+        [
+          41.46,
+          -99.51
+        ],
+        [
+          43.0,
+          -101.53
+        ],
+        [
+          36.0,
+          -107.39
+        ],
+        [
+          37.32,
+          -110.03
+        ],
+        [
+          28.92,
+          -117.16
+        ],
+        [
+          23.68,
+          -107.94
+        ],
+        [
+          20.83,
+          -102.36
+        ],
+        [
+          19.99,
+          -100.71
+        ],
+        [
+          31.75,
+          -93.7
+        ]
+      ],
+      "centroid": [
+        33.98,
+        -100.75666666666666
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:country": "GB",
+        "addr:housename": "National House",
+        "addr:housenumber": "60-66",
+        "addr:street": "Wardour Street",
+        "building": "yes",
+        "building:colour": "grey",
+        "building:levels": "5",
+        "building:material": "stone",
+        "name": "National House",
+        "roof:colour": "grey",
+        "source": "Bing;photographic_survey"
+      }
+    },
+    {
+      "id": 1391436525,
+      "name": "The Watch House",
+      "vertices_2d": [
+        [
+          -52.93,
+          -85.79
+        ],
+        [
+          -49.72,
+          -84.21
+        ],
+        [
+          -40.55,
+          -101.33
+        ],
+        [
+          -61.19,
+          -112.5
+        ],
+        [
+          -70.58,
+          -94.87
+        ],
+        [
+          -52.93,
+          -85.79
+        ]
+      ],
+      "centroid": [
+        -54.65,
+        -94.08166666666666
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "104-105",
+        "addr:street": "Berwick Street",
+        "building": "apartments",
+        "name": "The Watch House"
+      }
+    },
+    {
+      "id": 61936009,
+      "name": "Broadwick House",
+      "vertices_2d": [
+        [
+          -96.63,
+          1.93
+        ],
+        [
+          -87.05,
+          -16.62
+        ],
+        [
+          -110.12,
+          -28.54
+        ],
+        [
+          -119.27,
+          -10.83
+        ],
+        [
+          -118.84,
+          -10.61
+        ],
+        [
+          -119.59,
+          -9.16
+        ],
+        [
+          -114.47,
+          -6.51
+        ],
+        [
+          -113.59,
+          -8.19
+        ],
+        [
+          -112.12,
+          -7.44
+        ],
+        [
+          -112.67,
+          -6.36
+        ],
+        [
+          -96.63,
+          1.93
+        ]
+      ],
+      "centroid": [
+        -109.18,
+        -9.127272727272727
+      ],
+      "height": 24.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "15-17",
+        "addr:postcode": "W1F 0DE",
+        "addr:street": "Broadwick Street",
+        "building": "commercial",
+        "building:levels": "7",
+        "building:material": "glass",
+        "name": "Broadwick House",
+        "ref:GB:uprn": "10033555731"
+      }
+    },
+    {
+      "id": 157779680,
+      "name": "Building 157779680",
+      "vertices_2d": [
+        [
+          100.13,
+          -32.65
+        ],
+        [
+          98.12,
+          -28.02
+        ],
+        [
+          94.79,
+          -20.37
+        ],
+        [
+          103.29,
+          -16.16
+        ],
+        [
+          104.46,
+          -18.77
+        ],
+        [
+          108.88,
+          -16.76
+        ],
+        [
+          119.9,
+          -13.34
+        ],
+        [
+          120.56,
+          -14.77
+        ],
+        [
+          125.0,
+          -23.7
+        ],
+        [
+          128.32,
+          -31.53
+        ],
+        [
+          120.47,
+          -35.12
+        ],
+        [
+          115.6,
+          -24.47
+        ],
+        [
+          110.66,
+          -26.67
+        ],
+        [
+          111.07,
+          -27.63
+        ],
+        [
+          100.13,
+          -32.65
+        ]
+      ],
+      "centroid": [
+        110.75866666666667,
+        -24.173999999999996
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "37",
+        "addr:postcode": "W1D 4PU",
+        "addr:street": "Dean Street",
+        "building": "yes",
+        "building:levels": "5",
+        "building:material": "brick",
+        "ref:GB:uprn": "100023472479;100023472478;100023472477;100023472480;10033570860",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 279570945,
+      "name": "Building 279570945",
+      "vertices_2d": [
+        [
+          98.49,
+          11.0
+        ],
+        [
+          107.64,
+          15.55
+        ],
+        [
+          112.76,
+          18.06
+        ],
+        [
+          122.16,
+          22.76
+        ],
+        [
+          129.39,
+          25.86
+        ],
+        [
+          136.14,
+          16.15
+        ],
+        [
+          128.44,
+          12.57
+        ],
+        [
+          129.79,
+          9.51
+        ],
+        [
+          122.93,
+          6.2
+        ],
+        [
+          119.46,
+          4.53
+        ],
+        [
+          114.29,
+          2.09
+        ],
+        [
+          108.17,
+          -0.76
+        ],
+        [
+          107.46,
+          0.77
+        ],
+        [
+          104.46,
+          -0.72
+        ],
+        [
+          98.49,
+          11.0
+        ]
+      ],
+      "centroid": [
+        116.00466666666668,
+        10.304666666666666
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "source": "Bing;photograph"
+      }
+    },
+    {
+      "id": 288392855,
+      "name": "The Resident Soho",
+      "vertices_2d": [
+        [
+          -19.13,
+          118.4
+        ],
+        [
+          -29.79,
+          144.55
+        ],
+        [
+          -40.1,
+          140.05
+        ],
+        [
+          -35.86,
+          130.5
+        ],
+        [
+          -34.74,
+          130.81
+        ],
+        [
+          -30.38,
+          119.47
+        ],
+        [
+          -33.7,
+          118.01
+        ],
+        [
+          -26.58,
+          102.39
+        ],
+        [
+          -22.36,
+          93.15
+        ],
+        [
+          -19.07,
+          94.57
+        ],
+        [
+          -20.14,
+          96.88
+        ],
+        [
+          -11.65,
+          100.72
+        ],
+        [
+          -19.13,
+          118.4
+        ]
+      ],
+      "centroid": [
+        -26.35615384615384,
+        115.99230769230768
+      ],
+      "height": 17.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "London",
+        "addr:housenumber": "10",
+        "addr:street": "Carlisle Street",
+        "building": "yes",
+        "building:levels": "5",
+        "name": "The Resident Soho",
+        "source": "Bing;photograph",
+        "stars": "4",
+        "tourism": "hotel"
+      }
+    },
+    {
+      "id": 288392861,
+      "name": "Building 288392861",
+      "vertices_2d": [
+        [
+          38.91,
+          114.57
+        ],
+        [
+          48.78,
+          91.1
+        ],
+        [
+          50.85,
+          85.99
+        ],
+        [
+          66.51,
+          92.7
+        ],
+        [
+          67.64,
+          93.24
+        ],
+        [
+          65.58,
+          97.94
+        ],
+        [
+          61.11,
+          108.32
+        ],
+        [
+          69.68,
+          112.03
+        ],
+        [
+          77.94,
+          115.51
+        ],
+        [
+          72.19,
+          129.0
+        ],
+        [
+          57.35,
+          122.59
+        ],
+        [
+          59.0,
+          118.56
+        ],
+        [
+          57.06,
+          117.74
+        ],
+        [
+          53.07,
+          116.07
+        ],
+        [
+          51.96,
+          118.73
+        ],
+        [
+          49.45,
+          117.7
+        ],
+        [
+          48.91,
+          118.92
+        ],
+        [
+          38.91,
+          114.57
+        ]
+      ],
+      "centroid": [
+        57.49444444444446,
+        110.29333333333332
+      ],
+      "height": 22.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "source": "Bing"
+      }
+    }
+  ],
+  "roads": [
+    {
+      "id": 4082566,
+      "name": "Dean Street",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          119.41,
+          -86.09
+        ],
+        [
+          118.61,
+          -84.2
+        ],
+        [
+          105.03,
+          -52.26
+        ],
+        [
+          95.15,
+          -29.03
+        ],
+        [
+          80.22,
+          6.07
+        ],
+        [
+          65.0,
+          41.86
+        ],
+        [
+          56.08,
+          62.84
+        ],
+        [
+          54.6,
+          66.31
+        ],
+        [
+          37.82,
+          105.78
+        ],
+        [
+          26.82,
+          131.61
+        ]
+      ]
+    },
+    {
+      "id": 4082597,
+      "name": "Bateman Street",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          133.94,
+          33.22
+        ],
+        [
+          129.86,
+          31.17
+        ],
+        [
+          81.73,
+          6.84
+        ],
+        [
+          80.22,
+          6.07
+        ]
+      ]
+    },
+    {
+      "id": 4253462,
+      "name": "Wardour Street",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          24.17,
+          -122.85
+        ],
+        [
+          20.33,
+          -115.27
+        ],
+        [
+          17.37,
+          -109.66
+        ],
+        [
+          16.49,
+          -107.98
+        ],
+        [
+          2.54,
+          -79.38
+        ],
+        [
+          1.95,
+          -77.98
+        ],
+        [
+          -11.08,
+          -48.27
+        ],
+        [
+          -44.0,
+          29.74
+        ],
+        [
+          -51.13,
+          43.85
+        ]
+      ]
+    },
+    {
+      "id": 4253927,
+      "name": "Broadwick Street",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          -51.13,
+          43.85
+        ],
+        [
+          -54.17,
+          42.5
+        ],
+        [
+          -76.09,
+          32.73
+        ],
+        [
+          -95.74,
+          22.23
+        ],
+        [
+          -97.06,
+          21.13
+        ],
+        [
+          -98.78,
+          19.7
+        ],
+        [
+          -99.79,
+          17.6
+        ]
+      ]
+    },
+    {
+      "id": 4256251,
+      "name": "Duck Lane",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          -70.46,
+          20.33
+        ],
+        [
+          -50.57,
+          -23.5
+        ]
+      ]
+    },
+    {
+      "id": 4376564,
+      "name": "Peter Street",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          -93.49,
+          -137.62
+        ],
+        [
+          -85.7,
+          -133.13
+        ],
+        [
+          -75.89,
+          -127.53
+        ],
+        [
+          -68.32,
+          -123.11
+        ],
+        [
+          -66.88,
+          -122.69
+        ],
+        [
+          -63.24,
+          -120.53
+        ],
+        [
+          -60.7,
+          -118.47
+        ],
+        [
+          -32.63,
+          -101.5
+        ],
+        [
+          -0.68,
+          -81.51
+        ],
+        [
+          2.54,
+          -79.38
+        ]
+      ]
+    },
+    {
+      "id": 4376578,
+      "name": "Meard Street",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          50.26,
+          -45.17
+        ],
+        [
+          65.13,
+          -40.95
+        ],
+        [
+          89.76,
+          -31.37
+        ],
+        [
+          95.15,
+          -29.03
+        ]
+      ]
+    },
+    {
+      "id": 4395794,
+      "name": "Richmond Buildings",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          5.78,
+          45.57
+        ],
+        [
+          49.73,
+          64.24
+        ],
+        [
+          54.6,
+          66.31
+        ]
+      ]
+    },
+    {
+      "id": 4395795,
+      "name": "Richmond Mews",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          5.78,
+          45.57
+        ],
+        [
+          8.28,
+          40.31
+        ]
+      ]
+    },
+    {
+      "id": 74662590,
+      "name": "Chapone Place",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          75.29,
+          85.2
+        ],
+        [
+          80.69,
+          73.52
+        ],
+        [
+          68.67,
+          68.26
+        ]
+      ]
+    },
+    {
+      "id": 288394413,
+      "name": "Chapone Place",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          68.67,
+          68.26
+        ],
+        [
+          59.83,
+          64.42
+        ]
+      ]
+    },
+    {
+      "id": 288394414,
+      "name": "Chapone Place",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          59.83,
+          64.42
+        ],
+        [
+          59.02,
+          64.15
+        ],
+        [
+          56.08,
+          62.84
+        ]
+      ]
+    },
+    {
+      "id": 628033667,
+      "name": "Richmond Mews",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          13.59,
+          29.49
+        ],
+        [
+          36.34,
+          -17.02
+        ]
+      ]
+    },
+    {
+      "id": 628033668,
+      "name": "Richmond Mews",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          8.28,
+          40.31
+        ],
+        [
+          13.59,
+          29.49
+        ]
+      ]
+    },
+    {
+      "id": 1185526416,
+      "name": "Wardour Street",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          -51.13,
+          43.85
+        ],
+        [
+          -58.05,
+          57.59
+        ],
+        [
+          -90.15,
+          122.71
+        ]
+      ]
+    },
+    {
+      "id": 1461905075,
+      "name": "Duck Lane",
+      "highway_type": "unclassified",
+      "polyline_2d": [
+        [
+          -76.09,
+          32.73
+        ],
+        [
+          -74.92,
+          30.13
+        ],
+        [
+          -70.46,
+          20.33
+        ]
+      ]
+    }
+  ]
+}
