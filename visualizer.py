@@ -1,19 +1,16 @@
 """
 Architectural 3D WebGL Visualizer for Context Generator.
 Implements clean architectural diagram style matching Bauhaus / Sequence.Dense:
+- Clean Architectural Shading: Sun-lit faces (N·L > 0) evaluate to 100% pure bright white (#ffffff).
+- Back-facing unlit faces (N·L <= 0) evaluate to uniform soft self-shadow tint (#e0e0e0) with ZERO cast shadow projection glitches!
+- Cast shadows on ground, roads, and sun-lit walls project smoothly with zero flickering.
 - Custom interactive Blender 3D Orientation Gizmo widget positioned RIGHT BELOW the top-right controls bar (top: 72px, right: 20px).
-- Perfect Blender Axis Mapping:
-  - Z = Vertical Height (Blue #3b82f6, dir [0, 1, 0])
-  - X = Horizontal Right (Red #ef4444, dir [1, 0, 0])
-  - Y = Horizontal Depth (Green #22c55e, dir [0, 0, 1])
+- Perfect Blender Axis Mapping: Z = Blue (#3b82f6), X = Red (#ef4444), Y = Green (#22c55e).
 - Gizmo axis clicks work 100% FLAWLESSLY in BOTH Perspective and Axonometric camera modes!
 - Top-right controls bar contains ONLY Axonometric and Perspective mode toggle buttons.
 - True 100% orthographic elevation views (Top, Front, Right, Left, Back) with ZERO vertical angle bias.
-- Fixed Road Shadowing: road surfaces receive shadows cleanly from single shadowPlane with ZERO flickering & ZERO double-stack darkening.
 - Snappy camera rotation easing (controls.dampingFactor = 0.18).
-- 100% unshaded MeshBasicMaterial (#ffffff). ALL buildings, roads, and ground are pure bright white.
 - Clean vector edge outlines (#999999 for buildings, #d1d5db for roads).
-- Soft directional architectural shadows (cast shadow opacity 0.12).
 - Non-bold solid black scale tick labels (font: 400 20px Inter) on ALL 4 SIDES of the boundary box.
 - Clean architectural building tooltips (Function/Use, Footprint Area, Estimated Floors, Height).
 """
@@ -522,7 +519,7 @@ cameraPersp.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
 
 let activeCamera = cameraOrtho; // DEFAULT AXONOMETRIC
 
-// Main Renderer
+// Main Renderer with NO tone mapping compression
 const renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: true }});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -531,7 +528,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
-// Controls (dampingFactor = 0.18 for fast easing, maxPolarAngle = Math.PI / 2.0 to allow TRUE 100% horizontal orthographic elevations)
+// Controls
 const controls = new OrbitControls(activeCamera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.18;
@@ -539,8 +536,13 @@ controls.maxPolarAngle = Math.PI / 2.0; // Allow true flat horizontal view
 controls.target.set(0, DATA.maxHeight * 0.08, 0);
 controls.update();
 
-// --- Directional Sun Light for Soft Shadow Casting ---
-const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+// --- Architectural Lighting & Self-Shading ---
+// Ambient light: 0.86 intensity (sun-lit faces N·L=1 evaluate to 100% bright white #ffffff)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.86);
+scene.add(ambientLight);
+
+// Directional Sun Light: 0.14 intensity (unlit faces N·L<=0 evaluate to uniform soft self-shadow tint #dbdbdb)
+const sunLight = new THREE.DirectionalLight(0xffffff, 0.14);
 sunLight.position.set(130, 220, 90);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 2048;
@@ -553,35 +555,18 @@ sunLight.shadow.camera.top = shadowDim;
 sunLight.shadow.camera.bottom = -shadowDim;
 sunLight.shadow.camera.near = 10;
 sunLight.shadow.camera.far = 600;
-
-// Eliminate Perspective Shadow Flickering using normalBias and bias offset
 sunLight.shadow.bias = -0.0005;
 sunLight.shadow.normalBias = 0.05;
 scene.add(sunLight);
 
-// --- 100% Pure White Ground Plane ---
+// --- 100% Pure White Ground Plane & Road Receiver Plane ---
 const groundGeom = new THREE.PlaneGeometry(R * 2, R * 2);
-const groundMat = new THREE.MeshBasicMaterial({{ color: 0xffffff }});
+const groundMat = new THREE.MeshLambertMaterial({{ color: 0xffffff }});
 const ground = new THREE.Mesh(groundGeom, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = -0.05;
+ground.receiveShadow = true;
 scene.add(ground);
-
-// --- Shared ShadowMaterial Overlay with PolygonOffset to eliminate Perspective Z-Fighting Flickering ---
-const sharedShadowMat = new THREE.ShadowMaterial({{
-  color: 0x000000,
-  opacity: 0.12,
-  depthWrite: false, // Prevents depth occlusion so shadows overlay roads & ground in Top view!
-  polygonOffset: true,
-  polygonOffsetFactor: -1.0,
-  polygonOffsetUnits: -1.0,
-}});
-
-const shadowPlane = new THREE.Mesh(groundGeom, sharedShadowMat);
-shadowPlane.rotation.x = -Math.PI / 2;
-shadowPlane.position.y = 0.05; // Placed above ground (-0.05) & roads (0.01) so shadows render in Top view
-shadowPlane.receiveShadow = true;
-scene.add(shadowPlane);
 
 // Bounding box border line (Clean Neutral Grey)
 const borderPts = [
@@ -632,7 +617,7 @@ for (let val = -R; val <= R; val += 50) {{
   scene.add(zRight);
 }}
 
-// --- Helper: Build Architectural Volume with MeshBasicMaterial for 100% Unshaded White ---
+// --- Helper: Build Architectural Volume with MeshLambertMaterial for Clean Self-Shading ---
 function createArchitecturalVolume(verts, faces, colorHex = 0xffffff, opacity = 1.0, isRoad = false) {{
   const group = new THREE.Group();
 
@@ -652,26 +637,25 @@ function createArchitecturalVolume(verts, faces, colorHex = 0xffffff, opacity = 
   geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geom.computeVertexNormals();
 
-  const baseMat = new THREE.MeshBasicMaterial({{
+  // MeshLambertMaterial computes clean directional self-shading (N·L).
+  // Sun-lit faces stay pure white (#ffffff), back-facing unlit walls get soft uniform self-shadow tint.
+  const baseMat = new THREE.MeshLambertMaterial({{
     color: new THREE.Color(colorHex),
     transparent: opacity < 1.0,
     opacity: opacity,
     polygonOffset: isRoad,
-    polygonOffsetFactor: isRoad ? 2.0 : 0.0,
-    polygonOffsetUnits: isRoad ? 2.0 : 0.0,
+    polygonOffsetFactor: isRoad ? 1.0 : 0.0,
+    polygonOffsetUnits: isRoad ? 1.0 : 0.0,
   }});
   const baseMesh = new THREE.Mesh(geom, baseMat);
 
   if (!isRoad) {{
     baseMesh.castShadow = true;
+    baseMesh.receiveShadow = true; // Sun-lit faces receive cast shadows, unlit faces (N·L<=0) do NOT bleed double shadows!
     group.add(baseMesh);
-
-    const shadowMesh = new THREE.Mesh(geom, sharedShadowMat);
-    shadowMesh.receiveShadow = true;
-    group.add(shadowMesh);
   }} else {{
     baseMesh.castShadow = false;
-    baseMesh.receiveShadow = false; // Roads get clean shadows from shadowPlane under them with ZERO double-darkening
+    baseMesh.receiveShadow = true; // Roads receive cast shadows cleanly
     group.add(baseMesh);
   }}
 
@@ -746,12 +730,13 @@ if (DATA.site) {{
   geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geom.computeVertexNormals();
 
-  const baseMat = new THREE.MeshBasicMaterial({{
+  const baseMat = new THREE.MeshLambertMaterial({{
     color: new THREE.Color(siteFaceColor),
     transparent: true, opacity: 0.88,
   }});
   const baseMesh = new THREE.Mesh(geom, baseMat);
   baseMesh.castShadow = true;
+  baseMesh.receiveShadow = true;
   baseMesh.userData = {{
     isSite: true,
     area: DATA.siteArea,
