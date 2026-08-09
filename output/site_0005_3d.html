@@ -140,7 +140,7 @@ cameraPersp.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
 
 let activeCamera = cameraOrtho; // DEFAULT AXONOMETRIC
 
-// Main Renderer with NO tone mapping compression
+// Main Renderer with NO tone mapping compression for 100% PURE BRIGHT PAPER WHITE
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -157,13 +157,11 @@ controls.maxPolarAngle = Math.PI / 2.0; // Allow true flat horizontal view
 controls.target.set(0, DATA.maxHeight * 0.08, 0);
 controls.update();
 
-// --- Architectural Lighting & Self-Shading ---
-// Ambient light: 0.86 intensity (sun-lit faces N·L=1 evaluate to 100% bright white #ffffff)
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.86);
-scene.add(ambientLight);
+// --- Sun Direction Vector for Normal Self-Shading & Sun-Facing Filtering ---
+const sunVector = new THREE.Vector3(130, 220, 90).normalize();
 
-// Directional Sun Light: 0.14 intensity (unlit faces N·L<=0 evaluate to uniform soft self-shadow tint #dbdbdb)
-const sunLight = new THREE.DirectionalLight(0xffffff, 0.14);
+// --- Directional Sun Light for Cast Shadow Projection Map ---
+const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
 sunLight.position.set(130, 220, 90);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 2048;
@@ -180,14 +178,30 @@ sunLight.shadow.bias = -0.0005;
 sunLight.shadow.normalBias = 0.05;
 scene.add(sunLight);
 
-// --- 100% Pure White Ground Plane & Road Receiver Plane ---
+// --- 100% Pure White Ground Plane ---
 const groundGeom = new THREE.PlaneGeometry(R * 2, R * 2);
-const groundMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+const groundMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 const ground = new THREE.Mesh(groundGeom, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = -0.05;
-ground.receiveShadow = true;
 scene.add(ground);
+
+// --- Shared ShadowMaterial Overlay for Soft Cast Shadows (depthWrite=false) ---
+// Projects soft cast shadows cleanly onto ground, roads, roofs, and sun-facing building walls!
+const sharedShadowMat = new THREE.ShadowMaterial({
+  color: 0x000000,
+  opacity: 0.12,
+  depthWrite: false,
+  polygonOffset: true,
+  polygonOffsetFactor: -1.0,
+  polygonOffsetUnits: -1.0,
+});
+
+const shadowPlane = new THREE.Mesh(groundGeom, sharedShadowMat);
+shadowPlane.rotation.x = -Math.PI / 2;
+shadowPlane.position.y = 0.05; // Placed above ground (-0.05) & roads (0.01) so shadows render in Top view
+shadowPlane.receiveShadow = true;
+scene.add(shadowPlane);
 
 // Bounding box border line (Clean Neutral Grey)
 const borderPts = [
@@ -238,46 +252,94 @@ for (let val = -R; val <= R; val += 50) {
   scene.add(zRight);
 }
 
-// --- Helper: Build Architectural Volume with MeshLambertMaterial for Clean Self-Shading ---
+// --- Helper: Build Architectural Volume with STRICT NORMAL FILTERING ---
+// 1. Base Mesh: Roofs & sun-facing walls stay 100% PURE PAPER WHITE (#ffffff).
+//    Back-facing unlit walls (N·L <= 0.05) take a uniform, crisp architectural self-shadow color (#d8dfe8).
+// 2. Shadow Overlay Mesh: Contains ONLY SUN-FACING FACES (N·L > 0.05)!
+//    Back-facing unlit walls are 100% EXCLUDED from receiving cast shadows, guaranteeing ZERO cast-shadow cuts on unlit walls!
 function createArchitecturalVolume(verts, faces, colorHex = 0xffffff, opacity = 1.0, isRoad = false) {
   const group = new THREE.Group();
 
-  const geom = new THREE.BufferGeometry();
-  const pos = new Float32Array(faces.length * 9);
+  const numTriangles = faces.length;
+  const pos = new Float32Array(numTriangles * 9);
+  const colors = new Float32Array(numTriangles * 9);
 
-  for (let fi = 0; fi < faces.length; fi++) {
+  const pureWhite = new THREE.Color(colorHex);
+  const selfShadowColor = new THREE.Color(0xe0e0e0); // 100% Pure Monochrome Grey (R=224, G=224, B=224) - Zero Blue Tint!
+
+  const sunFacingPositions = [];
+
+  for (let fi = 0; fi < numTriangles; fi++) {
     const f = faces[fi];
+    const p0 = new THREE.Vector3(verts[f[0]][0], verts[f[0]][2], -verts[f[0]][1]);
+    const p1 = new THREE.Vector3(verts[f[1]][0], verts[f[1]][2], -verts[f[1]][1]);
+    const p2 = new THREE.Vector3(verts[f[2]][0], verts[f[2]][2], -verts[f[2]][1]);
+
+    // Compute exact face normal
+    const vA = new THREE.Vector3().subVectors(p1, p0);
+    const vB = new THREE.Vector3().subVectors(p2, p0);
+    const faceNormal = new THREE.Vector3().crossVectors(vA, vB).normalize();
+
+    // Check orientation relative to sun light direction
+    const dot = faceNormal.dot(sunVector);
+    const isSunFacing = (isRoad || dot > 0.05);
+    const c = isSunFacing ? pureWhite : selfShadowColor;
+
     for (let vi = 0; vi < 3; vi++) {
       const v = verts[f[vi]];
       pos[fi * 9 + vi * 3 + 0] = v[0];
       pos[fi * 9 + vi * 3 + 1] = v[2];
       pos[fi * 9 + vi * 3 + 2] = -v[1];
+
+      colors[fi * 9 + vi * 3 + 0] = c.r;
+      colors[fi * 9 + vi * 3 + 1] = c.g;
+      colors[fi * 9 + vi * 3 + 2] = c.b;
+    }
+
+    // Collect ONLY sun-facing triangles for cast-shadow overlay
+    if (isSunFacing && !isRoad) {
+      for (let vi = 0; vi < 3; vi++) {
+        const v = verts[f[vi]];
+        sunFacingPositions.push(v[0], v[2], -v[1]);
+      }
     }
   }
 
+  const geom = new THREE.BufferGeometry();
   geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geom.computeVertexNormals();
 
-  // MeshLambertMaterial computes clean directional self-shading (N·L).
-  // Sun-lit faces stay pure white (#ffffff), back-facing unlit walls get soft uniform self-shadow tint.
-  const baseMat = new THREE.MeshLambertMaterial({
-    color: new THREE.Color(colorHex),
+  // Base Mesh: MeshBasicMaterial guarantees 100% PURE PAPER WHITE on sun-facing faces & roofs!
+  const baseMat = new THREE.MeshBasicMaterial({
+    vertexColors: true,
     transparent: opacity < 1.0,
     opacity: opacity,
     polygonOffset: isRoad,
-    polygonOffsetFactor: isRoad ? 1.0 : 0.0,
-    polygonOffsetUnits: isRoad ? 1.0 : 0.0,
+    polygonOffsetFactor: isRoad ? 2.0 : 0.0,
+    polygonOffsetUnits: isRoad ? 2.0 : 0.0,
   });
   const baseMesh = new THREE.Mesh(geom, baseMat);
+  group.add(baseMesh);
 
   if (!isRoad) {
-    baseMesh.castShadow = true;
-    baseMesh.receiveShadow = true; // Sun-lit faces receive cast shadows, unlit faces (N·L<=0) do NOT bleed double shadows!
-    group.add(baseMesh);
-  } else {
-    baseMesh.castShadow = false;
-    baseMesh.receiveShadow = true; // Roads receive cast shadows cleanly
-    group.add(baseMesh);
+    // Caster mesh: casts soft directional shadow map onto other structures
+    const casterMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+    const casterMesh = new THREE.Mesh(geom, casterMat);
+    casterMesh.castShadow = true;
+    group.add(casterMesh);
+
+    // Receiver shadow overlay mesh: ONLY contains SUN-FACING faces!
+    // Unlit back walls are 100% EXCLUDED, preventing any cast-shadow bleeding onto unlit walls!
+    if (sunFacingPositions.length > 0) {
+      const sunGeom = new THREE.BufferGeometry();
+      sunGeom.setAttribute('position', new THREE.Float32BufferAttribute(sunFacingPositions, 3));
+      sunGeom.computeVertexNormals();
+
+      const buildingShadowOverlay = new THREE.Mesh(sunGeom, sharedShadowMat);
+      buildingShadowOverlay.receiveShadow = true;
+      group.add(buildingShadowOverlay);
+    }
   }
 
   return { geom, baseMesh, group };
@@ -351,13 +413,12 @@ if (DATA.site) {
   geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geom.computeVertexNormals();
 
-  const baseMat = new THREE.MeshLambertMaterial({
+  const baseMat = new THREE.MeshBasicMaterial({
     color: new THREE.Color(siteFaceColor),
     transparent: true, opacity: 0.88,
   });
   const baseMesh = new THREE.Mesh(geom, baseMat);
   baseMesh.castShadow = true;
-  baseMesh.receiveShadow = true;
   baseMesh.userData = {
     isSite: true,
     area: DATA.siteArea,
