@@ -1,0 +1,1684 @@
+{
+  "site_id": "site_0016",
+  "created_at": "2026-08-09T05:26:20.851294+00:00",
+  "city": "singapore",
+  "zone": "marina_bay",
+  "density_tier": "very_high",
+  "coordinates": {
+    "lat": 1.28,
+    "lon": 103.85
+  },
+  "radius_m": 100.0,
+  "metrics": {
+    "far": 12.33,
+    "gcr": 0.874,
+    "building_count": 19,
+    "max_height": 214.0,
+    "avg_height": 77.0,
+    "site_area_m2": 1827.1,
+    "area_tier": "L"
+  },
+  "site_boundary": {
+    "name": "The Ogilvy Centre",
+    "vertices_2d": [
+      [
+        -53.28,
+        -19.67
+      ],
+      [
+        -29.6,
+        16.7
+      ],
+      [
+        -23.75,
+        20.95
+      ],
+      [
+        -16.87,
+        22.85
+      ],
+      [
+        -9.89,
+        22.53
+      ],
+      [
+        5.75,
+        13.32
+      ],
+      [
+        -25.32,
+        -37.09
+      ],
+      [
+        -53.28,
+        -19.67
+      ]
+    ],
+    "centroid": [
+      -25.779999999999998,
+      2.49
+    ],
+    "original_height": 13.0
+  },
+  "context_buildings": [
+    {
+      "id": 47345025,
+      "name": "Unity Tower One",
+      "vertices_2d": [
+        [
+          11.01,
+          -8.65
+        ],
+        [
+          7.78,
+          -13.85
+        ],
+        [
+          4.77,
+          -11.47
+        ],
+        [
+          -17.07,
+          -47.47
+        ],
+        [
+          -8.28,
+          -52.88
+        ],
+        [
+          -5.9,
+          -49.24
+        ],
+        [
+          10.59,
+          -59.0
+        ],
+        [
+          18.07,
+          -46.73
+        ],
+        [
+          24.22,
+          -33.67
+        ],
+        [
+          28.0,
+          -18.84
+        ],
+        [
+          11.01,
+          -8.65
+        ]
+      ],
+      "centroid": [
+        7.654545454545455,
+        -31.85909090909091
+      ],
+      "height": 187.0,
+      "height_source": "tag_height",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "2",
+        "addr:postcode": "068807",
+        "addr:street": "Shenton Way",
+        "alt_name": "SGX Centre One",
+        "building": "yes",
+        "building:colour": "#d3d7dc",
+        "building:levels": "30",
+        "building:material": "metal",
+        "building:min_level": "3",
+        "height": "187",
+        "name": "Unity Tower One",
+        "start_date": "2000"
+      }
+    },
+    {
+      "id": 47345018,
+      "name": "Robinson Point",
+      "vertices_2d": [
+        [
+          -72.73,
+          -50.91
+        ],
+        [
+          -44.77,
+          -68.32
+        ],
+        [
+          -25.32,
+          -37.09
+        ],
+        [
+          -53.28,
+          -19.67
+        ],
+        [
+          -72.73,
+          -50.91
+        ]
+      ],
+      "centroid": [
+        -53.766,
+        -45.38
+      ],
+      "height": 73.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "39",
+        "addr:postcode": "068911",
+        "addr:street": "Robinson Road",
+        "building": "yes",
+        "building:colour": "#6a6f72",
+        "building:levels": "21",
+        "building:material": "stone",
+        "name": "Robinson Point",
+        "office": "yes",
+        "roof:colour": "#6a6f72",
+        "start_date": "1997"
+      }
+    },
+    {
+      "id": 679027931,
+      "name": "Indian Grill & Bar",
+      "vertices_2d": [
+        [
+          58.04,
+          32.69
+        ],
+        [
+          70.87,
+          37.63
+        ],
+        [
+          73.19,
+          31.06
+        ],
+        [
+          60.65,
+          26.49
+        ],
+        [
+          58.04,
+          32.69
+        ]
+      ],
+      "centroid": [
+        64.158,
+        32.112
+      ],
+      "height": 45.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:housenumber": "18",
+        "addr:postcode": "048582",
+        "addr:street": "Raffles Quay",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "indian",
+        "diet:vegetarian": "yes",
+        "name": "Indian Grill & Bar",
+        "start_date": "1894"
+      }
+    },
+    {
+      "id": 172024970,
+      "name": "Building 172024970",
+      "vertices_2d": [
+        [
+          -66.73,
+          53.69
+        ],
+        [
+          -97.18,
+          2.64
+        ],
+        [
+          -96.3,
+          -2.26
+        ],
+        [
+          -89.26,
+          -6.49
+        ],
+        [
+          -68.13,
+          -2.42
+        ],
+        [
+          -49.48,
+          29.23
+        ],
+        [
+          -50.47,
+          35.78
+        ],
+        [
+          -45.15,
+          44.45
+        ],
+        [
+          -45.24,
+          48.46
+        ],
+        [
+          -59.12,
+          57.41
+        ],
+        [
+          -66.73,
+          53.69
+        ]
+      ],
+      "centroid": [
+        -66.70818181818183,
+        28.561818181818182
+      ],
+      "height": 85.0,
+      "height_source": "tag_height",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "80",
+        "addr:postcode": "068898",
+        "addr:street": "Robinson Road",
+        "building": "yes",
+        "building:colour": "#c4bfb9",
+        "building:levels": "25",
+        "building:material": "metal",
+        "height": "85",
+        "roof:colour": "#c4bfb9",
+        "start_date": "1994"
+      }
+    },
+    {
+      "id": 45098518,
+      "name": "SGX Centre",
+      "vertices_2d": [
+        [
+          16.47,
+          7.5
+        ],
+        [
+          41.95,
+          -8.39
+        ],
+        [
+          -49.35,
+          -157.11
+        ],
+        [
+          -56.54,
+          -168.82
+        ],
+        [
+          -82.36,
+          -153.4
+        ],
+        [
+          16.47,
+          7.5
+        ]
+      ],
+      "centroid": [
+        -18.89333333333333,
+        -78.78666666666668
+      ],
+      "height": 10.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "building": "yes",
+        "building:colour": "#9a9a94",
+        "building:levels": "3",
+        "building:material": "stone",
+        "layer": "1",
+        "name": "SGX Centre",
+        "start_date": "2000",
+        "wikidata": "Q3459541",
+        "wikimedia_commons": "Category:SGX Centre",
+        "wikipedia": "en:SGX Centre"
+      }
+    },
+    {
+      "id": 172915367,
+      "name": "Bank of East Asia",
+      "vertices_2d": [
+        [
+          -39.66,
+          97.76
+        ],
+        [
+          -53.25,
+          74.16
+        ],
+        [
+          -35.3,
+          63.45
+        ],
+        [
+          -32.63,
+          65.53
+        ],
+        [
+          -26.68,
+          70.0
+        ],
+        [
+          -20.92,
+          75.75
+        ],
+        [
+          -15.86,
+          83.88
+        ],
+        [
+          -39.66,
+          97.76
+        ]
+      ],
+      "centroid": [
+        -32.995000000000005,
+        78.53625
+      ],
+      "height": 91.0,
+      "height_source": "tag_height",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "60",
+        "addr:postcode": "068892",
+        "addr:street": "Robinson Road",
+        "amenity": "bank",
+        "building": "yes",
+        "building:colour": "#424d4b",
+        "building:levels": "30",
+        "building:material": "glass",
+        "height": "91",
+        "name": "Bank of East Asia",
+        "old_name": "OUB Building",
+        "roof:colour": "#424d4b",
+        "source": "Kaart Ground Survey 2017",
+        "start_date": "2009"
+      }
+    },
+    {
+      "id": 45098520,
+      "name": "Lau Pa Sat",
+      "vertices_2d": [
+        [
+          16.69,
+          74.45
+        ],
+        [
+          24.35,
+          46.89
+        ],
+        [
+          51.85,
+          31.63
+        ],
+        [
+          76.42,
+          41.34
+        ],
+        [
+          89.41,
+          62.84
+        ],
+        [
+          87.36,
+          77.1
+        ],
+        [
+          85.57,
+          89.6
+        ],
+        [
+          72.99,
+          97.22
+        ],
+        [
+          60.59,
+          104.71
+        ],
+        [
+          43.28,
+          100.97
+        ],
+        [
+          30.74,
+          98.25
+        ],
+        [
+          23.27,
+          85.59
+        ],
+        [
+          16.69,
+          74.45
+        ]
+      ],
+      "centroid": [
+        52.24692307692308,
+        75.7723076923077
+      ],
+      "height": 0.0,
+      "height_source": "tag_height",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "18",
+        "addr:postcode": "048582",
+        "addr:street": "Raffles Quay",
+        "alt_name": "Telok Ayer Market",
+        "amenity": "food_court",
+        "building": "retail",
+        "check_date": "2024-05-18",
+        "diet:vegetarian": "yes",
+        "height": "0",
+        "indoor_seating": "yes",
+        "name": "Lau Pa Sat",
+        "name:en": "Lau Pa Sat",
+        "name:ko": "\ub77c\uc6b0 \ud30c \uc0bf \ud398\uc2a4\ud2f0\ubc8c \ub9c8\ucf13",
+        "name:zh": "\u8001\u5df4\u5239",
+        "opening_hours": "24/7",
+        "operator": "Kopitiam",
+        "outdoor_seating": "no",
+        "wheelchair": "yes",
+        "wheelchair:description": "ramp at Robinson Road entrance- near the corner of Boon Tat St",
+        "wikidata": "Q7697795",
+        "wikipedia": "en:Lau Pa Sat"
+      }
+    },
+    {
+      "id": 325793774,
+      "name": "One Shenton Tower 1",
+      "vertices_2d": [
+        [
+          65.03,
+          -55.67
+        ],
+        [
+          67.41,
+          -50.71
+        ],
+        [
+          63.77,
+          -48.54
+        ],
+        [
+          69.19,
+          -39.87
+        ],
+        [
+          77.07,
+          -43.05
+        ],
+        [
+          84.58,
+          -47.61
+        ],
+        [
+          91.77,
+          -53.57
+        ],
+        [
+          89.83,
+          -56.66
+        ],
+        [
+          91.24,
+          -57.52
+        ],
+        [
+          85.24,
+          -66.89
+        ],
+        [
+          65.03,
+          -55.67
+        ]
+      ],
+      "centroid": [
+        77.28727272727272,
+        -52.34181818181817
+      ],
+      "height": 214.0,
+      "height_source": "tag_height",
+      "tags": {
+        "building": "yes",
+        "building:levels": "50",
+        "building:part": "yes",
+        "height": "214",
+        "name": "One Shenton Tower 1",
+        "source": "Bing",
+        "start_date": "2011",
+        "wikidata": "Q7093178",
+        "wikimedia_commons": "Category:One Shenton Way, Singapore",
+        "wikipedia": "en:One Shenton Way"
+      }
+    },
+    {
+      "id": 172270415,
+      "name": "SIF Building",
+      "vertices_2d": [
+        [
+          -98.73,
+          -0.43
+        ],
+        [
+          -96.3,
+          -2.26
+        ],
+        [
+          -89.26,
+          -6.49
+        ],
+        [
+          -74.85,
+          -14.83
+        ],
+        [
+          -91.6,
+          -42.57
+        ],
+        [
+          -115.48,
+          -28.15
+        ],
+        [
+          -98.73,
+          -0.43
+        ]
+      ],
+      "centroid": [
+        -94.99285714285715,
+        -13.594285714285714
+      ],
+      "height": 20.0,
+      "height_source": "tag_height",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "96",
+        "addr:postcode": "068899",
+        "addr:street": "Robinson Road",
+        "building": "yes",
+        "building:levels": "6",
+        "height": "20",
+        "name": "SIF Building",
+        "start_date": "2007"
+      }
+    },
+    {
+      "id": 463863824,
+      "name": "Robinson Suites",
+      "vertices_2d": [
+        [
+          -18.64,
+          87.65
+        ],
+        [
+          -15.86,
+          87.85
+        ],
+        [
+          -6.24,
+          102.02
+        ],
+        [
+          -3.56,
+          101.84
+        ],
+        [
+          -1.19,
+          105.7
+        ],
+        [
+          -5.33,
+          110.28
+        ],
+        [
+          -11.6,
+          113.84
+        ],
+        [
+          -12.59,
+          112.14
+        ],
+        [
+          -19.33,
+          116.02
+        ],
+        [
+          -22.41,
+          111.05
+        ],
+        [
+          -26.48,
+          113.43
+        ],
+        [
+          -29.15,
+          112.54
+        ],
+        [
+          -35.7,
+          101.33
+        ],
+        [
+          -35.5,
+          98.26
+        ],
+        [
+          -18.64,
+          87.65
+        ]
+      ],
+      "centroid": [
+        -17.481333333333332,
+        104.10666666666667
+      ],
+      "height": 159.0,
+      "height_source": "tag_height",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:housenumber": "50",
+        "addr:postcode": "068882",
+        "addr:street": "Robinson Road",
+        "building": "yes",
+        "building:colour": "#59636c",
+        "building:levels": "6",
+        "building:material": "concrete",
+        "height": "159",
+        "name": "Robinson Suites",
+        "start_date": "2016"
+      }
+    },
+    {
+      "id": 172915372,
+      "name": "Building 172915372",
+      "vertices_2d": [
+        [
+          -58.9,
+          -68.54
+        ],
+        [
+          -55.86,
+          -84.44
+        ],
+        [
+          -61.11,
+          -93.02
+        ],
+        [
+          -76.8,
+          -97.39
+        ],
+        [
+          -85.0,
+          -92.15
+        ],
+        [
+          -87.45,
+          -76.75
+        ],
+        [
+          -82.0,
+          -67.57
+        ],
+        [
+          -67.72,
+          -63.27
+        ],
+        [
+          -58.9,
+          -68.54
+        ]
+      ],
+      "centroid": [
+        -70.41555555555556,
+        -79.07444444444442
+      ],
+      "height": 68.0,
+      "height_source": "tag_height",
+      "tags": {
+        "building": "yes",
+        "building:colour": "#95908d",
+        "building:levels": "20",
+        "building:material": "stone",
+        "building:part": "yes",
+        "height": "68",
+        "roof:colour": "#95908d",
+        "roof:levels": "2",
+        "roof:shape": "mansard",
+        "source": "Bing",
+        "start_date": "2000"
+      }
+    },
+    {
+      "id": 852006684,
+      "name": "Building 852006684",
+      "vertices_2d": [
+        [
+          -19.19,
+          115.68
+        ],
+        [
+          -5.59,
+          106.84
+        ],
+        [
+          -17.17,
+          88.21
+        ],
+        [
+          -30.95,
+          96.77
+        ],
+        [
+          -19.19,
+          115.68
+        ]
+      ],
+      "centroid": [
+        -18.418,
+        104.63600000000001
+      ],
+      "height": 45.0,
+      "height_source": "default",
+      "tags": {
+        "building": "yes",
+        "start_date": "2016"
+      }
+    },
+    {
+      "id": 172915352,
+      "name": "Robinson Suites",
+      "vertices_2d": [
+        [
+          -29.15,
+          112.54
+        ],
+        [
+          -35.7,
+          101.33
+        ],
+        [
+          -35.5,
+          98.26
+        ],
+        [
+          -18.64,
+          87.65
+        ],
+        [
+          -15.86,
+          87.85
+        ],
+        [
+          -6.24,
+          102.02
+        ],
+        [
+          -3.56,
+          101.84
+        ],
+        [
+          -1.19,
+          105.7
+        ],
+        [
+          -5.33,
+          110.28
+        ],
+        [
+          -11.6,
+          113.84
+        ],
+        [
+          -12.59,
+          112.14
+        ],
+        [
+          -19.33,
+          116.02
+        ],
+        [
+          -22.41,
+          111.05
+        ],
+        [
+          -26.48,
+          113.43
+        ],
+        [
+          -29.15,
+          112.54
+        ]
+      ],
+      "centroid": [
+        -18.182,
+        105.766
+      ],
+      "height": 45.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "50",
+        "addr:postcode": "068882",
+        "addr:street": "Robinson Road",
+        "building": "yes",
+        "name": "Robinson Suites",
+        "old_name": "VTB Building",
+        "start_date": "2016"
+      }
+    },
+    {
+      "id": 325793778,
+      "name": "One Shenton Tower 2",
+      "vertices_2d": [
+        [
+          53.26,
+          -72.79
+        ],
+        [
+          47.92,
+          -79.52
+        ],
+        [
+          42.74,
+          -87.56
+        ],
+        [
+          39.19,
+          -94.29
+        ],
+        [
+          41.19,
+          -95.76
+        ],
+        [
+          38.64,
+          -100.02
+        ],
+        [
+          42.2,
+          -103.81
+        ],
+        [
+          47.53,
+          -107.37
+        ],
+        [
+          51.57,
+          -108.87
+        ],
+        [
+          56.2,
+          -109.29
+        ],
+        [
+          60.53,
+          -105.12
+        ],
+        [
+          65.48,
+          -96.93
+        ],
+        [
+          68.12,
+          -91.85
+        ],
+        [
+          69.35,
+          -89.5
+        ],
+        [
+          66.8,
+          -87.25
+        ],
+        [
+          69.54,
+          -82.2
+        ],
+        [
+          53.26,
+          -72.79
+        ]
+      ],
+      "centroid": [
+        53.736470588235285,
+        -93.23058823529412
+      ],
+      "height": 178.0,
+      "height_source": "tag_height",
+      "tags": {
+        "building": "yes",
+        "building:levels": "50",
+        "building:part": "yes",
+        "height": "178",
+        "name": "One Shenton Tower 2",
+        "source": "Bing",
+        "start_date": "2011"
+      }
+    },
+    {
+      "id": 99347079,
+      "name": "The Octagon",
+      "vertices_2d": [
+        [
+          -102.3,
+          52.33
+        ],
+        [
+          -89.12,
+          44.77
+        ],
+        [
+          -81.62,
+          47.81
+        ],
+        [
+          -73.46,
+          61.45
+        ],
+        [
+          -76.11,
+          70.08
+        ],
+        [
+          -86.66,
+          76.47
+        ],
+        [
+          -96.41,
+          75.8
+        ],
+        [
+          -105.06,
+          62.06
+        ],
+        [
+          -102.3,
+          52.33
+        ]
+      ],
+      "centroid": [
+        -90.33777777777777,
+        60.34444444444445
+      ],
+      "height": 80.0,
+      "height_source": "tag_height",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "105",
+        "addr:postcode": "069534",
+        "addr:street": "Cecil Street",
+        "building": "yes",
+        "building:levels": "26",
+        "height": "80",
+        "name": "The Octagon",
+        "office": "yes",
+        "start_date": "1982"
+      }
+    },
+    {
+      "id": 47345021,
+      "name": "One Shenton",
+      "vertices_2d": [
+        [
+          22.88,
+          -113.04
+        ],
+        [
+          26.01,
+          -107.91
+        ],
+        [
+          74.31,
+          -28.74
+        ],
+        [
+          100.26,
+          -44.57
+        ],
+        [
+          70.41,
+          -93.53
+        ],
+        [
+          64.92,
+          -102.37
+        ],
+        [
+          52.2,
+          -123.33
+        ],
+        [
+          48.82,
+          -128.87
+        ],
+        [
+          22.88,
+          -113.04
+        ]
+      ],
+      "centroid": [
+        53.632222222222225,
+        -95.04444444444444
+      ],
+      "height": 31.5,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "1",
+        "addr:postcode": "068803",
+        "addr:street": "Shenton Way",
+        "building": "residential",
+        "building:levels": "9",
+        "name": "One Shenton",
+        "start_date": "2011",
+        "wikidata": "Q7093178",
+        "wikimedia_commons": "Category:One Shenton Way, Singapore",
+        "wikipedia": "en:One Shenton Way"
+      }
+    },
+    {
+      "id": 47345026,
+      "name": "Robinson Centre",
+      "vertices_2d": [
+        [
+          -97.46,
+          -90.6
+        ],
+        [
+          -72.73,
+          -50.91
+        ],
+        [
+          -44.77,
+          -68.32
+        ],
+        [
+          -69.5,
+          -108.02
+        ],
+        [
+          -97.46,
+          -90.6
+        ]
+      ],
+      "centroid": [
+        -76.384,
+        -81.68999999999998
+      ],
+      "height": 70.0,
+      "height_source": "tag_levels",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "61",
+        "addr:postcode": "068893",
+        "addr:street": "Robinson Road",
+        "building": "yes",
+        "building:colour": "#95908d",
+        "building:levels": "20",
+        "building:material": "stone",
+        "name": "Robinson Centre",
+        "roof:colour": "#95908d",
+        "roof:levels": "2",
+        "roof:shape": "mansard",
+        "start_date": "2000",
+        "wikidata": "Q42916184",
+        "wikipedia": "en:Asiaciti Trust"
+      }
+    },
+    {
+      "id": 172024973,
+      "name": "Keck Seng Tower",
+      "vertices_2d": [
+        [
+          -143.03,
+          2.85
+        ],
+        [
+          -115.84,
+          47.62
+        ],
+        [
+          -89.63,
+          31.7
+        ],
+        [
+          -116.82,
+          -13.06
+        ],
+        [
+          -143.03,
+          2.85
+        ]
+      ],
+      "centroid": [
+        -121.67,
+        14.392
+      ],
+      "height": 12.0,
+      "height_source": "tag_height",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "133",
+        "addr:postcode": "069535",
+        "addr:street": "Cecil Street",
+        "building": "yes",
+        "building:levels": "4",
+        "height": "12",
+        "name": "Keck Seng Tower",
+        "name:en": "Keck Seng Tower",
+        "name:zh": "\u6fc0\u6210\u5927\u53a6",
+        "start_date": "1984"
+      }
+    },
+    {
+      "id": 1206694672,
+      "name": "IOI Central Boulevard Towers",
+      "vertices_2d": [
+        [
+          90.58,
+          -11.63
+        ],
+        [
+          114.01,
+          24.41
+        ],
+        [
+          111.33,
+          30.48
+        ],
+        [
+          124.21,
+          50.62
+        ],
+        [
+          136.67,
+          39.41
+        ],
+        [
+          139.88,
+          36.19
+        ],
+        [
+          143.31,
+          32.62
+        ],
+        [
+          157.24,
+          17.92
+        ],
+        [
+          156.13,
+          16.27
+        ],
+        [
+          159.0,
+          14.43
+        ],
+        [
+          161.53,
+          12.8
+        ],
+        [
+          160.87,
+          11.8
+        ],
+        [
+          166.65,
+          8.04
+        ],
+        [
+          184.44,
+          -3.53
+        ],
+        [
+          251.63,
+          -47.22
+        ],
+        [
+          250.18,
+          -49.45
+        ],
+        [
+          227.55,
+          -84.24
+        ],
+        [
+          224.59,
+          -82.31
+        ],
+        [
+          222.43,
+          -80.91
+        ],
+        [
+          215.06,
+          -92.31
+        ],
+        [
+          137.61,
+          -42.11
+        ],
+        [
+          129.11,
+          -36.6
+        ],
+        [
+          123.88,
+          -33.21
+        ],
+        [
+          97.5,
+          -16.12
+        ],
+        [
+          90.58,
+          -11.63
+        ]
+      ],
+      "centroid": [
+        159.03880000000004,
+        -11.851199999999999
+      ],
+      "height": 45.0,
+      "height_source": "default",
+      "tags": {
+        "addr:city": "Singapore",
+        "addr:country": "SG",
+        "addr:housenumber": "2",
+        "addr:postcode": "018916",
+        "addr:street": "Central Boulevard",
+        "building": "office",
+        "email": "enquiry@cbts.com.sg",
+        "name": "IOI Central Boulevard Towers",
+        "phone": "+65 68228101",
+        "website": "http://www.centralboulevardtowers.com.sg/"
+      }
+    }
+  ],
+  "roads": [
+    {
+      "id": 22921959,
+      "name": "Shenton Way",
+      "highway_type": "trunk",
+      "polyline_2d": [
+        [
+          62.25,
+          -5.71
+        ],
+        [
+          27.36,
+          -64.45
+        ]
+      ]
+    },
+    {
+      "id": 43826730,
+      "name": "Boon Tat Link",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          17.38,
+          21.5
+        ],
+        [
+          -47.37,
+          -85.24
+        ]
+      ]
+    },
+    {
+      "id": 74735250,
+      "name": "Raffles Quay",
+      "highway_type": "trunk",
+      "polyline_2d": [
+        [
+          117.38,
+          83.47
+        ],
+        [
+          66.7,
+          1.49
+        ],
+        [
+          62.25,
+          -5.71
+        ]
+      ]
+    },
+    {
+      "id": 253945337,
+      "name": "Commerce Street",
+      "highway_type": "tertiary",
+      "polyline_2d": [
+        [
+          62.25,
+          -5.71
+        ],
+        [
+          74.57,
+          -12.42
+        ],
+        [
+          89.09,
+          -21.55
+        ],
+        [
+          114.4,
+          -36.61
+        ]
+      ]
+    },
+    {
+      "id": 301810474,
+      "name": "Road (service)",
+      "highway_type": "service",
+      "polyline_2d": [
+        [
+          -75.29,
+          148.56
+        ],
+        [
+          -69.59,
+          145.34
+        ],
+        [
+          -31.33,
+          123.77
+        ],
+        [
+          -30.84,
+          122.76
+        ],
+        [
+          -30.97,
+          121.56
+        ],
+        [
+          -58.53,
+          75.26
+        ],
+        [
+          -61.04,
+          70.74
+        ]
+      ]
+    },
+    {
+      "id": 479529432,
+      "name": "Robinson Road",
+      "highway_type": "trunk",
+      "polyline_2d": [
+        [
+          -71.84,
+          -33.56
+        ],
+        [
+          -25.33,
+          41.78
+        ],
+        [
+          -22.3,
+          46.41
+        ]
+      ]
+    },
+    {
+      "id": 479529434,
+      "name": "Boon Tat Street",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -22.3,
+          46.41
+        ],
+        [
+          -14.28,
+          41.44
+        ],
+        [
+          17.38,
+          21.5
+        ]
+      ]
+    },
+    {
+      "id": 615134253,
+      "name": "Road (residential)",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -93.18,
+          19.83
+        ],
+        [
+          -83.61,
+          34.83
+        ]
+      ]
+    },
+    {
+      "id": 615136796,
+      "name": "Road (residential)",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -127.1,
+          59.92
+        ],
+        [
+          -114.99,
+          51.92
+        ],
+        [
+          -83.61,
+          34.83
+        ]
+      ]
+    },
+    {
+      "id": 633313289,
+      "name": "Boon Tat Street",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          17.38,
+          21.5
+        ],
+        [
+          52.46,
+          0.22
+        ]
+      ]
+    },
+    {
+      "id": 665507903,
+      "name": "Road (residential)",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -109.63,
+          -6.5
+        ],
+        [
+          -93.18,
+          19.83
+        ]
+      ]
+    },
+    {
+      "id": 738108625,
+      "name": "Boon Tat Street",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -105.46,
+          97.73
+        ],
+        [
+          -100.9,
+          94.96
+        ],
+        [
+          -61.04,
+          70.74
+        ]
+      ]
+    },
+    {
+      "id": 747038521,
+      "name": "Robinson Road",
+      "highway_type": "trunk",
+      "polyline_2d": [
+        [
+          -132.49,
+          -131.81
+        ],
+        [
+          -71.84,
+          -33.56
+        ]
+      ]
+    },
+    {
+      "id": 747041623,
+      "name": "Shenton Way",
+      "highway_type": "trunk",
+      "polyline_2d": [
+        [
+          27.36,
+          -64.45
+        ],
+        [
+          0.52,
+          -109.64
+        ]
+      ]
+    },
+    {
+      "id": 747288345,
+      "name": "Boon Tat Street",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -61.04,
+          70.74
+        ],
+        [
+          -46.83,
+          61.59
+        ],
+        [
+          -29.67,
+          50.98
+        ],
+        [
+          -22.3,
+          46.41
+        ]
+      ]
+    },
+    {
+      "id": 776656803,
+      "name": "Robinson Road",
+      "highway_type": "trunk",
+      "polyline_2d": [
+        [
+          -22.3,
+          46.41
+        ],
+        [
+          -18.96,
+          51.49
+        ],
+        [
+          31.43,
+          128.11
+        ],
+        [
+          35.54,
+          134.36
+        ]
+      ]
+    },
+    {
+      "id": 778176376,
+      "name": "Road (residential)",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -70.7,
+          55.37
+        ],
+        [
+          -63.96,
+          65.86
+        ],
+        [
+          -61.04,
+          70.74
+        ]
+      ]
+    },
+    {
+      "id": 827248999,
+      "name": "Boon Tat Link",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -47.37,
+          -85.24
+        ],
+        [
+          -81.73,
+          -140.07
+        ]
+      ]
+    },
+    {
+      "id": 839225098,
+      "name": "Road (residential)",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          -83.61,
+          34.83
+        ],
+        [
+          -70.7,
+          55.37
+        ]
+      ]
+    },
+    {
+      "id": 877848817,
+      "name": "Boon Tat Street",
+      "highway_type": "residential",
+      "polyline_2d": [
+        [
+          52.46,
+          0.22
+        ],
+        [
+          62.25,
+          -5.71
+        ]
+      ]
+    }
+  ]
+}
