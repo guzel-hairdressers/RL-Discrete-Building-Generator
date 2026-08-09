@@ -337,7 +337,10 @@ def create_3d_context_visualization(scene, output_path=None):
             gv = [[v[0] - cx, v[1] - cy, v[2]] for v in gv]
             green_meshes.append({"vertices": gv, "faces": gf})
 
-    print(f"[Visualizer] Prepared {len(building_meshes)}/{len(buildings)} buildings and {len(road_data['meshes'])} road network polygons.")
+    # Calculate robust average & max heights directly from actual prepared building meshes
+    actual_heights = [b["height"] for b in building_meshes if "height" in b]
+    calc_avg_h = float(np.mean(actual_heights)) if actual_heights else float(metrics.get("avgHeight", metrics.get("avg_height_m", 0.0)))
+    calc_max_h = float(np.max(actual_heights)) if actual_heights else float(metrics.get("maxHeight", metrics.get("max_height_m", max_h)))
 
     scene_data = json.dumps({
         "buildings": building_meshes,
@@ -349,7 +352,7 @@ def create_3d_context_visualization(scene, output_path=None):
         "siteArea": site_area,
         "areaTier": area_tier,
         "radius": radius,
-        "maxHeight": max_h,
+        "maxHeight": round(calc_max_h, 1),
         "cityName": city_name,
         "coords": coords,
         "metrics": {
@@ -357,10 +360,10 @@ def create_3d_context_visualization(scene, output_path=None):
             "areaTier": area_tier,
             "far": metrics.get("floor_area_ratio", metrics.get("far", "?")),
             "buildingCount": metrics.get("building_count", len(building_meshes)),
-            "maxHeight": round(float(metrics.get("max_height_m", max_h)), 1),
-            "avgHeight": round(float(metrics.get("avg_height_m", 0.0)), 1),
-            "maxFloors": max(1, round(float(metrics.get("max_height_m", max_h)) / 3.5)),
-            "avgFloors": max(1, round(float(metrics.get("avg_height_m", 0.0)) / 3.5)),
+            "maxHeight": round(calc_max_h, 1),
+            "avgHeight": round(calc_avg_h, 1),
+            "maxFloors": max(1, int(round(calc_max_h / 3.8))),
+            "avgFloors": max(1, int(round(calc_avg_h / 3.8))),
         },
     }, separators=(',', ':'))
 
