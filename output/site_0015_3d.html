@@ -265,7 +265,7 @@ function createArchitecturalVolume(verts, faces, colorHex = 0xffffff, opacity = 
   const colors = new Float32Array(numTriangles * 9);
 
   const pureWhite = new THREE.Color(colorHex);
-  const selfShadowColor = new THREE.Color(0xe0e0e0); // 100% Pure Monochrome Grey (R=224, G=224, B=224) - Zero Blue Tint!
+  const selfShadowColor = new THREE.Color(0xf0f0f0); // Soft Lighter Pure Monochrome Grey (R=240, G=240, B=240)
 
   const sunFacingPositions = [];
 
