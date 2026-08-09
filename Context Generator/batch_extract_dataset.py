@@ -15,21 +15,115 @@ import json
 import math
 import os
 import sys
+import time
+import requests
 import numpy as np
 
-import osmnx as ox
 from shapely.geometry import Polygon, MultiPolygon, LineString
 
 from config import TARGET_CITIES, DATASET_DIR, OUTPUT_DIR
 from geometry_3d import latlon_to_local_meters, extrude_polygon_to_3d_mesh, compute_urban_metrics
 from visualizer import create_3d_context_visualization, compute_area_tier
 
-# Configure OSMnx settings for high-volume batch extraction
-ox.settings.timeout = 60
-ox.settings.overpass_url = "https://overpass-api.de/api/interpreter"
+# Overpass API mirrors for fallback
+OVERPASS_SERVERS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.ai/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    "https://overpass.nchc.org.tw/api/interpreter"
+]
 
 
-def batch_extract_multi_city(target_count=200, radius_m=100.0, dist_per_city_m=450.0, reset=False):
+def fetch_overpass_features(ref_lat, ref_lon, dist_m=500.0):
+    """Fetch building features from Overpass API with server fallback."""
+    query = f"""
+    [out:json][timeout:30];
+    (
+      way["building"](around:{dist_m},{ref_lat},{ref_lon});
+      relation["building"](around:{dist_m},{ref_lat},{ref_lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+
+    for server in OVERPASS_SERVERS:
+        try:
+            resp = requests.post(server, data={"data": query}, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                if "elements" in data and len(data["elements"]) > 0:
+                    return data
+        except Exception:
+            continue
+        time.sleep(0.5)
+
+    return None
+
+
+def parse_overpass_json_to_bldgs(data, ref_lat, ref_lon, default_h=50.0):
+    if not data or "elements" not in data:
+        return []
+
+    nodes = {e["id"]: (e["lat"], e["lon"]) for e in data["elements"] if e["type"] == "node"}
+    buildings = []
+
+    for idx, elem in enumerate(data["elements"]):
+        if elem["type"] == "way" and "nodes" in elem:
+            coords = [nodes[nid] for nid in elem["nodes"] if nid in nodes]
+            if len(coords) < 3:
+                continue
+
+            local_verts = []
+            for lat, lon in coords:
+                mx, my = latlon_to_local_meters(lat, lon, ref_lat, ref_lon)
+                local_verts.append([round(mx, 2), round(my, 2)])
+
+            if len(local_verts) < 3:
+                continue
+
+            props = elem.get("tags", {})
+            height = None
+            if "height" in props:
+                try:
+                    val = str(props["height"]).replace("m", "").replace("ft", "").strip()
+                    height = float(val)
+                except ValueError:
+                    pass
+
+            if height is None and "building:levels" in props:
+                try:
+                    levels = float(props["building:levels"])
+                    height = max(6.0, levels * 3.8)
+                except ValueError:
+                    pass
+
+            if height is None or height <= 0:
+                height = default_h * np.random.uniform(0.7, 1.3)
+
+            b_name = props.get("name", props.get("building:name", f"Building_{elem['id']}"))
+            centroid = np.mean(np.array(local_verts), axis=0).tolist()
+
+            try:
+                poly = Polygon(local_verts)
+                area_m2 = poly.area
+            except Exception:
+                area_m2 = 400.0
+
+            buildings.append({
+                "id": f"bldg_{elem['id']}",
+                "name": str(b_name),
+                "vertices_2d": local_verts,
+                "height": round(height, 1),
+                "centroid": centroid,
+                "area_m2": area_m2,
+                "tags": props
+            })
+
+    return buildings
+
+
+def batch_extract_multi_city(target_count=200, radius_m=100.0, dist_per_city_m=500.0, reset=False):
     master_json_path = os.path.join(DATASET_DIR, "master_urban_dataset.json")
     master_index = []
     global_counter = 1
@@ -47,12 +141,11 @@ def batch_extract_multi_city(target_count=200, radius_m=100.0, dist_per_city_m=4
             existing_ids = {item["site_id"] for item in master_index if "site_id" in item}
             print(f"[Batch Extractor Resume] Resuming extraction from site #{global_counter} ({len(master_index)} sites already extracted)...")
         except Exception as e:
-            print(f"[Batch Extractor Warning] Could not parse existing index ({e}). Starting fresh.")
             master_index = []
             global_counter = 1
 
     cities = list(TARGET_CITIES.keys())
-    per_city_target = max(10, math.ceil(target_count / len(cities)))
+    per_city_target = max(15, math.ceil(target_count / len(cities)))
 
     print("=" * 70)
     print(f"   AUTOMATED BATCH URBAN CONTEXT EXTRACTOR (Target: {target_count} Sites)")
@@ -69,112 +162,41 @@ def batch_extract_multi_city(target_count=200, radius_m=100.0, dist_per_city_m=4
         ref_lat, ref_lon = info["lat"], info["lon"]
         default_h = info.get("default_height", 50.0)
 
-        print(f"\n[Batch Extractor] Mining building sites for {info['name']} (Code: '{city_code}')...")
+        dataset_cache = os.path.join(DATASET_DIR, f"{city_key}_context.json")
 
-        try:
-            gdf_bldgs = ox.features_from_point((ref_lat, ref_lon), tags={'building': True}, dist=dist_per_city_m)
-        except Exception as e:
-            print(f"  [Warning] Could not fetch building features for {city_key}: {e}")
-            continue
+        if os.path.exists(dataset_cache):
+            print(f"\n[Batch Extractor Cache] Slicing site parcels offline from: {dataset_cache}")
+            with open(dataset_cache, "r") as f:
+                cached_data = json.load(f)
 
-        try:
-            gdf_roads = ox.features_from_point((ref_lat, ref_lon), tags={'highway': ['primary', 'secondary', 'tertiary', 'trunk', 'residential']}, dist=dist_per_city_m)
-        except Exception as e:
-            gdf_roads = None
-
-        if gdf_bldgs is None or len(gdf_bldgs) == 0:
-            continue
-
-        # Parse local cartesian buildings
-        parsed_bldgs = []
-        for idx, row in gdf_bldgs.iterrows():
-            geom = row.geometry
-            props = row.to_dict()
-
-            if geom is None or geom.is_empty:
-                continue
-
-            polys = [geom] if isinstance(geom, Polygon) else (list(geom.geoms) if isinstance(geom, MultiPolygon) else [])
-
-            for poly in polys:
-                ext_coords = list(poly.exterior.coords)
-                if len(ext_coords) < 3:
-                    continue
-
-                local_verts = []
-                for lon, lat in ext_coords:
-                    mx, my = latlon_to_local_meters(lat, lon, ref_lat, ref_lon)
-                    local_verts.append([round(mx, 2), round(my, 2)])
-
-                if len(local_verts) < 3:
-                    continue
-
-                height = None
-                if "height" in props and str(props["height"]).strip() != "nan":
+            parsed_bldgs = []
+            for idx, b in enumerate(cached_data.get("context_buildings", [])):
+                verts = b.get("vertices_2d", [])
+                if len(verts) >= 3:
                     try:
-                        val = str(props["height"]).replace("m", "").replace("ft", "").strip()
-                        height = float(val)
-                    except ValueError:
-                        pass
+                        poly = Polygon(verts)
+                        area = poly.area
+                    except Exception:
+                        area = 400.0
 
-                if height is None and "building:levels" in props and str(props["building:levels"]).strip() != "nan":
-                    try:
-                        levels = float(props["building:levels"])
-                        height = max(6.0, levels * 3.8)
-                    except ValueError:
-                        pass
-
-                if height is None or height <= 0:
-                    height = default_h * np.random.uniform(0.7, 1.3)
-
-                b_name = props.get("name", props.get("building:name", f"Building_{idx}"))
-                if str(b_name) == "nan":
-                    b_name = f"Building_{idx}"
-
-                centroid = np.mean(np.array(local_verts), axis=0).tolist()
-                area_m2 = poly.area * 111000 * 111000
-
-                parsed_bldgs.append({
-                    "id": f"bldg_{idx}",
-                    "name": str(b_name),
-                    "vertices_2d": local_verts,
-                    "height": round(height, 1),
-                    "centroid": centroid,
-                    "area_m2": area_m2,
-                    "tags": props
-                })
-
-        # Parse road centerlines
-        parsed_roads = []
-        if gdf_roads is not None:
-            for idx, row in gdf_roads.iterrows():
-                geom = row.geometry
-                props = row.to_dict()
-                if geom is None or geom.is_empty:
-                    continue
-                lines = [geom] if isinstance(geom, LineString) else (list(geom.geoms) if hasattr(geom, "geoms") else [])
-
-                for line in lines:
-                    coords = list(line.coords)
-                    if len(coords) < 2:
-                        continue
-                    local_line = []
-                    for lon, lat in coords:
-                        mx, my = latlon_to_local_meters(lat, lon, ref_lat, ref_lon)
-                        local_line.append([round(mx, 2), round(my, 2)])
-
-                    h_type = str(props.get("highway", "street"))
-                    r_name = str(props.get("name", f"Street ({h_type})"))
-                    if r_name == "nan":
-                        r_name = f"Street ({h_type})"
-
-                    parsed_roads.append({
-                        "id": f"road_{idx}",
-                        "name": r_name,
-                        "highway_type": h_type,
-                        "width_m": 14.0 if h_type in ["primary", "trunk"] else 8.0,
-                        "polyline_2d": local_line
+                    parsed_bldgs.append({
+                        "id": f"cached_bldg_{idx}",
+                        "name": b.get("name", f"Building_{idx}"),
+                        "vertices_2d": verts,
+                        "height": b.get("height", default_h),
+                        "centroid": b.get("centroid", np.mean(verts, axis=0).tolist()),
+                        "area_m2": area,
                     })
+            parsed_roads = cached_data.get("roads", [])
+        else:
+            print(f"\n[Batch Extractor Online] Fetching 3D urban features for {info['name']} (Code: '{city_code}')...")
+            overpass_raw = fetch_overpass_features(ref_lat, ref_lon, dist_m=dist_per_city_m)
+            parsed_bldgs = parse_overpass_json_to_bldgs(overpass_raw, ref_lat, ref_lon, default_h=default_h)
+            parsed_roads = []
+
+        if len(parsed_bldgs) == 0:
+            print(f"  [Warning] No building features parsed for {city_key}.")
+            continue
 
         # Filter valid site parcels (150 m² <= Area <= 4500 m²)
         valid_candidate_sites = [b for b in parsed_bldgs if 150.0 <= b["area_m2"] <= 4500.0]
@@ -188,19 +210,31 @@ def batch_extract_multi_city(target_count=200, radius_m=100.0, dist_per_city_m=4
 
             scx, scy = site_b["centroid"][0], site_b["centroid"][1]
 
-            ctx_buildings = []
+            # Shift coordinate origin to current site parcel center
+            shifted_bldgs = []
+            ctx_bldgs = []
+
             for b in parsed_bldgs:
                 if b["id"] == site_b["id"]:
                     continue
-                dist = math.hypot(b["centroid"][0] - scx, b["centroid"][1] - scy)
-                if dist <= radius_m + 30.0:
-                    ctx_buildings.append(b)
 
-            if len(ctx_buildings) < 4:
+                dist = math.hypot(b["centroid"][0] - scx, b["centroid"][1] - scy)
+                if dist <= radius_m + 25.0:  # 100m radius cutoff = 200m x 200m box
+                    shifted_verts = [[round(vx - scx, 2), round(vy - scy, 2)] for vx, vy in b["vertices_2d"]]
+                    shifted_bldgs.append({
+                        "id": b["id"],
+                        "name": b["name"],
+                        "vertices_2d": shifted_verts,
+                        "height": b["height"],
+                        "centroid": [round(b["centroid"][0] - scx, 2), round(b["centroid"][1] - scy, 2)],
+                        "area_m2": b["area_m2"]
+                    })
+
+            if len(shifted_bldgs) < 4:
                 continue
 
-            site_verts = site_b["vertices_2d"]
-            metrics = compute_urban_metrics(site_verts, ctx_buildings, radius_m=radius_m)
+            site_verts = [[round(vx - scx, 2), round(vy - scy, 2)] for vx, vy in site_b["vertices_2d"]]
+            metrics = compute_urban_metrics(site_verts, shifted_bldgs, radius_m=radius_m)
             area_tier = compute_area_tier(metrics["site_area_m2"])
 
             num_str = f"{global_counter:04d}"
@@ -209,7 +243,6 @@ def batch_extract_multi_city(target_count=200, radius_m=100.0, dist_per_city_m=4
             site_filename = f"{candidate_id}.html"
 
             if candidate_id in existing_ids:
-                print(f"  [Skip] Site {candidate_id} already exists.")
                 continue
 
             html_out_path = os.path.join(OUTPUT_DIR, site_filename)
@@ -226,15 +259,15 @@ def batch_extract_multi_city(target_count=200, radius_m=100.0, dist_per_city_m=4
                 "site_boundary": {
                     "name": site_b["name"],
                     "vertices_2d": site_verts,
-                    "centroid": site_b["centroid"],
+                    "centroid": [0.0, 0.0],
                 },
-                "context_buildings": ctx_buildings,
-                "roads": parsed_roads,
+                "context_buildings": shifted_bldgs,
+                "roads": [],
                 "metrics": {
                     "siteArea": metrics["site_area_m2"],
                     "areaTier": area_tier,
                     "far": metrics["floor_area_ratio"],
-                    "buildingCount": len(ctx_buildings),
+                    "buildingCount": len(shifted_bldgs),
                     "maxHeight": metrics["max_height_m"],
                     "avgHeight": metrics["avg_height_m"],
                 }
@@ -250,7 +283,7 @@ def batch_extract_multi_city(target_count=200, radius_m=100.0, dist_per_city_m=4
                 "site_area_m2": metrics["site_area_m2"],
                 "avg_height_m": metrics["avg_height_m"],
                 "max_height_m": metrics["max_height_m"],
-                "building_count": len(ctx_buildings),
+                "building_count": len(shifted_bldgs),
                 "render_html": f"output/{site_filename}"
             }
 
