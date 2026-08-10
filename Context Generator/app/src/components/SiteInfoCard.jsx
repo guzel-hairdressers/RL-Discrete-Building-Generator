@@ -41,13 +41,11 @@ export const SiteInfoCard = () => {
         Lat: {latVal.toFixed(4)}, Lon: {lonVal.toFixed(4)}
       </div>
       <div className="info-grid">
-        <div className="info-item">
+        <div className="info-item full-width">
           <span className="info-label">SITE AREA</span>
-          <span className="info-val">{site.site_area_m2?.toFixed(1) || '--'} m²</span>
-        </div>
-        <div className="info-item">
-          <span className="info-label">AREA TIER</span>
-          <span className="info-val">{site.area_tier} Tier</span>
+          <span className="info-val">
+            {site.site_area_m2?.toFixed(1) || '--'} m² ({site.area_tier})
+          </span>
         </div>
         <div className="info-item full-width">
           <span className="info-label">CONTEXT HEIGHT</span>
