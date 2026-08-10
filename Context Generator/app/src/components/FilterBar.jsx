@@ -22,7 +22,7 @@ export const FilterBar = () => {
           value={filters.city}
           onChange={(e) => setFilter('city', e.target.value)}
         >
-          <option value="ALL">All Cities (Any)</option>
+          <option value="ALL">Any</option>
           <option value="prs">Paris</option>
           <option value="nyc">NYC</option>
           <option value="tokyo">Tokyo</option>

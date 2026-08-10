@@ -110,7 +110,9 @@ export const useStore = create((set, get) => ({
 
   // Apply client-side filtering over master_urban_dataset.json (<0.1ms)
   applyFilters: () => {
-    const { allSites, filters } = get();
+    const { allSites, filteredSites, activeSiteIndex, filters } = get();
+    const currentSite = filteredSites[activeSiteIndex];
+
     const filtered = allSites.filter((site) => {
       // City Filter
       if (filters.city !== 'ALL' && site.city_code !== filters.city) return false;
@@ -125,9 +127,18 @@ export const useStore = create((set, get) => ({
       return true;
     });
 
+    let newIndex = 0;
+    // If switching to ANY tier, preserve the active 3D model currently on screen
+    if (filters.activeTier === 'ANY' && currentSite) {
+      const idxInFiltered = filtered.findIndex((s) => s.site_id === currentSite.site_id);
+      if (idxInFiltered !== -1) {
+        newIndex = idxInFiltered;
+      }
+    }
+
     set({
       filteredSites: filtered,
-      activeSiteIndex: 0,
+      activeSiteIndex: newIndex,
     });
   },
 

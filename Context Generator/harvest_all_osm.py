@@ -230,10 +230,14 @@ def harvest_real_portfolio():
             create_3d_context_visualization(scene_data, out_path)
             create_3d_context_visualization(scene_data, public_out_path)
 
+            slat, slon = local_meters_to_latlon(scx, scy, ref_lat, ref_lon)
+
             master_dataset.append({
                 'site_id': site_id,
                 'city_code': city_code,
                 'city_name': info['name'],
+                'lat': round(slat, 6),
+                'lon': round(slon, 6),
                 'area_tier': area_tier,
                 'site_area_m2': metrics['site_area_m2'],
                 'avg_height_m': metrics['avg_height_m'],
