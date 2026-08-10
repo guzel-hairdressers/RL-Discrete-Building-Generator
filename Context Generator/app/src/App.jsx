@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useStore } from './store/useStore';
 import { SceneViewer } from './components/SceneViewer';
+import { SiteInfoCard } from './components/SiteInfoCard';
 import { FilterBar } from './components/FilterBar';
 import { CarouselNav } from './components/CarouselNav';
 import { BottomBar } from './components/BottomBar';
@@ -28,6 +29,7 @@ export function App() {
   return (
     <div className="app-root">
       <SceneViewer />
+      <SiteInfoCard />
       <FilterBar />
       <CarouselNav />
       <BottomBar />
