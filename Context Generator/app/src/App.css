@@ -347,9 +347,33 @@ body, html, #root, .app-root {
   padding: 8px 18px;
   font-size: 12px;
   font-weight: 600;
-  color: #0f172a;
   pointer-events: auto;
   border: 1px solid #cbd5e1;
+}
+
+.site-number-input {
+  width: 42px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.site-number-input:hover {
+  border-color: #94a3b8;
+}
+
+.site-number-input:focus {
+  border-color: #0f172a;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
 }
 
 .pill-divider {

@@ -150,6 +150,14 @@ export const useStore = create((set, get) => ({
     set({ activeSiteIndex: nextIndex });
   },
 
+  // Set Active Site Index directly
+  setActiveSiteIndex: (index) => {
+    const { filteredSites } = get();
+    if (index >= 0 && index < filteredSites.length) {
+      set({ activeSiteIndex: index });
+    }
+  },
+
   // Pick Random Site (Forced to pick a site that is NOT the current active one; does nothing if <= 1 site)
   pickRandomSite: () => {
     const { filteredSites, activeSiteIndex } = get();
