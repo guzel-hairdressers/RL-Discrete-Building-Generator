@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#111712">
   <meta name="description" content="Live parallel floor-plan reinforcement learning optimizer.">
-  <title>Module Lab v0.8.1 — Optimized Parallel Floor Plan Generator</title>
+  <title>Module Lab v0.8.0 — Exact Multi-Floor Core Optimizer</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='9' height='9' rx='1.5' fill='%23a9c071' opacity='0.8'/%3E%3Crect x='6' y='6' width='9' height='9' rx='1.5' fill='%23a9c071' stroke='%23f5f2ea' stroke-width='1.5'/%3E%3Cpath d='M6 1v5H1' stroke='%23f5f2ea' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
 </head>
@@ -38,7 +38,7 @@
               <rect x="6" y="6" width="9" height="9" rx="1.5" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5"/>
               <path d="M6 1v5H1" stroke="var(--ink)" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
-            Module Lab <span>v0.8.1</span>
+            Module Lab <span>v0.8.0</span>
           </div>
           <h1>Parallel floor plan optimizer</h1>
           <div class="connection-line">
@@ -235,9 +235,15 @@
         <div class="score-breakdown-details" id="scoreBreakdownDetails"></div>
       </section>
 
-      <section class="score-breakdown-card" id="perfTimingsCard" style="display: none;">
-        <h3 class="panel-kicker" style="margin-top: 0; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #859288; cursor: pointer;" onclick="document.getElementById('perfTimingsDetails').style.display = document.getElementById('perfTimingsDetails').style.display === 'none' ? 'block' : 'none';">⏱ Performance Timings ▾</h3>
-        <div class="score-breakdown-details" id="perfTimingsDetails"></div>
+      <section class="trend-section" aria-labelledby="trendTitle" style="margin-top: 16px; margin-bottom: 16px;">
+        <div class="section-heading">
+          <div>
+            <span class="panel-kicker" id="trendKicker">All episodes</span>
+            <h3 id="trendTitle">Score trend</h3>
+          </div>
+          <span class="trend-value" id="trendValue">—</span>
+        </div>
+        <canvas id="historyCanvas" width="320" height="88" role="img" aria-label="Recent episode score trend"></canvas>
       </section>
 
       <form id="settingsForm" novalidate>
@@ -436,88 +442,7 @@
         </div>
       </section>
 
-      <section class="trend-section" aria-labelledby="trendTitle">
-        <div class="section-heading">
-          <div>
-            <span class="panel-kicker" id="trendKicker">All episodes</span>
-            <h3 id="trendTitle">Score trend</h3>
-          </div>
-          <span class="trend-value" id="trendValue">—</span>
-        </div>
-        <canvas id="historyCanvas" width="320" height="88" role="img" aria-label="Recent episode score trend"></canvas>
-      </section>
 
-      <section class="info-section" aria-labelledby="infoTitle">
-        <div class="section-heading">
-          <div>
-            <span class="panel-kicker">RL Agent Objectives</span>
-            <h3 id="infoTitle">Score Formulation & Weights</h3>
-          </div>
-        </div>
-        <div class="info-content">
-          <table class="weights-table">
-            <thead>
-              <tr>
-                <th>Objective Metric</th>
-                <th>Weight</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Space Fill Ratio</strong> (min 60% target)</td>
-                <td>70%</td>
-              </tr>
-              <tr>
-                <td><strong>Rentable Area Ratio</strong> (min 70% target)</td>
-                <td>15%</td>
-              </tr>
-              <tr>
-                <td><strong>Daylight Access Ratio</strong></td>
-                <td>10%</td>
-              </tr>
-              <tr>
-                <td><strong>BPE Module Vocabulary Reuse</strong></td>
-                <td>2%</td>
-              </tr>
-              <tr>
-                <td><strong>Constructibility / Grid Snapping</strong></td>
-                <td>2%</td>
-              </tr>
-              <tr>
-                <td><strong>Envelope Efficiency</strong></td>
-                <td>1%</td>
-              </tr>
-              <tr>
-                <td><strong>Unmerged Triangles Penalty</strong> (average per floor)</td>
-                <td>-8.0 pts/average triangle</td>
-              </tr>
-              <tr>
-                <td><strong>Topology Violations (Reachability)</strong></td>
-                <td>Dynamic (up to -85 pts)</td>
-              </tr>
-          </table>
-          <div class="score-notes" style="margin-top: 10px; font-size: 10px; color: #7d8980; line-height: 1.4;">
-            <div style="margin-bottom: 4px;">
-              <strong style="color: #adb9b0;">BPE Merge Bonus:</strong> Adds exactly <code>+3.0</code> points for each occurrence of a merged token that appears at least twice globally.
-            </div>
-             <div>
-              <strong style="color: #adb9b0;">Triangle Penalty Avoidance:</strong> Merging triangles into composite rooms removes them from the post-BPE triangle count, avoiding exactly <code>-8.0</code> points per average unmerged triangle per floor. Note: The score is allowed to drop below 0 to maintain learning gradients.
-            </div>
-            <div style="margin-top: 6px; border-top: 1px solid #3d4a40; padding-top: 6px;">
-              <strong style="color: #adb9b0;">Topology Violations & Checks:</strong>
-              Dynamic penalty scaled by violation rate and multiplier. Violations include:
-              <ul style="margin: 4px 0 0 0; padding-left: 14px; list-style-type: disc; color: #727e75;">
-                <li><strong>No Path to Core:</strong> A room or special module has no connectivity path back to any circulation core.</li>
-                <li><strong>Travel Limit Cap:</strong> The shortest reachability path distance from a room to the nearest core exceeds 30m.</li>
-                <li><strong>Missing Core:</strong> The layout contains no circulation core modules.</li>
-                <li><strong>Core Spacing:</strong> Multiple core modules are placed closer than 30m without separating internal site holes.</li>
-                <li><strong>First Placement Rule:</strong> The first module placed in multi-floor layouts is not a core module.</li>
-                <li><strong>Empty Layout:</strong> The layout contains no module placements.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <footer class="panel-footer">
         <span id="protocolStatus">Live protocol idle</span>

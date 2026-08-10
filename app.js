@@ -1596,11 +1596,12 @@ window.onerror = function(message, source, lineno, colno, error) {
     dom.stepValue.textContent = padMetric(state.step);
     dom.moduleCountValue.textContent = `${state.placements.size} ${state.placements.size === 1 ? 'module' : 'modules'}`;
     updateScoreBreakdown();
-    updatePerformanceTimings();
+    renderPerfTimings();
     scheduleDeveloperPanelUpdate();
   }
 
-  function updatePerformanceTimings() {
+  function renderPerfTimings() {
+    if (!dom.perfTimingsCard || !dom.perfTimingsDetails) return;
     const metrics = metricRoot(state.serverMetrics);
     const timings = metrics.performanceTimings;
     
