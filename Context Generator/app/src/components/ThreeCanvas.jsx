@@ -162,42 +162,6 @@ export const ThreeCanvas = () => {
     window.addEventListener('mousemove', handleMouseMove);
 
     // Resize Handler
-    const handleResize = () => {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      const asp = w / h;
-
-      if (engineRef.current.camera.isOrthographicCamera) {
-        const d = 160;
-        engineRef.current.camera.left = -d * asp;
-        engineRef.current.camera.right = d * asp;
-        engineRef.current.camera.top = d;
-        engineRef.current.camera.bottom = -d;
-      } else {
-        engineRef.current.camera.aspect = asp;
-      }
-      engineRef.current.camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    // Animation Loop
-    let animId;
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
-      controls.update();
-
-      if (gizmoCamera && gizmoRenderer && engineRef.current.camera) {
-        gizmoCamera.quaternion.copy(engineRef.current.camera.quaternion).invert();
-        gizmoRenderer.render(gizmoScene, gizmoCamera);
-      }
-
-      renderer.render(scene, engineRef.current.camera);
-    };
-
-    animate();
-
     // Store references
     engineRef.current = {
       scene,
@@ -211,6 +175,48 @@ export const ThreeCanvas = () => {
       gizmoCamera,
       gizmoRenderer,
     };
+
+    // Resize Handler
+    const handleResize = () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      const asp = w / h;
+      const activeCam = engineRef.current.camera || camera;
+
+      if (activeCam.isOrthographicCamera) {
+        const d = 160;
+        activeCam.left = -d * asp;
+        activeCam.right = d * asp;
+        activeCam.top = d;
+        activeCam.bottom = -d;
+      } else {
+        activeCam.aspect = asp;
+      }
+      activeCam.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Animation Loop
+    let animId;
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+      controls.update();
+
+      const activeCam = engineRef.current.camera || camera;
+
+      if (gizmoCamera && gizmoRenderer && activeCam) {
+        gizmoCamera.quaternion.copy(activeCam.quaternion).invert();
+        gizmoRenderer.render(gizmoScene, gizmoCamera);
+      }
+
+      if (activeCam) {
+        renderer.render(scene, activeCam);
+      }
+    };
+
+    animate();
 
     return () => {
       cancelAnimationFrame(animId);
