@@ -49,14 +49,6 @@ export const SiteInfoCard = () => {
           <span className="info-label">AREA TIER</span>
           <span className="info-val">{site.area_tier} Tier</span>
         </div>
-        <div className="info-item">
-          <span className="info-label">FAR</span>
-          <span className="info-val">{site.far?.toFixed(2) || '2.50'}</span>
-        </div>
-        <div className="info-item">
-          <span className="info-label">BUILDINGS</span>
-          <span className="info-val">{site.building_count || '--'}</span>
-        </div>
         <div className="info-item full-width">
           <span className="info-label">CONTEXT HEIGHT</span>
           <span className="info-val">
