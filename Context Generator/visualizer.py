@@ -407,12 +407,7 @@ def _generate_architectural_threejs_html(scene_data_json):
     pointer-events: none;
   }}
   .card {{
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    border-radius: 12px; padding: 18px 22px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04);
-    pointer-events: auto; max-width: 320px;
+    display: none !important;
   }}
   .card h1 {{
     font-size: 16px; font-weight: 700; text-transform: uppercase;
