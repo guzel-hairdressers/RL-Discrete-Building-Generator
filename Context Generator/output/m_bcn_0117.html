@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urban Context Architectural Diagram</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #ffffff; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+  }
+  #ui-container {
+    position: absolute; top: 20px; left: 20px; z-index: 10;
+    display: flex; flex-direction: column; gap: 12px;
+    pointer-events: none;
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 12px; padding: 18px 22px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04);
+    pointer-events: auto; max-width: 320px;
+  }
+  .card h1 {
+    font-size: 16px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: #0f172a; margin-bottom: 4px;
+  }
+  .card .subtitle {
+    font-size: 12px; color: #64748b; margin-bottom: 12px; font-weight: 500;
+  }
+  .metrics-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px;
+    font-size: 12px; border-top: 1px solid #f1f5f9; padding-top: 10px;
+  }
+  .metric-item { display: flex; flex-direction: column; }
+  .metric-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .metric-val { font-weight: 600; color: #1e293b; font-size: 13px; }
+
+  /* Top-Right Controls Bar (Axonometric & Perspective ONLY) */
+  #controls-bar {
+    position: absolute; top: 20px; right: 20px; z-index: 10;
+    display: flex; gap: 6px; background: rgba(255, 255, 255, 0.95);
+    padding: 5px; border-radius: 10px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  }
+  .toggle-btn {
+    border: none; background: transparent; padding: 8px 14px;
+    border-radius: 6px; font-size: 12px; font-weight: 600;
+    color: #64748b; cursor: pointer; transition: all 0.2s ease;
+  }
+  .toggle-btn.active {
+    background: #0f172a; color: #ffffff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+  }
+  .toggle-btn:hover:not(.active) {
+    background: #f1f5f9; color: #334155;
+  }
+
+  /* Interactive Blender Orientation Gizmo Container directly under the top-right bar */
+  #gizmo-container {
+    position: absolute; top: 72px; right: 20px; z-index: 10;
+    width: 120px; height: 120px;
+    pointer-events: auto;
+  }
+
+  #tooltip {
+    position: absolute; z-index: 20; display: none;
+    background: #ffffff;
+    border: 1px solid rgba(203, 213, 225, 0.95);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #0f172a;
+    font-size: 12px; font-weight: 500;
+    pointer-events: none;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    line-height: 1.6;
+  }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+
+<div id="ui-container">
+  <div class="card">
+    <h1 id="title-text">Urban Context</h1>
+    <div class="subtitle" id="coords-text">Architectural Site Study</div>
+    <div class="metrics-grid">
+      <div class="metric-item"><span class="metric-label">Site Area</span><span class="metric-val" id="val-area">-</span></div>
+      <div class="metric-item"><span class="metric-label">Area Tier</span><span class="metric-val" id="val-tier">-</span></div>
+      <div class="metric-item"><span class="metric-label">FAR</span><span class="metric-val" id="val-far">-</span></div>
+      <div class="metric-item"><span class="metric-label">Buildings</span><span class="metric-val" id="val-bldgs">-</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="controls-bar">
+  <button class="toggle-btn active" id="btn-ortho">Axonometric</button>
+  <button class="toggle-btn" id="btn-persp">Perspective</button>
+</div>
+
+<!-- Blender Orientation Gizmo widget div placed directly below top-right bar -->
+<div id="gizmo-container"></div>
+
+<div id="tooltip"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const DATA = {"buildings":[{"vertices":[[-28.755767846964243,97.85240511468399,0.0],[-28.725767846964242,96.49240511468399,0.0],[-29.94576784696424,96.542405114684,0.0],[-29.94576784696424,92.402405114684,0.0],[-28.67576784696424,92.32240511468399,0.0],[-28.685767846964243,90.942405114684,0.0],[-29.915767846964243,90.982405114684,0.0],[-29.915767846964243,86.732405114684,0.0],[-30.39576784696424,84.152405114684,0.0],[-31.35576784696424,82.80240511468399,0.0],[-45.72576784696424,68.622405114684,0.0],[-49.875767846964244,64.612405114684,0.0],[-64.43576784696424,78.872405114684,0.0],[-60.445767846964245,82.972405114684,0.0],[-57.085767846964245,86.432405114684,0.0],[-56.46576784696424,87.062405114684,0.0],[-50.945767846964245,92.902405114684,0.0],[-48.555767846964244,95.41240511468399,0.0],[-44.216667684602854,100.0,0.0],[-29.99576784696424,100.0,0.0],[-29.99576784696424,97.942405114684,0.0],[-28.755767846964243,97.85240511468399,22.0],[-28.725767846964242,96.49240511468399,22.0],[-29.94576784696424,96.542405114684,22.0],[-29.94576784696424,92.402405114684,22.0],[-28.67576784696424,92.32240511468399,22.0],[-28.685767846964243,90.942405114684,22.0],[-29.915767846964243,90.982405114684,22.0],[-29.915767846964243,86.732405114684,22.0],[-30.39576784696424,84.152405114684,22.0],[-31.35576784696424,82.80240511468399,22.0],[-45.72576784696424,68.622405114684,22.0],[-49.875767846964244,64.612405114684,22.0],[-64.43576784696424,78.872405114684,22.0],[-60.445767846964245,82.972405114684,22.0],[-57.085767846964245,86.432405114684,22.0],[-56.46576784696424,87.062405114684,22.0],[-50.945767846964245,92.902405114684,22.0],[-48.555767846964244,95.41240511468399,22.0],[-44.216667684602854,100.0,22.0],[-29.99576784696424,100.0,22.0],[-29.99576784696424,97.942405114684,22.0]],"faces":[[18,19,20],[15,16,17],[13,14,15],[11,12,13],[9,10,11],[7,8,9],[4,5,6],[0,1,2],[17,18,20],[11,13,15],[7,9,11],[3,4,6],[20,0,2],[15,17,20],[7,11,15],[3,6,7],[20,2,3],[7,15,20],[20,3,7],[41,40,39],[38,37,36],[36,35,34],[34,33,32],[32,31,30],[30,29,28],[27,26,25],[23,22,21],[41,39,38],[36,34,32],[32,30,28],[27,25,24],[23,21,41],[41,38,36],[36,32,28],[28,27,24],[24,23,41],[41,36,28],[28,24,41],[21,22,0],[0,22,1],[22,23,1],[1,23,2],[23,24,2],[2,24,3],[24,25,3],[3,25,4],[25,26,4],[4,26,5],[26,27,5],[5,27,6],[27,28,6],[6,28,7],[28,29,7],[7,29,8],[29,30,8],[8,30,9],[30,31,9],[9,31,10],[31,32,10],[10,32,11],[32,33,11],[11,33,12],[33,34,12],[12,34,13],[34,35,13],[13,35,14],[35,36,14],[14,36,15],[36,37,15],[15,37,16],[37,38,16],[16,38,17],[38,39,17],[17,39,18],[39,40,18],[18,40,19],[41,21,20],[20,21,0],[40,41,19],[19,41,20]],"height":22.0,"area":786.4,"floors":6,"use":"Residential Apartments"},{"vertices":[[5.214232153035758,47.962405114684,0.0],[6.474232153035758,48.702405114684005,0.0],[25.064232153035757,48.942405114684,0.0],[26.32423215303576,48.502405114684,0.0],[26.78423215303576,47.962405114684,0.0],[32.50423215303576,42.512405114684,0.0],[26.134232153035757,35.932405114684,0.0],[20.204232153035758,29.802405114684003,0.0],[16.024232153035758,25.492405114684,0.0],[8.354232153035758,33.112405114684,0.0],[4.304232153035758,37.242405114684004,0.0],[-0.5357678469642418,42.102405114684004,0.0],[3.014232153035758,46.092405114684006,0.0],[5.214232153035758,47.962405114684,22.0],[6.474232153035758,48.702405114684005,22.0],[25.064232153035757,48.942405114684,22.0],[26.32423215303576,48.502405114684,22.0],[26.78423215303576,47.962405114684,22.0],[32.50423215303576,42.512405114684,22.0],[26.134232153035757,35.932405114684,22.0],[20.204232153035758,29.802405114684003,22.0],[16.024232153035758,25.492405114684,22.0],[8.354232153035758,33.112405114684,22.0],[4.304232153035758,37.242405114684004,22.0],[-0.5357678469642418,42.102405114684004,22.0],[3.014232153035758,46.092405114684006,22.0]],"faces":[[11,12,0],[8,9,10],[6,7,8],[4,5,6],[2,3,4],[0,1,2],[10,11,0],[6,8,10],[2,4,6],[10,0,2],[2,6,10],[13,25,24],[23,22,21],[21,20,19],[19,18,17],[17,16,15],[15,14,13],[13,24,23],[23,21,19],[19,17,15],[15,13,23],[23,19,15],[13,14,0],[0,14,1],[14,15,1],[1,15,2],[15,16,2],[2,16,3],[16,17,3],[3,17,4],[17,18,4],[4,18,5],[18,19,5],[5,19,6],[19,20,6],[6,20,7],[20,21,7],[7,21,8],[21,22,8],[8,22,9],[22,23,9],[9,23,10],[23,24,10],[10,24,11],[25,13,12],[12,13,0],[24,25,11],[11,25,12]],"height":22.0,"area":451.3,"floors":6,"use":"Residential Apartments"},{"vertices":[[-7.0457678469642415,35.522405114684005,0.0],[-2.3357678469642416,40.012405114684,0.0],[-0.5357678469642418,42.102405114684004,0.0],[4.304232153035758,37.242405114684004,0.0],[3.1842321530357585,36.122405114684,0.0],[7.274232153035758,31.992405114684,0.0],[8.354232153035758,33.112405114684,0.0],[16.024232153035758,25.492405114684,0.0],[13.524232153035758,22.782405114684003,0.0],[12.474232153035759,23.802405114684003,0.0],[4.174232153035758,15.222405114684003,0.0],[5.224232153035758,14.252405114684002,0.0],[4.484232153035759,13.392405114684003,0.0],[0.7242321530357582,17.152405114684,0.0],[-0.7357678469642418,18.482405114684003,0.0],[-3.3757678469642416,21.152405114684,0.0],[-2.115767846964242,22.442405114684004,0.0],[-6.325767846964242,26.592405114684002,0.0],[-7.575767846964242,25.392405114684003,0.0],[-12.365767846964241,30.152405114684,0.0],[-8.715767846964242,33.652405114684,0.0],[-7.0457678469642415,35.522405114684005,22.0],[-2.3357678469642416,40.012405114684,22.0],[-0.5357678469642418,42.102405114684004,22.0],[4.304232153035758,37.242405114684004,22.0],[3.1842321530357585,36.122405114684,22.0],[7.274232153035758,31.992405114684,22.0],[8.354232153035758,33.112405114684,22.0],[16.024232153035758,25.492405114684,22.0],[13.524232153035758,22.782405114684003,22.0],[12.474232153035759,23.802405114684003,22.0],[4.174232153035758,15.222405114684003,22.0],[5.224232153035758,14.252405114684002,22.0],[4.484232153035759,13.392405114684003,22.0],[0.7242321530357582,17.152405114684,22.0],[-0.7357678469642418,18.482405114684003,22.0],[-3.3757678469642416,21.152405114684,22.0],[-2.115767846964242,22.442405114684004,22.0],[-6.325767846964242,26.592405114684002,22.0],[-7.575767846964242,25.392405114684003,22.0],[-12.365767846964241,30.152405114684,22.0],[-8.715767846964242,33.652405114684,22.0]],"faces":[[18,19,20],[14,15,16],[11,12,13],[7,8,9],[5,6,7],[2,3,4],[20,0,1],[17,18,20],[13,14,16],[10,11,13],[5,7,9],[1,2,4],[17,20,1],[10,13,16],[5,9,10],[1,4,5],[16,17,1],[5,10,16],[16,1,5],[41,40,39],[37,36,35],[34,33,32],[30,29,28],[28,27,26],[25,24,23],[22,21,41],[41,39,38],[37,35,34],[34,32,31],[30,28,26],[25,23,22],[22,41,38],[37,34,31],[31,30,26],[26,25,22],[22,38,37],[37,31,26],[26,22,37],[21,22,0],[0,22,1],[22,23,1],[1,23,2],[23,24,2],[2,24,3],[24,25,3],[3,25,4],[25,26,4],[4,26,5],[26,27,5],[5,27,6],[27,28,6],[6,28,7],[28,29,7],[7,29,8],[29,30,8],[8,30,9],[30,31,9],[9,31,10],[31,32,10],[10,32,11],[32,33,11],[11,33,12],[33,34,12],[12,34,13],[34,35,13],[13,35,14],[35,36,14],[14,36,15],[36,37,15],[15,37,16],[37,38,16],[16,38,17],[38,39,17],[17,39,18],[39,40,18],[18,40,19],[41,21,20],[20,21,0],[40,41,19],[19,41,20]],"height":22.0,"area":357.6,"floors":6,"use":"Residential Apartments"},{"vertices":[[16.024232153035758,25.492405114684,0.0],[20.204232153035758,29.802405114684003,0.0],[21.48423215303576,28.492405114684,0.0],[27.544232153035757,34.612405114684,0.0],[26.134232153035757,35.932405114684,0.0],[32.50423215303576,42.512405114684,0.0],[45.46423215303576,29.832405114684,0.0],[40.10423215303576,24.132405114684,0.0],[39.40423215303576,23.392405114684003,0.0],[38.40423215303576,24.372405114684003,0.0],[32.22423215303576,17.862405114684,0.0],[33.11423215303576,17.002405114684002,0.0],[32.56423215303576,16.422405114684004,0.0],[17.364232153035758,0.5724051146840021,0.0],[14.514232153035758,3.362405114684002,0.0],[8.754232153035758,9.122405114684002,0.0],[4.484232153035759,13.392405114684003,0.0],[5.224232153035758,14.252405114684002,0.0],[13.524232153035758,22.782405114684003,0.0],[16.024232153035758,25.492405114684,22.0],[20.204232153035758,29.802405114684003,22.0],[21.48423215303576,28.492405114684,22.0],[27.544232153035757,34.612405114684,22.0],[26.134232153035757,35.932405114684,22.0],[32.50423215303576,42.512405114684,22.0],[45.46423215303576,29.832405114684,22.0],[40.10423215303576,24.132405114684,22.0],[39.40423215303576,23.392405114684003,22.0],[38.40423215303576,24.372405114684003,22.0],[32.22423215303576,17.862405114684,22.0],[33.11423215303576,17.002405114684002,22.0],[32.56423215303576,16.422405114684004,22.0],[17.364232153035758,0.5724051146840021,22.0],[14.514232153035758,3.362405114684002,22.0],[8.754232153035758,9.122405114684002,22.0],[4.484232153035759,13.392405114684003,22.0],[5.224232153035758,14.252405114684002,22.0],[13.524232153035758,22.782405114684003,22.0]],"faces":[[16,17,18],[14,15,16],[12,13,14],[10,11,12],[7,8,9],[5,6,7],[3,4,5],[0,1,2],[14,16,18],[10,12,14],[5,7,9],[18,0,2],[10,14,18],[5,9,10],[10,18,2],[3,5,10],[10,2,3],[37,36,35],[35,34,33],[33,32,31],[31,30,29],[28,27,26],[26,25,24],[24,23,22],[21,20,19],[37,35,33],[33,31,29],[28,26,24],[21,19,37],[37,33,29],[29,28,24],[21,37,29],[29,24,22],[22,21,29],[19,20,0],[0,20,1],[20,21,1],[1,21,2],[21,22,2],[2,22,3],[22,23,3],[3,23,4],[23,24,4],[4,24,5],[24,25,5],[5,25,6],[25,26,6],[6,26,7],[26,27,7],[7,27,8],[27,28,8],[8,28,9],[28,29,9],[9,29,10],[29,30,10],[10,30,11],[30,31,11],[11,31,12],[31,32,12],[12,32,13],[32,33,13],[13,33,14],[33,34,14],[14,34,15],[34,35,15],[15,35,16],[35,36,16],[16,36,17],[37,19,18],[18,19,0],[36,37,17],[17,37,18]],"height":22.0,"area":709.1,"floors":6,"use":"Residential Apartments"}],"site":{"vertices":[[-20.58576784696424,21.662405114684002,0.0],[-12.365767846964241,30.152405114684,0.0],[-7.575767846964242,25.392405114684003,0.0],[-6.475767846964242,24.292405114684,0.0],[-7.935767846964242,22.742405114684,0.0],[-6.335767846964242,21.112405114684,0.0],[-4.815767846964242,22.612405114684,0.0],[-3.3757678469642416,21.152405114684,0.0],[-0.7357678469642418,18.482405114684003,0.0],[-3.5657678469642415,15.522405114684002,0.0],[-2.2057678469642417,14.162405114684002,0.0],[0.7242321530357582,17.152405114684,0.0],[4.484232153035759,13.392405114684003,0.0],[8.754232153035758,9.122405114684002,0.0],[6.934232153035758,7.2424051146840025,0.0],[12.604232153035758,1.4824051146840023,0.0],[14.514232153035758,3.362405114684002,0.0],[17.364232153035758,0.5724051146840021,0.0],[15.484232153035759,-1.3975948853159976,0.0],[18.364232153035758,-4.2975948853159975,0.0],[23.594232153035758,-9.627594885315998,0.0],[26.53423215303576,-12.477594885315998,0.0],[10.584232153035758,-29.137594885316,0.0],[-4.415767846964242,-14.027594885315997,0.0],[-5.165767846964242,-14.727594885315998,0.0],[-6.7957678469642415,-12.227594885315998,0.0],[-7.765767846964241,-10.827594885315998,0.0],[-12.195767846964241,-4.0075948853159975,0.0],[-14.155767846964242,-0.8775948853159978,0.0],[-15.415767846964242,1.0124051146840023,0.0],[-12.175767846964241,4.252405114684002,0.0],[-13.315767846964242,5.392405114684002,0.0],[-16.315767846964242,2.3524051146840024,0.0],[-18.775767846964243,6.012405114684002,0.0],[-19.37576784696424,7.052405114684002,0.0],[-17.595767846964243,8.762405114684002,0.0],[-19.595767846964243,10.842405114684002,0.0],[-20.935767846964243,9.432405114684002,0.0],[-25.705767846964243,16.752405114684002,0.0],[-23.905767846964242,18.572405114684003,0.0],[-20.58576784696424,21.662405114684002,0.2],[-12.365767846964241,30.152405114684,0.2],[-7.575767846964242,25.392405114684003,0.2],[-6.475767846964242,24.292405114684,0.2],[-7.935767846964242,22.742405114684,0.2],[-6.335767846964242,21.112405114684,0.2],[-4.815767846964242,22.612405114684,0.2],[-3.3757678469642416,21.152405114684,0.2],[-0.7357678469642418,18.482405114684003,0.2],[-3.5657678469642415,15.522405114684002,0.2],[-2.2057678469642417,14.162405114684002,0.2],[0.7242321530357582,17.152405114684,0.2],[4.484232153035759,13.392405114684003,0.2],[8.754232153035758,9.122405114684002,0.2],[6.934232153035758,7.2424051146840025,0.2],[12.604232153035758,1.4824051146840023,0.2],[14.514232153035758,3.362405114684002,0.2],[17.364232153035758,0.5724051146840021,0.2],[15.484232153035759,-1.3975948853159976,0.2],[18.364232153035758,-4.2975948853159975,0.2],[23.594232153035758,-9.627594885315998,0.2],[26.53423215303576,-12.477594885315998,0.2],[10.584232153035758,-29.137594885316,0.2],[-4.415767846964242,-14.027594885315997,0.2],[-5.165767846964242,-14.727594885315998,0.2],[-6.7957678469642415,-12.227594885315998,0.2],[-7.765767846964241,-10.827594885315998,0.2],[-12.195767846964241,-4.0075948853159975,0.2],[-14.155767846964242,-0.8775948853159978,0.2],[-15.415767846964242,1.0124051146840023,0.2],[-12.175767846964241,4.252405114684002,0.2],[-13.315767846964242,5.392405114684002,0.2],[-16.315767846964242,2.3524051146840024,0.2],[-18.775767846964243,6.012405114684002,0.2],[-19.37576784696424,7.052405114684002,0.2],[-17.595767846964243,8.762405114684002,0.2],[-19.595767846964243,10.842405114684002,0.2],[-20.935767846964243,9.432405114684002,0.2],[-25.705767846964243,16.752405114684002,0.2],[-23.905767846964242,18.572405114684003,0.2]],"faces":[[38,39,0],[36,37,38],[33,34,35],[31,32,33],[28,29,30],[26,27,28],[23,24,25],[21,22,23],[18,19,20],[16,17,18],[12,13,14],[10,11,12],[7,8,9],[5,6,7],[2,3,4],[0,1,2],[36,38,0],[31,33,35],[26,28,30],[23,25,26],[20,21,23],[15,16,18],[10,12,14],[5,7,9],[0,2,4],[35,36,0],[23,26,30],[18,20,23],[10,14,15],[4,5,9],[35,0,4],[18,23,30],[10,15,18],[35,4,9],[18,30,31],[35,9,10],[18,31,35],[35,10,18],[40,79,78],[78,77,76],[75,74,73],[73,72,71],[70,69,68],[68,67,66],[65,64,63],[63,62,61],[60,59,58],[58,57,56],[54,53,52],[52,51,50],[49,48,47],[47,46,45],[44,43,42],[42,41,40],[40,78,76],[75,73,71],[70,68,66],[66,65,63],[63,61,60],[58,56,55],[54,52,50],[49,47,45],[44,42,40],[40,76,75],[70,66,63],[63,60,58],[55,54,50],[49,45,44],[44,40,75],[70,63,58],[58,55,50],[49,44,75],[71,70,58],[50,49,75],[75,71,58],[58,50,75],[40,41,0],[0,41,1],[41,42,1],[1,42,2],[42,43,2],[2,43,3],[43,44,3],[3,44,4],[44,45,4],[4,45,5],[45,46,5],[5,46,6],[46,47,6],[6,47,7],[47,48,7],[7,48,8],[48,49,8],[8,49,9],[49,50,9],[9,50,10],[50,51,10],[10,51,11],[51,52,11],[11,52,12],[52,53,12],[12,53,13],[53,54,13],[13,54,14],[54,55,14],[14,55,15],[55,56,15],[15,56,16],[56,57,16],[16,57,17],[57,58,17],[17,58,18],[58,59,18],[18,59,19],[59,60,19],[19,60,20],[60,61,20],[20,61,21],[61,62,21],[21,62,22],[62,63,22],[22,63,23],[63,64,23],[23,64,24],[64,65,24],[24,65,25],[65,66,25],[25,66,26],[66,67,26],[26,67,27],[67,68,27],[27,68,28],[68,69,28],[28,69,29],[69,70,29],[29,70,30],[70,71,30],[30,71,31],[71,72,31],[31,72,32],[72,73,32],[32,73,33],[73,74,33],[33,74,34],[74,75,34],[34,75,35],[75,76,35],[35,76,36],[76,77,36],[36,77,37],[77,78,37],[37,78,38],[79,40,39],[39,40,0],[78,79,38],[38,79,39]]},"sitePerimeter":[[-25.705767846964243,16.752405114684002],[-20.935767846964243,9.432405114684002],[-19.595767846964243,10.842405114684002],[-17.595767846964243,8.762405114684002],[-19.37576784696424,7.052405114684002],[-18.775767846964243,6.012405114684002],[-16.315767846964242,2.3524051146840024],[-13.315767846964242,5.392405114684002],[-12.175767846964241,4.252405114684002],[-15.415767846964242,1.0124051146840023],[-14.155767846964242,-0.8775948853159978],[-12.195767846964241,-4.0075948853159975],[-7.765767846964241,-10.827594885315998],[-6.7957678469642415,-12.227594885315998],[-5.165767846964242,-14.727594885315998],[-4.415767846964242,-14.027594885315997],[10.584232153035758,-29.137594885316],[26.53423215303576,-12.477594885315998],[23.594232153035758,-9.627594885315998],[18.364232153035758,-4.2975948853159975],[15.484232153035759,-1.3975948853159976],[17.364232153035758,0.5724051146840021],[14.514232153035758,3.362405114684002],[12.604232153035758,1.4824051146840023],[6.934232153035758,7.2424051146840025],[8.754232153035758,9.122405114684002],[4.484232153035759,13.392405114684003],[0.7242321530357582,17.152405114684],[-2.2057678469642417,14.162405114684002],[-3.5657678469642415,15.522405114684002],[-0.7357678469642418,18.482405114684003],[-3.3757678469642416,21.152405114684],[-4.815767846964242,22.612405114684],[-6.335767846964242,21.112405114684],[-7.935767846964242,22.742405114684],[-6.475767846964242,24.292405114684],[-7.575767846964242,25.392405114684003],[-12.365767846964241,30.152405114684],[-20.58576784696424,21.662405114684002],[-23.905767846964242,18.572405114684003],[-25.705767846964243,16.752405114684002]],"roads":[],"roadOutlines":[],"greenSpaces":[],"siteArea":1289.6,"areaTier":"M","radius":100.0,"maxHeight":22.0,"cityName":"Barcelona (Eixample)","coords":{},"metrics":{"siteArea":1289.6,"areaTier":"M","far":0.37,"buildingCount":4,"maxHeight":22.0,"avgHeight":22.0,"maxFloors":6,"avgFloors":6}};
+
+// --- Scene Setup ---
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xffffff); // Pure 100% white background
+
+const aspect = window.innerWidth / window.innerHeight;
+const R = DATA.radius;
+
+// Orthographic Camera (Axonometric) - DEFAULT
+const orthoSize = R * 1.45;
+const cameraOrtho = new THREE.OrthographicCamera(
+  -orthoSize * aspect, orthoSize * aspect,
+  orthoSize, -orthoSize,
+  1, 3000
+);
+const camDist = R * 2.8;
+cameraOrtho.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
+
+// Perspective Camera
+const cameraPersp = new THREE.PerspectiveCamera(38, aspect, 1, 3000);
+cameraPersp.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
+
+let activeCamera = cameraOrtho; // DEFAULT AXONOMETRIC
+
+// Main Renderer with NO tone mapping compression for 100% PURE BRIGHT PAPER WHITE
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.NoToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+// Controls
+const controls = new OrbitControls(activeCamera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.18;
+controls.maxPolarAngle = Math.PI / 2.0; // Allow true flat horizontal view
+controls.target.set(0, DATA.maxHeight * 0.08, 0);
+controls.update();
+
+// --- Sun Direction Vector for Normal Self-Shading & Sun-Facing Filtering ---
+const sunVector = new THREE.Vector3(130, 220, 90).normalize();
+
+// --- Directional Sun Light for Cast Shadow Projection Map ---
+const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+sunLight.position.set(130, 220, 90);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 2048;
+sunLight.shadow.mapSize.height = 2048;
+
+const shadowDim = R * 1.6;
+sunLight.shadow.camera.left = -shadowDim;
+sunLight.shadow.camera.right = shadowDim;
+sunLight.shadow.camera.top = shadowDim;
+sunLight.shadow.camera.bottom = -shadowDim;
+sunLight.shadow.camera.near = 10;
+sunLight.shadow.camera.far = 600;
+sunLight.shadow.bias = -0.0005;
+sunLight.shadow.normalBias = 0.05;
+scene.add(sunLight);
+
+// --- 100% Pure White Ground Plane ---
+const groundGeom = new THREE.PlaneGeometry(R * 2, R * 2);
+const groundMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const ground = new THREE.Mesh(groundGeom, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.05;
+scene.add(ground);
+
+// --- Shared ShadowMaterial Overlay for Soft Cast Shadows (depthWrite=false) ---
+// Projects soft cast shadows cleanly onto ground, roads, roofs, and sun-facing building walls!
+const sharedShadowMat = new THREE.ShadowMaterial({
+  color: 0x000000,
+  opacity: 0.12,
+  depthWrite: false,
+  polygonOffset: true,
+  polygonOffsetFactor: -1.0,
+  polygonOffsetUnits: -1.0,
+});
+
+const shadowPlane = new THREE.Mesh(groundGeom, sharedShadowMat);
+shadowPlane.rotation.x = -Math.PI / 2;
+shadowPlane.position.y = 0.05; // Placed above ground (-0.05) & roads (0.01) so shadows render in Top view
+shadowPlane.receiveShadow = true;
+scene.add(shadowPlane);
+
+// Bounding box border line (Clean Neutral Grey)
+const borderPts = [
+  new THREE.Vector3(-R, 0.1,  R),
+  new THREE.Vector3( R, 0.1,  R),
+  new THREE.Vector3( R, 0.1, -R),
+  new THREE.Vector3(-R, 0.1, -R),
+  new THREE.Vector3(-R, 0.1,  R),
+];
+const borderGeom = new THREE.BufferGeometry().setFromPoints(borderPts);
+scene.add(new THREE.Line(borderGeom, new THREE.LineBasicMaterial({ color: 0xd1d5db, linewidth: 1.2 })));
+
+// --- Meter Scale Ticks on ALL 4 SIDES of the Square Boundary Box ---
+function createTickLabel(text) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 128; canvas.height = 64;
+  ctx.font = '400 20px Inter, sans-serif'; // Regular non-bold font
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000000'; // Pure solid black
+  ctx.fillText(text, 64, 32);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
+  sprite.scale.set(14, 7, 1);
+  return sprite;
+}
+
+for (let val = -R; val <= R; val += 50) {
+  // 1. Front X border (Z = R)
+  const xFront = createTickLabel(`${val}m`);
+  xFront.position.set(val, 0.5, R + 7);
+  scene.add(xFront);
+
+  // 2. Back X border (Z = -R)
+  const xBack = createTickLabel(`${val}m`);
+  xBack.position.set(val, 0.5, -R - 7);
+  scene.add(xBack);
+
+  // 3. Left Z border (X = -R)
+  const zLeft = createTickLabel(`${val}m`);
+  zLeft.position.set(-R - 7, 0.5, -val);
+  scene.add(zLeft);
+
+  // 4. Right Z border (X = R)
+  const zRight = createTickLabel(`${val}m`);
+  zRight.position.set(R + 7, 0.5, -val);
+  scene.add(zRight);
+}
+
+// --- Helper: Build Architectural Volume with STRICT NORMAL FILTERING ---
+// 1. Base Mesh: Roofs & sun-facing walls stay 100% PURE PAPER WHITE (#ffffff).
+//    Back-facing unlit walls (N·L <= 0.05) take a uniform, crisp architectural self-shadow color (#d8dfe8).
+// 2. Shadow Overlay Mesh: Contains ONLY SUN-FACING FACES (N·L > 0.05)!
+//    Back-facing unlit walls are 100% EXCLUDED from receiving cast shadows, guaranteeing ZERO cast-shadow cuts on unlit walls!
+function createArchitecturalVolume(verts, faces, colorHex = 0xffffff, opacity = 1.0, isRoad = false) {
+  const group = new THREE.Group();
+
+  const numTriangles = faces.length;
+  const pos = new Float32Array(numTriangles * 9);
+  const colors = new Float32Array(numTriangles * 9);
+
+  const pureWhite = new THREE.Color(colorHex);
+  const selfShadowColor = new THREE.Color(0xf0f0f0); // Soft Lighter Pure Monochrome Grey (R=240, G=240, B=240)
+
+  const sunFacingPositions = [];
+
+  for (let fi = 0; fi < numTriangles; fi++) {
+    const f = faces[fi];
+    const p0 = new THREE.Vector3(verts[f[0]][0], verts[f[0]][2], -verts[f[0]][1]);
+    const p1 = new THREE.Vector3(verts[f[1]][0], verts[f[1]][2], -verts[f[1]][1]);
+    const p2 = new THREE.Vector3(verts[f[2]][0], verts[f[2]][2], -verts[f[2]][1]);
+
+    // Compute exact face normal
+    const vA = new THREE.Vector3().subVectors(p1, p0);
+    const vB = new THREE.Vector3().subVectors(p2, p0);
+    const faceNormal = new THREE.Vector3().crossVectors(vA, vB).normalize();
+
+    // Check orientation relative to sun light direction
+    const dot = faceNormal.dot(sunVector);
+    const isSunFacing = (isRoad || dot > 0.05);
+    const c = isSunFacing ? pureWhite : selfShadowColor;
+
+    for (let vi = 0; vi < 3; vi++) {
+      const v = verts[f[vi]];
+      pos[fi * 9 + vi * 3 + 0] = v[0];
+      pos[fi * 9 + vi * 3 + 1] = v[2];
+      pos[fi * 9 + vi * 3 + 2] = -v[1];
+
+      colors[fi * 9 + vi * 3 + 0] = c.r;
+      colors[fi * 9 + vi * 3 + 1] = c.g;
+      colors[fi * 9 + vi * 3 + 2] = c.b;
+    }
+
+    // Collect ONLY sun-facing triangles for cast-shadow overlay
+    if (isSunFacing && !isRoad) {
+      for (let vi = 0; vi < 3; vi++) {
+        const v = verts[f[vi]];
+        sunFacingPositions.push(v[0], v[2], -v[1]);
+      }
+    }
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geom.computeVertexNormals();
+
+  // Base Mesh: MeshBasicMaterial guarantees 100% PURE PAPER WHITE on sun-facing faces & roofs!
+  const baseMat = new THREE.MeshBasicMaterial({
+    vertexColors: true,
+    transparent: opacity < 1.0,
+    opacity: opacity,
+    polygonOffset: isRoad,
+    polygonOffsetFactor: isRoad ? 2.0 : 0.0,
+    polygonOffsetUnits: isRoad ? 2.0 : 0.0,
+  });
+  const baseMesh = new THREE.Mesh(geom, baseMat);
+  group.add(baseMesh);
+
+  if (!isRoad) {
+    // Caster mesh: casts soft directional shadow map onto other structures
+    const casterMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+    const casterMesh = new THREE.Mesh(geom, casterMat);
+    casterMesh.castShadow = true;
+    group.add(casterMesh);
+
+    // Receiver shadow overlay mesh: ONLY contains SUN-FACING faces!
+    // Unlit back walls are 100% EXCLUDED, preventing any cast-shadow bleeding onto unlit walls!
+    if (sunFacingPositions.length > 0) {
+      const sunGeom = new THREE.BufferGeometry();
+      sunGeom.setAttribute('position', new THREE.Float32BufferAttribute(sunFacingPositions, 3));
+      sunGeom.computeVertexNormals();
+
+      const buildingShadowOverlay = new THREE.Mesh(sunGeom, sharedShadowMat);
+      buildingShadowOverlay.receiveShadow = true;
+      group.add(buildingShadowOverlay);
+    }
+  }
+
+  return { geom, baseMesh, group };
+}
+
+// --- Render Context Buildings ---
+const interactiveObjects = [];
+for (const b of DATA.buildings) {
+  const faceColor = 0xffffff;
+  const edgeColor = 0x999999;
+
+  const { geom, baseMesh, group } = createArchitecturalVolume(b.vertices, b.faces, faceColor, 0.98, false);
+  baseMesh.userData = {
+    isBuilding: true,
+    area: b.area,
+    height: b.height,
+    floors: b.floors,
+    use: b.use,
+  };
+
+  const edges = new THREE.EdgesGeometry(geom, 20);
+  const lineMat = new THREE.LineBasicMaterial({ color: new THREE.Color(edgeColor), linewidth: 1.2 });
+  group.add(new THREE.LineSegments(edges, lineMat));
+
+  scene.add(group);
+  interactiveObjects.push(baseMesh);
+}
+
+// --- Render Vehicular Road Network ---
+if (DATA.roads) {
+  for (const r of DATA.roads) {
+    const { baseMesh, group } = createArchitecturalVolume(r.vertices, r.faces, 0xffffff, 1.0, true);
+    scene.add(group);
+  }
+  if (DATA.roadOutlines) {
+    for (const outline of DATA.roadOutlines) {
+      if (outline.length >= 2) {
+        const rPts = outline.map(p => new THREE.Vector3(p[0], 0.04, -p[1]));
+        const rGeom = new THREE.BufferGeometry().setFromPoints(rPts);
+        const rMat = new THREE.LineBasicMaterial({ color: 0xd1d5db, linewidth: 1.0 });
+        scene.add(new THREE.Line(rGeom, rMat));
+      }
+    }
+  }
+}
+
+// --- Render Green Spaces / Parks ---
+if (DATA.greenSpaces) {
+  for (const g of DATA.greenSpaces) {
+    const { baseMesh, group } = createArchitecturalVolume(g.vertices, g.faces, 0xdcfce7, 1.0, true);
+    scene.add(group);
+  }
+}
+
+// --- Render Central Testing Site Parcel ---
+if (DATA.site) {
+  const siteGroup = new THREE.Group();
+  const siteFaceColor = 0xfca5a5; // Soft Coral Red
+
+  const geom = new THREE.BufferGeometry();
+  const pos = new Float32Array(DATA.site.faces.length * 9);
+  for (let fi = 0; fi < DATA.site.faces.length; fi++) {
+    const f = DATA.site.faces[fi];
+    for (let vi = 0; vi < 3; vi++) {
+      const v = DATA.site.vertices[f[vi]];
+      pos[fi * 9 + vi * 3 + 0] = v[0];
+      pos[fi * 9 + vi * 3 + 1] = v[2];
+      pos[fi * 9 + vi * 3 + 2] = -v[1];
+    }
+  }
+  geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geom.computeVertexNormals();
+
+  const baseMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(siteFaceColor),
+    transparent: true, opacity: 0.88,
+  });
+  const baseMesh = new THREE.Mesh(geom, baseMat);
+  baseMesh.castShadow = true;
+  baseMesh.userData = {
+    isSite: true,
+    area: DATA.siteArea,
+    tier: DATA.areaTier,
+    far: DATA.metrics.far,
+    bldgs: DATA.metrics.buildingCount,
+    maxHeight: DATA.metrics.maxHeight,
+    avgHeight: DATA.metrics.avgHeight,
+    maxFloors: DATA.metrics.maxFloors,
+    avgFloors: DATA.metrics.avgFloors,
+  };
+  siteGroup.add(baseMesh);
+  interactiveObjects.push(baseMesh);
+
+  if (DATA.sitePerimeter && DATA.sitePerimeter.length >= 3) {
+    const outPts = DATA.sitePerimeter.map(p => new THREE.Vector3(p[0], 0.25, -p[1]));
+    const siteLineGeom = new THREE.BufferGeometry().setFromPoints(outPts);
+    const siteLineMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2.5 });
+    siteGroup.add(new THREE.Line(siteLineGeom, siteLineMat));
+  }
+
+  scene.add(siteGroup);
+}
+
+// --- Update UI Panel ---
+document.getElementById('title-text').innerText = DATA.cityName;
+document.getElementById('coords-text').innerText = `Lat: ${DATA.coords.lat?.toFixed(4) || '?'}, Lon: ${DATA.coords.lon?.toFixed(4) || '?'}`;
+document.getElementById('val-area').innerText = `${DATA.siteArea} m²`;
+document.getElementById('val-tier').innerText = `${DATA.areaTier} Tier`;
+document.getElementById('val-far').innerText = DATA.metrics.far;
+document.getElementById('val-bldgs').innerText = DATA.metrics.buildingCount;
+
+// --- Smooth Camera View Snap Function (Works 100% in Perspective & Axonometric Modes) ---
+let isAnimatingCamera = false;
+let animStartTime = 0;
+let animStartPos = new THREE.Vector3();
+let animEndPos = new THREE.Vector3();
+const ANIM_DURATION = 350; // ms
+
+function snapToView(dirX, dirY, dirZ) {
+  const target = controls.target.clone();
+  animStartPos.copy(activeCamera.position);
+
+  // Enforce standard Y-up vector to maintain smooth, unbroken OrbitControls mouse rotation
+  cameraOrtho.up.set(0, 1, 0);
+  cameraPersp.up.set(0, 1, 0);
+
+  if (dirY === 1) {
+    // Top view (Z height axis) - preserve current view heading to snap to nearest rotation
+    const dx = animStartPos.x - target.x;
+    const dz = animStartPos.z - target.z;
+    const dist2d = Math.hypot(dx, dz);
+    const angle = dist2d > 0.001 ? Math.atan2(dx, dz) : 0;
+    const eps = 0.001 * camDist;
+    animEndPos.set(target.x + eps * Math.sin(angle), target.y + camDist, target.z + eps * Math.cos(angle));
+  } else if (dirY === -1) {
+    // Bottom view
+    const dx = animStartPos.x - target.x;
+    const dz = animStartPos.z - target.z;
+    const dist2d = Math.hypot(dx, dz);
+    const angle = dist2d > 0.001 ? Math.atan2(dx, dz) : 0;
+    const eps = 0.001 * camDist;
+    animEndPos.set(target.x + eps * Math.sin(angle), target.y - camDist, target.z + eps * Math.cos(angle));
+  } else if (dirX === 1) {
+    animEndPos.set(target.x + camDist, target.y, target.z);
+  } else if (dirX === -1) {
+    animEndPos.set(target.x - camDist, target.y, target.z);
+  } else if (dirZ === 1) {
+    animEndPos.set(target.x, target.y, target.z + camDist);
+  } else if (dirZ === -1) {
+    animEndPos.set(target.x, target.y, target.z - camDist);
+  }
+
+  animStartTime = performance.now();
+  isAnimatingCamera = true;
+}
+
+// --- Custom Interactive Blender Orientation Gizmo Widget ---
+const gizmoContainer = document.getElementById('gizmo-container');
+const gizmoCanvas = document.createElement('canvas');
+gizmoCanvas.width = 240; // 2x hidpi
+gizmoCanvas.height = 240;
+gizmoCanvas.style.width = '120px';
+gizmoCanvas.style.height = '120px';
+gizmoContainer.appendChild(gizmoCanvas);
+const gctx = gizmoCanvas.getContext('2d');
+
+// Gizmo Axis Definitions: Blender CAD Standards
+// X = Red (#ef4444) [Horizontal Right]
+// Y = Green (#22c55e) [Horizontal Depth]
+// Z = Blue (#3b82f6) [Vertical Height]
+const AXES = [
+  { label: 'X', dir: [1, 0, 0], color: '#ef4444', isNeg: false },
+  { label: 'Y', dir: [0, 0, 1], color: '#22c55e', isNeg: false },
+  { label: 'Z', dir: [0, 1, 0], color: '#3b82f6', isNeg: false },
+  { label: '-X', dir: [-1, 0, 0], color: '#ef4444', isNeg: true },
+  { label: '-Y', dir: [0, 0, -1], color: '#22c55e', isNeg: true },
+  { label: '-Z', dir: [0, -1, 0], color: '#3b82f6', isNeg: true },
+];
+
+let gizmoRenderNodes = [];
+
+function drawGizmo() {
+  gctx.clearRect(0, 0, 240, 240);
+  const cx = 120, cy = 120, r = 75;
+
+  // Get current camera orientation matrix
+  const mat = new THREE.Matrix4();
+  mat.extractRotation(activeCamera.matrixWorldInverse);
+  
+  // Transform axis directions
+  const projected = AXES.map((axis) => {
+    const vec = new THREE.Vector3(...axis.dir).applyMatrix4(mat);
+    return {
+      ...axis,
+      px: cx + vec.x * r,
+      py: cy - vec.y * r,
+      pz: vec.z,
+    };
+  });
+
+  // Sort back-to-front by depth (pz)
+  projected.sort((a, b) => a.pz - b.pz);
+  gizmoRenderNodes = projected;
+
+  // Draw connecting axis lines from center
+  for (const node of projected) {
+    gctx.beginPath();
+    gctx.moveTo(cx, cy);
+    gctx.lineTo(node.px, node.py);
+    gctx.strokeStyle = node.isNeg ? '#cbd5e1' : node.color;
+    gctx.lineWidth = node.isNeg ? 2 : 4;
+    gctx.stroke();
+  }
+
+  // Draw node circles
+  for (const node of projected) {
+    gctx.beginPath();
+    const radius = node.isNeg ? 10 : 16;
+    gctx.arc(node.px, node.py, radius, 0, Math.PI * 2);
+
+    if (node.isNeg) {
+      gctx.fillStyle = '#ffffff';
+      gctx.fill();
+      gctx.strokeStyle = node.color;
+      gctx.lineWidth = 3;
+      gctx.stroke();
+    } else {
+      gctx.fillStyle = node.color;
+      gctx.fill();
+      gctx.font = 'bold 18px Inter, sans-serif';
+      gctx.textAlign = 'center';
+      gctx.textBaseline = 'middle';
+      gctx.fillStyle = '#ffffff';
+      gctx.fillText(node.label, node.px, node.py + 1);
+    }
+  }
+}
+
+// Handle Gizmo Mouse Clicks on Nodes (Works 100% in Perspective AND Axonometric)
+gizmoCanvas.addEventListener('click', (e) => {
+  const rect = gizmoCanvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * 2;
+  const my = (e.clientY - rect.top) * 2;
+
+  // Check hit from front to back
+  const clickable = [...gizmoRenderNodes].reverse();
+  for (const node of clickable) {
+    const dist = Math.hypot(mx - node.px, my - node.py);
+    const radius = node.isNeg ? 12 : 18;
+    if (dist <= radius) {
+      snapToView(node.dir[0], node.dir[1], node.dir[2]);
+      break;
+    }
+  }
+});
+
+// --- Camera Switch Controls (Axonometric vs Perspective) ---
+const btnPersp = document.getElementById('btn-persp');
+const btnOrtho = document.getElementById('btn-ortho');
+
+function setCamera(cameraMode) {
+  const prevCam = activeCamera;
+  if (cameraMode === 'ortho') {
+    activeCamera = cameraOrtho;
+    btnOrtho.classList.add('active');
+    btnPersp.classList.remove('active');
+  } else {
+    activeCamera = cameraPersp;
+    btnPersp.classList.add('active');
+    btnOrtho.classList.remove('active');
+  }
+  activeCamera.position.copy(prevCam.position);
+  controls.object = activeCamera;
+  controls.update();
+}
+
+btnPersp.addEventListener('click', () => setCamera('persp'));
+btnOrtho.addEventListener('click', () => setCamera('ortho'));
+
+// --- Clean Architectural Building Tooltips ---
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const tooltip = document.getElementById('tooltip');
+let hoveredObj = null;
+
+renderer.domElement.addEventListener('mousemove', (e) => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, activeCamera);
+  const hits = raycaster.intersectObjects(interactiveObjects);
+
+  if (hoveredObj) {
+    hoveredObj.material.color.setHex(hoveredObj.userData.isSite ? 0xfca5a5 : 0xffffff);
+    hoveredObj = null;
+  }
+
+  if (hits.length > 0) {
+    const obj = hits[0].object;
+    hoveredObj = obj;
+
+    if (obj.userData.isSite) {
+      obj.material.color.setHex(0xf87171);
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX + 14) + 'px';
+      tooltip.style.top = (e.clientY + 14) + 'px';
+      tooltip.innerHTML = `
+        <div style="font-weight:700; color:#0f172a; font-size:13px; margin-bottom:6px;">Testing Site Parcel</div>
+        <div style="color:#334155; margin-bottom:3px;"><b style="color:#0f172a;">Site Area:</b> ${obj.userData.area} m² (${obj.userData.tier} Tier)</div>
+        <div style="color:#334155; margin-bottom:3px;"><b style="color:#0f172a;">Context Height:</b> ${obj.userData.avgHeight}m | ${obj.userData.maxHeight}m</div>
+        <div style="color:#334155;"><b style="color:#0f172a;">Context Storeys:</b> ${obj.userData.avgFloors} | ${obj.userData.maxFloors}</div>
+      `;
+    } else if (obj.userData.isBuilding) {
+      obj.material.color.setHex(0xe2e8f0);
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX + 14) + 'px';
+      tooltip.style.top = (e.clientY + 14) + 'px';
+      tooltip.innerHTML = `
+        <div style="font-weight:700; color:#0f172a; font-size:13px; margin-bottom:6px;">${obj.userData.use}</div>
+        <div style="color:#334155; margin-bottom:3px;"><b style="color:#0f172a;">Footprint:</b> ${obj.userData.area} m²</div>
+        <div style="color:#334155; margin-bottom:3px;"><b style="color:#0f172a;">Height:</b> ${obj.userData.height} m</div>
+        <div style="color:#334155;"><b style="color:#0f172a;">Storeys:</b> ${obj.userData.floors}</div>
+      `;
+    }
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+
+// --- Resize ---
+window.addEventListener('resize', () => {
+  const newAspect = window.innerWidth / window.innerHeight;
+  cameraPersp.aspect = newAspect;
+  cameraPersp.updateProjectionMatrix();
+
+  cameraOrtho.left = -orthoSize * newAspect;
+  cameraOrtho.right = orthoSize * newAspect;
+  cameraOrtho.top = orthoSize;
+  cameraOrtho.bottom = -orthoSize;
+  cameraOrtho.updateProjectionMatrix();
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --- Animation Loop ---
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Smooth camera view snap animation
+  if (isAnimatingCamera) {
+    const now = performance.now();
+    const progress = Math.min(1.0, (now - animStartTime) / ANIM_DURATION);
+    const easeProgress = 1 - Math.pow(1 - progress, 3); // cubic ease out
+
+    controls.enabled = false;
+    activeCamera.position.lerpVectors(animStartPos, animEndPos, easeProgress);
+    activeCamera.lookAt(controls.target);
+
+    if (progress >= 1.0) {
+      isAnimatingCamera = false;
+      controls.enabled = true;
+      controls.update();
+    }
+  } else {
+    controls.update();
+  }
+
+  renderer.render(scene, activeCamera);
+
+  // Render dynamic Blender orientation gizmo widget
+  drawGizmo();
+}
+animate();
+</script>
+</body>
+</html>
