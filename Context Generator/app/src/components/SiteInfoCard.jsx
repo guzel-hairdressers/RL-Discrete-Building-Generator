@@ -9,7 +9,7 @@ export const SiteInfoCard = () => {
 
   if (!site) {
     return (
-      <div id="site-info-card" class="glass-card">
+      <div id="site-info-card" className="glass-card">
         <div id="site-city-title">NO MATCHING SITES</div>
         <div id="site-coords">Adjust filters to view sites</div>
       </div>
