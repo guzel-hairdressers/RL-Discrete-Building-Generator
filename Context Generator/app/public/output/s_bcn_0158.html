@@ -399,7 +399,7 @@ if (DATA.greenSpaces) {
   }
 }
 
-// --- Render Central Testing Site Parcel ---
+// --- Render Central Primary Site Parcel ---
 if (DATA.site) {
   const siteGroup = new THREE.Group();
   const siteFaceColor = 0xfca5a5; // Soft Coral Red
@@ -651,7 +651,7 @@ renderer.domElement.addEventListener('mousemove', (e) => {
       tooltip.style.left = (e.clientX + 14) + 'px';
       tooltip.style.top = (e.clientY + 14) + 'px';
       tooltip.innerHTML = `
-        <div style="font-weight:700; color:#0f172a; font-size:13px; margin-bottom:6px;">Testing Site Parcel</div>
+        <div style="font-weight:700; color:#0f172a; font-size:13px; margin-bottom:6px;">Primary Site Parcel</div>
         <div style="color:#334155; margin-bottom:3px;"><b style="color:#0f172a;">Site Area:</b> ${obj.userData.area} m² (${obj.userData.tier} Tier)</div>
         <div style="color:#334155; margin-bottom:3px;"><b style="color:#0f172a;">Context Height:</b> ${obj.userData.avgHeight}m | ${obj.userData.maxHeight}m</div>
         <div style="color:#334155;"><b style="color:#0f172a;">Context Storeys:</b> ${obj.userData.avgFloors} | ${obj.userData.maxFloors}</div>

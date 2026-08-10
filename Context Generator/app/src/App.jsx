@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { useStore } from './store/useStore';
-import { ThreeCanvas } from './components/ThreeCanvas';
+import { SceneViewer } from './components/SceneViewer';
 import { SiteInfoCard } from './components/SiteInfoCard';
-import { ViewToggle } from './components/ViewToggle';
 import { FilterBar } from './components/FilterBar';
 import { CarouselNav } from './components/CarouselNav';
 import { BottomBar } from './components/BottomBar';
@@ -29,9 +28,8 @@ export function App() {
 
   return (
     <div className="app-root">
-      <ThreeCanvas />
+      <SceneViewer />
       <SiteInfoCard />
-      <ViewToggle />
       <FilterBar />
       <CarouselNav />
       <BottomBar />
