@@ -49,7 +49,8 @@ def compute_area_tier(area_m2):
         XS : area < 600 m²
         S  : 600 <= area < 1,200 m²
         M  : 1,200 <= area < 2,500 m²
-        L  : area >= 2,500 m²
+        L  : 2,500 <= area < 4,000 m²
+        XL : area >= 4,000 m²
     """
     if area_m2 < 600.0:
         return "XS"
@@ -57,8 +58,10 @@ def compute_area_tier(area_m2):
         return "S"
     elif area_m2 < 2500.0:
         return "M"
-    else:
+    elif area_m2 < 4000.0:
         return "L"
+    else:
+        return "XL"
 
 
 def _parse_building_function(tags, height):
