@@ -189,6 +189,7 @@ def harvest_real_portfolio():
                     shifted_roads.append({
                         'highway_type': r['highway_type'],
                         'width_m': r['width_m'],
+                        'polyline_2d': shifted_pts,
                         'points_2d': shifted_pts
                     })
 

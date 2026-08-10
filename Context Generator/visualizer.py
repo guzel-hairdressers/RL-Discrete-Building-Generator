@@ -175,7 +175,7 @@ def _build_road_network_polygons(roads, center, half_size):
         if h_type in NON_VEHICULAR_HIGHWAYS:
             continue
 
-        pts = r.get("polyline_2d", [])
+        pts = r.get("polyline_2d", r.get("points_2d", []))
         if len(pts) < 2:
             continue
         width = r.get("width_m", 6.0)
