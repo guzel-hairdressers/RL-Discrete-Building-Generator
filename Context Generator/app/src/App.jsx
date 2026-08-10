@@ -14,12 +14,14 @@ export function App() {
     fetch('/dataset/master_urban_dataset.json')
       .then((res) => {
         if (!res.ok) {
-          return fetch('../dataset/master_urban_dataset.json');
+          throw new Error(`Dataset fetch returned ${res.status}`);
         }
         return res.json();
       })
       .then((data) => {
-        setDataset(data);
+        if (Array.isArray(data)) {
+          setDataset(data);
+        }
       })
       .catch((err) => {
         console.error('Error loading master_urban_dataset.json:', err);
