@@ -46,17 +46,17 @@ NON_VEHICULAR_HIGHWAYS = {
 def compute_area_tier(area_m2):
     """
     Categorize site by area:
-        S   : area < 600 m²
-        M   : 600 <= area < 1,200 m²
-        M-L : 1,200 <= area < 2,500 m²
-        L   : area >= 2,500 m²
+        XS : area < 600 m²
+        S  : 600 <= area < 1,200 m²
+        M  : 1,200 <= area < 2,500 m²
+        L  : area >= 2,500 m²
     """
     if area_m2 < 600.0:
-        return "S"
+        return "XS"
     elif area_m2 < 1200.0:
-        return "M"
+        return "S"
     elif area_m2 < 2500.0:
-        return "M-L"
+        return "M"
     else:
         return "L"
 

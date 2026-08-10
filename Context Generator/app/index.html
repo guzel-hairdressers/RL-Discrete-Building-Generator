@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Building Context Generator - Interactive 3D Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Three.js & OrbitControls from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+  <!-- Full-Screen 3D WebGL Canvas -->
+  <div id="canvas-container"></div>
+
+  <!-- Top-Left Site Information Card -->
+  <div id="site-info-card" class="glass-card">
+    <div id="site-city-title">Loading Site...</div>
+    <div id="site-coords">Lat: --, Lon: --</div>
+    <div class="info-grid">
+      <div class="info-item"><span class="info-label">SITE AREA</span><span id="val-area" class="info-val">-- m²</span></div>
+      <div class="info-item"><span class="info-label">AREA TIER</span><span id="val-tier" class="info-val">--</span></div>
+      <div class="info-item"><span class="info-label">FAR</span><span id="val-far" class="info-val">--</span></div>
+      <div class="info-item"><span class="info-label">BUILDINGS</span><span id="val-bldgs" class="info-val">--</span></div>
+      <div class="info-item full-width"><span class="info-label">CONTEXT HEIGHT</span><span id="val-height-range" class="info-val">-- m | -- m</span></div>
+      <div class="info-item full-width"><span class="info-label">CONTEXT STOREYS</span><span id="val-storeys-range" class="info-val">-- | --</span></div>
+    </div>
+  </div>
+
+  <!-- Wide Top Horizontal Floating Filter Bar -->
+  <div id="filter-bar" class="glass-bar wide-bar">
+    
+    <!-- Site Area Section with Right-Aligned Small Tier Buttons -->
+    <div class="filter-group flex-grow">
+      <div class="group-header">
+        <div class="header-left">
+          <span class="group-title">Site Area</span>
+          <span id="val-area-summary" class="range-summary-badge">600 m² - 1200 m²</span>
+        </div>
+        <div class="tier-buttons right-aligned">
+          <button class="tier-btn" data-tier="XS">XS</button>
+          <button class="tier-btn active" data-tier="S">S</button>
+          <button class="tier-btn" data-tier="M">M</button>
+          <button class="tier-btn" data-tier="L">L</button>
+          <button class="tier-btn" data-tier="XL">XL</button>
+        </div>
+      </div>
+      <div class="dual-range-container">
+        <input type="range" id="range-area-min" min="150" max="4500" step="25" value="600">
+        <input type="range" id="range-area-max" min="150" max="4500" step="25" value="1200">
+        <div class="range-track"></div>
+      </div>
+    </div>
+
+    <!-- City Filter Dropdown -->
+    <div class="filter-group compact">
+      <span class="group-title">City</span>
+      <select id="select-city" class="custom-select">
+        <option value="ALL">All Cities</option>
+        <option value="nyc">NYC</option>
+        <option value="tokyo">Tokyo</option>
+        <option value="bcn">Barcelona</option>
+        <option value="ldn">London</option>
+        <option value="chi">Chicago</option>
+        <option value="hk">Hong Kong</option>
+        <option value="prs">Paris</option>
+        <option value="sgp">Singapore</option>
+      </select>
+    </div>
+
+    <!-- Context Height Dual Range Slider -->
+    <div class="filter-group flex-grow">
+      <div class="group-header">
+        <span class="group-title">Context Height</span>
+        <span id="val-height-summary" class="range-summary-badge">10m - 300m</span>
+      </div>
+      <div class="dual-range-container">
+        <input type="range" id="range-height-min" min="10" max="300" step="5" value="10">
+        <input type="range" id="range-height-max" min="10" max="300" step="5" value="300">
+        <div class="range-track"></div>
+      </div>
+    </div>
+
+    <!-- Clean Reset Button -->
+    <button id="btn-reset-filters" class="btn-secondary" title="Reset All Filters">Reset</button>
+  </div>
+
+  <!-- Top-Right Axonometric / Perspective Camera View Toggle -->
+  <div id="view-toggle" class="glass-pill-toggle">
+    <button id="btn-axono" class="toggle-btn active">Axonometric</button>
+    <button id="btn-persp" class="toggle-btn">Perspective</button>
+  </div>
+
+  <!-- Interactive Blender Orientation Gizmo Container -->
+  <div id="gizmo-container"></div>
+
+  <!-- Floating Edge Navigation Carousel Buttons (Matching Slate Outline Borders) -->
+  <button id="btn-prev-site" class="carousel-arrow left-arrow" title="Previous Site (Left Arrow Key)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+  <button id="btn-next-site" class="carousel-arrow right-arrow" title="Next Site (Right Arrow Key)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+  </button>
+
+  <!-- Bottom-Center Match Counter & Clean Random Site Action -->
+  <div id="bottom-bar" class="glass-bottom-pill">
+    <span id="match-counter-text">Site 1 of 500</span>
+    <span class="pill-divider">|</span>
+    <button id="btn-random-site" class="btn-text-action">Random Site</button>
+  </div>
+
+  <!-- Pure White Hover Tooltip -->
+  <div id="tooltip"></div>
+
+  <script src="three_engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
