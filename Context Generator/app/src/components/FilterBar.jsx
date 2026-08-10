@@ -5,6 +5,7 @@ export const FilterBar = () => {
   const filters = useStore((s) => s.filters);
   const setFilter = useStore((s) => s.setFilter);
   const selectTier = useStore((s) => s.selectTier);
+  const resetFilters = useStore((s) => s.resetFilters);
 
   const minPercent = areaToPercent(filters.minArea);
   const maxPercent = areaToPercent(filters.maxArea);
