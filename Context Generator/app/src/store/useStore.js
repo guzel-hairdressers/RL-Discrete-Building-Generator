@@ -96,11 +96,17 @@ export const useStore = create((set, get) => ({
     set({ activeSiteIndex: nextIndex });
   },
 
-  // Pick Random Site
+  // Pick Random Site (Forced to pick a site that is NOT the current active one; does nothing if <= 1 site)
   pickRandomSite: () => {
-    const { filteredSites } = get();
-    if (filteredSites.length === 0) return;
-    const randomIndex = Math.floor(Math.random() * filteredSites.length);
+    const { filteredSites, activeSiteIndex } = get();
+    if (filteredSites.length <= 1) return;
+    
+    // Uniform random pick among all indices excluding activeSiteIndex
+    let randomIndex = Math.floor(Math.random() * (filteredSites.length - 1));
+    if (randomIndex >= activeSiteIndex) {
+      randomIndex += 1;
+    }
+    
     set({ activeSiteIndex: randomIndex });
   },
 
