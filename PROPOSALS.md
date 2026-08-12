@@ -1,8 +1,13 @@
-# Graph Neural Networks & Graph RL Proposals for Discrete Building Generator
+# Architectural Proposals & Roadmap — RL Discrete Building Generator
 
-`mb_bs_graphs_proposal.md`
+`PROPOSALS.md`
 
-This document details the architectural proposal for incorporating **Graph Neural Networks (GNNs)**, **Graph Attention Mechanisms (GAT / GATv2)**, and **Graph Reinforcement Learning (Graph RL)** into the parallel floor-plan placement and shape generation pipeline.
+This document contains the core architectural proposals and long-term design specifications for the **RL Discrete Building Generator** (Module Lab).
+
+> [!NOTE]
+> **Status Summary**:
+> * **Sections 1–5 (Graph Neural Networks & Graph RL)**: Deprioritized for current release iterations.
+> * **Section 6 (Model-Driven & Policy-Controlled Core Placement)**: Active implementation proposal (Phase 1 immediate, Phase 2 roadmap).
 
 ---
 
@@ -106,6 +111,27 @@ In multi-floor optimization (`singleFloor: False`):
 
 ---
 
+## 6. Model-Driven & Policy-Controlled Core Placement Strategies
+
+To prevent core placement heuristics from forcing cores into central locations that restrict subsequent building wing options, core placement transitions through two progressive architectural phases:
+
+### Phase 1: Dynamically Determined Core Placement (Immediate Implementation)
+* **Core Count Determination**: Multi-core requirement (1 vs 2 cores) is dynamically computed based on site polygon area and story count (e.g. 2 cores for sites $> 600\text{ m}^2$ or stories $\ge 6$).
+* **Model-Decided Core Placement**:
+  - The policy selects initial Core 1 placement $(x_1, y_1, \theta_1, \text{CoreShapeID})$ at step $t=0$ from a set of boundary-aware candidates (SDF setback distance fields, principal edge axes, and centroid anchors).
+  - Core 2 is placed sequentially at step $t=k$ either **attached to the active module frontier** (ensuring 100% geometric alignment without bridge gaps) or **detached in an unbuilt wing zone**.
+* **Full Geometric Control**: Position $(x,y)$, rotation angle $\theta$, and core shape variant are 100% selected by policy logits.
+
+### Phase 2: Fully Policy-Controlled Core Generation (Roadmap Item)
+* **Autonomous Core Count & Timing**: The policy network $\pi_\theta(a_t | s_t)$ decides autonomously **when** to add a core, **how many** cores to place, and **when cores are complete** (`FINISH_CORES` action).
+* **State Feature Inputs**:
+  - *Egress Radius Field*: Spatial distance field from any footprint point to the nearest core.
+  - *Unserviced Frontier Ratio*: Percentage of valid site area beyond fire egress safety limits ($> 30\text{m}$).
+  - *Core Area Penalty*: Penalizes unnecessary cores since cores consume space on all floors ($4-8$ stories).
+* **Emergent Learning**: Small sites naturally learn single-core layouts, while sprawling multi-wing sites autonomously trigger attached secondary egress cores.
+
+---
+
 ## Architectural Comparison Summary
 
 | Component | Standard Flat Grid RL | Proposed Graph Attention RL |
@@ -113,5 +139,7 @@ In multi-floor optimization (`singleFloor: False`):
 | **State Encoding** | Flattened 1D/2D Feature Arrays | GATv2 Spatial & Topological Graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ |
 | **Placement Action** | Grid cell index sampling | Graph Pointer Network over active frontier ports $\mathcal{F}_t$ |
 | **Spatial Awareness** | Fixed raster resolution ($1\text{m}$) | Exact continuous vector geometry + dynamic edge weights |
+| **Core Strategy (Phase 1)** | Fixed geometric centroid | Model-selected placement/rotation across SDF setback fields |
+| **Core Strategy (Phase 2)** | Fixed core count | Fully policy-controlled core count, timing, and shape variants |
 | **BPE Merging** | Post-processing heuristic | Dynamic Graph Edge Contraction & Rewriting |
 | **Multi-Floor Stacking**| Evaluated independently | 3D Heterogeneous Graph Message Passing |
