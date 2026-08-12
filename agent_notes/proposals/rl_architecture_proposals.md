@@ -18,6 +18,7 @@ This document presents a technical analysis and relevancy rating for all Reinfor
 | **PROP-08** | Direct Unconstrained Continuous $(x,y,\theta)$ | Continuous Placement | **DUMB (Not Recommended)** | $>99\%$ of sampled continuous coordinates result in wall collisions or site clipping, leading to complete gradient collapse. |
 | **PROP-09** | Differentiable Projection Layer | Continuous Placement | **MEDIUM (Complex)** | Projects invalid continuous coordinates to nearest valid anchor, but gradient backpropagation across non-convex boundaries is noisy. |
 | **PROP-10** | Offline Bootstrapping (BC $\to$ Live PPO) | Training Bootstrapping | **HIGH (Essential for Continuous)** | Pre-trains continuous policies on recorded discrete trajectory datasets to completely avoid cold-start collision failures. |
+| **PROP-11** | Multi-Step Lookahead Beam Search / MCTS | Search / Inference | **HIGH (Inference) / MEDIUM (Training)** | Explores best actions $n$ steps deep (AlphaZero/Chess style). Instant zero-shot layout quality boost during inference; provides high-quality $Q^*$ targets for training. |
 
 ---
 
@@ -96,3 +97,13 @@ This document presents a technical analysis and relevancy rating for all Reinfor
 * **Concept**: Record a dataset of 10,000+ high-scoring layout trajectories $\mathcal{D}$ using the strong discrete generator. Pre-train a continuous policy on $\mathcal{D}$ using Behavioral Cloning (BC), then switch to live PPO fine-tuning.
 * **Rating**: **HIGH (Essential for Continuous Transitions)**
 * **Justification**: Completely eliminates cold-start collision failures when introducing complex or continuous action spaces. The policy starts live training already knowing valid architectural placement strategies.
+
+---
+
+### PROP-11: Multi-Step Lookahead Beam Search / MCTS
+* **Concept**: At current state $s_t$, expand top-$K$ candidate placements $n$ steps deep using parallel environment rollouts or policy value predictions $V(s_{t+n})$, selecting the candidate that yields the highest lookahead return:
+  $$\hat{Q}(s_t, a) = \max_{a_{t+1} \dots a_{t+n-1}} V_\psi\left(s_{t+n}\right)$$
+* **Rating**: **HIGH (Inference) / MEDIUM (Training)**
+* **Justification**: 
+  * **During Inference**: Gives an instant, zero-shot quality boost to layout generations without updating neural network weights (similar to Chess/Go engine tree search).
+  * **During Training**: Can generate high-precision target $Q^*$-values for training surrogate models and policy baseline updates. However, because multi-step rollouts add compute overhead ($\approx 15-30\,\text{ms}$ per search step), it is best used selectively for dataset collection or inference search rather than on every single PPO step.

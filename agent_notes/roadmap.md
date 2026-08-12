@@ -1,47 +1,56 @@
-# Project Development Roadmap — Module Lab (v0.8+)
+# Master Project Development Roadmap — Module Lab (v0.8+)
 
-This document defines the step-by-step master development plan for the **RL-Discrete-Building-Generator** (Module Lab).
-
----
-
-## Strategic Roadmap Dependency Graph
-
-```
-Phase 1: Learning Stability (GAE + PPO Clipping)
-  └─► Cures score dispersion and stabilizes baseline
-        │
-        ▼
-Phase 2: Engine Optimization & Parallel C Batching
-  └─► Achieves ultra-fast rollout throughput (<150ms / episode)
-        │
-        ▼
-Phase 3: High-Quality Generator Convergence & Dataset Recording
-  └─► Generates 10,000+ high-scoring trajectory dataset D_v1
-        │
-        ▼
-Phase 4: Neural Surrogate Reward Model & PBRS
-  └─► Provides 10x metric speedup & dense step-by-step guidance
-        │
-        ▼
-Phase 5: Iterative Self-Improving Surrogate Flywheel
-  └─► Co-evolves policy & surrogate for complex architectural topologies
-        │
-        ▼
-Phase 6: Spatial Action Maps & Continuous Placement Extensions
-  └─► Pre-trains continuous policy via BC on D_v1, fine-tunes with live PPO
-```
+This document defines the master development plan for the **RL-Discrete-Building-Generator** (Module Lab), featuring **Decision-Tree Branching** and **Contingency Pathways** to handle execution dependencies.
 
 ---
 
-## Detailed Step-by-Step Milestones
+## 1. Master Decision-Tree Roadmap Graph
+
+```
+[Phase 1: Learning Stability (GAE + PPO Ratio Clipping)]
+  │
+  ├─► [Decision Node 1: Score Variance < 8.0 pts?]
+  │      ├─► (YES) ──► Proceed to [Phase 2: C Optimization & Vector Batching]
+  │      └─► (NO)  ──► [Contingency 1A: MCTS / Lookahead Training Rollouts]
+  │                                    │
+  │  ┌─────────────────────────────────┘
+  ▼  ▼
+[Phase 3: High-Quality Generator Convergence & Dataset Recording (D_v1)]
+  │
+  ▼
+[Phase 4: Neural Surrogate Reward Model & PBRS]
+  │
+  ├─► [Decision Node 2: Surrogate Prediction Error < 5%?]
+  │      ├─► (YES) ──► Proceed to [Phase 5: Iterative Self-Improving Flywheel]
+  │      └─► (NO)  ──► [Contingency 4A: GNN / Spatial Transformer Surrogate]
+  │                                    │
+  │  ┌─────────────────────────────────┘
+  ▼  ▼
+[Phase 5: Iterative Self-Improving Flywheel]
+  │
+  ▼
+[Phase 6: Spatial Action Maps & Continuous Placement Extensions]
+  │
+  └─► [Decision Node 3: 2D Spatial Softmax Step Time < 2.0ms?]
+         ├─► (YES) ──► [Primary Release: Continuous Spatial Generator]
+         └─► (NO)  ──► [Contingency 6A: Differentiable Projection / Offset Heads]
+```
+
+---
+
+## 2. Detailed Phase Breakdown & Contingency Pathways
 
 ### Phase 1: Learning Stability & Variance Reduction
 * **Target Objective**: *Model Learning Stability & Variance Reduction*
 * **Core Tasks**:
-  1. **Generalized Advantage Estimation (GAE)**: Implement GAE ($\gamma = 0.99, \lambda = 0.95$) in `server.py` to replace crude terminal baseline subtraction.
-  2. **PPO Ratio Clipping**: Implement PPO Clipped Surrogate Loss ($\epsilon = 0.2$) to prevent catastrophic policy updates.
-  3. **Advantage Normalization**: Standardize advantages per minibatch ($\hat{A} \leftarrow (\hat{A} - \mu) / (\sigma + 10^{-8})$).
-* **Target Metric**: Reduce episode score standard deviation from $\pm 28.4\,\text{pts}$ down to $< 8.0\,\text{pts}$.
+  1. **GAE Implementation**: Implement GAE ($\gamma = 0.99, \lambda = 0.95$) in `server.py` to replace crude terminal baseline subtraction.
+  2. **PPO Ratio Clipping**: Implement PPO Clipped Surrogate Loss ($\epsilon = 0.2$).
+  3. **Advantage Normalization**: Standardize advantages per minibatch.
+* **Target Metric**: Reduce episode score standard deviation to $< 8.0\,\text{pts}$.
+
+> 🔀 **Decision Node 1**: Check episode score variance after 500 training episodes.
+> * **Primary Branch**: If variance $< 8.0\,\text{pts}$, proceed directly to **Phase 2**.
+> * **Contingency Branch 1A (MCTS Training Rollouts)**: If variance remains high, introduce 2-step parallel MCTS rollouts during training to compute precise empirical $Q^*(s, a)$ baseline targets before updating policy weights.
 
 ---
 
@@ -54,24 +63,26 @@ Phase 6: Spatial Action Maps & Continuous Placement Extensions
 
 ---
 
-### Phase 3: High-Quality Model Convergence & Trajectory Recording
+### Phase 3: High-Quality Model Convergence & Dataset Recording
 * **Target Objective**: *Data Collection & Trajectory Archiving*
 * **Core Tasks**:
   1. Train the stabilized PPO policy until mean episode score consistently exceeds $85.0\,\text{pts}$.
-  2. Record 10,000+ completed episode trajectories into an archived dataset (`dataset_v1.h5` / `jsonl`), capturing:
-     * Full state history $s_0, s_1, \dots, s_T$
-     * Placed module geometry & anchor choices $a_t$
-     * Ground-truth terminal sub-scores (daylight, fill ratio, reachability, BPE reuse).
-* **Target Metric**: Generate a verified dataset of $\ge 10,000$ high-scoring layouts for downstream surrogate model training.
+  2. Record 10,000+ completed episode trajectories into an archived dataset (`dataset_v1.h5` / `jsonl`).
+  3. **Inference Multi-Step Beam Search (PROP-11)**: Add optional user setting for 3-step lookahead beam search during frontend inference, enabling instant zero-shot layout quality boosts without retraining.
+* **Target Metric**: Generate a verified dataset of $\ge 10,000$ high-scoring layouts.
 
 ---
 
 ### Phase 4: Dense Neural Surrogate Reward Model & Potential-Based Reward Shaping (PBRS)
 * **Target Objective**: *Dense Feedback & 10x Metric Evaluation Acceleration*
 * **Core Tasks**:
-  1. **Surrogate Model Training**: Train a Graph Neural Network / MLP $\hat{R}_\phi(s_t)$ on `dataset_v1` to predict final layout score from partial states.
+  1. **Surrogate Model Training**: Train a lightweight Neural Network $\hat{R}_\phi(s_t)$ on `dataset_v1` to predict final layout score from partial states.
   2. **PBRS Integration**: Integrate Potential-Based Reward Shaping ($r_t = \gamma \hat{R}_\phi(s_{t+1}) - \hat{R}_\phi(s_t)$) into `server.py`.
-* **Target Metric**: Reduce per-step metric calculation time to $< 0.1\,\text{ms}$ while providing instant intermediate step guidance.
+* **Target Metric**: Reduce per-step metric calculation time to $< 0.1\,\text{ms}$.
+
+> 🔀 **Decision Node 2**: Check surrogate prediction error on held-out validation trajectories.
+> * **Primary Branch**: If mean prediction error $< 5\%$, proceed directly to **Phase 5**.
+> * **Contingency Branch 4A (GNN / Spatial Transformer Architecture)**: If MLP surrogate struggles with complex non-convex site shapes, upgrade surrogate network architecture to a Graph Neural Network (GNN) operating on room-adjacency topology graphs.
 
 ---
 
@@ -90,4 +101,7 @@ Phase 6: Spatial Action Maps & Continuous Placement Extensions
   1. **Spatial Action Maps**: Implement 2D Spatial Softmax Action Maps $\mathbf{Z} \in \mathbb{R}^{H \times W \times R}$ with boolean C validity masking.
   2. **Behavioral Cloning Pre-training**: Pre-train continuous policy on `dataset_v1` to learn valid spatial placement distributions without cold-start failures.
   3. **Live PPO Fine-Tuning**: Fine-tune the continuous policy using live PPO for sub-pixel placement precision.
-* **Target Metric**: Continuous placement model achieves 100% boundary compliance with superior room proportion flexibility.
+
+> 🔀 **Decision Node 3**: Check 2D Spatial Softmax step time and memory footprint.
+> * **Primary Branch**: If step time $< 2.0\,\text{ms}$ and VRAM $< 2.0\,\text{GB}$, deploy Spatial Action Maps as the primary continuous placement generator.
+> * **Contingency Branch 6A (Anchor Offset Sub-Pixel Heads)**: If 2D Spatial Softmax grid resolution is too memory-intensive for large sites, switch to continuous offset prediction heads $(\Delta x, \Delta y, \Delta \theta)$ anchored to discrete candidate placements.
