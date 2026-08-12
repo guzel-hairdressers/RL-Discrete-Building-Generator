@@ -1,0 +1,17 @@
+[
+  {
+    "site_id": "custom_l_1786562985",
+    "is_custom": true,
+    "city_code": "custom",
+    "city_name": "Berlin (Mitte)",
+    "lat": 52.520701,
+    "lon": 13.405149,
+    "area_tier": "L",
+    "site_area_m2": 2762.0,
+    "avg_height_m": 47.5,
+    "max_height_m": 68.4,
+    "building_count": 2,
+    "far": 1.56,
+    "render_html": "sites/custom_l_1786562985.html"
+  }
+]

@@ -250,12 +250,10 @@ def harvest_real_portfolio():
 
         time.sleep(2.0) # Pause between cities
 
-    # Save Master Urban Dataset JSON
-    master_path = os.path.join(DATASET_DIR, "master_urban_dataset.json")
-    public_master_path = os.path.join(BASE_DIR, "app", "public", "dataset", "master_urban_dataset.json")
+    # Save Master Urban Dataset JSON (Single source of truth in app/public/data/)
+    public_master_path = os.path.join(BASE_DIR, "app", "public", "data", "master_urban_dataset.json")
+    os.makedirs(os.path.dirname(public_master_path), exist_ok=True)
 
-    with open(master_path, "w") as f:
-        json.dump(master_dataset, f, indent=2)
     with open(public_master_path, "w") as f:
         json.dump(master_dataset, f, indent=2)
 

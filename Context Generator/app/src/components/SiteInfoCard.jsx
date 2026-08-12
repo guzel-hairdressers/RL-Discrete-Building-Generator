@@ -15,6 +15,7 @@ const CITY_COORDS = {
 export const SiteInfoCard = () => {
   const filteredSites = useStore((s) => s.filteredSites);
   const activeSiteIndex = useStore((s) => s.activeSiteIndex);
+  const deleteCustomSite = useStore((s) => s.deleteCustomSite);
   
   const site = filteredSites[activeSiteIndex];
 
@@ -36,7 +37,21 @@ export const SiteInfoCard = () => {
 
   return (
     <div id="site-info-card" className="glass-card">
-      <div id="site-city-title">{site.city_name || site.city_code.toUpperCase()}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <div id="site-city-title">
+          {site.city_name || site.city_code.toUpperCase()}
+          {site.is_custom && <span className="custom-badge">CUSTOM</span>}
+        </div>
+        {site.is_custom && (
+          <button
+            className="btn-delete-custom"
+            onClick={() => deleteCustomSite(site.site_id)}
+            title="Delete Custom Site"
+          >
+            &times; Delete
+          </button>
+        )}
+      </div>
       <div id="site-coords">
         Lat: {latVal.toFixed(4)}, Lon: {lonVal.toFixed(4)}
       </div>

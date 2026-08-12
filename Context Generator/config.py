@@ -6,8 +6,8 @@ import os
 
 # Default directory for outputs
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-DATASET_DIR = os.path.join(BASE_DIR, "dataset")
+OUTPUT_DIR = os.path.join(BASE_DIR, "app", "public", "sites")
+DATASET_DIR = os.path.join(BASE_DIR, "app", "public", "data")
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(DATASET_DIR, exist_ok=True)

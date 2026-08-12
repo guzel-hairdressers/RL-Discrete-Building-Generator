@@ -15,6 +15,24 @@ except ImportError:
     SHAPELY_AVAILABLE = False
 
 
+def latlon_to_local_meters(lat, lon, ref_lat, ref_lon):
+    """Convert (lat, lon) coordinates to local tangent plane meters relative to ref origin."""
+    r_earth = 6371000.0
+    d_lat = math.radians(lat - ref_lat)
+    d_lon = math.radians(lon - ref_lon)
+    x = d_lon * r_earth * math.cos(math.radians(ref_lat))
+    y = d_lat * r_earth
+    return x, y
+
+
+def local_meters_to_latlon(x, y, ref_lat, ref_lon):
+    """Convert local tangent plane meters (x, y) back to WGS84 (lat, lon)."""
+    r_earth = 6371000.0
+    d_lat = math.degrees(y / r_earth)
+    d_lon = math.degrees(x / (r_earth * math.cos(math.radians(ref_lat))))
+    return ref_lat + d_lat, ref_lon + d_lon
+
+
 def ensure_ccw_polygon(verts_2d):
     """
     Ensures a 2D polygon vertex array is in strict Counter-Clockwise (CCW) order

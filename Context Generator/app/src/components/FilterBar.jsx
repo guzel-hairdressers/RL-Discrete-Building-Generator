@@ -6,6 +6,7 @@ export const FilterBar = () => {
   const setFilter = useStore((s) => s.setFilter);
   const selectTier = useStore((s) => s.selectTier);
   const resetFilters = useStore((s) => s.resetFilters);
+  const setCustomModalOpen = useStore((s) => s.setCustomModalOpen);
 
   const minPercent = areaToPercent(filters.minArea);
   const maxPercent = areaToPercent(filters.maxArea);
@@ -116,6 +117,15 @@ export const FilterBar = () => {
           {filters.minHeight}m - {filters.maxHeight}m
         </div>
       </div>
+
+      {/* Custom Site Selector Trigger Button */}
+      <button
+        className="btn-secondary"
+        onClick={() => setCustomModalOpen(true)}
+        title="Harvest & Choose Custom Global Site Location"
+      >
+        🌐 Custom Site
+      </button>
 
       {/* 4. Clean Reset Button (Far Right) */}
       <button className="btn-secondary" onClick={resetFilters} title="Reset All Filters">

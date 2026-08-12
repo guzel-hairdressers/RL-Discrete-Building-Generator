@@ -5,27 +5,21 @@ import { SiteInfoCard } from './components/SiteInfoCard';
 import { FilterBar } from './components/FilterBar';
 import { CarouselNav } from './components/CarouselNav';
 import { BottomBar } from './components/BottomBar';
+import { CustomSiteModal } from './components/CustomSiteModal';
 import './App.css';
 
 export function App() {
   const setDataset = useStore((s) => s.setDataset);
 
   useEffect(() => {
-    fetch('/dataset/master_urban_dataset.json')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Dataset fetch returned ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setDataset(data);
-        }
-      })
-      .catch((err) => {
-        console.error('Error loading master_urban_dataset.json:', err);
-      });
+    Promise.all([
+      fetch('/data/master_urban_dataset.json').then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      fetch('/data/custom_sites_dataset.json').then((r) => (r.ok ? r.json() : [])).catch(() => []),
+    ]).then(([masterData, customData]) => {
+      const masterArr = Array.isArray(masterData) ? masterData : [];
+      const customArr = Array.isArray(customData) ? customData : [];
+      setDataset([...customArr, ...masterArr]);
+    });
   }, [setDataset]);
 
   return (
@@ -35,6 +29,7 @@ export function App() {
       <FilterBar />
       <CarouselNav />
       <BottomBar />
+      <CustomSiteModal />
     </div>
   );
 }

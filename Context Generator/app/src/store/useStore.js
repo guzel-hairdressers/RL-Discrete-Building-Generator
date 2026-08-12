@@ -58,9 +58,37 @@ export const useStore = create((set, get) => ({
   viewMode: 'axonometric', // 'axonometric' | 'perspective'
   filters: { ...DEFAULT_FILTERS },
 
+  customModalOpen: false,
+  setCustomModalOpen: (open) => set({ customModalOpen: open }),
+
   // Set initial loaded dataset
   setDataset: (sites) => {
     set({ allSites: sites });
+    get().applyFilters();
+  },
+
+  // Add newly harvested custom site to state
+  addCustomSite: (customSite) => {
+    set((state) => {
+      const exists = state.allSites.some((s) => s.site_id === customSite.site_id);
+      const newSites = exists ? state.allSites : [customSite, ...state.allSites];
+      return { allSites: newSites };
+    });
+    get().applyFilters();
+    // Set active site index to the new custom site
+    const filtered = get().filteredSites;
+    const idx = filtered.findIndex((s) => s.site_id === customSite.site_id);
+    if (idx !== -1) {
+      set({ activeSiteIndex: idx });
+    }
+  },
+
+  // Delete custom site from state
+  deleteCustomSite: (siteId) => {
+    set((state) => {
+      const updated = state.allSites.filter((s) => s.site_id !== siteId);
+      return { allSites: updated, activeSiteIndex: 0 };
+    });
     get().applyFilters();
   },
 
