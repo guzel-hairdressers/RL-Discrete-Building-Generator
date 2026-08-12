@@ -54,6 +54,18 @@ This document defines the master development plan for the **RL-Discrete-Building
 
 ---
 
+### Phase 1B: Real-World OSM Urban Site Integration (Context Generator) [IMMEDIATE ROADMAP]
+* **Target Objective**: *Real-World Urban Site Boundaries & Solar/Context Constraints*
+* **Status**: `[PLANNED / IMMEDIATE ROADMAP]` (Priority: High — Pending Execution Order)
+* **Core Tasks**:
+  1. **Dataset Integration**: Import site boundaries and 3D context meshes from `Context Generator` (`master_urban_dataset.json` / `database/sites/site_*.json`).
+  2. **Real Site Boundary Sampler**: Add real-world OSM site polygon sampler to `FloorEnvironment` in `src/server.py`.
+  3. **Site Area Classification Filtering**: Filter real-world training sites by Area Tier (`XS`, `S`, `M`, `L`, `XL`).
+  4. **Daylight & Shading Context Feature Signals**: Pass surrounding context building heights and shading angles into policy observation vectors.
+* **Target Metric**: Policy achieves $> 80.0\,\text{pts}$ mean score when generating multi-floor layouts on real-world OSM site boundaries.
+
+---
+
 ### Phase 2: Native C Optimization & Parallel Rollout Batching
 * **Target Objective**: *Optimization & Throughput Scaling*
 * **Core Tasks**:

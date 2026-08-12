@@ -5,3 +5,6 @@ __pycache__/
 .venv/
 cache/
 *.log
+*.dylib
+*.so
+build/

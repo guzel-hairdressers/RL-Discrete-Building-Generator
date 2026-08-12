@@ -202,8 +202,7 @@ def harvest_real_portfolio():
             site_id = f"{tier_code}_{city_code}_{num_str}"
             html_name = f"{site_id}.html"
 
-            out_path = os.path.join(OUTPUT_DIR, html_name)
-            public_out_path = os.path.join(BASE_DIR, "app", "public", "output", html_name)
+            public_out_path = os.path.join(BASE_DIR, "app", "public", "sites", html_name)
 
             scene_data = {
                 'site_id': site_id,
@@ -227,7 +226,6 @@ def harvest_real_portfolio():
                 }
             }
 
-            create_3d_context_visualization(scene_data, out_path)
             create_3d_context_visualization(scene_data, public_out_path)
 
             slat, slon = local_meters_to_latlon(scx, scy, ref_lat, ref_lon)
@@ -244,7 +242,7 @@ def harvest_real_portfolio():
                 'max_height_m': metrics['max_height_m'],
                 'building_count': len(shifted_bldgs),
                 'far': metrics['floor_area_ratio'],
-                'render_html': f"output/{html_name}"
+                'render_html': f"sites/{html_name}"
             })
 
             city_count += 1

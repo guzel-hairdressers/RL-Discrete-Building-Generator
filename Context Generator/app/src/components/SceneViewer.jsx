@@ -11,7 +11,7 @@ export const SceneViewer = () => {
   const targetSrc = site
     ? site.render_html
       ? site.render_html.startsWith('/') ? site.render_html : '/' + site.render_html
-      : `/output/${site.site_id}.html`
+      : `/sites/${site.site_id}.html`
     : null;
 
   // Active buffer tracking ('A' or 'B')

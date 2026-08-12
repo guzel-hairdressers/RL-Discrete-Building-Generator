@@ -8,8 +8,8 @@ import unittest
 
 
 MODULE_DIR = pathlib.Path(__file__).resolve().parents[1]
-SCRATCH_DIR = MODULE_DIR / "scratch"
-sys.path.insert(0, str(SCRATCH_DIR))
+BENCHMARK_DIR = MODULE_DIR / "benchmarks"
+sys.path.insert(0, str(BENCHMARK_DIR))
 
 import benchmark_graph_frontier as evaluation  # noqa: E402
 

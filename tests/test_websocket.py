@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 
 MODULE_DIR = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(MODULE_DIR / "src"))
 sys.path.insert(0, str(MODULE_DIR))
 
 import server  # noqa: E402

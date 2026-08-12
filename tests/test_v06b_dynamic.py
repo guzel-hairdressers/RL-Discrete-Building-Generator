@@ -11,6 +11,7 @@ import torch
 
 
 MODULE_DIR = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(MODULE_DIR / "src"))
 sys.path.insert(0, str(MODULE_DIR))
 
 import geometry as G  # noqa: E402
@@ -265,7 +266,8 @@ class DynamicPaletteTests(unittest.TestCase):
         ):
             with self.subTest(patch=patch), self.assertRaises(server.SettingsError):
                 server.validate_settings_patch(server.DEFAULT_SETTINGS, patch)
-        html = (MODULE_DIR / "index.html").read_text(encoding="utf-8")
+        public_dir = (MODULE_DIR / "public") if (MODULE_DIR / "public" / "index.html").is_file() else MODULE_DIR
+        html = (public_dir / "index.html").read_text(encoding="utf-8")
         self.assertIn('id="minEdge" name="minEdge" type="range" min="1" max="9"', html)
         self.assertIn('id="maxEdge" name="maxEdge" type="range" min="1" max="9"', html)
         self.assertIn('id="maxEdges" name="maxEdges" type="range" min="3" max="8"', html)
@@ -432,7 +434,8 @@ class RelativeFrontierRewardTests(unittest.TestCase):
         self.assertEqual(trainer.baseline_transition_remaining, server.BASELINE_TRANSITION_EPISODES)
 
     def test_reward_metrics_are_exposed_in_score_breakdown(self) -> None:
-        app_source = (MODULE_DIR / "app.js").read_text(encoding="utf-8")
+        public_dir = (MODULE_DIR / "public") if (MODULE_DIR / "public" / "app.js").is_file() else MODULE_DIR
+        app_source = (public_dir / "app.js").read_text(encoding="utf-8")
         self.assertIn("metrics.relativeTimeReward", app_source)
         self.assertIn("metrics.frontierGrowthPotential", app_source)
         self.assertIn("metrics.generationTimeReferenceUsed", app_source)

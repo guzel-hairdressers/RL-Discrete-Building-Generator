@@ -9,18 +9,24 @@ Welcome to the `agent_notes/` repository directory. This directory serves as the
 ```
 agent_notes/
 ├── README.md                          # Central index (this file)
+├── proposals.md                       # Master Proposals Register & Rating Matrix
 ├── historical_approaches.md          # Implemented achievements & discarded/failed approaches ledger
 ├── issues.md                          # Active issue tracker & bug resolution logs
 ├── roadmap.md                         # Master step-by-step development roadmap & milestones
-├── proposals/                         # Research & architectural proposals
+├── proposals/                         # Detailed architectural proposal documents
 │   ├── core_placement_proposals.md    # Model-driven & policy-controlled core placement strategies
 │   ├── rl_architecture_proposals.md   # RL proposals (GAE, PBRS, Surrogates, Continuous Maps) & ratings
 │   └── mb_bs_graphs_proposal.md       # Graph RL proposal (deprioritized)
 ├── reports/                           # Deep technical reports & evaluation logs
 │   ├── OPTIMIZATION_REPORT.md         # Comprehensive C kernel & profiler benchmark report
 │   └── GRAPH_EVALUATION.md            # BPE graph representation report
-├── benchmarks/                        # Benchmark results & timing matrix
-│   └── BENCHMARK_SUMMARY.md           # Speedup comparisons (v0.6-c vs v0.8.0 vs v0.8.1)
+├── benchmarks/                        # Dated & categorized benchmark datasets
+│   ├── README.md                      # Central benchmark directory index & usage guide
+│   ├── BENCHMARK_SUMMARY.md           # Speedup metrics & cross-version comparison matrix
+│   ├── 26-08-10_v0.6c-legacy-baseline/
+│   ├── 26-08-10_v0.8.0-matched-speedup-eval/
+│   ├── 26-08-10_v0.8.0-stress-test-130modules/
+│   └── 26-08-11_v0.8.0-visual-grid-evaluations/
 └── guides/                            # Component guides & architectural documentation
     ├── bpe_merge_guide.md             # BPE vocabulary & polygon merge guide
     └── core_stacking_guide.md         # Multi-floor shaft alignment guide

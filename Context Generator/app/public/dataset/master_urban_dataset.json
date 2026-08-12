@@ -9,7 +9,7 @@
     "max_height_m": 32.0,
     "building_count": 46,
     "far": 1.34,
-    "render_html": "output/xs_nyc_0001.html",
+    "render_html": "sites/xs_nyc_0001.html",
     "lat": 40.752883,
     "lon": -73.992094
   },
@@ -23,7 +23,7 @@
     "max_height_m": 325.1,
     "building_count": 33,
     "far": 16.45,
-    "render_html": "output/s_nyc_0002.html",
+    "render_html": "sites/s_nyc_0002.html",
     "lat": 40.752359,
     "lon": -73.978641
   },
@@ -37,7 +37,7 @@
     "max_height_m": 120.0,
     "building_count": 19,
     "far": 9.41,
-    "render_html": "output/m_nyc_0003.html",
+    "render_html": "sites/m_nyc_0003.html",
     "lat": 40.753322,
     "lon": -73.987464
   },
@@ -51,7 +51,7 @@
     "max_height_m": 28.7,
     "building_count": 44,
     "far": 1.18,
-    "render_html": "output/xs_nyc_0004.html",
+    "render_html": "sites/xs_nyc_0004.html",
     "lat": 40.763677,
     "lon": -73.991932
   },
@@ -65,7 +65,7 @@
     "max_height_m": 160.6,
     "building_count": 20,
     "far": 12.66,
-    "render_html": "output/m_nyc_0005.html",
+    "render_html": "sites/m_nyc_0005.html",
     "lat": 40.7615,
     "lon": -73.976933
   },
@@ -79,7 +79,7 @@
     "max_height_m": 158.5,
     "building_count": 25,
     "far": 14.06,
-    "render_html": "output/xs_nyc_0006.html",
+    "render_html": "sites/xs_nyc_0006.html",
     "lat": 40.760443,
     "lon": -73.988156
   },
@@ -93,7 +93,7 @@
     "max_height_m": 120.0,
     "building_count": 18,
     "far": 11.23,
-    "render_html": "output/m_nyc_0007.html",
+    "render_html": "sites/m_nyc_0007.html",
     "lat": 40.755111,
     "lon": -73.987511
   },
@@ -107,7 +107,7 @@
     "max_height_m": 120.0,
     "building_count": 10,
     "far": 6.13,
-    "render_html": "output/m_nyc_0008.html",
+    "render_html": "sites/m_nyc_0008.html",
     "lat": 40.751963,
     "lon": -73.982844
   },
@@ -121,7 +121,7 @@
     "max_height_m": 120.0,
     "building_count": 24,
     "far": 10.43,
-    "render_html": "output/xs_nyc_0009.html",
+    "render_html": "sites/xs_nyc_0009.html",
     "lat": 40.753257,
     "lon": -73.988156
   },
@@ -135,7 +135,7 @@
     "max_height_m": 120.0,
     "building_count": 18,
     "far": 4.42,
-    "render_html": "output/xs_nyc_0010.html",
+    "render_html": "sites/xs_nyc_0010.html",
     "lat": 40.750957,
     "lon": -73.99345
   },
@@ -149,7 +149,7 @@
     "max_height_m": 120.0,
     "building_count": 20,
     "far": 10.45,
-    "render_html": "output/s_nyc_0011.html",
+    "render_html": "sites/s_nyc_0011.html",
     "lat": 40.756663,
     "lon": -73.990111
   },
@@ -163,7 +163,7 @@
     "max_height_m": 140.0,
     "building_count": 23,
     "far": 12.44,
-    "render_html": "output/xs_nyc_0012.html",
+    "render_html": "sites/xs_nyc_0012.html",
     "lat": 40.762139,
     "lon": -73.989162
   },
@@ -177,7 +177,7 @@
     "max_height_m": 120.0,
     "building_count": 29,
     "far": 4.97,
-    "render_html": "output/xs_nyc_0013.html",
+    "render_html": "sites/xs_nyc_0013.html",
     "lat": 40.762032,
     "lon": -73.990291
   },
@@ -191,7 +191,7 @@
     "max_height_m": 120.0,
     "building_count": 26,
     "far": 6.86,
-    "render_html": "output/xs_nyc_0014.html",
+    "render_html": "sites/xs_nyc_0014.html",
     "lat": 40.76477,
     "lon": -73.980358
   },
@@ -205,7 +205,7 @@
     "max_height_m": 120.0,
     "building_count": 47,
     "far": 5.44,
-    "render_html": "output/xs_nyc_0015.html",
+    "render_html": "sites/xs_nyc_0015.html",
     "lat": 40.756433,
     "lon": -73.992559
   },
@@ -219,7 +219,7 @@
     "max_height_m": 325.1,
     "building_count": 22,
     "far": 13.25,
-    "render_html": "output/s_nyc_0016.html",
+    "render_html": "sites/s_nyc_0016.html",
     "lat": 40.752625,
     "lon": -73.994798
   },
@@ -233,7 +233,7 @@
     "max_height_m": 169.0,
     "building_count": 19,
     "far": 15.67,
-    "render_html": "output/xs_nyc_0017.html",
+    "render_html": "sites/xs_nyc_0017.html",
     "lat": 40.760213,
     "lon": -73.990585
   },
@@ -247,7 +247,7 @@
     "max_height_m": 120.0,
     "building_count": 22,
     "far": 1.91,
-    "render_html": "output/xs_nyc_0018.html",
+    "render_html": "sites/xs_nyc_0018.html",
     "lat": 40.760242,
     "lon": -73.990244
   },
@@ -261,7 +261,7 @@
     "max_height_m": 190.0,
     "building_count": 23,
     "far": 8.98,
-    "render_html": "output/l_nyc_0019.html",
+    "render_html": "sites/l_nyc_0019.html",
     "lat": 40.764353,
     "lon": -73.98476
   },
@@ -275,7 +275,7 @@
     "max_height_m": 190.0,
     "building_count": 36,
     "far": 14.77,
-    "render_html": "output/s_nyc_0020.html",
+    "render_html": "sites/s_nyc_0020.html",
     "lat": 40.757971,
     "lon": -73.976269
   },
@@ -289,7 +289,7 @@
     "max_height_m": 120.0,
     "building_count": 18,
     "far": 10.11,
-    "render_html": "output/m_nyc_0021.html",
+    "render_html": "sites/m_nyc_0021.html",
     "lat": 40.753523,
     "lon": -73.98531
   },
@@ -303,7 +303,7 @@
     "max_height_m": 120.0,
     "building_count": 53,
     "far": 3.71,
-    "render_html": "output/xs_nyc_0022.html",
+    "render_html": "sites/xs_nyc_0022.html",
     "lat": 40.762096,
     "lon": -73.989655
   },
@@ -317,7 +317,7 @@
     "max_height_m": 120.0,
     "building_count": 40,
     "far": 3.94,
-    "render_html": "output/xs_nyc_0023.html",
+    "render_html": "sites/xs_nyc_0023.html",
     "lat": 40.756512,
     "lon": -73.991676
   },
@@ -331,7 +331,7 @@
     "max_height_m": 147.1,
     "building_count": 15,
     "far": 4.0,
-    "render_html": "output/xs_nyc_0024.html",
+    "render_html": "sites/xs_nyc_0024.html",
     "lat": 40.752258,
     "lon": -73.979703
   },
@@ -345,7 +345,7 @@
     "max_height_m": 120.0,
     "building_count": 27,
     "far": 4.95,
-    "render_html": "output/xs_nyc_0025.html",
+    "render_html": "sites/xs_nyc_0025.html",
     "lat": 40.750972,
     "lon": -73.99327
   },
@@ -359,7 +359,7 @@
     "max_height_m": 120.0,
     "building_count": 21,
     "far": 6.93,
-    "render_html": "output/m_nyc_0026.html",
+    "render_html": "sites/m_nyc_0026.html",
     "lat": 40.763692,
     "lon": -73.991752
   },
@@ -373,7 +373,7 @@
     "max_height_m": 169.0,
     "building_count": 19,
     "far": 18.07,
-    "render_html": "output/s_nyc_0027.html",
+    "render_html": "sites/s_nyc_0027.html",
     "lat": 40.765,
     "lon": -73.977976
   },
@@ -387,7 +387,7 @@
     "max_height_m": 120.0,
     "building_count": 54,
     "far": 5.44,
-    "render_html": "output/xs_nyc_0028.html",
+    "render_html": "sites/xs_nyc_0028.html",
     "lat": 40.763771,
     "lon": -73.990927
   },
@@ -401,7 +401,7 @@
     "max_height_m": 202.8,
     "building_count": 19,
     "far": 14.25,
-    "render_html": "output/s_nyc_0029.html",
+    "render_html": "sites/s_nyc_0029.html",
     "lat": 40.76053,
     "lon": -73.987236
   },
@@ -415,7 +415,7 @@
     "max_height_m": 120.0,
     "building_count": 35,
     "far": 7.25,
-    "render_html": "output/s_nyc_0030.html",
+    "render_html": "sites/s_nyc_0030.html",
     "lat": 40.754795,
     "lon": -73.990841
   },
@@ -429,7 +429,7 @@
     "max_height_m": 366.0,
     "building_count": 10,
     "far": 38.54,
-    "render_html": "output/s_nyc_0031.html",
+    "render_html": "sites/s_nyc_0031.html",
     "lat": 40.762319,
     "lon": -73.987312
   },
@@ -443,7 +443,7 @@
     "max_height_m": 175.0,
     "building_count": 27,
     "far": 11.26,
-    "render_html": "output/m_nyc_0032.html",
+    "render_html": "sites/m_nyc_0032.html",
     "lat": 40.755873,
     "lon": -73.979456
   },
@@ -457,7 +457,7 @@
     "max_height_m": 155.7,
     "building_count": 11,
     "far": 10.83,
-    "render_html": "output/xs_nyc_0033.html",
+    "render_html": "sites/xs_nyc_0033.html",
     "lat": 40.760199,
     "lon": -73.990718
   },
@@ -471,7 +471,7 @@
     "max_height_m": 140.0,
     "building_count": 31,
     "far": 8.85,
-    "render_html": "output/xs_nyc_0034.html",
+    "render_html": "sites/xs_nyc_0034.html",
     "lat": 40.757885,
     "lon": -73.977189
   },
@@ -485,7 +485,7 @@
     "max_height_m": 120.0,
     "building_count": 18,
     "far": 5.24,
-    "render_html": "output/s_nyc_0035.html",
+    "render_html": "sites/s_nyc_0035.html",
     "lat": 40.751187,
     "lon": -73.990984
   },
@@ -499,7 +499,7 @@
     "max_height_m": 325.1,
     "building_count": 17,
     "far": 12.18,
-    "render_html": "output/s_nyc_0036.html",
+    "render_html": "sites/s_nyc_0036.html",
     "lat": 40.755873,
     "lon": -73.979447
   },
@@ -513,7 +513,7 @@
     "max_height_m": 120.0,
     "building_count": 27,
     "far": 4.85,
-    "render_html": "output/m_nyc_0037.html",
+    "render_html": "sites/m_nyc_0037.html",
     "lat": 40.762355,
     "lon": -73.986933
   },
@@ -527,7 +527,7 @@
     "max_height_m": 175.0,
     "building_count": 30,
     "far": 13.99,
-    "render_html": "output/xs_nyc_0038.html",
+    "render_html": "sites/xs_nyc_0038.html",
     "lat": 40.759509,
     "lon": -73.978982
   },
@@ -541,7 +541,7 @@
     "max_height_m": 120.0,
     "building_count": 10,
     "far": 7.79,
-    "render_html": "output/xs_nyc_0039.html",
+    "render_html": "sites/xs_nyc_0039.html",
     "lat": 40.755822,
     "lon": -73.979969
   },
@@ -555,7 +555,7 @@
     "max_height_m": 175.0,
     "building_count": 26,
     "far": 10.69,
-    "render_html": "output/xs_nyc_0040.html",
+    "render_html": "sites/xs_nyc_0040.html",
     "lat": 40.763922,
     "lon": -73.989342
   },
@@ -569,7 +569,7 @@
     "max_height_m": 120.0,
     "building_count": 3,
     "far": 4.88,
-    "render_html": "output/m_nyc_0041.html",
+    "render_html": "sites/m_nyc_0041.html",
     "lat": 40.753106,
     "lon": -73.989741
   },
@@ -583,7 +583,7 @@
     "max_height_m": 190.0,
     "building_count": 28,
     "far": 13.19,
-    "render_html": "output/xs_nyc_0042.html",
+    "render_html": "sites/xs_nyc_0042.html",
     "lat": 40.757907,
     "lon": -73.976942
   },
@@ -597,7 +597,7 @@
     "max_height_m": 120.0,
     "building_count": 59,
     "far": 4.04,
-    "render_html": "output/xs_nyc_0043.html",
+    "render_html": "sites/xs_nyc_0043.html",
     "lat": 40.765136,
     "lon": -73.976487
   },
@@ -611,7 +611,7 @@
     "max_height_m": 140.0,
     "building_count": 32,
     "far": 13.21,
-    "render_html": "output/s_nyc_0044.html",
+    "render_html": "sites/s_nyc_0044.html",
     "lat": 40.753688,
     "lon": -73.983565
   },
@@ -625,7 +625,7 @@
     "max_height_m": 120.0,
     "building_count": 23,
     "far": 8.87,
-    "render_html": "output/s_nyc_0045.html",
+    "render_html": "sites/s_nyc_0045.html",
     "lat": 40.75371,
     "lon": -73.983375
   },
@@ -639,7 +639,7 @@
     "max_height_m": 175.0,
     "building_count": 43,
     "far": 12.23,
-    "render_html": "output/s_nyc_0046.html",
+    "render_html": "sites/s_nyc_0046.html",
     "lat": 40.751209,
     "lon": -73.990803
   },
@@ -653,7 +653,7 @@
     "max_height_m": 158.5,
     "building_count": 29,
     "far": 9.14,
-    "render_html": "output/m_nyc_0047.html",
+    "render_html": "sites/m_nyc_0047.html",
     "lat": 40.755708,
     "lon": -73.98125
   },
@@ -667,7 +667,7 @@
     "max_height_m": 123.0,
     "building_count": 14,
     "far": 3.39,
-    "render_html": "output/xl_nyc_0048.html",
+    "render_html": "sites/xl_nyc_0048.html",
     "lat": 40.760982,
     "lon": -73.982426
   },
@@ -681,7 +681,7 @@
     "max_height_m": 120.0,
     "building_count": 18,
     "far": 8.56,
-    "render_html": "output/s_nyc_0049.html",
+    "render_html": "sites/s_nyc_0049.html",
     "lat": 40.76076,
     "lon": -73.98476
   },
@@ -695,7 +695,7 @@
     "max_height_m": 202.8,
     "building_count": 21,
     "far": 14.46,
-    "render_html": "output/xs_nyc_0050.html",
+    "render_html": "sites/xs_nyc_0050.html",
     "lat": 40.75841,
     "lon": -73.990642
   },
@@ -709,7 +709,7 @@
     "max_height_m": 202.8,
     "building_count": 20,
     "far": 9.4,
-    "render_html": "output/s_nyc_0051.html",
+    "render_html": "sites/s_nyc_0051.html",
     "lat": 40.760451,
     "lon": -73.988052
   },
@@ -723,7 +723,7 @@
     "max_height_m": 120.0,
     "building_count": 37,
     "far": 7.05,
-    "render_html": "output/m_nyc_0052.html",
+    "render_html": "sites/m_nyc_0052.html",
     "lat": 40.759797,
     "lon": -73.994968
   },
@@ -737,7 +737,7 @@
     "max_height_m": 120.0,
     "building_count": 48,
     "far": 5.52,
-    "render_html": "output/xs_nyc_0053.html",
+    "render_html": "sites/xs_nyc_0053.html",
     "lat": 40.760716,
     "lon": -73.985263
   },
@@ -751,7 +751,7 @@
     "max_height_m": 190.0,
     "building_count": 25,
     "far": 13.01,
-    "render_html": "output/xs_nyc_0054.html",
+    "render_html": "sites/xs_nyc_0054.html",
     "lat": 40.751697,
     "lon": -73.985623
   },
@@ -765,7 +765,7 @@
     "max_height_m": 64.8,
     "building_count": 20,
     "far": 1.41,
-    "render_html": "output/xs_nyc_0055.html",
+    "render_html": "sites/xs_nyc_0055.html",
     "lat": 40.759861,
     "lon": -73.994295
   },
@@ -779,7 +779,7 @@
     "max_height_m": 190.0,
     "building_count": 30,
     "far": 12.94,
-    "render_html": "output/m_nyc_0056.html",
+    "render_html": "sites/m_nyc_0056.html",
     "lat": 40.760436,
     "lon": -73.988175
   },
@@ -793,7 +793,7 @@
     "max_height_m": 160.6,
     "building_count": 23,
     "far": 18.98,
-    "render_html": "output/xs_nyc_0057.html",
+    "render_html": "sites/xs_nyc_0057.html",
     "lat": 40.761385,
     "lon": -73.978166
   },
@@ -807,7 +807,7 @@
     "max_height_m": 120.0,
     "building_count": 29,
     "far": 9.1,
-    "render_html": "output/xs_nyc_0058.html",
+    "render_html": "sites/xs_nyc_0058.html",
     "lat": 40.76229,
     "lon": -73.987559
   },
@@ -821,7 +821,7 @@
     "max_height_m": 159.6,
     "building_count": 26,
     "far": 14.33,
-    "render_html": "output/xs_nyc_0059.html",
+    "render_html": "sites/xs_nyc_0059.html",
     "lat": 40.760522,
     "lon": -73.987265
   },
@@ -835,7 +835,7 @@
     "max_height_m": 175.0,
     "building_count": 30,
     "far": 13.98,
-    "render_html": "output/xs_nyc_0060.html",
+    "render_html": "sites/xs_nyc_0060.html",
     "lat": 40.752668,
     "lon": -73.994371
   },
@@ -849,7 +849,7 @@
     "max_height_m": 155.7,
     "building_count": 10,
     "far": 8.47,
-    "render_html": "output/xs_nyc_0061.html",
+    "render_html": "sites/xs_nyc_0061.html",
     "lat": 40.751439,
     "lon": -73.988384
   },
@@ -863,7 +863,7 @@
     "max_height_m": 160.6,
     "building_count": 20,
     "far": 10.1,
-    "render_html": "output/xl_nyc_0062.html",
+    "render_html": "sites/xl_nyc_0062.html",
     "lat": 40.759042,
     "lon": -73.983973
   },
@@ -877,7 +877,7 @@
     "max_height_m": 193.8,
     "building_count": 20,
     "far": 20.9,
-    "render_html": "output/s_nyc_0063.html",
+    "render_html": "sites/s_nyc_0063.html",
     "lat": 40.764497,
     "lon": -73.983251
   },
@@ -891,7 +891,7 @@
     "max_height_m": 159.6,
     "building_count": 26,
     "far": 16.5,
-    "render_html": "output/xs_nyc_0064.html",
+    "render_html": "sites/xs_nyc_0064.html",
     "lat": 40.761299,
     "lon": -73.979068
   },
@@ -905,7 +905,7 @@
     "max_height_m": 140.0,
     "building_count": 26,
     "far": 11.4,
-    "render_html": "output/xs_nyc_0065.html",
+    "render_html": "sites/xs_nyc_0065.html",
     "lat": 40.761327,
     "lon": -73.978754
   },
@@ -919,7 +919,7 @@
     "max_height_m": 22.0,
     "building_count": 16,
     "far": 1.36,
-    "render_html": "output/s_bcn_0066.html",
+    "render_html": "sites/s_bcn_0066.html",
     "lat": 41.38723,
     "lon": 2.165178
   },
@@ -933,7 +933,7 @@
     "max_height_m": 30.4,
     "building_count": 25,
     "far": 1.87,
-    "render_html": "output/s_bcn_0067.html",
+    "render_html": "sites/s_bcn_0067.html",
     "lat": 41.385843,
     "lon": 2.169556
   },
@@ -947,7 +947,7 @@
     "max_height_m": 22.0,
     "building_count": 26,
     "far": 2.33,
-    "render_html": "output/xs_bcn_0068.html",
+    "render_html": "sites/xs_bcn_0068.html",
     "lat": 41.395315,
     "lon": 2.155551
   },
@@ -961,7 +961,7 @@
     "max_height_m": 45.6,
     "building_count": 16,
     "far": 1.98,
-    "render_html": "output/s_bcn_0069.html",
+    "render_html": "sites/s_bcn_0069.html",
     "lat": 41.391506,
     "lon": 2.172439
   },
@@ -975,7 +975,7 @@
     "max_height_m": 22.0,
     "building_count": 12,
     "far": 1.6,
-    "render_html": "output/xs_bcn_0070.html",
+    "render_html": "sites/xs_bcn_0070.html",
     "lat": 41.396572,
     "lon": 2.168962
   },
@@ -989,7 +989,7 @@
     "max_height_m": 38.0,
     "building_count": 20,
     "far": 2.06,
-    "render_html": "output/xs_bcn_0071.html",
+    "render_html": "sites/xs_bcn_0071.html",
     "lat": 41.390155,
     "lon": 2.158022
   },
@@ -1003,7 +1003,7 @@
     "max_height_m": 38.0,
     "building_count": 19,
     "far": 1.96,
-    "render_html": "output/xs_bcn_0072.html",
+    "render_html": "sites/xs_bcn_0072.html",
     "lat": 41.394079,
     "lon": 2.161586
   },
@@ -1017,7 +1017,7 @@
     "max_height_m": 22.0,
     "building_count": 25,
     "far": 2.19,
-    "render_html": "output/xs_bcn_0073.html",
+    "render_html": "sites/xs_bcn_0073.html",
     "lat": 41.385225,
     "lon": 2.162917
   },
@@ -1031,7 +1031,7 @@
     "max_height_m": 45.6,
     "building_count": 10,
     "far": 3.08,
-    "render_html": "output/l_bcn_0074.html",
+    "render_html": "sites/l_bcn_0074.html",
     "lat": 41.391017,
     "lon": 2.167199
   },
@@ -1045,7 +1045,7 @@
     "max_height_m": 38.0,
     "building_count": 29,
     "far": 2.83,
-    "render_html": "output/s_bcn_0075.html",
+    "render_html": "sites/s_bcn_0075.html",
     "lat": 41.385045,
     "lon": 2.161001
   },
@@ -1059,7 +1059,7 @@
     "max_height_m": 41.8,
     "building_count": 16,
     "far": 1.59,
-    "render_html": "output/xs_bcn_0076.html",
+    "render_html": "sites/xs_bcn_0076.html",
     "lat": 41.386835,
     "lon": 2.160982
   },
@@ -1073,7 +1073,7 @@
     "max_height_m": 41.8,
     "building_count": 34,
     "far": 3.3,
-    "render_html": "output/xs_bcn_0077.html",
+    "render_html": "sites/xs_bcn_0077.html",
     "lat": 41.388696,
     "lon": 2.161672
   },
@@ -1087,7 +1087,7 @@
     "max_height_m": 41.8,
     "building_count": 41,
     "far": 1.78,
-    "render_html": "output/xs_bcn_0078.html",
+    "render_html": "sites/xs_bcn_0078.html",
     "lat": 41.390708,
     "lon": 2.163971
   },
@@ -1101,7 +1101,7 @@
     "max_height_m": 22.0,
     "building_count": 34,
     "far": 2.84,
-    "render_html": "output/xs_bcn_0079.html",
+    "render_html": "sites/xs_bcn_0079.html",
     "lat": 41.388416,
     "lon": 2.158645
   },
@@ -1115,7 +1115,7 @@
     "max_height_m": 38.0,
     "building_count": 23,
     "far": 2.24,
-    "render_html": "output/s_bcn_0080.html",
+    "render_html": "sites/s_bcn_0080.html",
     "lat": 41.395236,
     "lon": 2.173924
   },
@@ -1129,7 +1129,7 @@
     "max_height_m": 38.0,
     "building_count": 23,
     "far": 1.2,
-    "render_html": "output/xs_bcn_0081.html",
+    "render_html": "sites/xs_bcn_0081.html",
     "lat": 41.390126,
     "lon": 2.157735
   },
@@ -1143,7 +1143,7 @@
     "max_height_m": 41.8,
     "building_count": 24,
     "far": 2.1,
-    "render_html": "output/xs_bcn_0082.html",
+    "render_html": "sites/xs_bcn_0082.html",
     "lat": 41.395286,
     "lon": 2.174403
   },
@@ -1157,7 +1157,7 @@
     "max_height_m": 26.6,
     "building_count": 19,
     "far": 2.3,
-    "render_html": "output/xs_bcn_0083.html",
+    "render_html": "sites/xs_bcn_0083.html",
     "lat": 41.395221,
     "lon": 2.17378
   },
@@ -1171,7 +1171,7 @@
     "max_height_m": 26.6,
     "building_count": 21,
     "far": 2.0,
-    "render_html": "output/xs_bcn_0084.html",
+    "render_html": "sites/xs_bcn_0084.html",
     "lat": 41.395739,
     "lon": 2.160082
   },
@@ -1185,7 +1185,7 @@
     "max_height_m": 34.2,
     "building_count": 40,
     "far": 3.28,
-    "render_html": "output/xs_bcn_0085.html",
+    "render_html": "sites/xs_bcn_0085.html",
     "lat": 41.398038,
     "lon": 2.165456
   },
@@ -1199,7 +1199,7 @@
     "max_height_m": 26.6,
     "building_count": 47,
     "far": 3.1,
-    "render_html": "output/xs_bcn_0086.html",
+    "render_html": "sites/xs_bcn_0086.html",
     "lat": 41.384679,
     "lon": 2.157131
   },
@@ -1213,7 +1213,7 @@
     "max_height_m": 41.8,
     "building_count": 30,
     "far": 2.61,
-    "render_html": "output/s_bcn_0087.html",
+    "render_html": "sites/s_bcn_0087.html",
     "lat": 41.396702,
     "lon": 2.170351
   },
@@ -1227,7 +1227,7 @@
     "max_height_m": 41.8,
     "building_count": 35,
     "far": 3.12,
-    "render_html": "output/xs_bcn_0088.html",
+    "render_html": "sites/xs_bcn_0088.html",
     "lat": 41.388315,
     "lon": 2.15761
   },
@@ -1241,7 +1241,7 @@
     "max_height_m": 34.2,
     "building_count": 39,
     "far": 3.04,
-    "render_html": "output/xs_bcn_0089.html",
+    "render_html": "sites/xs_bcn_0089.html",
     "lat": 41.391643,
     "lon": 2.173924
   },
@@ -1255,7 +1255,7 @@
     "max_height_m": 34.2,
     "building_count": 28,
     "far": 3.33,
-    "render_html": "output/xs_bcn_0090.html",
+    "render_html": "sites/xs_bcn_0090.html",
     "lat": 41.391614,
     "lon": 2.173608
   },
@@ -1269,7 +1269,7 @@
     "max_height_m": 38.0,
     "building_count": 12,
     "far": 1.3,
-    "render_html": "output/xs_bcn_0091.html",
+    "render_html": "sites/xs_bcn_0091.html",
     "lat": 41.38746,
     "lon": 2.167621
   },
@@ -1283,7 +1283,7 @@
     "max_height_m": 22.0,
     "building_count": 26,
     "far": 2.2,
-    "render_html": "output/xs_bcn_0092.html",
+    "render_html": "sites/xs_bcn_0092.html",
     "lat": 41.3928,
     "lon": 2.167084
   },
@@ -1297,7 +1297,7 @@
     "max_height_m": 41.8,
     "building_count": 29,
     "far": 2.57,
-    "render_html": "output/m_bcn_0093.html",
+    "render_html": "sites/m_bcn_0093.html",
     "lat": 41.392311,
     "lon": 2.161902
   },
@@ -1311,7 +1311,7 @@
     "max_height_m": 26.6,
     "building_count": 20,
     "far": 3.41,
-    "render_html": "output/m_bcn_0094.html",
+    "render_html": "sites/m_bcn_0094.html",
     "lat": 41.394876,
     "lon": 2.170054
   },
@@ -1325,7 +1325,7 @@
     "max_height_m": 41.8,
     "building_count": 39,
     "far": 3.45,
-    "render_html": "output/xs_bcn_0095.html",
+    "render_html": "sites/xs_bcn_0095.html",
     "lat": 41.398405,
     "lon": 2.169364
   },
@@ -1339,7 +1339,7 @@
     "max_height_m": 41.8,
     "building_count": 37,
     "far": 3.36,
-    "render_html": "output/xs_bcn_0096.html",
+    "render_html": "sites/xs_bcn_0096.html",
     "lat": 41.395157,
     "lon": 2.173081
   },
@@ -1353,7 +1353,7 @@
     "max_height_m": 45.6,
     "building_count": 11,
     "far": 1.78,
-    "render_html": "output/xs_bcn_0097.html",
+    "render_html": "sites/xs_bcn_0097.html",
     "lat": 41.398146,
     "lon": 2.166615
   },
@@ -1367,7 +1367,7 @@
     "max_height_m": 22.0,
     "building_count": 28,
     "far": 3.47,
-    "render_html": "output/xs_bcn_0098.html",
+    "render_html": "sites/xs_bcn_0098.html",
     "lat": 41.386892,
     "lon": 2.161595
   },
@@ -1381,7 +1381,7 @@
     "max_height_m": 41.8,
     "building_count": 32,
     "far": 3.8,
-    "render_html": "output/s_bcn_0099.html",
+    "render_html": "sites/s_bcn_0099.html",
     "lat": 41.389487,
     "lon": 2.170073
   },
@@ -1395,7 +1395,7 @@
     "max_height_m": 41.8,
     "building_count": 35,
     "far": 3.41,
-    "render_html": "output/xs_bcn_0100.html",
+    "render_html": "sites/xs_bcn_0100.html",
     "lat": 41.391125,
     "lon": 2.168416
   },
@@ -1409,7 +1409,7 @@
     "max_height_m": 41.8,
     "building_count": 27,
     "far": 2.07,
-    "render_html": "output/xs_bcn_0101.html",
+    "render_html": "sites/xs_bcn_0101.html",
     "lat": 41.397837,
     "lon": 2.163329
   },
@@ -1423,7 +1423,7 @@
     "max_height_m": 45.6,
     "building_count": 21,
     "far": 2.28,
-    "render_html": "output/xs_bcn_0102.html",
+    "render_html": "sites/xs_bcn_0102.html",
     "lat": 41.394388,
     "lon": 2.164823
   },
@@ -1437,7 +1437,7 @@
     "max_height_m": 22.8,
     "building_count": 27,
     "far": 2.31,
-    "render_html": "output/s_bcn_0103.html",
+    "render_html": "sites/s_bcn_0103.html",
     "lat": 41.395473,
     "lon": 2.157265
   },
@@ -1451,7 +1451,7 @@
     "max_height_m": 26.6,
     "building_count": 29,
     "far": 3.21,
-    "render_html": "output/s_bcn_0104.html",
+    "render_html": "sites/s_bcn_0104.html",
     "lat": 41.394718,
     "lon": 2.168387
   },
@@ -1465,7 +1465,7 @@
     "max_height_m": 34.2,
     "building_count": 26,
     "far": 3.99,
-    "render_html": "output/xs_bcn_0105.html",
+    "render_html": "sites/xs_bcn_0105.html",
     "lat": 41.392713,
     "lon": 2.166164
   },
@@ -1479,7 +1479,7 @@
     "max_height_m": 41.8,
     "building_count": 30,
     "far": 2.12,
-    "render_html": "output/xs_bcn_0106.html",
+    "render_html": "sites/xs_bcn_0106.html",
     "lat": 41.395171,
     "lon": 2.173196
   },
@@ -1493,7 +1493,7 @@
     "max_height_m": 38.0,
     "building_count": 26,
     "far": 2.51,
-    "render_html": "output/xs_bcn_0107.html",
+    "render_html": "sites/xs_bcn_0107.html",
     "lat": 41.391937,
     "lon": 2.157878
   },
@@ -1507,7 +1507,7 @@
     "max_height_m": 26.6,
     "building_count": 33,
     "far": 2.1,
-    "render_html": "output/xs_bcn_0108.html",
+    "render_html": "sites/xs_bcn_0108.html",
     "lat": 41.396637,
     "lon": 2.169671
   },
@@ -1521,7 +1521,7 @@
     "max_height_m": 34.2,
     "building_count": 39,
     "far": 3.22,
-    "render_html": "output/xs_bcn_0109.html",
+    "render_html": "sites/xs_bcn_0109.html",
     "lat": 41.386483,
     "lon": 2.157217
   },
@@ -1535,7 +1535,7 @@
     "max_height_m": 26.6,
     "building_count": 31,
     "far": 2.88,
-    "render_html": "output/xs_bcn_0110.html",
+    "render_html": "sites/xs_bcn_0110.html",
     "lat": 41.389781,
     "lon": 2.173186
   },
@@ -1549,7 +1549,7 @@
     "max_height_m": 26.6,
     "building_count": 30,
     "far": 3.66,
-    "render_html": "output/xs_bcn_0111.html",
+    "render_html": "sites/xs_bcn_0111.html",
     "lat": 41.390256,
     "lon": 2.159095
   },
@@ -1563,7 +1563,7 @@
     "max_height_m": 26.6,
     "building_count": 29,
     "far": 3.39,
-    "render_html": "output/s_bcn_0112.html",
+    "render_html": "sites/s_bcn_0112.html",
     "lat": 41.389451,
     "lon": 2.16968
   },
@@ -1577,7 +1577,7 @@
     "max_height_m": 34.2,
     "building_count": 44,
     "far": 3.46,
-    "render_html": "output/xs_bcn_0113.html",
+    "render_html": "sites/xs_bcn_0113.html",
     "lat": 41.39308,
     "lon": 2.170035
   },
@@ -1591,7 +1591,7 @@
     "max_height_m": 45.6,
     "building_count": 17,
     "far": 2.08,
-    "render_html": "output/xs_bcn_0114.html",
+    "render_html": "sites/xs_bcn_0114.html",
     "lat": 41.386317,
     "lon": 2.155426
   },
@@ -1605,7 +1605,7 @@
     "max_height_m": 38.0,
     "building_count": 12,
     "far": 1.51,
-    "render_html": "output/xs_bcn_0115.html",
+    "render_html": "sites/xs_bcn_0115.html",
     "lat": 41.390579,
     "lon": 2.162553
   },
@@ -1619,7 +1619,7 @@
     "max_height_m": 34.2,
     "building_count": 45,
     "far": 3.0,
-    "render_html": "output/s_bcn_0116.html",
+    "render_html": "sites/s_bcn_0116.html",
     "lat": 41.398498,
     "lon": 2.17036
   },
@@ -1633,7 +1633,7 @@
     "max_height_m": 22.0,
     "building_count": 4,
     "far": 0.37,
-    "render_html": "output/m_bcn_0117.html",
+    "render_html": "sites/m_bcn_0117.html",
     "lat": 41.38856,
     "lon": 2.160177
   },
@@ -1647,7 +1647,7 @@
     "max_height_m": 30.4,
     "building_count": 30,
     "far": 2.43,
-    "render_html": "output/xs_bcn_0118.html",
+    "render_html": "sites/xs_bcn_0118.html",
     "lat": 41.398728,
     "lon": 2.172803
   },
@@ -1661,7 +1661,7 @@
     "max_height_m": 41.8,
     "building_count": 37,
     "far": 1.5,
-    "render_html": "output/xs_bcn_0119.html",
+    "render_html": "sites/xs_bcn_0119.html",
     "lat": 41.385484,
     "lon": 2.165733
   },
@@ -1675,7 +1675,7 @@
     "max_height_m": 41.8,
     "building_count": 32,
     "far": 2.6,
-    "render_html": "output/xs_bcn_0120.html",
+    "render_html": "sites/xs_bcn_0120.html",
     "lat": 41.392864,
     "lon": 2.167755
   },
@@ -1689,7 +1689,7 @@
     "max_height_m": 26.6,
     "building_count": 25,
     "far": 2.01,
-    "render_html": "output/s_bcn_0121.html",
+    "render_html": "sites/s_bcn_0121.html",
     "lat": 41.394388,
     "lon": 2.164881
   },
@@ -1703,7 +1703,7 @@
     "max_height_m": 41.8,
     "building_count": 37,
     "far": 2.75,
-    "render_html": "output/xs_bcn_0122.html",
+    "render_html": "sites/xs_bcn_0122.html",
     "lat": 41.388552,
     "lon": 2.160082
   },
@@ -1717,7 +1717,7 @@
     "max_height_m": 26.6,
     "building_count": 37,
     "far": 2.39,
-    "render_html": "output/xs_bcn_0123.html",
+    "render_html": "sites/xs_bcn_0123.html",
     "lat": 41.396565,
     "lon": 2.168895
   },
@@ -1731,7 +1731,7 @@
     "max_height_m": 30.4,
     "building_count": 30,
     "far": 3.82,
-    "render_html": "output/s_bcn_0124.html",
+    "render_html": "sites/s_bcn_0124.html",
     "lat": 41.398577,
     "lon": 2.171184
   },
@@ -1745,7 +1745,7 @@
     "max_height_m": 38.0,
     "building_count": 17,
     "far": 3.21,
-    "render_html": "output/xs_bcn_0125.html",
+    "render_html": "sites/xs_bcn_0125.html",
     "lat": 41.391298,
     "lon": 2.170245
   },
@@ -1759,7 +1759,7 @@
     "max_height_m": 38.0,
     "building_count": 28,
     "far": 1.91,
-    "render_html": "output/s_bcn_0126.html",
+    "render_html": "sites/s_bcn_0126.html",
     "lat": 41.3881,
     "lon": 2.174412
   },
@@ -1773,7 +1773,7 @@
     "max_height_m": 41.8,
     "building_count": 25,
     "far": 2.21,
-    "render_html": "output/xs_bcn_0127.html",
+    "render_html": "sites/xs_bcn_0127.html",
     "lat": 41.397765,
     "lon": 2.162543
   },
@@ -1787,7 +1787,7 @@
     "max_height_m": 26.6,
     "building_count": 43,
     "far": 2.92,
-    "render_html": "output/xs_bcn_0128.html",
+    "render_html": "sites/xs_bcn_0128.html",
     "lat": 41.397183,
     "lon": 2.156336
   },
@@ -1801,7 +1801,7 @@
     "max_height_m": 38.0,
     "building_count": 25,
     "far": 2.29,
-    "render_html": "output/xs_bcn_0129.html",
+    "render_html": "sites/xs_bcn_0129.html",
     "lat": 41.392081,
     "lon": 2.159449
   },
@@ -1815,7 +1815,7 @@
     "max_height_m": 41.8,
     "building_count": 34,
     "far": 3.22,
-    "render_html": "output/xs_bcn_0130.html",
+    "render_html": "sites/xs_bcn_0130.html",
     "lat": 41.384844,
     "lon": 2.158884
   },
@@ -1829,7 +1829,7 @@
     "max_height_m": 65.0,
     "building_count": 51,
     "far": 7.2,
-    "render_html": "output/xs_tokyo_0131.html",
+    "render_html": "sites/xs_tokyo_0131.html",
     "lat": 35.694167,
     "lon": 139.698206
   },
@@ -1843,7 +1843,7 @@
     "max_height_m": 65.0,
     "building_count": 58,
     "far": 7.55,
-    "render_html": "output/xs_tokyo_0132.html",
+    "render_html": "sites/xs_tokyo_0132.html",
     "lat": 35.691809,
     "lon": 139.710364
   },
@@ -1857,7 +1857,7 @@
     "max_height_m": 225.0,
     "building_count": 25,
     "far": 9.27,
-    "render_html": "output/xs_tokyo_0133.html",
+    "render_html": "sites/xs_tokyo_0133.html",
     "lat": 35.688705,
     "lon": 139.69748
   },
@@ -1871,7 +1871,7 @@
     "max_height_m": 65.0,
     "building_count": 82,
     "far": 7.79,
-    "render_html": "output/xs_tokyo_0134.html",
+    "render_html": "sites/xs_tokyo_0134.html",
     "lat": 35.700174,
     "lon": 139.704311
   },
@@ -1885,7 +1885,7 @@
     "max_height_m": 65.0,
     "building_count": 22,
     "far": 2.25,
-    "render_html": "output/m_tokyo_0135.html",
+    "render_html": "sites/m_tokyo_0135.html",
     "lat": 35.691737,
     "lon": 139.709674
   },
@@ -1899,7 +1899,7 @@
     "max_height_m": 65.0,
     "building_count": 52,
     "far": 4.91,
-    "render_html": "output/xs_tokyo_0136.html",
+    "render_html": "sites/xs_tokyo_0136.html",
     "lat": 35.688425,
     "lon": 139.694746
   },
@@ -1913,7 +1913,7 @@
     "max_height_m": 65.0,
     "building_count": 32,
     "far": 5.18,
-    "render_html": "output/xs_tokyo_0137.html",
+    "render_html": "sites/xs_tokyo_0137.html",
     "lat": 35.693944,
     "lon": 139.695985
   },
@@ -1927,7 +1927,7 @@
     "max_height_m": 65.0,
     "building_count": 57,
     "far": 6.29,
-    "render_html": "output/xs_tokyo_0138.html",
+    "render_html": "sites/xs_tokyo_0138.html",
     "lat": 35.688928,
     "lon": 139.699648
   },
@@ -1941,7 +1941,7 @@
     "max_height_m": 65.0,
     "building_count": 85,
     "far": 4.59,
-    "render_html": "output/xs_tokyo_0139.html",
+    "render_html": "sites/xs_tokyo_0139.html",
     "lat": 35.700527,
     "lon": 139.70778
   },
@@ -1955,7 +1955,7 @@
     "max_height_m": 65.0,
     "building_count": 52,
     "far": 5.49,
-    "render_html": "output/xs_tokyo_0140.html",
+    "render_html": "sites/xs_tokyo_0140.html",
     "lat": 35.692729,
     "lon": 139.70171
   },
@@ -1969,7 +1969,7 @@
     "max_height_m": 65.0,
     "building_count": 50,
     "far": 7.05,
-    "render_html": "output/xs_tokyo_0141.html",
+    "render_html": "sites/xs_tokyo_0141.html",
     "lat": 35.690559,
     "lon": 139.698064
   },
@@ -1983,7 +1983,7 @@
     "max_height_m": 65.0,
     "building_count": 71,
     "far": 8.31,
-    "render_html": "output/xs_tokyo_0142.html",
+    "render_html": "sites/xs_tokyo_0142.html",
     "lat": 35.689502,
     "lon": 139.705364
   },
@@ -1997,7 +1997,7 @@
     "max_height_m": 75.0,
     "building_count": 29,
     "far": 4.16,
-    "render_html": "output/xs_tokyo_0143.html",
+    "render_html": "sites/xs_tokyo_0143.html",
     "lat": 35.699477,
     "lon": 139.697445
   },
@@ -2011,7 +2011,7 @@
     "max_height_m": 65.0,
     "building_count": 56,
     "far": 7.48,
-    "render_html": "output/xs_tokyo_0144.html",
+    "render_html": "sites/xs_tokyo_0144.html",
     "lat": 35.690264,
     "lon": 139.695118
   },
@@ -2025,7 +2025,7 @@
     "max_height_m": 65.0,
     "building_count": 19,
     "far": 2.07,
-    "render_html": "output/m_tokyo_0145.html",
+    "render_html": "sites/m_tokyo_0145.html",
     "lat": 35.687663,
     "lon": 139.704895
   },
@@ -2039,7 +2039,7 @@
     "max_height_m": 65.0,
     "building_count": 40,
     "far": 1.67,
-    "render_html": "output/xs_tokyo_0146.html",
+    "render_html": "sites/xs_tokyo_0146.html",
     "lat": 35.699039,
     "lon": 139.710798
   },
@@ -2053,7 +2053,7 @@
     "max_height_m": 65.0,
     "building_count": 85,
     "far": 8.49,
-    "render_html": "output/xs_tokyo_0147.html",
+    "render_html": "sites/xs_tokyo_0147.html",
     "lat": 35.699571,
     "lon": 139.698312
   },
@@ -2067,7 +2067,7 @@
     "max_height_m": 65.0,
     "building_count": 65,
     "far": 5.79,
-    "render_html": "output/xs_tokyo_0148.html",
+    "render_html": "sites/xs_tokyo_0148.html",
     "lat": 35.690997,
     "lon": 139.702338
   },
@@ -2081,7 +2081,7 @@
     "max_height_m": 65.0,
     "building_count": 51,
     "far": 5.47,
-    "render_html": "output/xs_tokyo_0149.html",
+    "render_html": "sites/xs_tokyo_0149.html",
     "lat": 35.69786,
     "lon": 139.699188
   },
@@ -2095,7 +2095,7 @@
     "max_height_m": 65.0,
     "building_count": 110,
     "far": 7.89,
-    "render_html": "output/xs_tokyo_0150.html",
+    "render_html": "sites/xs_tokyo_0150.html",
     "lat": 35.687842,
     "lon": 139.706683
   },
@@ -2109,7 +2109,7 @@
     "max_height_m": 66.0,
     "building_count": 40,
     "far": 5.99,
-    "render_html": "output/xs_tokyo_0151.html",
+    "render_html": "sites/xs_tokyo_0151.html",
     "lat": 35.6868,
     "lon": 139.696392
   },
@@ -2123,7 +2123,7 @@
     "max_height_m": 65.0,
     "building_count": 49,
     "far": 5.36,
-    "render_html": "output/xs_tokyo_0152.html",
+    "render_html": "sites/xs_tokyo_0152.html",
     "lat": 35.700189,
     "lon": 139.704426
   },
@@ -2137,7 +2137,7 @@
     "max_height_m": 65.0,
     "building_count": 70,
     "far": 7.96,
-    "render_html": "output/xs_tokyo_0153.html",
+    "render_html": "sites/xs_tokyo_0153.html",
     "lat": 35.696402,
     "lon": 139.702497
   },
@@ -2151,7 +2151,7 @@
     "max_height_m": 65.0,
     "building_count": 75,
     "far": 4.22,
-    "render_html": "output/xs_tokyo_0154.html",
+    "render_html": "sites/xs_tokyo_0154.html",
     "lat": 35.697487,
     "lon": 139.695498
   },
@@ -2165,7 +2165,7 @@
     "max_height_m": 65.0,
     "building_count": 68,
     "far": 2.34,
-    "render_html": "output/s_tokyo_0155.html",
+    "render_html": "sites/s_tokyo_0155.html",
     "lat": 35.689323,
     "lon": 139.703559
   },
@@ -2179,7 +2179,7 @@
     "max_height_m": 65.0,
     "building_count": 91,
     "far": 9.13,
-    "render_html": "output/xs_tokyo_0156.html",
+    "render_html": "sites/xs_tokyo_0156.html",
     "lat": 35.691486,
     "lon": 139.707161
   },
@@ -2193,7 +2193,7 @@
     "max_height_m": 65.0,
     "building_count": 30,
     "far": 2.5,
-    "render_html": "output/xs_tokyo_0157.html",
+    "render_html": "sites/xs_tokyo_0157.html",
     "lat": 35.696739,
     "lon": 139.705816
   },
@@ -2207,7 +2207,7 @@
     "max_height_m": 65.0,
     "building_count": 89,
     "far": 9.0,
-    "render_html": "output/xs_tokyo_0158.html",
+    "render_html": "sites/xs_tokyo_0158.html",
     "lat": 35.690782,
     "lon": 139.700241
   },
@@ -2221,7 +2221,7 @@
     "max_height_m": 65.0,
     "building_count": 107,
     "far": 6.65,
-    "render_html": "output/xs_tokyo_0159.html",
+    "render_html": "sites/xs_tokyo_0159.html",
     "lat": 35.686944,
     "lon": 139.697852
   },
@@ -2235,7 +2235,7 @@
     "max_height_m": 65.0,
     "building_count": 48,
     "far": 5.94,
-    "render_html": "output/xs_tokyo_0160.html",
+    "render_html": "sites/xs_tokyo_0160.html",
     "lat": 35.693354,
     "lon": 139.707895
   },
@@ -2249,7 +2249,7 @@
     "max_height_m": 65.0,
     "building_count": 94,
     "far": 5.14,
-    "render_html": "output/m_tokyo_0161.html",
+    "render_html": "sites/m_tokyo_0161.html",
     "lat": 35.690782,
     "lon": 139.70025
   },
@@ -2263,7 +2263,7 @@
     "max_height_m": 65.0,
     "building_count": 82,
     "far": 5.93,
-    "render_html": "output/xs_tokyo_0162.html",
+    "render_html": "sites/xs_tokyo_0162.html",
     "lat": 35.697206,
     "lon": 139.710435
   },
@@ -2277,7 +2277,7 @@
     "max_height_m": 65.0,
     "building_count": 60,
     "far": 5.06,
-    "render_html": "output/s_tokyo_0163.html",
+    "render_html": "sites/s_tokyo_0163.html",
     "lat": 35.696064,
     "lon": 139.699188
   },
@@ -2291,7 +2291,7 @@
     "max_height_m": 65.0,
     "building_count": 41,
     "far": 4.89,
-    "render_html": "output/xs_tokyo_0164.html",
+    "render_html": "sites/xs_tokyo_0164.html",
     "lat": 35.694756,
     "lon": 139.703975
   },
@@ -2305,7 +2305,7 @@
     "max_height_m": 65.0,
     "building_count": 15,
     "far": 2.14,
-    "render_html": "output/s_tokyo_0165.html",
+    "render_html": "sites/s_tokyo_0165.html",
     "lat": 35.689646,
     "lon": 139.706727
   },
@@ -2319,7 +2319,7 @@
     "max_height_m": 66.0,
     "building_count": 54,
     "far": 7.52,
-    "render_html": "output/xs_tokyo_0166.html",
+    "render_html": "sites/xs_tokyo_0166.html",
     "lat": 35.699061,
     "lon": 139.711019
   },
@@ -2333,7 +2333,7 @@
     "max_height_m": 65.0,
     "building_count": 121,
     "far": 7.39,
-    "render_html": "output/xs_tokyo_0167.html",
+    "render_html": "sites/xs_tokyo_0167.html",
     "lat": 35.692413,
     "lon": 139.698604
   },
@@ -2347,7 +2347,7 @@
     "max_height_m": 65.0,
     "building_count": 30,
     "far": 1.98,
-    "render_html": "output/m_tokyo_0168.html",
+    "render_html": "sites/m_tokyo_0168.html",
     "lat": 35.695115,
     "lon": 139.707515
   },
@@ -2361,7 +2361,7 @@
     "max_height_m": 65.0,
     "building_count": 91,
     "far": 7.8,
-    "render_html": "output/xs_tokyo_0169.html",
+    "render_html": "sites/xs_tokyo_0169.html",
     "lat": 35.692133,
     "lon": 139.695879
   },
@@ -2375,7 +2375,7 @@
     "max_height_m": 65.0,
     "building_count": 36,
     "far": 3.55,
-    "render_html": "output/xs_tokyo_0170.html",
+    "render_html": "sites/xs_tokyo_0170.html",
     "lat": 35.700512,
     "lon": 139.707612
   },
@@ -2389,7 +2389,7 @@
     "max_height_m": 75.0,
     "building_count": 89,
     "far": 8.26,
-    "render_html": "output/xs_tokyo_0171.html",
+    "render_html": "sites/xs_tokyo_0171.html",
     "lat": 35.69362,
     "lon": 139.710497
   },
@@ -2403,7 +2403,7 @@
     "max_height_m": 65.0,
     "building_count": 78,
     "far": 8.72,
-    "render_html": "output/xs_tokyo_0172.html",
+    "render_html": "sites/xs_tokyo_0172.html",
     "lat": 35.693872,
     "lon": 139.695268
   },
@@ -2417,7 +2417,7 @@
     "max_height_m": 65.0,
     "building_count": 84,
     "far": 6.49,
-    "render_html": "output/xs_tokyo_0173.html",
+    "render_html": "sites/xs_tokyo_0173.html",
     "lat": 35.696028,
     "lon": 139.698843
   },
@@ -2431,7 +2431,7 @@
     "max_height_m": 65.0,
     "building_count": 54,
     "far": 6.36,
-    "render_html": "output/xs_tokyo_0174.html",
+    "render_html": "sites/xs_tokyo_0174.html",
     "lat": 35.697444,
     "lon": 139.695091
   },
@@ -2445,7 +2445,7 @@
     "max_height_m": 65.0,
     "building_count": 57,
     "far": 9.24,
-    "render_html": "output/xs_tokyo_0175.html",
+    "render_html": "sites/xs_tokyo_0175.html",
     "lat": 35.692729,
     "lon": 139.701719
   },
@@ -2459,7 +2459,7 @@
     "max_height_m": 65.0,
     "building_count": 59,
     "far": 5.35,
-    "render_html": "output/s_tokyo_0176.html",
+    "render_html": "sites/s_tokyo_0176.html",
     "lat": 35.697235,
     "lon": 139.710736
   },
@@ -2473,7 +2473,7 @@
     "max_height_m": 65.0,
     "building_count": 67,
     "far": 8.1,
-    "render_html": "output/xs_tokyo_0177.html",
+    "render_html": "sites/xs_tokyo_0177.html",
     "lat": 35.692974,
     "lon": 139.704108
   },
@@ -2487,7 +2487,7 @@
     "max_height_m": 65.0,
     "building_count": 22,
     "far": 3.5,
-    "render_html": "output/xs_tokyo_0178.html",
+    "render_html": "sites/xs_tokyo_0178.html",
     "lat": 35.687814,
     "lon": 139.706435
   },
@@ -2501,7 +2501,7 @@
     "max_height_m": 65.0,
     "building_count": 42,
     "far": 4.88,
-    "render_html": "output/xs_tokyo_0179.html",
+    "render_html": "sites/xs_tokyo_0179.html",
     "lat": 35.700721,
     "lon": 139.709665
   },
@@ -2515,7 +2515,7 @@
     "max_height_m": 65.0,
     "building_count": 86,
     "far": 8.58,
-    "render_html": "output/xs_tokyo_0180.html",
+    "render_html": "sites/xs_tokyo_0180.html",
     "lat": 35.688892,
     "lon": 139.699312
   },
@@ -2529,7 +2529,7 @@
     "max_height_m": 90.5,
     "building_count": 47,
     "far": 8.7,
-    "render_html": "output/xs_tokyo_0181.html",
+    "render_html": "sites/xs_tokyo_0181.html",
     "lat": 35.690121,
     "lon": 139.711417
   },
@@ -2543,7 +2543,7 @@
     "max_height_m": 65.0,
     "building_count": 62,
     "far": 7.4,
-    "render_html": "output/xs_tokyo_0182.html",
+    "render_html": "sites/xs_tokyo_0182.html",
     "lat": 35.700297,
     "lon": 139.705515
   },
@@ -2557,7 +2557,7 @@
     "max_height_m": 66.0,
     "building_count": 41,
     "far": 4.55,
-    "render_html": "output/xs_tokyo_0183.html",
+    "render_html": "sites/xs_tokyo_0183.html",
     "lat": 35.694368,
     "lon": 139.700161
   },
@@ -2571,7 +2571,7 @@
     "max_height_m": 65.0,
     "building_count": 31,
     "far": 4.49,
-    "render_html": "output/xs_tokyo_0184.html",
+    "render_html": "sites/xs_tokyo_0184.html",
     "lat": 35.699808,
     "lon": 139.700666
   },
@@ -2585,7 +2585,7 @@
     "max_height_m": 65.0,
     "building_count": 24,
     "far": 1.04,
-    "render_html": "output/xl_tokyo_0185.html",
+    "render_html": "sites/xl_tokyo_0185.html",
     "lat": 35.68767,
     "lon": 139.704966
   },
@@ -2599,7 +2599,7 @@
     "max_height_m": 65.0,
     "building_count": 57,
     "far": 8.11,
-    "render_html": "output/xs_tokyo_0186.html",
+    "render_html": "sites/xs_tokyo_0186.html",
     "lat": 35.692334,
     "lon": 139.697834
   },
@@ -2613,7 +2613,7 @@
     "max_height_m": 65.0,
     "building_count": 67,
     "far": 6.47,
-    "render_html": "output/xs_tokyo_0187.html",
+    "render_html": "sites/xs_tokyo_0187.html",
     "lat": 35.695403,
     "lon": 139.710364
   },
@@ -2627,7 +2627,7 @@
     "max_height_m": 75.0,
     "building_count": 31,
     "far": 4.22,
-    "render_html": "output/s_tokyo_0188.html",
+    "render_html": "sites/s_tokyo_0188.html",
     "lat": 35.689797,
     "lon": 139.708258
   },
@@ -2641,7 +2641,7 @@
     "max_height_m": 65.0,
     "building_count": 44,
     "far": 3.3,
-    "render_html": "output/xs_tokyo_0189.html",
+    "render_html": "sites/xs_tokyo_0189.html",
     "lat": 35.688518,
     "lon": 139.69564
   },
@@ -2655,7 +2655,7 @@
     "max_height_m": 65.0,
     "building_count": 62,
     "far": 6.57,
-    "render_html": "output/xs_tokyo_0190.html",
+    "render_html": "sites/xs_tokyo_0190.html",
     "lat": 35.689107,
     "lon": 139.70148
   },
@@ -2669,7 +2669,7 @@
     "max_height_m": 65.0,
     "building_count": 24,
     "far": 1.07,
-    "render_html": "output/l_tokyo_0191.html",
+    "render_html": "sites/l_tokyo_0191.html",
     "lat": 35.700253,
     "lon": 139.705081
   },
@@ -2683,7 +2683,7 @@
     "max_height_m": 65.0,
     "building_count": 60,
     "far": 4.76,
-    "render_html": "output/s_tokyo_0192.html",
+    "render_html": "sites/s_tokyo_0192.html",
     "lat": 35.68905,
     "lon": 139.70086
   },
@@ -2697,7 +2697,7 @@
     "max_height_m": 65.0,
     "building_count": 72,
     "far": 8.17,
-    "render_html": "output/xs_tokyo_0193.html",
+    "render_html": "sites/xs_tokyo_0193.html",
     "lat": 35.687648,
     "lon": 139.704754
   },
@@ -2711,7 +2711,7 @@
     "max_height_m": 225.0,
     "building_count": 24,
     "far": 9.2,
-    "render_html": "output/xs_tokyo_0194.html",
+    "render_html": "sites/xs_tokyo_0194.html",
     "lat": 35.698716,
     "lon": 139.707577
   },
@@ -2725,7 +2725,7 @@
     "max_height_m": 65.0,
     "building_count": 23,
     "far": 3.1,
-    "render_html": "output/xs_tokyo_0195.html",
+    "render_html": "sites/xs_tokyo_0195.html",
     "lat": 35.688144,
     "lon": 139.709674
   },
@@ -2739,7 +2739,7 @@
     "max_height_m": 151.0,
     "building_count": 24,
     "far": 9.68,
-    "render_html": "output/xs_hk_0196.html",
+    "render_html": "sites/xs_hk_0196.html",
     "lat": 22.28867,
     "lon": 114.162271
   },
@@ -2753,7 +2753,7 @@
     "max_height_m": 140.0,
     "building_count": 52,
     "far": 8.53,
-    "render_html": "output/xs_hk_0197.html",
+    "render_html": "sites/xs_hk_0197.html",
     "lat": 22.27582,
     "lon": 114.159941
   },
@@ -2767,7 +2767,7 @@
     "max_height_m": 140.0,
     "building_count": 9,
     "far": 6.11,
-    "render_html": "output/l_hk_0198.html",
+    "render_html": "sites/l_hk_0198.html",
     "lat": 22.278314,
     "lon": 114.150427
   },
@@ -2781,7 +2781,7 @@
     "max_height_m": 15.2,
     "building_count": 4,
     "far": 0.43,
-    "render_html": "output/m_hk_0199.html",
+    "render_html": "sites/m_hk_0199.html",
     "lat": 22.286521,
     "lon": 114.159257
   },
@@ -2795,7 +2795,7 @@
     "max_height_m": 140.0,
     "building_count": 21,
     "far": 7.93,
-    "render_html": "output/xs_hk_0200.html",
+    "render_html": "sites/xs_hk_0200.html",
     "lat": 22.286679,
     "lon": 114.160585
   },
@@ -2809,7 +2809,7 @@
     "max_height_m": 140.0,
     "building_count": 78,
     "far": 13.36,
-    "render_html": "output/xs_hk_0201.html",
+    "render_html": "sites/xs_hk_0201.html",
     "lat": 22.28172,
     "lon": 114.164352
   },
@@ -2823,7 +2823,7 @@
     "max_height_m": 159.0,
     "building_count": 17,
     "far": 17.4,
-    "render_html": "output/s_hk_0202.html",
+    "render_html": "sites/s_hk_0202.html",
     "lat": 22.280872,
     "lon": 114.157028
   },
@@ -2837,7 +2837,7 @@
     "max_height_m": 178.8,
     "building_count": 17,
     "far": 10.22,
-    "render_html": "output/xs_hk_0203.html",
+    "render_html": "sites/xs_hk_0203.html",
     "lat": 22.286262,
     "lon": 114.157005
   },
@@ -2851,7 +2851,7 @@
     "max_height_m": 140.0,
     "building_count": 33,
     "far": 10.46,
-    "render_html": "output/m_hk_0204.html",
+    "render_html": "sites/m_hk_0204.html",
     "lat": 22.277157,
     "lon": 114.155941
   },
@@ -2865,7 +2865,7 @@
     "max_height_m": 178.8,
     "building_count": 12,
     "far": 11.73,
-    "render_html": "output/s_hk_0205.html",
+    "render_html": "sites/s_hk_0205.html",
     "lat": 22.283064,
     "lon": 114.160422
   },
@@ -2879,7 +2879,7 @@
     "max_height_m": 140.0,
     "building_count": 45,
     "far": 8.57,
-    "render_html": "output/xs_hk_0206.html",
+    "render_html": "sites/xs_hk_0206.html",
     "lat": 22.282209,
     "lon": 114.153036
   },
@@ -2893,7 +2893,7 @@
     "max_height_m": 140.6,
     "building_count": 7,
     "far": 4.66,
-    "render_html": "output/l_hk_0207.html",
+    "render_html": "sites/l_hk_0207.html",
     "lat": 22.28596,
     "lon": 114.154411
   },
@@ -2907,7 +2907,7 @@
     "max_height_m": 150.0,
     "building_count": 53,
     "far": 11.7,
-    "render_html": "output/xs_hk_0208.html",
+    "render_html": "sites/xs_hk_0208.html",
     "lat": 22.281088,
     "lon": 114.158861
   },
@@ -2921,7 +2921,7 @@
     "max_height_m": 140.0,
     "building_count": 72,
     "far": 16.01,
-    "render_html": "output/xs_hk_0209.html",
+    "render_html": "sites/xs_hk_0209.html",
     "lat": 22.28711,
     "lon": 114.164352
   },
@@ -2935,7 +2935,7 @@
     "max_height_m": 150.0,
     "building_count": 66,
     "far": 12.87,
-    "render_html": "output/xs_hk_0210.html",
+    "render_html": "sites/xs_hk_0210.html",
     "lat": 22.278673,
     "lon": 114.15351
   },
@@ -2949,7 +2949,7 @@
     "max_height_m": 150.0,
     "building_count": 64,
     "far": 11.95,
-    "render_html": "output/s_hk_0211.html",
+    "render_html": "sites/s_hk_0211.html",
     "lat": 22.288052,
     "lon": 114.156951
   },
@@ -2963,7 +2963,7 @@
     "max_height_m": 150.0,
     "building_count": 49,
     "far": 7.14,
-    "render_html": "output/s_hk_0212.html",
+    "render_html": "sites/s_hk_0212.html",
     "lat": 22.281397,
     "lon": 114.161548
   },
@@ -2977,7 +2977,7 @@
     "max_height_m": 188.0,
     "building_count": 30,
     "far": 9.93,
-    "render_html": "output/xs_hk_0213.html",
+    "render_html": "sites/xs_hk_0213.html",
     "lat": 22.275001,
     "lon": 114.152873
   },
@@ -2991,7 +2991,7 @@
     "max_height_m": 140.0,
     "building_count": 20,
     "far": 6.99,
-    "render_html": "output/xs_hk_0214.html",
+    "render_html": "sites/xs_hk_0214.html",
     "lat": 22.281728,
     "lon": 114.164399
   },
@@ -3005,7 +3005,7 @@
     "max_height_m": 150.0,
     "building_count": 27,
     "far": 4.72,
-    "render_html": "output/xs_hk_0215.html",
+    "render_html": "sites/xs_hk_0215.html",
     "lat": 22.275612,
     "lon": 114.158108
   },
@@ -3019,7 +3019,7 @@
     "max_height_m": 140.0,
     "building_count": 18,
     "far": 1.81,
-    "render_html": "output/xs_hk_0216.html",
+    "render_html": "sites/xs_hk_0216.html",
     "lat": 22.276359,
     "lon": 114.164616
   },
@@ -3033,7 +3033,7 @@
     "max_height_m": 346.0,
     "building_count": 23,
     "far": 12.86,
-    "render_html": "output/xs_hk_0217.html",
+    "render_html": "sites/xs_hk_0217.html",
     "lat": 22.286988,
     "lon": 114.163303
   },
@@ -3047,7 +3047,7 @@
     "max_height_m": 140.0,
     "building_count": 5,
     "far": 9.25,
-    "render_html": "output/l_hk_0218.html",
+    "render_html": "sites/l_hk_0218.html",
     "lat": 22.287067,
     "lon": 114.163964
   },
@@ -3061,7 +3061,7 @@
     "max_height_m": 140.0,
     "building_count": 74,
     "far": 13.09,
-    "render_html": "output/xs_hk_0219.html",
+    "render_html": "sites/xs_hk_0219.html",
     "lat": 22.276093,
     "lon": 114.162309
   },
@@ -3075,7 +3075,7 @@
     "max_height_m": 150.0,
     "building_count": 68,
     "far": 13.74,
-    "render_html": "output/xs_hk_0220.html",
+    "render_html": "sites/xs_hk_0220.html",
     "lat": 22.286262,
     "lon": 114.157013
   },
@@ -3089,7 +3089,7 @@
     "max_height_m": 140.0,
     "building_count": 65,
     "far": 10.58,
-    "render_html": "output/s_hk_0221.html",
+    "render_html": "sites/s_hk_0221.html",
     "lat": 22.287901,
     "lon": 114.155654
   },
@@ -3103,7 +3103,7 @@
     "max_height_m": 150.0,
     "building_count": 63,
     "far": 13.74,
-    "render_html": "output/xs_hk_0222.html",
+    "render_html": "sites/xs_hk_0222.html",
     "lat": 22.2855,
     "lon": 114.150435
   },
@@ -3117,7 +3117,7 @@
     "max_height_m": 159.0,
     "building_count": 10,
     "far": 11.07,
-    "render_html": "output/s_hk_0223.html",
+    "render_html": "sites/s_hk_0223.html",
     "lat": 22.274965,
     "lon": 114.152539
   },
@@ -3131,7 +3131,7 @@
     "max_height_m": 140.0,
     "building_count": 59,
     "far": 16.65,
-    "render_html": "output/xs_hk_0224.html",
+    "render_html": "sites/xs_hk_0224.html",
     "lat": 22.275712,
     "lon": 114.159016
   },
@@ -3145,7 +3145,7 @@
     "max_height_m": 140.0,
     "building_count": 67,
     "far": 17.14,
-    "render_html": "output/xs_hk_0225.html",
+    "render_html": "sites/xs_hk_0225.html",
     "lat": 22.283804,
     "lon": 114.151273
   },
@@ -3159,7 +3159,7 @@
     "max_height_m": 140.0,
     "building_count": 60,
     "far": 11.65,
-    "render_html": "output/xs_hk_0226.html",
+    "render_html": "sites/xs_hk_0226.html",
     "lat": 22.274965,
     "lon": 114.152539
   },
@@ -3173,7 +3173,7 @@
     "max_height_m": 150.0,
     "building_count": 53,
     "far": 12.85,
-    "render_html": "output/xs_hk_0227.html",
+    "render_html": "sites/xs_hk_0227.html",
     "lat": 22.279385,
     "lon": 114.159684
   },
@@ -3187,7 +3187,7 @@
     "max_height_m": 140.0,
     "building_count": 4,
     "far": 1.1,
-    "render_html": "output/l_hk_0228.html",
+    "render_html": "sites/l_hk_0228.html",
     "lat": 22.276604,
     "lon": 114.151172
   },
@@ -3201,7 +3201,7 @@
     "max_height_m": 140.0,
     "building_count": 70,
     "far": 16.76,
-    "render_html": "output/xs_hk_0229.html",
+    "render_html": "sites/xs_hk_0229.html",
     "lat": 22.279952,
     "lon": 114.164593
   },
@@ -3215,7 +3215,7 @@
     "max_height_m": 140.0,
     "building_count": 84,
     "far": 16.83,
-    "render_html": "output/xs_hk_0230.html",
+    "render_html": "sites/xs_hk_0230.html",
     "lat": 22.281232,
     "lon": 114.160096
   },
@@ -3229,7 +3229,7 @@
     "max_height_m": 150.0,
     "building_count": 41,
     "far": 7.62,
-    "render_html": "output/xs_hk_0231.html",
+    "render_html": "sites/xs_hk_0231.html",
     "lat": 22.280333,
     "lon": 114.152322
   },
@@ -3243,7 +3243,7 @@
     "max_height_m": 140.0,
     "building_count": 72,
     "far": 15.48,
-    "render_html": "output/xs_hk_0232.html",
+    "render_html": "sites/xs_hk_0232.html",
     "lat": 22.28093,
     "lon": 114.157494
   },
@@ -3257,7 +3257,7 @@
     "max_height_m": 140.0,
     "building_count": 65,
     "far": 10.58,
-    "render_html": "output/s_hk_0233.html",
+    "render_html": "sites/s_hk_0233.html",
     "lat": 22.286974,
     "lon": 114.163164
   },
@@ -3271,7 +3271,7 @@
     "max_height_m": 178.8,
     "building_count": 9,
     "far": 10.33,
-    "render_html": "output/s_hk_0234.html",
+    "render_html": "sites/s_hk_0234.html",
     "lat": 22.283028,
     "lon": 114.160135
   },
@@ -3285,7 +3285,7 @@
     "max_height_m": 140.0,
     "building_count": 57,
     "far": 15.88,
-    "render_html": "output/xs_hk_0235.html",
+    "render_html": "sites/xs_hk_0235.html",
     "lat": 22.285493,
     "lon": 114.150372
   },
@@ -3299,7 +3299,7 @@
     "max_height_m": 140.0,
     "building_count": 30,
     "far": 11.14,
-    "render_html": "output/xs_hk_0236.html",
+    "render_html": "sites/xs_hk_0236.html",
     "lat": 22.275145,
     "lon": 114.154077
   },
@@ -3313,7 +3313,7 @@
     "max_height_m": 151.0,
     "building_count": 57,
     "far": 16.58,
-    "render_html": "output/xs_hk_0237.html",
+    "render_html": "sites/xs_hk_0237.html",
     "lat": 22.278688,
     "lon": 114.153673
   },
@@ -3327,7 +3327,7 @@
     "max_height_m": 140.0,
     "building_count": 7,
     "far": 1.54,
-    "render_html": "output/s_hk_0238.html",
+    "render_html": "sites/s_hk_0238.html",
     "lat": 22.280851,
     "lon": 114.156811
   },
@@ -3341,7 +3341,7 @@
     "max_height_m": 140.0,
     "building_count": 65,
     "far": 14.73,
-    "render_html": "output/m_hk_0239.html",
+    "render_html": "sites/m_hk_0239.html",
     "lat": 22.287585,
     "lon": 114.152935
   },
@@ -3355,7 +3355,7 @@
     "max_height_m": 140.0,
     "building_count": 27,
     "far": 5.26,
-    "render_html": "output/xs_hk_0240.html",
+    "render_html": "sites/xs_hk_0240.html",
     "lat": 22.286442,
     "lon": 114.158535
   },
@@ -3369,7 +3369,7 @@
     "max_height_m": 140.6,
     "building_count": 11,
     "far": 11.78,
-    "render_html": "output/m_hk_0241.html",
+    "render_html": "sites/m_hk_0241.html",
     "lat": 22.284279,
     "lon": 114.155374
   },
@@ -3383,7 +3383,7 @@
     "max_height_m": 185.0,
     "building_count": 7,
     "far": 5.35,
-    "render_html": "output/m_hk_0242.html",
+    "render_html": "sites/m_hk_0242.html",
     "lat": 22.279952,
     "lon": 114.164608
   },
@@ -3397,7 +3397,7 @@
     "max_height_m": 151.0,
     "building_count": 15,
     "far": 6.26,
-    "render_html": "output/xs_hk_0243.html",
+    "render_html": "sites/xs_hk_0243.html",
     "lat": 22.286291,
     "lon": 114.157253
   },
@@ -3411,7 +3411,7 @@
     "max_height_m": 140.0,
     "building_count": 43,
     "far": 11.4,
-    "render_html": "output/xs_hk_0244.html",
+    "render_html": "sites/xs_hk_0244.html",
     "lat": 22.28688,
     "lon": 114.162348
   },
@@ -3425,7 +3425,7 @@
     "max_height_m": 346.0,
     "building_count": 35,
     "far": 12.48,
-    "render_html": "output/xs_hk_0245.html",
+    "render_html": "sites/xs_hk_0245.html",
     "lat": 22.281081,
     "lon": 114.15883
   },
@@ -3439,7 +3439,7 @@
     "max_height_m": 140.0,
     "building_count": 16,
     "far": 3.1,
-    "render_html": "output/m_hk_0246.html",
+    "render_html": "sites/m_hk_0246.html",
     "lat": 22.280664,
     "lon": 114.155195
   },
@@ -3453,7 +3453,7 @@
     "max_height_m": 178.8,
     "building_count": 11,
     "far": 11.41,
-    "render_html": "output/m_hk_0247.html",
+    "render_html": "sites/m_hk_0247.html",
     "lat": 22.282152,
     "lon": 114.152508
   },
@@ -3467,7 +3467,7 @@
     "max_height_m": 140.0,
     "building_count": 68,
     "far": 12.88,
-    "render_html": "output/xs_hk_0248.html",
+    "render_html": "sites/xs_hk_0248.html",
     "lat": 22.280635,
     "lon": 114.154939
   },
@@ -3481,7 +3481,7 @@
     "max_height_m": 159.0,
     "building_count": 14,
     "far": 12.41,
-    "render_html": "output/m_hk_0249.html",
+    "render_html": "sites/m_hk_0249.html",
     "lat": 22.283122,
     "lon": 114.160943
   },
@@ -3495,7 +3495,7 @@
     "max_height_m": 140.0,
     "building_count": 25,
     "far": 7.93,
-    "render_html": "output/xs_hk_0250.html",
+    "render_html": "sites/xs_hk_0250.html",
     "lat": 22.286456,
     "lon": 114.158698
   },
@@ -3509,7 +3509,7 @@
     "max_height_m": 140.0,
     "building_count": 27,
     "far": 4.17,
-    "render_html": "output/xs_hk_0251.html",
+    "render_html": "sites/xs_hk_0251.html",
     "lat": 22.281857,
     "lon": 114.165501
   },
@@ -3523,7 +3523,7 @@
     "max_height_m": 140.0,
     "building_count": 42,
     "far": 15.87,
-    "render_html": "output/xs_hk_0252.html",
+    "render_html": "sites/xs_hk_0252.html",
     "lat": 22.286341,
     "lon": 114.157712
   },
@@ -3537,7 +3537,7 @@
     "max_height_m": 159.0,
     "building_count": 22,
     "far": 16.12,
-    "render_html": "output/s_hk_0253.html",
+    "render_html": "sites/s_hk_0253.html",
     "lat": 22.280254,
     "lon": 114.151685
   },
@@ -3551,7 +3551,7 @@
     "max_height_m": 151.0,
     "building_count": 33,
     "far": 12.59,
-    "render_html": "output/l_hk_0254.html",
+    "render_html": "sites/l_hk_0254.html",
     "lat": 22.288612,
     "lon": 114.161774
   },
@@ -3565,7 +3565,7 @@
     "max_height_m": 140.0,
     "building_count": 68,
     "far": 15.24,
-    "render_html": "output/xs_hk_0255.html",
+    "render_html": "sites/xs_hk_0255.html",
     "lat": 22.27761,
     "lon": 114.159886
   },
@@ -3579,7 +3579,7 @@
     "max_height_m": 140.0,
     "building_count": 60,
     "far": 8.76,
-    "render_html": "output/xs_hk_0256.html",
+    "render_html": "sites/xs_hk_0256.html",
     "lat": 22.287649,
     "lon": 114.153487
   },
@@ -3593,7 +3593,7 @@
     "max_height_m": 140.0,
     "building_count": 31,
     "far": 15.77,
-    "render_html": "output/s_hk_0257.html",
+    "render_html": "sites/s_hk_0257.html",
     "lat": 22.279133,
     "lon": 114.157502
   },
@@ -3607,7 +3607,7 @@
     "max_height_m": 140.0,
     "building_count": 64,
     "far": 16.23,
-    "render_html": "output/xs_hk_0258.html",
+    "render_html": "sites/xs_hk_0258.html",
     "lat": 22.283395,
     "lon": 114.163272
   },
@@ -3621,7 +3621,7 @@
     "max_height_m": 140.0,
     "building_count": 69,
     "far": 14.4,
-    "render_html": "output/xs_hk_0259.html",
+    "render_html": "sites/xs_hk_0259.html",
     "lat": 22.287017,
     "lon": 114.163544
   },
@@ -3635,7 +3635,7 @@
     "max_height_m": 150.0,
     "building_count": 47,
     "far": 11.27,
-    "render_html": "output/xs_hk_0260.html",
+    "render_html": "sites/xs_hk_0260.html",
     "lat": 22.278479,
     "lon": 114.151879
   },
@@ -3649,7 +3649,7 @@
     "max_height_m": 30.4,
     "building_count": 32,
     "far": 1.2,
-    "render_html": "output/xs_prs_0261.html",
+    "render_html": "sites/xs_prs_0261.html",
     "lat": 48.864659,
     "lon": 2.335952
   },
@@ -3663,7 +3663,7 @@
     "max_height_m": 30.4,
     "building_count": 43,
     "far": 2.51,
-    "render_html": "output/xs_prs_0262.html",
+    "render_html": "sites/xs_prs_0262.html",
     "lat": 48.858888,
     "lon": 2.331287
   },
@@ -3677,7 +3677,7 @@
     "max_height_m": 30.4,
     "building_count": 45,
     "far": 2.49,
-    "render_html": "output/s_prs_0263.html",
+    "render_html": "sites/s_prs_0263.html",
     "lat": 48.859297,
     "lon": 2.336225
   },
@@ -3691,7 +3691,7 @@
     "max_height_m": 30.4,
     "building_count": 58,
     "far": 2.51,
-    "render_html": "output/xs_prs_0264.html",
+    "render_html": "sites/xs_prs_0264.html",
     "lat": 48.869991,
     "lon": 2.335209
   },
@@ -3705,7 +3705,7 @@
     "max_height_m": 26.6,
     "building_count": 40,
     "far": 1.93,
-    "render_html": "output/xs_prs_0265.html",
+    "render_html": "sites/xs_prs_0265.html",
     "lat": 48.867634,
     "lon": 2.32837
   },
@@ -3719,7 +3719,7 @@
     "max_height_m": 30.4,
     "building_count": 33,
     "far": 2.17,
-    "render_html": "output/xs_prs_0266.html",
+    "render_html": "sites/xs_prs_0266.html",
     "lat": 48.864105,
     "lon": 2.329223
   },
@@ -3733,7 +3733,7 @@
     "max_height_m": 30.4,
     "building_count": 37,
     "far": 1.5,
-    "render_html": "output/xs_prs_0267.html",
+    "render_html": "sites/xs_prs_0267.html",
     "lat": 48.858967,
     "lon": 2.332205
   },
@@ -3747,7 +3747,7 @@
     "max_height_m": 26.6,
     "building_count": 88,
     "far": 3.23,
-    "render_html": "output/xs_prs_0268.html",
+    "render_html": "sites/xs_prs_0268.html",
     "lat": 48.862467,
     "lon": 2.331123
   },
@@ -3761,7 +3761,7 @@
     "max_height_m": 26.6,
     "building_count": 20,
     "far": 1.35,
-    "render_html": "output/xs_prs_0269.html",
+    "render_html": "sites/xs_prs_0269.html",
     "lat": 48.864594,
     "lon": 2.335122
   },
@@ -3775,7 +3775,7 @@
     "max_height_m": 30.4,
     "building_count": 28,
     "far": 1.87,
-    "render_html": "output/xs_prs_0270.html",
+    "render_html": "sites/xs_prs_0270.html",
     "lat": 48.862323,
     "lon": 2.329321
   },
@@ -3789,7 +3789,7 @@
     "max_height_m": 38.0,
     "building_count": 30,
     "far": 1.81,
-    "render_html": "output/xs_prs_0271.html",
+    "render_html": "sites/xs_prs_0271.html",
     "lat": 48.87109,
     "lon": 2.326721
   },
@@ -3803,7 +3803,7 @@
     "max_height_m": 30.4,
     "building_count": 37,
     "far": 1.42,
-    "render_html": "output/xs_prs_0272.html",
+    "render_html": "sites/xs_prs_0272.html",
     "lat": 48.861576,
     "lon": 2.342146
   },
@@ -3817,7 +3817,7 @@
     "max_height_m": 30.4,
     "building_count": 14,
     "far": 0.81,
-    "render_html": "output/xs_prs_0273.html",
+    "render_html": "sites/xs_prs_0273.html",
     "lat": 48.865931,
     "lon": 2.32955
   },
@@ -3831,7 +3831,7 @@
     "max_height_m": 30.4,
     "building_count": 57,
     "far": 1.95,
-    "render_html": "output/xs_prs_0274.html",
+    "render_html": "sites/xs_prs_0274.html",
     "lat": 48.863264,
     "lon": 2.340781
   },
@@ -3845,7 +3845,7 @@
     "max_height_m": 30.4,
     "building_count": 21,
     "far": 1.17,
-    "render_html": "output/xs_prs_0275.html",
+    "render_html": "sites/xs_prs_0275.html",
     "lat": 48.867591,
     "lon": 2.327868
   },
@@ -3859,7 +3859,7 @@
     "max_height_m": 24.0,
     "building_count": 13,
     "far": 0.8,
-    "render_html": "output/xs_prs_0276.html",
+    "render_html": "sites/xs_prs_0276.html",
     "lat": 48.872679,
     "lon": 2.346035
   },
@@ -3873,7 +3873,7 @@
     "max_height_m": 34.2,
     "building_count": 87,
     "far": 3.16,
-    "render_html": "output/xs_prs_0277.html",
+    "render_html": "sites/xs_prs_0277.html",
     "lat": 48.870242,
     "lon": 2.338246
   },
@@ -3887,7 +3887,7 @@
     "max_height_m": 30.4,
     "building_count": 52,
     "far": 2.93,
-    "render_html": "output/xs_prs_0278.html",
+    "render_html": "sites/xs_prs_0278.html",
     "lat": 48.867821,
     "lon": 2.330708
   },
@@ -3901,7 +3901,7 @@
     "max_height_m": 30.4,
     "building_count": 26,
     "far": 1.36,
-    "render_html": "output/xs_prs_0279.html",
+    "render_html": "sites/xs_prs_0279.html",
     "lat": 48.871637,
     "lon": 2.333407
   },
@@ -3915,7 +3915,7 @@
     "max_height_m": 30.4,
     "building_count": 57,
     "far": 2.7,
-    "render_html": "output/xs_prs_0280.html",
+    "render_html": "sites/xs_prs_0280.html",
     "lat": 48.869933,
     "lon": 2.334488
   },
@@ -3929,7 +3929,7 @@
     "max_height_m": 30.4,
     "building_count": 22,
     "far": 1.33,
-    "render_html": "output/xs_prs_0281.html",
+    "render_html": "sites/xs_prs_0281.html",
     "lat": 48.859319,
     "lon": 2.336542
   },
@@ -3943,7 +3943,7 @@
     "max_height_m": 30.4,
     "building_count": 26,
     "far": 1.66,
-    "render_html": "output/xs_prs_0282.html",
+    "render_html": "sites/xs_prs_0282.html",
     "lat": 48.871435,
     "lon": 2.330916
   },
@@ -3957,7 +3957,7 @@
     "max_height_m": 26.6,
     "building_count": 17,
     "far": 1.34,
-    "render_html": "output/xs_prs_0283.html",
+    "render_html": "sites/xs_prs_0283.html",
     "lat": 48.865269,
     "lon": 2.34337
   },
@@ -3971,7 +3971,7 @@
     "max_height_m": 30.4,
     "building_count": 61,
     "far": 3.68,
-    "render_html": "output/xs_prs_0284.html",
+    "render_html": "sites/xs_prs_0284.html",
     "lat": 48.872334,
     "lon": 2.341895
   },
@@ -3985,7 +3985,7 @@
     "max_height_m": 30.4,
     "building_count": 45,
     "far": 2.43,
-    "render_html": "output/xs_prs_0285.html",
+    "render_html": "sites/xs_prs_0285.html",
     "lat": 48.858449,
     "lon": 2.325956
   },
@@ -3999,7 +3999,7 @@
     "max_height_m": 26.6,
     "building_count": 33,
     "far": 1.89,
-    "render_html": "output/xs_prs_0286.html",
+    "render_html": "sites/xs_prs_0286.html",
     "lat": 48.862273,
     "lon": 2.328709
   },
@@ -4013,7 +4013,7 @@
     "max_height_m": 26.6,
     "building_count": 13,
     "far": 1.25,
-    "render_html": "output/s_prs_0287.html",
+    "render_html": "sites/s_prs_0287.html",
     "lat": 48.871471,
     "lon": 2.331375
   },
@@ -4027,7 +4027,7 @@
     "max_height_m": 30.4,
     "building_count": 65,
     "far": 2.45,
-    "render_html": "output/xs_prs_0288.html",
+    "render_html": "sites/xs_prs_0288.html",
     "lat": 48.871665,
     "lon": 2.333745
   },
@@ -4041,7 +4041,7 @@
     "max_height_m": 30.4,
     "building_count": 75,
     "far": 3.02,
-    "render_html": "output/xs_prs_0289.html",
+    "render_html": "sites/xs_prs_0289.html",
     "lat": 48.871435,
     "lon": 2.330905
   },
@@ -4055,7 +4055,7 @@
     "max_height_m": 30.4,
     "building_count": 64,
     "far": 2.87,
-    "render_html": "output/xs_prs_0290.html",
+    "render_html": "sites/xs_prs_0290.html",
     "lat": 48.868769,
     "lon": 2.342201
   },
@@ -4069,7 +4069,7 @@
     "max_height_m": 26.6,
     "building_count": 25,
     "far": 1.38,
-    "render_html": "output/xs_prs_0291.html",
+    "render_html": "sites/xs_prs_0291.html",
     "lat": 48.868352,
     "lon": 2.337176
   },
@@ -4083,7 +4083,7 @@
     "max_height_m": 30.4,
     "building_count": 46,
     "far": 2.78,
-    "render_html": "output/xs_prs_0292.html",
+    "render_html": "sites/xs_prs_0292.html",
     "lat": 48.862833,
     "lon": 2.335603
   },
@@ -4097,7 +4097,7 @@
     "max_height_m": 30.4,
     "building_count": 32,
     "far": 1.21,
-    "render_html": "output/xs_prs_0293.html",
+    "render_html": "sites/xs_prs_0293.html",
     "lat": 48.858873,
     "lon": 2.331091
   },
@@ -4111,7 +4111,7 @@
     "max_height_m": 30.4,
     "building_count": 39,
     "far": 2.19,
-    "render_html": "output/xs_prs_0294.html",
+    "render_html": "sites/xs_prs_0294.html",
     "lat": 48.862589,
     "lon": 2.332576
   },
@@ -4125,7 +4125,7 @@
     "max_height_m": 30.4,
     "building_count": 48,
     "far": 2.32,
-    "render_html": "output/xs_prs_0295.html",
+    "render_html": "sites/xs_prs_0295.html",
     "lat": 48.864256,
     "lon": 2.331058
   },
@@ -4139,7 +4139,7 @@
     "max_height_m": 22.8,
     "building_count": 6,
     "far": 0.45,
-    "render_html": "output/s_prs_0296.html",
+    "render_html": "sites/s_prs_0296.html",
     "lat": 48.871256,
     "lon": 2.328742
   },
@@ -4153,7 +4153,7 @@
     "max_height_m": 34.2,
     "building_count": 94,
     "far": 3.39,
-    "render_html": "output/xs_prs_0297.html",
+    "render_html": "sites/xs_prs_0297.html",
     "lat": 48.861166,
     "lon": 2.337121
   },
@@ -4167,7 +4167,7 @@
     "max_height_m": 26.6,
     "building_count": 19,
     "far": 1.17,
-    "render_html": "output/xs_prs_0298.html",
+    "render_html": "sites/xs_prs_0298.html",
     "lat": 48.86823,
     "lon": 2.33569
   },
@@ -4181,7 +4181,7 @@
     "max_height_m": 26.6,
     "building_count": 35,
     "far": 2.53,
-    "render_html": "output/xs_prs_0299.html",
+    "render_html": "sites/xs_prs_0299.html",
     "lat": 48.872513,
     "lon": 2.344004
   },
@@ -4195,7 +4195,7 @@
     "max_height_m": 30.0,
     "building_count": 18,
     "far": 1.73,
-    "render_html": "output/xs_prs_0300.html",
+    "render_html": "sites/xs_prs_0300.html",
     "lat": 48.870983,
     "lon": 2.347248
   },
@@ -4209,7 +4209,7 @@
     "max_height_m": 30.4,
     "building_count": 78,
     "far": 3.28,
-    "render_html": "output/xs_prs_0301.html",
+    "render_html": "sites/xs_prs_0301.html",
     "lat": 48.866132,
     "lon": 2.331943
   },
@@ -4223,7 +4223,7 @@
     "max_height_m": 30.4,
     "building_count": 57,
     "far": 3.1,
-    "render_html": "output/xs_prs_0302.html",
+    "render_html": "sites/xs_prs_0302.html",
     "lat": 48.859786,
     "lon": 2.342234
   },
@@ -4237,7 +4237,7 @@
     "max_height_m": 30.4,
     "building_count": 57,
     "far": 2.27,
-    "render_html": "output/xs_prs_0303.html",
+    "render_html": "sites/xs_prs_0303.html",
     "lat": 48.865212,
     "lon": 2.342627
   },
@@ -4251,7 +4251,7 @@
     "max_height_m": 38.0,
     "building_count": 28,
     "far": 1.5,
-    "render_html": "output/xs_prs_0304.html",
+    "render_html": "sites/xs_prs_0304.html",
     "lat": 48.865492,
     "lon": 2.346079
   },
@@ -4265,7 +4265,7 @@
     "max_height_m": 26.6,
     "building_count": 28,
     "far": 1.7,
-    "render_html": "output/xs_prs_0305.html",
+    "render_html": "sites/xs_prs_0305.html",
     "lat": 48.863394,
     "lon": 2.342354
   },
@@ -4279,7 +4279,7 @@
     "max_height_m": 30.4,
     "building_count": 49,
     "far": 3.15,
-    "render_html": "output/xs_prs_0306.html",
+    "render_html": "sites/xs_prs_0306.html",
     "lat": 48.858924,
     "lon": 2.331702
   },
@@ -4293,7 +4293,7 @@
     "max_height_m": 30.4,
     "building_count": 30,
     "far": 1.85,
-    "render_html": "output/xs_prs_0307.html",
+    "render_html": "sites/xs_prs_0307.html",
     "lat": 48.86708,
     "lon": 2.343545
   },
@@ -4307,7 +4307,7 @@
     "max_height_m": 26.6,
     "building_count": 12,
     "far": 1.3,
-    "render_html": "output/xs_prs_0308.html",
+    "render_html": "sites/xs_prs_0308.html",
     "lat": 48.866556,
     "lon": 2.337132
   },
@@ -4321,7 +4321,7 @@
     "max_height_m": 30.4,
     "building_count": 44,
     "far": 1.89,
-    "render_html": "output/xs_prs_0309.html",
+    "render_html": "sites/xs_prs_0309.html",
     "lat": 48.871694,
     "lon": 2.334062
   },
@@ -4335,7 +4335,7 @@
     "max_height_m": 30.0,
     "building_count": 16,
     "far": 2.68,
-    "render_html": "output/xs_prs_0310.html",
+    "render_html": "sites/xs_prs_0310.html",
     "lat": 48.860605,
     "lon": 2.330293
   },
@@ -4349,7 +4349,7 @@
     "max_height_m": 30.4,
     "building_count": 28,
     "far": 1.28,
-    "render_html": "output/s_prs_0311.html",
+    "render_html": "sites/s_prs_0311.html",
     "lat": 48.864278,
     "lon": 2.331276
   },
@@ -4363,7 +4363,7 @@
     "max_height_m": 31.0,
     "building_count": 21,
     "far": 1.45,
-    "render_html": "output/xs_prs_0312.html",
+    "render_html": "sites/xs_prs_0312.html",
     "lat": 48.867569,
     "lon": 2.327573
   },
@@ -4377,7 +4377,7 @@
     "max_height_m": 34.2,
     "building_count": 43,
     "far": 2.43,
-    "render_html": "output/xs_prs_0313.html",
+    "render_html": "sites/xs_prs_0313.html",
     "lat": 48.869668,
     "lon": 2.331287
   },
@@ -4391,7 +4391,7 @@
     "max_height_m": 30.4,
     "building_count": 66,
     "far": 3.13,
-    "render_html": "output/xs_prs_0314.html",
+    "render_html": "sites/xs_prs_0314.html",
     "lat": 48.866757,
     "lon": 2.339557
   },
@@ -4405,7 +4405,7 @@
     "max_height_m": 30.4,
     "building_count": 10,
     "far": 0.9,
-    "render_html": "output/m_prs_0315.html",
+    "render_html": "sites/m_prs_0315.html",
     "lat": 48.863056,
     "lon": 2.338279
   },
@@ -4419,7 +4419,7 @@
     "max_height_m": 30.4,
     "building_count": 27,
     "far": 2.95,
-    "render_html": "output/xs_prs_0316.html",
+    "render_html": "sites/xs_prs_0316.html",
     "lat": 48.871112,
     "lon": 2.327016
   },
@@ -4433,7 +4433,7 @@
     "max_height_m": 24.0,
     "building_count": 16,
     "far": 1.19,
-    "render_html": "output/xs_prs_0317.html",
+    "render_html": "sites/xs_prs_0317.html",
     "lat": 48.869739,
     "lon": 2.332139
   },
@@ -4447,7 +4447,7 @@
     "max_height_m": 26.6,
     "building_count": 30,
     "far": 2.61,
-    "render_html": "output/xs_prs_0318.html",
+    "render_html": "sites/xs_prs_0318.html",
     "lat": 48.862337,
     "lon": 2.32955
   },
@@ -4461,7 +4461,7 @@
     "max_height_m": 30.4,
     "building_count": 20,
     "far": 1.64,
-    "render_html": "output/xs_prs_0319.html",
+    "render_html": "sites/xs_prs_0319.html",
     "lat": 48.865269,
     "lon": 2.343381
   },
@@ -4475,7 +4475,7 @@
     "max_height_m": 30.4,
     "building_count": 40,
     "far": 2.06,
-    "render_html": "output/m_prs_0320.html",
+    "render_html": "sites/m_prs_0320.html",
     "lat": 48.865004,
     "lon": 2.340114
   },
@@ -4489,7 +4489,7 @@
     "max_height_m": 30.0,
     "building_count": 19,
     "far": 1.94,
-    "render_html": "output/xs_prs_0321.html",
+    "render_html": "sites/xs_prs_0321.html",
     "lat": 48.862474,
     "lon": 2.331211
   },
@@ -4503,7 +4503,7 @@
     "max_height_m": 30.4,
     "building_count": 72,
     "far": 2.92,
-    "render_html": "output/xs_prs_0322.html",
+    "render_html": "sites/xs_prs_0322.html",
     "lat": 48.861568,
     "lon": 2.342037
   },
@@ -4517,7 +4517,7 @@
     "max_height_m": 26.6,
     "building_count": 83,
     "far": 3.22,
-    "render_html": "output/s_prs_0323.html",
+    "render_html": "sites/s_prs_0323.html",
     "lat": 48.870767,
     "lon": 2.344692
   },
@@ -4531,7 +4531,7 @@
     "max_height_m": 30.4,
     "building_count": 14,
     "far": 0.97,
-    "render_html": "output/l_prs_0324.html",
+    "render_html": "sites/l_prs_0324.html",
     "lat": 48.866599,
     "lon": 2.337645
   },
@@ -4545,7 +4545,7 @@
     "max_height_m": 34.2,
     "building_count": 89,
     "far": 3.54,
-    "render_html": "output/xs_prs_0325.html",
+    "render_html": "sites/xs_prs_0325.html",
     "lat": 48.865578,
     "lon": 2.347128
   },
@@ -4559,7 +4559,7 @@
     "max_height_m": 160.0,
     "building_count": 7,
     "far": 12.53,
-    "render_html": "output/s_sgp_0326.html",
+    "render_html": "sites/s_sgp_0326.html",
     "lat": 1.28888,
     "lon": 103.855439
   },
@@ -4573,7 +4573,7 @@
     "max_height_m": 100.0,
     "building_count": 9,
     "far": 2.2,
-    "render_html": "output/l_sgp_0327.html",
+    "render_html": "sites/l_sgp_0327.html",
     "lat": 1.288607,
     "lon": 103.853268
   },
@@ -4587,7 +4587,7 @@
     "max_height_m": 180.0,
     "building_count": 9,
     "far": 9.69,
-    "render_html": "output/m_sgp_0328.html",
+    "render_html": "sites/m_sgp_0328.html",
     "lat": 1.285043,
     "lon": 103.85347
   },
@@ -4601,7 +4601,7 @@
     "max_height_m": 177.0,
     "building_count": 5,
     "far": 2.55,
-    "render_html": "output/s_sgp_0329.html",
+    "render_html": "sites/s_sgp_0329.html",
     "lat": 1.283598,
     "lon": 103.85628
   },
@@ -4615,7 +4615,7 @@
     "max_height_m": 20.0,
     "building_count": 48,
     "far": 0.85,
-    "render_html": "output/xs_sgp_0330.html",
+    "render_html": "sites/xs_sgp_0330.html",
     "lat": 1.277705,
     "lon": 103.852255
   },
@@ -4629,7 +4629,7 @@
     "max_height_m": 242.0,
     "building_count": 17,
     "far": 16.86,
-    "render_html": "output/xs_sgp_0331.html",
+    "render_html": "sites/xs_sgp_0331.html",
     "lat": 1.282067,
     "lon": 103.858444
   },
@@ -4643,7 +4643,7 @@
     "max_height_m": 160.0,
     "building_count": 15,
     "far": 8.13,
-    "render_html": "output/s_sgp_0332.html",
+    "render_html": "sites/s_sgp_0332.html",
     "lat": 1.279164,
     "lon": 103.849552
   },
@@ -4657,7 +4657,7 @@
     "max_height_m": 26.0,
     "building_count": 71,
     "far": 1.56,
-    "render_html": "output/xs_sgp_0333.html",
+    "render_html": "sites/xs_sgp_0333.html",
     "lat": 1.277935,
     "lon": 103.854117
   },
@@ -4671,7 +4671,7 @@
     "max_height_m": 160.0,
     "building_count": 6,
     "far": 5.93,
-    "render_html": "output/s_sgp_0334.html",
+    "render_html": "sites/s_sgp_0334.html",
     "lat": 1.289326,
     "lon": 103.844599
   },
@@ -4685,7 +4685,7 @@
     "max_height_m": 245.0,
     "building_count": 7,
     "far": 18.08,
-    "render_html": "output/l_sgp_0335.html",
+    "render_html": "sites/l_sgp_0335.html",
     "lat": 1.288507,
     "lon": 103.85242
   },
@@ -4699,7 +4699,7 @@
     "max_height_m": 245.0,
     "building_count": 3,
     "far": 6.84,
-    "render_html": "output/m_sgp_0336.html",
+    "render_html": "sites/m_sgp_0336.html",
     "lat": 1.283462,
     "lon": 103.855202
   },
@@ -4713,7 +4713,7 @@
     "max_height_m": 100.0,
     "building_count": 5,
     "far": 2.09,
-    "render_html": "output/xs_sgp_0337.html",
+    "render_html": "sites/xs_sgp_0337.html",
     "lat": 1.283318,
     "lon": 103.854081
   },
@@ -4727,7 +4727,7 @@
     "max_height_m": 242.0,
     "building_count": 15,
     "far": 17.16,
-    "render_html": "output/xs_sgp_0338.html",
+    "render_html": "sites/xs_sgp_0338.html",
     "lat": 1.277159,
     "lon": 103.847913
   },
@@ -4741,7 +4741,7 @@
     "max_height_m": 209.0,
     "building_count": 12,
     "far": 14.52,
-    "render_html": "output/m_sgp_0339.html",
+    "render_html": "sites/m_sgp_0339.html",
     "lat": 1.290871,
     "lon": 103.856992
   },
@@ -4755,7 +4755,7 @@
     "max_height_m": 190.0,
     "building_count": 10,
     "far": 7.32,
-    "render_html": "output/m_sgp_0340.html",
+    "render_html": "sites/m_sgp_0340.html",
     "lat": 1.278984,
     "lon": 103.848143
   },
@@ -4769,7 +4769,7 @@
     "max_height_m": 242.0,
     "building_count": 9,
     "far": 9.81,
-    "render_html": "output/xs_sgp_0341.html",
+    "render_html": "sites/xs_sgp_0341.html",
     "lat": 1.290734,
     "lon": 103.855921
   },
@@ -4783,7 +4783,7 @@
     "max_height_m": 69.0,
     "building_count": 42,
     "far": 1.48,
-    "render_html": "output/xs_sgp_0342.html",
+    "render_html": "sites/xs_sgp_0342.html",
     "lat": 1.282664,
     "lon": 103.848826
   },
@@ -4797,7 +4797,7 @@
     "max_height_m": 160.0,
     "building_count": 34,
     "far": 7.59,
-    "render_html": "output/s_sgp_0343.html",
+    "render_html": "sites/s_sgp_0343.html",
     "lat": 1.282635,
     "lon": 103.848596
   },
@@ -4811,7 +4811,7 @@
     "max_height_m": 242.0,
     "building_count": 10,
     "far": 10.26,
-    "render_html": "output/s_sgp_0344.html",
+    "render_html": "sites/s_sgp_0344.html",
     "lat": 1.283318,
     "lon": 103.854066
   },
@@ -4825,7 +4825,7 @@
     "max_height_m": 160.0,
     "building_count": 104,
     "far": 2.42,
-    "render_html": "output/s_sgp_0345.html",
+    "render_html": "sites/s_sgp_0345.html",
     "lat": 1.283519,
     "lon": 103.855691
   },
@@ -4839,7 +4839,7 @@
     "max_height_m": 26.0,
     "building_count": 66,
     "far": 1.9,
-    "render_html": "output/xs_sgp_0346.html",
+    "render_html": "sites/xs_sgp_0346.html",
     "lat": 1.279315,
     "lon": 103.850752
   },
@@ -4853,7 +4853,7 @@
     "max_height_m": 242.0,
     "building_count": 12,
     "far": 16.33,
-    "render_html": "output/m_sgp_0347.html",
+    "render_html": "sites/m_sgp_0347.html",
     "lat": 1.290152,
     "lon": 103.851256
   },
@@ -4867,7 +4867,7 @@
     "max_height_m": 60.0,
     "building_count": 86,
     "far": 1.25,
-    "render_html": "output/xs_sgp_0348.html",
+    "render_html": "sites/xs_sgp_0348.html",
     "lat": 1.287637,
     "lon": 103.845476
   },
@@ -4881,7 +4881,7 @@
     "max_height_m": 15.0,
     "building_count": 81,
     "far": 0.83,
-    "render_html": "output/xs_sgp_0349.html",
+    "render_html": "sites/xs_sgp_0349.html",
     "lat": 1.284267,
     "lon": 103.847266
   },
@@ -4895,7 +4895,7 @@
     "max_height_m": 242.0,
     "building_count": 14,
     "far": 17.48,
-    "render_html": "output/xs_sgp_0350.html",
+    "render_html": "sites/xs_sgp_0350.html",
     "lat": 1.290231,
     "lon": 103.851859
   },
@@ -4909,7 +4909,7 @@
     "max_height_m": 245.0,
     "building_count": 15,
     "far": 17.61,
-    "render_html": "output/m_sgp_0351.html",
+    "render_html": "sites/m_sgp_0351.html",
     "lat": 1.282621,
     "lon": 103.848481
   },
@@ -4923,7 +4923,7 @@
     "max_height_m": 69.0,
     "building_count": 40,
     "far": 1.53,
-    "render_html": "output/xs_sgp_0352.html",
+    "render_html": "sites/xs_sgp_0352.html",
     "lat": 1.276922,
     "lon": 103.846015
   },
@@ -4937,7 +4937,7 @@
     "max_height_m": 160.0,
     "building_count": 34,
     "far": 7.44,
-    "render_html": "output/xs_sgp_0353.html",
+    "render_html": "sites/xs_sgp_0353.html",
     "lat": 1.280609,
     "lon": 103.846727
   },
@@ -4951,7 +4951,7 @@
     "max_height_m": 69.0,
     "building_count": 44,
     "far": 1.52,
-    "render_html": "output/xs_sgp_0354.html",
+    "render_html": "sites/xs_sgp_0354.html",
     "lat": 1.289182,
     "lon": 103.857869
   },
@@ -4965,7 +4965,7 @@
     "max_height_m": 245.0,
     "building_count": 8,
     "far": 12.64,
-    "render_html": "output/m_sgp_0355.html",
+    "render_html": "sites/m_sgp_0355.html",
     "lat": 1.277871,
     "lon": 103.853613
   },
@@ -4979,7 +4979,7 @@
     "max_height_m": 209.0,
     "building_count": 8,
     "far": 6.18,
-    "render_html": "output/s_sgp_0356.html",
+    "render_html": "sites/s_sgp_0356.html",
     "lat": 1.284259,
     "lon": 103.847194
   },
@@ -4993,7 +4993,7 @@
     "max_height_m": 242.0,
     "building_count": 12,
     "far": 13.95,
-    "render_html": "output/m_sgp_0357.html",
+    "render_html": "sites/m_sgp_0357.html",
     "lat": 1.279121,
     "lon": 103.849228
   },
@@ -5007,7 +5007,7 @@
     "max_height_m": 209.0,
     "building_count": 12,
     "far": 7.19,
-    "render_html": "output/xl_sgp_0358.html",
+    "render_html": "sites/xl_sgp_0358.html",
     "lat": 1.285639,
     "lon": 103.858243
   },
@@ -5021,7 +5021,7 @@
     "max_height_m": 242.0,
     "building_count": 12,
     "far": 14.92,
-    "render_html": "output/xs_sgp_0359.html",
+    "render_html": "sites/xs_sgp_0359.html",
     "lat": 1.282226,
     "lon": 103.845318
   },
@@ -5035,7 +5035,7 @@
     "max_height_m": 215.0,
     "building_count": 5,
     "far": 5.73,
-    "render_html": "output/s_sgp_0360.html",
+    "render_html": "sites/s_sgp_0360.html",
     "lat": 1.277533,
     "lon": 103.850882
   },
@@ -5049,7 +5049,7 @@
     "max_height_m": 172.0,
     "building_count": 41,
     "far": 4.99,
-    "render_html": "output/m_sgp_0361.html",
+    "render_html": "sites/m_sgp_0361.html",
     "lat": 1.287788,
     "lon": 103.846705
   },
@@ -5063,7 +5063,7 @@
     "max_height_m": 209.0,
     "building_count": 12,
     "far": 15.34,
-    "render_html": "output/xs_sgp_0362.html",
+    "render_html": "sites/xs_sgp_0362.html",
     "lat": 1.276958,
     "lon": 103.846296
   },
@@ -5077,7 +5077,7 @@
     "max_height_m": 69.0,
     "building_count": 41,
     "far": 1.55,
-    "render_html": "output/xs_sgp_0363.html",
+    "render_html": "sites/xs_sgp_0363.html",
     "lat": 1.282671,
     "lon": 103.848905
   },
@@ -5091,7 +5091,7 @@
     "max_height_m": 209.0,
     "building_count": 17,
     "far": 16.24,
-    "render_html": "output/xs_sgp_0364.html",
+    "render_html": "sites/xs_sgp_0364.html",
     "lat": 1.284849,
     "lon": 103.851953
   },
@@ -5105,7 +5105,7 @@
     "max_height_m": 20.0,
     "building_count": 79,
     "far": 1.06,
-    "render_html": "output/xs_sgp_0365.html",
+    "render_html": "sites/xs_sgp_0365.html",
     "lat": 1.28523,
     "lon": 103.855001
   },
@@ -5119,7 +5119,7 @@
     "max_height_m": 163.0,
     "building_count": 8,
     "far": 5.12,
-    "render_html": "output/xs_sgp_0366.html",
+    "render_html": "sites/xs_sgp_0366.html",
     "lat": 1.284928,
     "lon": 103.852535
   },
@@ -5133,7 +5133,7 @@
     "max_height_m": 180.0,
     "building_count": 9,
     "far": 5.36,
-    "render_html": "output/l_sgp_0367.html",
+    "render_html": "sites/l_sgp_0367.html",
     "lat": 1.279818,
     "lon": 103.854821
   },
@@ -5147,7 +5147,7 @@
     "max_height_m": 209.0,
     "building_count": 11,
     "far": 11.72,
-    "render_html": "output/xs_sgp_0368.html",
+    "render_html": "sites/xs_sgp_0368.html",
     "lat": 1.290267,
     "lon": 103.852183
   },
@@ -5161,7 +5161,7 @@
     "max_height_m": 30.0,
     "building_count": 5,
     "far": 0.25,
-    "render_html": "output/l_sgp_0369.html",
+    "render_html": "sites/l_sgp_0369.html",
     "lat": 1.280343,
     "lon": 103.84465
   },
@@ -5175,7 +5175,7 @@
     "max_height_m": 160.0,
     "building_count": 7,
     "far": 9.3,
-    "render_html": "output/xs_sgp_0370.html",
+    "render_html": "sites/xs_sgp_0370.html",
     "lat": 1.281047,
     "lon": 103.850256
   },
@@ -5189,7 +5189,7 @@
     "max_height_m": 98.0,
     "building_count": 13,
     "far": 6.16,
-    "render_html": "output/m_sgp_0371.html",
+    "render_html": "sites/m_sgp_0371.html",
     "lat": 1.279135,
     "lon": 103.849358
   },
@@ -5203,7 +5203,7 @@
     "max_height_m": 69.0,
     "building_count": 50,
     "far": 1.78,
-    "render_html": "output/xs_sgp_0372.html",
+    "render_html": "sites/xs_sgp_0372.html",
     "lat": 1.278122,
     "lon": 103.855597
   },
@@ -5217,7 +5217,7 @@
     "max_height_m": 160.0,
     "building_count": 114,
     "far": 7.46,
-    "render_html": "output/xs_sgp_0373.html",
+    "render_html": "sites/xs_sgp_0373.html",
     "lat": 1.283763,
     "lon": 103.85761
   },
@@ -5231,7 +5231,7 @@
     "max_height_m": 227.0,
     "building_count": 7,
     "far": 23.09,
-    "render_html": "output/l_sgp_0374.html",
+    "render_html": "sites/l_sgp_0374.html",
     "lat": 1.281428,
     "lon": 103.853304
   },
@@ -5245,7 +5245,7 @@
     "max_height_m": 209.0,
     "building_count": 10,
     "far": 6.46,
-    "render_html": "output/s_sgp_0375.html",
+    "render_html": "sites/s_sgp_0375.html",
     "lat": 1.288348,
     "lon": 103.851198
   },
@@ -5259,7 +5259,7 @@
     "max_height_m": 160.0,
     "building_count": 91,
     "far": 5.34,
-    "render_html": "output/xs_sgp_0376.html",
+    "render_html": "sites/xs_sgp_0376.html",
     "lat": 1.281514,
     "lon": 103.854016
   },
@@ -5273,7 +5273,7 @@
     "max_height_m": 160.0,
     "building_count": 10,
     "far": 7.13,
-    "render_html": "output/xs_sgp_0377.html",
+    "render_html": "sites/xs_sgp_0377.html",
     "lat": 1.287579,
     "lon": 103.845009
   },
@@ -5287,7 +5287,7 @@
     "max_height_m": 160.0,
     "building_count": 4,
     "far": 2.3,
-    "render_html": "output/m_sgp_0378.html",
+    "render_html": "sites/m_sgp_0378.html",
     "lat": 1.286437,
     "lon": 103.850235
   },
@@ -5301,7 +5301,7 @@
     "max_height_m": 160.0,
     "building_count": 9,
     "far": 5.54,
-    "render_html": "output/l_sgp_0379.html",
+    "render_html": "sites/l_sgp_0379.html",
     "lat": 1.286322,
     "lon": 103.849358
   },
@@ -5315,7 +5315,7 @@
     "max_height_m": 160.0,
     "building_count": 98,
     "far": 8.52,
-    "render_html": "output/xs_sgp_0380.html",
+    "render_html": "sites/xs_sgp_0380.html",
     "lat": 1.283383,
     "lon": 103.854577
   },
@@ -5329,7 +5329,7 @@
     "max_height_m": 209.0,
     "building_count": 16,
     "far": 14.89,
-    "render_html": "output/s_sgp_0381.html",
+    "render_html": "sites/s_sgp_0381.html",
     "lat": 1.281579,
     "lon": 103.854526
   },
@@ -5343,7 +5343,7 @@
     "max_height_m": 190.0,
     "building_count": 8,
     "far": 5.75,
-    "render_html": "output/m_sgp_0382.html",
+    "render_html": "sites/m_sgp_0382.html",
     "lat": 1.280508,
     "lon": 103.845951
   },
@@ -5357,7 +5357,7 @@
     "max_height_m": 160.0,
     "building_count": 9,
     "far": 4.85,
-    "render_html": "output/s_sgp_0383.html",
+    "render_html": "sites/s_sgp_0383.html",
     "lat": 1.277008,
     "lon": 103.846713
   },
@@ -5371,7 +5371,7 @@
     "max_height_m": 190.0,
     "building_count": 8,
     "far": 7.12,
-    "render_html": "output/l_sgp_0384.html",
+    "render_html": "sites/l_sgp_0384.html",
     "lat": 1.282448,
     "lon": 103.847094
   },
@@ -5385,7 +5385,7 @@
     "max_height_m": 242.0,
     "building_count": 12,
     "far": 15.3,
-    "render_html": "output/xs_sgp_0385.html",
+    "render_html": "sites/xs_sgp_0385.html",
     "lat": 1.286652,
     "lon": 103.851982
   },
@@ -5399,7 +5399,7 @@
     "max_height_m": 190.0,
     "building_count": 10,
     "far": 9.96,
-    "render_html": "output/xl_sgp_0386.html",
+    "render_html": "sites/xl_sgp_0386.html",
     "lat": 1.286652,
     "lon": 103.851982
   },
@@ -5413,7 +5413,7 @@
     "max_height_m": 242.0,
     "building_count": 15,
     "far": 18.48,
-    "render_html": "output/xs_sgp_0387.html",
+    "render_html": "sites/xs_sgp_0387.html",
     "lat": 1.287184,
     "lon": 103.856251
   },
@@ -5427,7 +5427,7 @@
     "max_height_m": 242.0,
     "building_count": 12,
     "far": 13.76,
-    "render_html": "output/m_sgp_0388.html",
+    "render_html": "sites/m_sgp_0388.html",
     "lat": 1.279768,
     "lon": 103.854411
   },
@@ -5441,7 +5441,7 @@
     "max_height_m": 98.0,
     "building_count": 83,
     "far": 5.0,
-    "render_html": "output/xs_sgp_0389.html",
+    "render_html": "sites/xs_sgp_0389.html",
     "lat": 1.286192,
     "lon": 103.848294
   },
@@ -5455,7 +5455,7 @@
     "max_height_m": 190.0,
     "building_count": 9,
     "far": 11.07,
-    "render_html": "output/m_sgp_0390.html",
+    "render_html": "sites/m_sgp_0390.html",
     "lat": 1.276864,
     "lon": 103.845519
   }

@@ -22,6 +22,7 @@ agent_notes/
 ├── issues.md                          # Active issues, bug tracebacks & resolution logs
 ├── roadmap.md                         # Project development roadmap & milestone status
 ├── historical_approaches.md          # Implemented achievements & discarded/failed approaches ledger
+├── media/                             # Media assets (screenshots & issue diagrams under media/issues/)
 ├── proposals/                         # Research & architectural proposals with ratings
 ├── reports/                           # Deep technical reports & benchmark analyses
 ├── benchmarks/                        # Benchmark results & speedup timing matrices
@@ -31,7 +32,7 @@ agent_notes/
 ### Where to Store New Artifacts:
 * 📜 **Implemented & Discarded Approaches Ledger**: Maintain [`agent_notes/historical_approaches.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/historical_approaches.md). Document what was achieved by successful releases and **which approaches were useless/discarded** (along with exact failure reasons and conditions), preventing developers from repeating past mistakes.
 * 🐛 **Bug Fixes & Troubleshooting**: Append to [`agent_notes/issues.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/issues.md). Include problem statement, log tracebacks, root cause analysis, and verification steps.
-* 💡 **Ideas & Technical Proposals**: Create a markdown file in [`agent_notes/proposals/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/proposals/). You **MUST include a Relevancy & Feasibility Rating Matrix** (HIGH, MEDIUM, LOW, DUMB / NOT RECOMMENDED) with concise justifications.
+* 💡 **Ideas & Technical Proposals**: Update [`agent_notes/proposals.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/proposals.md). Organize proposals into clean, issue-style priority sections (`Active & High-Priority`, `Medium-Priority & Evaluation`, `Deprioritized & Rejected`) with Category, Rating, Concept, and Rationale & Tradeoffs.
 * ⚡ **Performance & Timing Data**: Record output in [`agent_notes/benchmarks/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/benchmarks/). Include mean step time, mean episode time, speedup vs baseline, and hardware details.
 * 🗺️ **Roadmap Updates**: When a phase in [`agent_notes/roadmap.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/roadmap.md) is started or completed, update its status tag (`[COMPLETED]`, `[IN PROGRESS]`, `[PLANNED]`).
 * 📖 **System Documentation**: Add specialized architectural guides (e.g. C extensions, GNN models, BPE merge rules) to [`agent_notes/guides/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/).
@@ -55,3 +56,6 @@ agent_notes/
 
 5. **Synchronize Across Release Branches**:
    When promoting changes across release branches (`main`, `version/v0.8.1`), ensure corresponding `agent_notes/` documentation is updated and synced.
+
+6. **Mandatory Documentation Update on Every Push to `main`**:
+   Before executing a git commit or pushing to `main` / `version/v0.8.1`, check all files in `agent_notes/` to verify that any code changes, bug resolutions, benchmark benchmarks, roadmap progress, or architectural modifications are fully documented and updated.

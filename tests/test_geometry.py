@@ -9,6 +9,7 @@ import unittest
 
 
 MODULE_DIR = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(MODULE_DIR / "src"))
 sys.path.insert(0, str(MODULE_DIR))
 
 import geometry as G  # noqa: E402

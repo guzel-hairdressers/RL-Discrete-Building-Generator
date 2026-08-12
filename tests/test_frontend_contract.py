@@ -10,9 +10,10 @@ import unittest
 
 
 MODULE_DIR = pathlib.Path(__file__).resolve().parents[1]
-HTML_PATH = MODULE_DIR / "index.html"
-APP_PATH = MODULE_DIR / "app.js"
-STYLE_PATH = MODULE_DIR / "styles.css"
+PUBLIC_DIR = (MODULE_DIR / "public") if (MODULE_DIR / "public" / "index.html").is_file() else MODULE_DIR
+HTML_PATH = PUBLIC_DIR / "index.html"
+APP_PATH = PUBLIC_DIR / "app.js"
+STYLE_PATH = PUBLIC_DIR / "styles.css"
 
 
 class ElementCollector(HTMLParser):
