@@ -13,8 +13,9 @@ agent_notes/
 ├── issues.md                          # Active issue tracker & bug resolution logs
 ├── roadmap.md                         # Master step-by-step development roadmap & milestones
 ├── proposals/                         # Research & architectural proposals
+│   ├── core_placement_proposals.md    # Model-driven & policy-controlled core placement strategies
 │   ├── rl_architecture_proposals.md   # RL proposals (GAE, PBRS, Surrogates, Continuous Maps) & ratings
-│   └── mb_bs_graphs_proposal.md       # Graph RL proposal
+│   └── mb_bs_graphs_proposal.md       # Graph RL proposal (deprioritized)
 ├── reports/                           # Deep technical reports & evaluation logs
 │   ├── OPTIMIZATION_REPORT.md         # Comprehensive C kernel & profiler benchmark report
 │   └── GRAPH_EVALUATION.md            # BPE graph representation report

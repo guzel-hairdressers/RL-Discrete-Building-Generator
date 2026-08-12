@@ -19,6 +19,8 @@ This document presents a technical analysis and relevancy rating for all Reinfor
 | **PROP-09** | Differentiable Projection Layer | Continuous Placement | **MEDIUM (Complex)** | Projects invalid continuous coordinates to nearest valid anchor, but gradient backpropagation across non-convex boundaries is noisy. |
 | **PROP-10** | Offline Bootstrapping (BC $\to$ Live PPO) | Training Bootstrapping | **HIGH (Essential for Continuous)** | Pre-trains continuous policies on recorded discrete trajectory datasets to completely avoid cold-start collision failures. |
 | **PROP-11** | Multi-Step Lookahead Beam Search / MCTS | Search / Inference | **HIGH (Inference) / MEDIUM (Training)** | Explores best actions $n$ steps deep (AlphaZero/Chess style). Instant zero-shot layout quality boost during inference; provides high-quality $Q^*$ targets for training. |
+| **PROP-12** | Dynamically Determined Core Placement | Core Placement | **HIGH (Phase 1 Immediate)** | Dynamically computes core count (1 vs 2) by site area/floors, but core candidate placement, rotation, and attached sequential Core 2 are 100% policy-decided. |
+| **PROP-13** | Fully Policy-Controlled Core Generation | Core Placement | **HIGH (Phase 2 Roadmap)** | Gives policy total decision autonomy over core count, placement timing ($t=k$), core shape variant selection, and attached vs detached placement via egress distance field signals. |
 
 ---
 
