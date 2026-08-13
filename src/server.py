@@ -13,7 +13,7 @@ candidate-search acceleration structure.
 from __future__ import annotations
 
 import asyncio
-from collections import deque
+from collections import Counter, deque
 import copy
 import concurrent.futures
 import heapq
@@ -93,6 +93,8 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "seed": 123,
     "allowCorridors": False,
     "allowStop": False,
+    "beamSearchWidth": 1,
+    "recordTrajectories": False,
 }
 
 BOUNDARY_TYPES = {"lobed", "lshape", "ushape", "tshape", "convex", "rect", "free"}
@@ -180,7 +182,7 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     atrium_policy = merged["atriumPolicy"]
     if not isinstance(atrium_policy, str) or atrium_policy not in ATRIUM_POLICIES:
         raise SettingsError("atriumPolicy is not supported")
-    for key in ("singleFloor", "publicMode", "allowCorridors", "allowStop"):
+    for key in ("singleFloor", "publicMode", "allowCorridors", "allowStop", "recordTrajectories"):
         if type(merged[key]) is not bool:
             raise SettingsError(f"{key} must be a boolean")
 
@@ -200,6 +202,9 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
         _in_range(_integer(merged["travelLimit"], "travelLimit"), 5, 60, "travelLimit")
     )
     merged["seed"] = int(_in_range(_integer(merged["seed"], "seed"), 0, 2**31 - 1, "seed"))
+    merged["beamSearchWidth"] = int(
+        _in_range(_integer(merged["beamSearchWidth"], "beamSearchWidth"), 1, 5, "beamSearchWidth")
+    )
 
     for key in ("minEdge", "maxEdge"):
         merged[key] = _half_step(
@@ -601,6 +606,7 @@ class PlacementPolicyDecision:
     features: torch.Tensor
     action_index: int
     temperature: float
+    old_log_prob: float = 0.0
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -1516,15 +1522,9 @@ class FloorEnvironment:
                     if len_b <= 1e-4:
                         continue
                     
-                    interval = G._overlap_interval_on_first(first, second, third, fourth)
-                    if interval is not None:
-                        start, end = interval
-                        
-                        interval_other = G._overlap_interval_on_first(third, fourth, first, second)
-                        if interval_other is None:
-                            return False
-                        
-                        start_other, end_other = interval_other
+                    overlap_data = G.symmetric_segment_overlap(first, second, third, fourth)
+                    if overlap_data is not None:
+                        (start, end), (start_other, end_other), _ov_len = overlap_data
                         
                         # 1. Enforce length ratio of 1:1, 1:2, or 2:1
                         ratio = len_a / len_b
@@ -1774,10 +1774,10 @@ class FloorEnvironment:
         neighbors: list[str] = []
         shared_overlap = 0.0
         for placement in nearby:
-            maximum_overlap = _max_shared_overlap(poly, placement["poly"])
-            if maximum_overlap + 1.0e-8 >= MIN_SHARED_EDGE:
+            max_ov, tot_ov = G.shared_overlap_pair(poly, placement["poly"])
+            if max_ov + 1.0e-8 >= MIN_SHARED_EDGE:
                 neighbors.append(placement["id"])
-                shared_overlap += G.get_shared_overlap(poly, placement["poly"])
+                shared_overlap += tot_ov
         if self.placements and not neighbors and category != "core":
             return None
         if category == "room" and self.placements:
@@ -2332,6 +2332,34 @@ class StepProfiler:
                     "count": len(values),
                 }
         return result
+
+
+def record_dataset_trajectory(
+    event: dict[str, Any],
+    data_dir: str = "data",
+    filename: str = "dataset_v1.jsonl",
+) -> str | None:
+    """Record completed multi-floor building episode to JSONL dataset."""
+    if not isinstance(event, dict) or event.get("type") != "episodeDone":
+        return None
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+        out_path = os.path.join(data_dir, filename)
+        record = {
+            "episode": event.get("completedEpisode", 0),
+            "score": float(event.get("metrics", {}).get("aggregateReward", 0.0)),
+            "metrics": event.get("metrics", {}),
+            "dictionary": event.get("dictionary", []),
+            "mergedDictionary": event.get("mergedDictionary", []),
+            "placements": event.get("placements", []),
+            "mergedPlacements": event.get("mergedPlacements", []),
+            "timestamp": time.time(),
+        }
+        with open(out_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record) + "\n")
+        return out_path
+    except Exception:
+        return None
 
 
 class ParallelTrainer:
@@ -4017,21 +4045,62 @@ class ParallelTrainer:
         temperature: float,
         sampled_log_prob: torch.Tensor,
     ) -> None:
-        self._record_placement_log_prob(environment_index, sampled_log_prob.detach().cpu())
+        log_prob_tensor = sampled_log_prob.detach().cpu()
+        self._record_placement_log_prob(environment_index, log_prob_tensor)
         self.placement_decisions.append(
             PlacementPolicyDecision(
                 environment_index=environment_index,
                 features=torch.tensor(features, dtype=torch.float32),
                 action_index=int(action_index),
                 temperature=float(temperature),
+                old_log_prob=float(log_prob_tensor.item()),
             )
         )
 
     def _learn_from_episode(self, score: float) -> None:
         normalized_score = score / 100.0
-        terms: list[torch.Tensor] = []
+        gamma = 0.99
+        gae_lambda = 0.95
+        clip_eps = 0.2
+
+        floor_descriptors = self._site_descriptor(self.environments, self.settings)
+        if not floor_descriptors:
+            floor_descriptors = [[0.0] * FLOOR_DESCRIPTOR_DIM]
+        floor_tensor = torch.tensor(floor_descriptors, dtype=torch.float32, device=self.device)
+        pooled_site = self.model.encode_sites(floor_tensor)
+        value_prediction = self.model.value(pooled_site)
+        v_pred_val = float(value_prediction.detach().cpu().item())
+        target = torch.tensor(normalized_score, dtype=torch.float32, device=self.device)
+
+        policy_loss_terms: list[torch.Tensor] = []
         entropy_terms: list[torch.Tensor] = []
+
         if self.placement_decisions:
+            # 1. Compute GAE advantages per trajectory / environment
+            grouped_decisions: dict[int, list[PlacementPolicyDecision]] = {}
+            for decision in self.placement_decisions:
+                grouped_decisions.setdefault(decision.environment_index, []).append(decision)
+
+            decision_advantages: list[float] = []
+            for env_idx, env_decisions in sorted(grouped_decisions.items()):
+                t_steps = len(env_decisions)
+                gae = 0.0
+                env_advs = [0.0] * t_steps
+                for t in reversed(range(t_steps)):
+                    step_reward = normalized_score if t == t_steps - 1 else 0.0
+                    v_next = 0.0 if t == t_steps - 1 else v_pred_val
+                    delta = step_reward + gamma * v_next - v_pred_val
+                    gae = delta + gamma * gae_lambda * gae
+                    env_advs[t] = gae
+                decision_advantages.extend(env_advs)
+
+            adv_tensor = torch.tensor(decision_advantages, dtype=torch.float32, device=self.device)
+            if len(adv_tensor) > 1 and float(adv_tensor.std().item()) > 1.0e-6:
+                norm_adv = (adv_tensor - adv_tensor.mean()) / (adv_tensor.std() + 1.0e-8)
+            else:
+                norm_adv = adv_tensor - adv_tensor.mean()
+
+            # 2. PPO Clipped Surrogate Loss
             feature_rows = torch.cat(
                 [decision.features for decision in self.placement_decisions], dim=0
             ).to(self.device)
@@ -4041,63 +4110,48 @@ class ParallelTrainer:
                 posinf=20.0,
                 neginf=-20.0,
             ).clamp(-30.0, 30.0)
+
             cursor = 0
-            recomputed: dict[int, list[torch.Tensor]] = {}
-            for decision in self.placement_decisions:
+            for idx, decision in enumerate(self.placement_decisions):
                 count = int(decision.features.shape[0])
                 group_logits = decision_logits[cursor : cursor + count] / decision.temperature
                 cursor += count
                 group_log_probs = F.log_softmax(group_logits, dim=0)
                 selected_log_prob = group_log_probs[decision.action_index]
-                recomputed.setdefault(decision.environment_index, []).append(selected_log_prob)
+                old_log_prob = torch.tensor(decision.old_log_prob, dtype=torch.float32, device=self.device)
+                
+                # Probability ratio r_t(theta)
+                ratio = torch.exp(selected_log_prob - old_log_prob)
+                adv = norm_adv[idx]
+                surr1 = ratio * adv
+                surr2 = torch.clamp(ratio, 1.0 - clip_eps, 1.0 + clip_eps) * adv
+                policy_loss_terms.append(-torch.min(surr1, surr2))
+
                 if count > 1:
                     probabilities = group_log_probs.exp()
                     entropy_terms.append(
                         -(probabilities * group_log_probs).sum() / math.log(count)
                     )
-            trajectory_term = _mean_trajectory_log_probability(recomputed)
-            if trajectory_term is not None:
-                terms.append(trajectory_term)
+
+            actor_loss = torch.stack(policy_loss_terms).mean() if policy_loss_terms else torch.zeros((), dtype=torch.float32, device=self.device)
         elif self.placement_log_probs_by_environment:
-            # Sum within each policy-dependent trajectory, then average the
-            # independent floor trajectories. Averaging individual actions
-            # biases learning toward short/dead-ended layouts.
             trajectory_term = _mean_trajectory_log_probability(
                 self.placement_log_probs_by_environment
             )
-            if trajectory_term is not None:
-                terms.append(trajectory_term)
+            advantage = _clamp(normalized_score - v_pred_val, -1.0, 1.0)
+            actor_loss = -advantage * trajectory_term if trajectory_term is not None else torch.zeros((), dtype=torch.float32, device=self.device)
         elif self.placement_log_probs:
-            terms.append(torch.stack(self.placement_log_probs).sum())
+            advantage = _clamp(normalized_score - v_pred_val, -1.0, 1.0)
+            actor_loss = -advantage * torch.stack(self.placement_log_probs).sum()
+        else:
+            actor_loss = torch.zeros((), dtype=torch.float32, device=self.device)
+
         if self.shape_log_probs:
-            # Shape/atrium actions also belong to independent floor rollouts;
-            # keep their scale invariant as a run moves from 4 to 8 floors.
-            terms.append(
-                0.8
-                * torch.stack(self.shape_log_probs).sum()
-                / max(1, len(self.environments))
+            shape_adv = _clamp(normalized_score - v_pred_val, -1.0, 1.0)
+            actor_loss = actor_loss - shape_adv * (
+                0.8 * torch.stack(self.shape_log_probs).sum() / max(1, len(self.environments))
             )
 
-        floor_descriptors = self._site_descriptor(self.environments, self.settings)
-        if not floor_descriptors:
-            # Keep synthetic/empty terminal episodes useful for critic and
-            # reward tests without passing a malformed 1-D empty tensor into
-            # the site encoder.
-            floor_descriptors = [[0.0] * FLOOR_DESCRIPTOR_DIM]
-        floor_tensor = torch.tensor(floor_descriptors, dtype=torch.float32, device=self.device)
-        pooled_site = self.model.encode_sites(floor_tensor)
-        value_prediction = self.model.value(pooled_site)
-        target = torch.tensor(normalized_score, dtype=torch.float32, device=self.device)
-        advantage = _clamp(
-            normalized_score - float(value_prediction.detach().cpu().item()),
-            -1.0,
-            1.0,
-        )
-        actor_loss = (
-            -advantage * torch.stack(terms).sum()
-            if terms
-            else torch.zeros((), dtype=torch.float32, device=self.device)
-        )
         value_loss = F.smooth_l1_loss(value_prediction, target)
         entropy = (
             torch.stack(entropy_terms).mean()
@@ -4105,16 +4159,18 @@ class ParallelTrainer:
             else torch.zeros((), dtype=torch.float32, device=self.device)
         )
         loss = actor_loss + 0.5 * value_loss - 0.01 * entropy
+
         self.optimizer.zero_grad(set_to_none=True)
         loss.backward()
         gradient_norm = nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
         self.optimizer.step()
+
         self.last_loss = float(loss.detach().cpu().item())
         self.last_actor_loss = float(actor_loss.detach().cpu().item())
         self.last_value_loss = float(value_loss.detach().cpu().item())
         self.last_entropy = float(entropy.detach().cpu().item())
         self.last_gradient_norm = float(torch.as_tensor(gradient_norm).detach().cpu().item())
-        self.last_advantage = float(advantage)
+        self.last_advantage = float(normalized_score - v_pred_val)
         self.baseline = 0.90 * self.baseline + 0.10 * normalized_score
 
     def _finish_episode(self) -> dict[str, Any]:
@@ -4157,18 +4213,47 @@ class ParallelTrainer:
         )
         self.step_profiler.record("episodeBpeMerge", time.perf_counter() - episode_bpe_merge_start)
 
+        # Phase 1C: Primitive Purging & Uniform Module Utilization Entropy Reward
+        active_shape_types = {
+            node.get("shapeType", "")
+            for layout_graph in layout_graphs
+            for node in layout_graph.nodes.values()
+        }
+        # Purge fully-consumed primitive shapes that have 0 unmerged placements
+        purged_dictionary = [
+            module for module in self.dictionary
+            if module["id"] in active_shape_types or module.get("category") == "core"
+        ]
+
+        # Calculate module utilization Shannon entropy across placed modules
+        placed_shape_counts = Counter(
+            node.get("shapeType", "")
+            for layout_graph in layout_graphs
+            for node in layout_graph.nodes.values()
+        )
+        total_placed = sum(placed_shape_counts.values())
+        if total_placed > 0 and len(placed_shape_counts) > 1:
+            usage_probs = [cnt / total_placed for cnt in placed_shape_counts.values() if cnt > 0]
+            shannon_h = -sum(p * math.log(p) for p in usage_probs)
+            max_h = math.log(len(placed_shape_counts))
+            utilization_entropy = shannon_h / max_h if max_h > 1.0e-6 else 0.0
+            utilization_entropy_bonus = 2.0 * utilization_entropy
+        else:
+            utilization_entropy_bonus = 0.0
+
         # Dictionary Limit Breach Squared Penalty (ramping penalty multiplier, capped at 80.0 points max)
         dict_limit = int(self.settings["dictCap"])
-        prelim_vocab_size = len(self.dictionary)
+        prelim_vocab_size = len(purged_dictionary) if purged_dictionary else len(self.dictionary)
         dict_limit_breach = max(0, prelim_vocab_size - dict_limit)
         breach_multiplier = 5.0 + 15.0 * min(1.0, float(self.episode) / 100.0)
         dict_breach_penalty = min(80.0, float(dict_limit_breach ** 2) * breach_multiplier)
 
-        # 2. Apply BPE bonus, unmerged triangle penalty, and dict breach penalty to score (allow negative values for RL advantage gradients)
+        # 2. Apply BPE bonus, utilization entropy, unmerged triangle penalty, and dict breach penalty to score
         frontier_metrics = self._relative_frontier_reward()
         score = (
             float(metrics["score"])
             + bpe_bonus
+            + utilization_entropy_bonus
             - unmerged_triangle_penalty
             + float(frontier_metrics["relativeTimeReward"])
             - dict_breach_penalty
@@ -4181,6 +4266,7 @@ class ParallelTrainer:
         metrics["bpeRounds"] = bpe_stats["merge_rounds"]
         metrics["reusedBpeModules"] = reused_bpe_modules
         metrics["bpeBonus"] = bpe_bonus
+        metrics["utilizationEntropyBonus"] = utilization_entropy_bonus
         metrics["unmergedTriangles"] = unmerged_triangles
         metrics["averageUnmergedTriangles"] = unmerged_triangles / max(1, len(layout_graphs))
         metrics["unmergedTrianglePenalty"] = unmerged_triangle_penalty
@@ -4197,7 +4283,7 @@ class ParallelTrainer:
         metrics["gradientNorm"] = self.last_gradient_norm
         metrics["advantage"] = self.last_advantage
         metrics["learningRate"] = float(self.optimizer.param_groups[0]["lr"])
-        metrics["learningAlgorithm"] = "monte_carlo_actor_critic"
+        metrics["learningAlgorithm"] = "ppo_gae"
         metrics["baseline"] = self.baseline
         self.score_history.append(score)
         self.best_score = max(self.best_score, score)
@@ -4299,7 +4385,7 @@ class ParallelTrainer:
         if hasattr(self, "episode_start_time"):
             delattr(self, "episode_start_time")
 
-        return {
+        event = {
             "type": "episodeDone",
             "generationId": self.generation_id,
             "completedEpisode": completed_episode,
@@ -4314,6 +4400,11 @@ class ParallelTrainer:
             "mergedPlacements": merged_placements_formatted,
             "diagnostics": diagnostics,
         }
+
+        if bool(self.settings.get("recordTrajectories", False)):
+            record_dataset_trajectory(event)
+
+        return event
 
     def step(self, generation_id: Any, episode: Any) -> dict[str, Any]:
         """Advance every active floor with one batched placement-policy call."""
@@ -4401,12 +4492,31 @@ class ParallelTrainer:
         temperature = max(0.32, 0.90 * math.exp(-self.episode / 45.0))
         placements: list[dict] = []
         cursor = 0
+        beam_width = int(self.settings.get("beamSearchWidth", 1))
         for environment, candidates in candidate_groups:
             group_logits = logits[cursor : cursor + len(candidates)] / temperature
             cursor += len(candidates)
             distribution = torch.distributions.Categorical(logits=group_logits)
-            selected_index = distribution.sample()
-            selected_offset = int(selected_index.item())
+            if beam_width > 1 and len(candidates) > 1:
+                k = min(beam_width, len(candidates))
+                _top_logprobs, top_indices = torch.topk(distribution.logits, k=k)
+                best_score = -float("inf")
+                best_offset = int(top_indices[0].item())
+                for cand_idx in top_indices:
+                    offset = int(cand_idx.item())
+                    cand = candidates[offset]
+                    geom_score = float(cand.shared_overlap) * 0.5 + float(cand.outer_exposure) * 0.2
+                    if cand.module["id"] == "stop":
+                        geom_score -= 1.0
+                    total_cand_score = float(distribution.logits[offset].item()) + geom_score
+                    if total_cand_score > best_score:
+                        best_score = total_cand_score
+                        best_offset = offset
+                selected_offset = best_offset
+                selected_index = torch.tensor(selected_offset, device=self.device)
+            else:
+                selected_index = distribution.sample()
+                selected_offset = int(selected_index.item())
             selected_candidate = candidates[selected_offset]
             self._record_placement_decision(
                 environment.index,

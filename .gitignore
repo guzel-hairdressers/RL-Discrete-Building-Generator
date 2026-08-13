@@ -8,3 +8,5 @@ cache/
 *.dylib
 *.so
 build/
+data/*.jsonl
+data/*.h5

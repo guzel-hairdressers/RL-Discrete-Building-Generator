@@ -26,7 +26,8 @@ agent_notes/
 │   ├── 26-08-10_v0.6c-legacy-baseline/
 │   ├── 26-08-10_v0.8.0-matched-speedup-eval/
 │   ├── 26-08-10_v0.8.0-stress-test-130modules/
-│   └── 26-08-11_v0.8.0-visual-grid-evaluations/
+│   ├── 26-08-11_v0.8.0-visual-grid-evaluations/
+│   └── 26-08-14_v0.8.0-phase1-3-eval/
 └── guides/                            # Component guides & architectural documentation
     ├── bpe_merge_guide.md             # BPE vocabulary & polygon merge guide
     └── core_stacking_guide.md         # Multi-floor shaft alignment guide

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 import pathlib
 import sys
 import unittest
@@ -364,6 +366,38 @@ class ParallelTrainerTests(unittest.TestCase):
         self.assertEqual(second["type"], "placements")
         self.assertEqual(second["metrics"]["moduleCount"], 2)
 
+    def test_beam_search_inference_and_trajectory_recording(self) -> None:
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            trainer = server.ParallelTrainer()
+            trainer.update_settings(
+                {
+                    "boundaryType": "rect",
+                    "atriumPolicy": "none",
+                    "parallelEnvironments": 1,
+                    "maxModules": 10,
+                    "dictCap": 6,
+                    "beamSearchWidth": 3,
+                    "recordTrajectories": True,
+                    "seed": 42,
+                }
+            )
+            for _ in range(40):
+                event = trainer.step(trainer.generation_id, trainer.episode)
+                if event["type"] == "episodeDone":
+                    break
+            self.assertEqual(event["type"], "episodeDone")
+            out_file = os.path.join(tmpdir, "test_dataset.jsonl")
+            path = server.record_dataset_trajectory(event, data_dir=tmpdir, filename="test_dataset.jsonl")
+            self.assertTrue(os.path.exists(out_file))
+            with open(out_file, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            self.assertEqual(len(lines), 1)
+            loaded = json.loads(lines[0])
+            self.assertIn("score", loaded)
+            self.assertIn("placements", loaded)
+
 
 if __name__ == "__main__":
     unittest.main()
+

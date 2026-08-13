@@ -1102,7 +1102,28 @@ def _create_merged_module_from_edge(pair_key: MergePairKey, conn: EdgeConnection
             components.extend(node["components"])
         else:
             components.append(node)
-            
+
+    # Phase 1C Anti-Sprawl Constraints: limit component count, compactness, and aspect ratio
+    if len(components) > 4:
+        return None
+
+    area = G.polygon_area(union_poly)
+    perim = G.polygon_perimeter(union_poly)
+    if perim > 1.0e-6:
+        compactness = (4.0 * math.pi * area) / (perim * perim)
+        if compactness < 0.15:
+            return None
+
+    xs = [p["x"] for p in union_poly]
+    ys = [p["y"] for p in union_poly]
+    if xs and ys:
+        span_x = max(xs) - min(xs)
+        span_y = max(ys) - min(ys)
+        min_span = max(1.0e-5, min(span_x, span_y))
+        aspect_ratio = max(span_x, span_y) / min_span
+        if aspect_ratio > 8.5:
+            return None
+
     return MergedModule(
         type_id=type_id,
         name=name,

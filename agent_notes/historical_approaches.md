@@ -17,6 +17,12 @@ It explicitly records **what was achieved** by successful approaches and **which
   * Strict quad convexity constraint enforcement across placement candidate generation, custom module synthesis, and BPE shape merging.
   * BPE reuse bonus clipping ($30.0$ pts max) to prevent reward function exploitation.
   * Full real-time HTML5 Canvas visualizer and profiler suite.
+  * **Phase 1-3 Implementations**:
+    * **PPO Clipped Surrogate Loss & GAE**: Replaced crude terminal baseline subtraction with Generalized Advantage Estimation ($\gamma=0.99, \lambda=0.95$) and normalized advantages with clipped surrogate ratio ($\epsilon=0.2$).
+    * **BPE Vocabulary Regularization**: Enforced anti-sprawl constraints ($N_{\text{subshapes}} \le 4$, compactness $\ge 0.15$, aspect ratio $\le 8.5$), primitive module purging, and Shannon entropy utilization bonus ($+2.0 \times H_{\text{norm}}$).
+    * **Native C Geometry FFI Call Reduction**: Halved native FFI boundary/overlap checks in `_candidate_from_anchor` and `_validate_edge_alignment` via `G.shared_overlap_pair` and `G.symmetric_segment_overlap`.
+    * **Inference Lookahead Beam Search (PROP-11)**: Enabled configurable multi-step lookahead candidate beam scoring (`beamSearchWidth`) for inference quality boosts.
+    * **Dataset Trajectory Archiving (`D_v1`)**: Built automated JSONL layout trajectory recording (`record_dataset_trajectory`).
 
 ### `v0.8.1` — Dynamic Parametric Shape Generator ($k=3,4$) *(`version/v0.8.1` Branch)*
 * **Key Achievements**:

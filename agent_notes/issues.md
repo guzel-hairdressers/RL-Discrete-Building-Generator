@@ -204,3 +204,15 @@ This document is the master tracking log for active bugs, regressive side effect
 * **Status**: `Solved`
 * **Resolution**: Replaced ray-cast `touches_outer`/`touches_atrium` predicates with $O(1)$ grid `cell_set` lookups, prepacked ctypes `all_wall_segments` array once per site, and optimized initial core stack sampling using `heapq.nsmallest(16, ...)` in `src/geometry.py` and `src/server.py`. Reduced 4-floor site generation latency from $369\,\text{ms}$ down to $138\,\text{ms}$.
 
+---
+
+### PPO/GAE Learning Algorithm Integration & Baseline Normalization
+* **Status**: `Solved`
+* **Resolution**: Replaced Monte Carlo baseline subtraction with Generalized Advantage Estimation ($\gamma=0.99, \lambda=0.95$) and normalized advantages with clipped surrogate loss ($\epsilon=0.2$) in `_learn_from_episode`. Updated unit test assertions to match `"ppo_gae"`.
+
+---
+
+### Candidate Neighbor Analysis & Segment Overlap FFI Call Optimization
+* **Status**: `Solved`
+* **Resolution**: Consolidated double C FFI calls in `_candidate_from_anchor` and `_validate_edge_alignment` into single-call `G.shared_overlap_pair` and `G.symmetric_segment_overlap`, reducing ctypes boundary crossing overhead in placement inner loops.
+

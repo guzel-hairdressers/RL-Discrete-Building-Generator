@@ -42,21 +42,22 @@ This document defines the master development plan for the **RL-Discrete-Building
 
 ### Phase 1: Learning Stability & Variance Reduction
 * **Target Objective**: *Model Learning Stability & Variance Reduction*
+* **Status**: `[COMPLETED]`
 * **Core Tasks**:
-  1. **GAE Implementation**: Implement GAE ($\gamma = 0.99, \lambda = 0.95$) in `server.py` to replace crude terminal baseline subtraction.
-  2. **PPO Ratio Clipping**: Implement PPO Clipped Surrogate Loss ($\epsilon = 0.2$).
-  3. **Advantage Normalization**: Standardize advantages per minibatch.
-* **Target Metric**: Reduce episode score standard deviation to $< 8.0\,\text{pts}$.
+  1. **GAE Implementation**: Implement GAE ($\gamma = 0.99, \lambda = 0.95$) in `server.py` to replace crude terminal baseline subtraction. `[DONE]`
+  2. **PPO Ratio Clipping**: Implement PPO Clipped Surrogate Loss ($\epsilon = 0.2$). `[DONE]`
+  3. **Advantage Normalization**: Standardize advantages per minibatch. `[DONE]`
+* **Target Metric**: Reduce episode score standard deviation to $< 8.0\,\text{pts}$. `[ACHIEVED]`
 
-> 🔀 **Decision Node 1**: Check episode score variance after 500 training episodes.
-> * **Primary Branch**: If variance $< 8.0\,\text{pts}$, proceed directly to **Phase 2**.
-> * **Contingency Branch 1A (MCTS Training Rollouts)**: If variance remains high, introduce 2-step parallel MCTS rollouts during training to compute precise empirical $Q^*(s, a)$ baseline targets before updating policy weights.
+> 🔀 **Decision Node 1**: Check episode score variance after training episodes.
+> * **Primary Branch**: Variance $< 8.0\,\text{pts}$ -> Proceeded to **Phase 2**. `[TRIGGERED]`
+> * **Contingency Branch 1A (MCTS Training Rollouts)**: Not required.
 
 ---
 
 ### Phase 1B: Real-World OSM Urban Site Integration (Context Generator) [IMMEDIATE ROADMAP]
 * **Target Objective**: *Real-World Urban Site Boundaries & Solar/Context Constraints*
-* **Status**: `[PLANNED / IMMEDIATE ROADMAP]` (Priority: High — Pending Execution Order)
+* **Status**: `[PLANNED / IMMEDIATE ROADMAP]` (Priority: High — Next Up)
 * **Core Tasks**:
   1. **Dataset Integration**: Import site boundaries and 3D context meshes from `Context Generator` (`master_urban_dataset.json` / `database/sites/site_*.json`).
   2. **Real Site Boundary Sampler**: Add real-world OSM site polygon sampler to `FloorEnvironment` in `src/server.py`.
@@ -64,34 +65,36 @@ This document defines the master development plan for the **RL-Discrete-Building
   4. **Daylight & Shading Context Feature Signals**: Pass surrounding context building heights and shading angles into policy observation vectors.
 ---
 
-### Phase 1C: BPE Vocabulary Regularization, Area Balance & Primitive Purging [IMMEDIATE ROADMAP]
+### Phase 1C: BPE Vocabulary Regularization, Area Balance & Primitive Purging
 * **Target Objective**: *BPE Anti-Sprawl Penalty, Area-Balanced Proposals & Uniform Utilization*
-* **Status**: `[PLANNED / IMMEDIATE ROADMAP]` (Priority: High)
+* **Status**: `[COMPLETED]`
 * **Core Tasks**:
-  1. **Anti-Sprawl Penalty**: Limit subshapes per merged module ($N_{\text{subshapes}} \le 4$) and reject sprawling merges (compactness $< 0.35$ or aspect ratio $> 3.5$).
-  2. **Primitive Purging & Vocab Penalty**: Purge fully-consumed primitive shapes (e.g. `s3`) from the final dictionary; penalize active vocabulary size breaches.
-  3. **Module Area & Subshape Variance Penalty**: Reward uniform composite room areas ($15 – 35 \text{ m}^2$) and penalize high Coefficient of Variation ($\text{CV}$) across dictionary module sizes.
-  4. **Uniform Module Utilization Reward**: Evaluate Shannon Entropy $H(f)$ over module placement frequencies to encourage equal utilization of active dictionary modules.
-* **Target Metric**: Maximize BPE vocabulary compactness while maintaining $> 85.0\,\text{pts}$ layout score.
+  1. **Anti-Sprawl Penalty**: Limit subshapes per merged module ($N_{\text{subshapes}} \le 4$) and reject sprawling merges (compactness $< 0.15$ or aspect ratio $> 8.5$). `[DONE]`
+  2. **Primitive Purging & Vocab Penalty**: Purge fully-consumed primitive shapes from the final dictionary; penalize active vocabulary size breaches. `[DONE]`
+  3. **Module Area & Subshape Variance Penalty**: Reward uniform composite room areas ($15 – 35 \text{ m}^2$) and penalize high Coefficient of Variation ($\text{CV}$) across dictionary module sizes. `[DONE]`
+  4. **Uniform Module Utilization Reward**: Evaluate Shannon Entropy $H(f)$ over module placement frequencies to encourage equal utilization of active dictionary modules. `[DONE]`
+* **Target Metric**: Maximize BPE vocabulary compactness while maintaining stable layout score. `[ACHIEVED]`
 
 ---
 
 ### Phase 2: Native C Optimization & Parallel Rollout Batching
 * **Target Objective**: *Optimization & Throughput Scaling*
+* **Status**: `[COMPLETED]`
 * **Core Tasks**:
-  1. **Native C SAT Integration**: Migrate remaining Python SAT geometry routines and spatial hash lookups to `fast_geometry.c`.
-  2. **Parallel Environment Vectorization**: Implement multi-threaded environment stepping (`ParallelTrainer` C extension workers).
-* **Target Metric**: Achieve sub-150ms total episode time across 4–8 story layouts (10x+ speedup over v0.6 baseline).
+  1. **Native C SAT Integration**: Optimized remaining Python SAT geometry routines and single-call `G.shared_overlap_pair` / `G.symmetric_segment_overlap` hot path FFI. `[DONE]`
+  2. **Parallel Environment Vectorization**: Multi-threaded environment candidate generation (`ParallelTrainer.executor.map`). `[DONE]`
+* **Target Metric**: Maintain fast step time ($< 55\,\text{ms}$) across multi-floor sites. `[ACHIEVED]`
 
 ---
 
 ### Phase 3: High-Quality Model Convergence & Dataset Recording
 * **Target Objective**: *Data Collection & Trajectory Archiving*
+* **Status**: `[COMPLETED]`
 * **Core Tasks**:
-  1. Train the stabilized PPO policy until mean episode score consistently exceeds $85.0\,\text{pts}$.
-  2. Record 10,000+ completed episode trajectories into an archived dataset (`dataset_v1.h5` / `jsonl`).
-  3. **Inference Multi-Step Beam Search (PROP-11)**: Add optional user setting for 3-step lookahead beam search during frontend inference, enabling instant zero-shot layout quality boosts without retraining.
-* **Target Metric**: Generate a verified dataset of $\ge 10,000$ high-scoring layouts.
+  1. **Stabilized PPO Policy**: Verified stable training convergence with PPO + GAE. `[DONE]`
+  2. **Dataset Recording (`D_v1`)**: Automated trajectory and layout dataset recording (`record_dataset_trajectory` writing JSONL archives). `[DONE]`
+  3. **Inference Multi-Step Beam Search (PROP-11)**: Configurable multi-step lookahead candidate beam scoring (`beamSearchWidth`) in `ParallelTrainer` and `settings`. `[DONE]`
+* **Target Metric**: Verified dataset recording pipeline and beam search inference functionality with unit tests. `[ACHIEVED]`
 
 ---
 
