@@ -50,13 +50,18 @@ python3 benchmarks/benchmark.py
 
 ---
 
-## 4. Mandatory Documentation Updates on Push to `main`
+## 4. Mandatory Documentation & Cross-Subversion Synchronization Rules
 
-Whenever code changes, bug fixes, benchmark runs, or architectural updates are pushed to `main` or release branches (`version/v0.8.1`), **all relevant files in [`agent_notes/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/README.md) MUST be synchronized and updated**:
+Whenever code features, bug fixes, performance optimizations, or architectural updates are implemented on `main` or any release branch across present and future versions (`v0.8.x`, `v0.9.x`, `v1.0.x`, etc.):
 
-1. **Implemented & Discarded Features**: Update [`agent_notes/historical_approaches.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/historical_approaches.md).
-2. **Bug Fixes & Tracebacks**: Append resolutions to [`agent_notes/issues.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/issues.md).
-3. **Roadmap & Milestones**: Update status tags in [`agent_notes/roadmap.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/roadmap.md).
-4. **Performance Data & Benchmarks**: Save categorized run data under [`agent_notes/benchmarks/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/benchmarks/).
-5. **Architectural Guides**: Update guide files in [`agent_notes/guides/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/).
-6. **Central Directory Index**: Keep [`agent_notes/README.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/README.md) links up to date.
+1. **Mandatory Feature & Code Subversion Sync**:
+   Unless a feature or bug fix is strictly variant-specific, **all general code features, geometry fixes, speed optimizations, and spatial constraints MUST be synchronized into the source code across all active subversion branches** of that version family (e.g. `version/v0.8.1`, `version/v0.9.1`, etc.) **BEFORE pushing to remote repositories**.
+
+2. **Mandatory Documentation Sync**:
+   **All relevant files in [`agent_notes/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/README.md) MUST be updated and synchronized before pushing to remote**:
+   - **Implemented & Discarded Features**: Update [`agent_notes/historical_approaches.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/historical_approaches.md).
+   - **Bug Fixes & Tracebacks**: Append resolutions to [`agent_notes/issues.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/issues.md).
+   - **Roadmap & Milestones**: Update status tags in [`agent_notes/roadmap.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/roadmap.md).
+   - **Performance Data & Benchmarks**: Save categorized run data under [`agent_notes/benchmarks/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/benchmarks/).
+   - **Architectural Guides**: Update guide files in [`agent_notes/guides/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/).
+   - **Central Directory Index**: Keep [`agent_notes/README.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/README.md) links up to date.

@@ -54,8 +54,8 @@ agent_notes/
 4. **Preserve Historical Traceability**:
    Do not delete old resolution logs or historical benchmarks. Mark completed tasks as resolved rather than deleting their documentation.
 
-5. **Synchronize Across Release Branches**:
-   When promoting changes across release branches (`main`, `version/v0.8.1`), ensure corresponding `agent_notes/` documentation is updated and synced.
+5. **Mandatory Feature & Documentation Subversion Synchronization Before Push**:
+   Whenever a new code feature, bug fix, performance optimization, or layout constraint is implemented that applies generally across subversions of any version family (e.g. `v0.8.x`, `v0.9.x`, `v1.0.x`, etc. — unless strictly variant-specific), AI agents and developers **MUST update both the source code features AND `agent_notes/` documentation across all active subversion branches of that version family before executing git push**.
 
-6. **Mandatory Documentation Update on Every Push to `main`**:
-   Before executing a git commit or pushing to `main` / `version/v0.8.1`, check all files in `agent_notes/` to verify that any code changes, bug resolutions, benchmark benchmarks, roadmap progress, or architectural modifications are fully documented and updated.
+6. **Mandatory Documentation Update on Every Push**:
+   Before executing a git commit or pushing to `main` or any release branch across present and future versions (`v0.8.x`, `v0.9.x`, `v1.0.x`, etc.), verify that all code changes, bug resolutions, benchmark data, roadmap progress, or architectural modifications are fully documented and updated across `agent_notes/`.
