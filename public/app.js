@@ -30,6 +30,7 @@ window.onerror = function(message, source, lineno, colno, error) {
 
   const SETTING_KEYS = Object.freeze([
     'boundaryType',
+    'siteAreaTier',
     'atriumPolicy',
     'singleFloor',
     'publicMode',
@@ -42,8 +43,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     'dictCap',
     'angleStep',
     'coreSpacing',
-    'travelLimit',
-    'enableLookahead'
+    'travelLimit'
   ]);
 
   const MAX_RETAINED_SCORE_HISTORY = 360;

@@ -173,3 +173,28 @@ This document is the master tracking log for active bugs, regressive side effect
 ### Occasional Unjoined Adjacent Shapes
 * **Status**: `Partially Solved in v0.6`
 * **Resolution**: Identified edge cases around 90% overlap thresholds, global frequency thresholding, and Edmonds matching; documented tolerances.
+
+---
+
+### Site Area Tier Dropdown Inactive in Viewport
+* **Status**: `Solved`
+* **Resolution**: Added `'siteAreaTier'` to `SETTING_KEYS` in `public/app.js`; fixed `polygon_centroid()` dictionary unpack bug in `_apply_site_area_scaling()` in `src/geometry.py`.
+
+---
+
+### Smooth Site Area Distribution & Multi-Floor Building Scaling
+* **Status**: `Solved`
+* **Resolution**: Implemented 2-stage continuous Truncated Log-Normal distribution ($\mu=7.1302, \sigma=0.7075$) for building base target area ($P(\text{XS})\approx 15\%$, $P(\text{XL})\approx 5\%$, bulk in S/M), with per-floor Gaussian variation ($\pm 5\%$) in `src/geometry.py` and `src/server.py`.
+
+---
+
+### Placed Quad Convexity Constraint
+* **Status**: `Solved`
+* **Resolution**: Added `is_convex_polygon()` in `src/geometry.py` and enforced strict quad convexity across custom module synthesis, candidate placement validation in `src/server.py`, and BPE polygon merging in `src/graph.py`.
+
+---
+
+### BPE Bonus Reward Clipping & Lookahead Search Cleanup
+* **Status**: `Solved`
+* **Resolution**: Clipped `bpe_bonus` to a maximum of $30.0$ points in `src/server.py`; removed unused `enableLookahead` rollout search settings from HTML, JS, and Python server contracts.
+

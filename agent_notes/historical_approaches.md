@@ -13,6 +13,9 @@ It explicitly records **what was achieved** by successful approaches and **which
   * **$6.54\times$ Episode Speedup ($226\,\text{ms}$/episode)** over `v0.6-c` baseline ($1.48\,\text{s}$).
   * **$14.07\times$ Step Speedup ($0.81\,\text{ms}$/step)** via C-accelerated SAT polygon overlap checking (`polygons_overlap_c` in `fast_geometry.c`).
   * Multi-floor building transaction validation ensuring vertical elevator/stair shaft alignment across $4–8$ stories (`FloorEnvironment`).
+  * Continuous Truncated Log-Normal site area distribution ($\mu=7.1302, \sigma=0.7075$) with 2-stage multi-floor building area sampling ($\pm 5\%$ per-floor variation).
+  * Strict quad convexity constraint enforcement across placement candidate generation, custom module synthesis, and BPE shape merging.
+  * BPE reuse bonus clipping ($30.0$ pts max) to prevent reward function exploitation.
   * Full real-time HTML5 Canvas visualizer and profiler suite.
 
 ### `v0.8.1` — Dynamic Parametric Shape Generator ($k=3,4$) *(`version/v0.8.1` Branch)*

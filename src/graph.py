@@ -1033,6 +1033,8 @@ def merge_polygons_at_edge(poly_a: list[dict], poly_b: list[dict], edge_a: tuple
     merged_poly = simplify_polygon(merged_poly)
     if len(merged_poly) < 3 or not G.is_simple_polygon(merged_poly):
         return None
+    if len(merged_poly) == 4 and not G.is_convex_polygon(merged_poly):
+        return None
     if G.polygon_signed_area(merged_poly) < 0.0:
         merged_poly.reverse()
 

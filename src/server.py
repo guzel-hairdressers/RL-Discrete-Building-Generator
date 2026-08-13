@@ -171,7 +171,8 @@ def _reused_bpe_module_summary(
         frequency for frequency in frequencies.values() if frequency >= 2
     )
     del episode  # Kept in the signature for checkpoint/API compatibility.
-    return reused_modules, float(BPE_REUSE_BONUS_PER_MODULE * reused_modules)
+    bpe_bonus = min(30.0, float(BPE_REUSE_BONUS_PER_MODULE * reused_modules))
+    return reused_modules, bpe_bonus
 
 
 def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, Any]:
@@ -1303,6 +1304,8 @@ class FloorEnvironment:
             return None
         if not G.polygon_inside_site(poly, self.site["outer"], self.site["holes"]):
             return None
+        if len(poly) == 4 and not G.is_convex_polygon(poly):
+            return None
         cells = G.rasterize_polygon(poly)
         if not cells or any(_cell_key(cell) not in self.site["cellSet"] for cell in cells):
             return None
@@ -1770,6 +1773,8 @@ class FloorEnvironment:
         inside_site = G.polygon_inside_site(poly, self.site["outer"], self.site["holes"])
         if cg_sub_totals is not None: cg_sub_totals["cgSiteBoundary"] += time.perf_counter() - t_bounds
         if not inside_site:
+            return None
+        if len(poly) == 4 and not G.is_convex_polygon(poly):
             return None
         t_bounds2 = time.perf_counter()
         # Rasterization is deferred until every vector predicate succeeds.
@@ -2994,9 +2999,16 @@ class ParallelTrainer:
         # The next attempt changes every floor seed together; individual floors
         # are never silently replaced or relaxed to rectangular boundaries.
         base_seed = int(settings["seed"]) + generation_id * 104729 + attempt * 1_000_003
-        for index in range(int(settings["parallelEnvironments"])):
+        master_rng = G.RNG(base_seed)
+        floor_count = int(settings["parallelEnvironments"])
+        tier = settings.get("siteAreaTier", "ANY")
+        floor_target_areas = G.sample_building_floor_areas(tier, floor_count, master_rng)
+
+        for index in range(floor_count):
             rng = G.RNG(base_seed + index * 8191)
-            boundary = G.make_boundary(settings["boundaryType"], rng.fork(11), settings)
+            floor_settings = dict(settings)
+            floor_settings["targetSiteArea"] = floor_target_areas[index]
+            boundary = G.make_boundary(settings["boundaryType"], rng.fork(11), floor_settings)
             candidates = G.atrium_candidates(boundary, rng.fork(23))
             atrium, atrium_log_prob = self._choose_atrium(settings, boundary, candidates)
             if atrium_log_prob is not None:
