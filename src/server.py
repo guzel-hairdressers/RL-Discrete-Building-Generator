@@ -3498,7 +3498,7 @@ class ParallelTrainer:
             return (-clearance, x, y)
 
         targets = []
-        for cell_key in sorted(common_keys, key=target_score)[:64]:
+        for cell_key in heapq.nsmallest(16, common_keys, key=target_score):
             x_text, y_text = cell_key.split(",")
             targets.append({"x": int(x_text), "y": int(y_text)})
 

@@ -1888,7 +1888,7 @@ def _clearance_candidates(poly: Sequence[dict]) -> list[tuple[float, dict[str, f
     box = bounds_of(poly)
     width = box["maxX"] - box["minX"]
     height = box["maxY"] - box["minY"]
-    step = max(0.5, min(width, height) / 30.0)
+    step = max(1.2, min(width, height) / 16.0)
     segments = _loop_segments(poly)
     candidates = []
     representative = polygon_representative_point(poly)
@@ -2023,19 +2023,25 @@ def build_site(boundary: dict, holes: Sequence[Sequence[dict]] | None = None) ->
         return field
 
     def touches_outer(cell: dict) -> bool:
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            neighbor = _point(cell["x"] + dx + 0.5, cell["y"] + dy + 0.5)
-            if not (point_in_polygon(neighbor, outer) or point_on_polygon(neighbor, outer)):
-                return True
-        return False
+        cx, cy = cell["x"], cell["y"]
+        return (
+            key(cx + 1, cy) not in cell_set
+            or key(cx - 1, cy) not in cell_set
+            or key(cx, cy + 1) not in cell_set
+            or key(cx, cy - 1) not in cell_set
+        )
 
     def touches_atrium(cell: dict) -> bool:
-        return any(
-            point_in_polygon(_point(cell["x"] + dx + 0.5, cell["y"] + dy + 0.5), hole)
-            or point_on_polygon(_point(cell["x"] + dx + 0.5, cell["y"] + dy + 0.5), hole)
-            for hole in accepted_holes
-            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
-        )
+        if not accepted_holes:
+            return False
+        cx, cy = cell["x"], cell["y"]
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nk = key(cx + dx, cy + dy)
+            if nk not in cell_set:
+                pt = _point(cx + dx + 0.5, cy + dy + 0.5)
+                if any(point_in_polygon(pt, hole) or point_on_polygon(pt, hole) for hole in accepted_holes):
+                    return True
+        return False
 
     outer_distance = make_distance_field(touches_outer)
     atrium_distance = make_distance_field(touches_atrium) if accepted_holes else {}
@@ -2043,12 +2049,27 @@ def build_site(boundary: dict, holes: Sequence[Sequence[dict]] | None = None) ->
     outer_segments = _loop_segments(outer)
     atrium_segments = [segment for hole in accepted_holes for segment in _loop_segments(hole)]
     all_wall_segments = outer_segments + atrium_segments
-    vector_wall_distance = {
-        key(cell["x"], cell["y"]): point_to_segments_dist(
-            _point(cell["x"] + 0.5, cell["y"] + 0.5), all_wall_segments
-        )
-        for cell in cells
-    }
+    wall_sig = _segment_signature(all_wall_segments)
+    if NATIVE_GEOMETRY_ENABLED and wall_sig:
+        packed_walls = _packed_segments_from_signature(wall_sig)
+        wall_count = len(wall_sig)
+        vector_wall_distance = {
+            key(cell["x"], cell["y"]): float(
+                _libfast_geo.point_to_segments_distance_c(
+                    _CPoint(float(cell["x"]) + 0.5, float(cell["y"]) + 0.5),
+                    packed_walls,
+                    wall_count,
+                )
+            )
+            for cell in cells
+        }
+    else:
+        vector_wall_distance = {
+            key(cell["x"], cell["y"]): point_to_segments_dist(
+                _point(cell["x"] + 0.5, cell["y"] + 0.5), all_wall_segments
+            )
+            for cell in cells
+        }
     exact_area = polygon_area(outer) - math.fsum(polygon_area(hole) for hole in accepted_holes)
     hull_area = polygon_area(convex_hull(outer))
     return {

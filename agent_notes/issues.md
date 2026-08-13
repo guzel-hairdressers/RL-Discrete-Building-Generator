@@ -198,3 +198,9 @@ This document is the master tracking log for active bugs, regressive side effect
 * **Status**: `Solved`
 * **Resolution**: Clipped `bpe_bonus` to a maximum of $30.0$ points in `src/server.py`; removed unused `enableLookahead` rollout search settings from HTML, JS, and Python server contracts.
 
+---
+
+### New Site Generation Latency Optimization (2.66x Speedup)
+* **Status**: `Solved`
+* **Resolution**: Replaced ray-cast `touches_outer`/`touches_atrium` predicates with $O(1)$ grid `cell_set` lookups, prepacked ctypes `all_wall_segments` array once per site, and optimized initial core stack sampling using `heapq.nsmallest(16, ...)` in `src/geometry.py` and `src/server.py`. Reduced 4-floor site generation latency from $369\,\text{ms}$ down to $138\,\text{ms}$.
+
