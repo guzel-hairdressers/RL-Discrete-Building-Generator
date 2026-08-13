@@ -158,7 +158,8 @@ def _reused_bpe_module_summary(
         frequency for frequency in frequencies.values() if frequency >= 2
     )
     del episode  # Kept in the signature for checkpoint/API compatibility.
-    return reused_modules, float(BPE_REUSE_BONUS_PER_MODULE * reused_modules)
+    bpe_bonus = min(30.0, float(BPE_REUSE_BONUS_PER_MODULE * reused_modules))
+    return reused_modules, bpe_bonus
 
 
 def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, Any]:
@@ -567,6 +568,29 @@ class PlacementCandidate:
     shared_overlap: float
     outer_exposure: float
     features: list[float]
+
+
+class CoreStackCandidate:
+    """One exact module/rotation/local-anchor action valid on every floor."""
+
+    module: dict
+    rotation: dict
+    anchor_x: float
+    anchor_y: float
+    floor_candidates: list[PlacementCandidate]
+
+    @property
+    def signature(self) -> tuple[str, float, float, float]:
+        return (
+            str(self.module["id"]),
+            round(float(self.rotation.get("angle", 0.0)), 6),
+            round(float(self.anchor_x), 6),
+            round(float(self.anchor_y), 6),
+        )
+
+    @property
+    def features(self) -> list[float]:
+        return _mean_feature_rows(candidate.features for candidate in self.floor_candidates)
 
 
 @dataclass(**_DATACLASS_SLOTS)
@@ -1247,6 +1271,8 @@ class FloorEnvironment:
             return None
         if not G.polygon_inside_site(poly, self.site["outer"], self.site["holes"]):
             return None
+        if len(poly) == 4 and not G.is_convex_polygon(poly):
+            return None
         cells = G.rasterize_polygon(poly)
         if not cells or any(_cell_key(cell) not in self.site["cellSet"] for cell in cells):
             return None
@@ -1702,6 +1728,8 @@ class FloorEnvironment:
         inside_site = G.polygon_inside_site(poly, self.site["outer"], self.site["holes"])
         if cg_sub_totals is not None: cg_sub_totals["cgSiteBoundary"] += time.perf_counter() - t_bounds
         if not inside_site:
+            return None
+        if len(poly) == 4 and not G.is_convex_polygon(poly):
             return None
         t_bounds2 = time.perf_counter()
         # Rasterization is deferred until every vector predicate succeeds.
@@ -2802,13 +2830,24 @@ class ParallelTrainer:
         self,
         settings: dict[str, Any],
         generation_id: int,
+        attempt: int = 0,
     ) -> tuple[list[FloorEnvironment], list[torch.Tensor]]:
         records: list[tuple[dict, dict, dict, G.RNG]] = []
         atrium_log_probs: list[torch.Tensor] = []
-        base_seed = int(settings["seed"]) + generation_id * 104729
-        for index in range(int(settings["parallelEnvironments"])):
+        # A failed common-core preflight rejects this entire group of floors.
+        # The next attempt changes every floor seed together; individual floors
+        # are never silently replaced or relaxed to rectangular boundaries.
+        base_seed = int(settings["seed"]) + generation_id * 104729 + attempt * 1_000_003
+        master_rng = G.RNG(base_seed)
+        floor_count = int(settings["parallelEnvironments"])
+        tier = settings.get("siteAreaTier", "ANY")
+        floor_target_areas = G.sample_building_floor_areas(tier, floor_count, master_rng)
+
+        for index in range(floor_count):
             rng = G.RNG(base_seed + index * 8191)
-            boundary = G.make_boundary(settings["boundaryType"], rng.fork(11), settings)
+            floor_settings = dict(settings)
+            floor_settings["targetSiteArea"] = floor_target_areas[index]
+            boundary = G.make_boundary(settings["boundaryType"], rng.fork(11), floor_settings)
             candidates = G.atrium_candidates(boundary, rng.fork(23))
             atrium, atrium_log_prob = self._choose_atrium(settings, boundary, candidates)
             if atrium_log_prob is not None:
@@ -3193,6 +3232,408 @@ class ParallelTrainer:
                 )
             )
         return modules
+
+    @staticmethod
+    def _core_transform_signature(
+        module: dict,
+        rotation: dict,
+        anchor_x: float,
+        anchor_y: float,
+    ) -> tuple[str, float, float, float]:
+        return (
+            str(module["id"]),
+            round(float(rotation.get("angle", 0.0)), 6),
+            round(float(anchor_x), 6),
+            round(float(anchor_y), 6),
+        )
+
+    def _core_stack_at_transform(
+        self,
+        environments: Sequence[FloorEnvironment],
+        module: dict,
+        rotation: dict,
+        anchor_x: float,
+        anchor_y: float,
+        settings: dict[str, Any],
+        orientation_basis: float,
+    ) -> CoreStackCandidate | None:
+        """Prevalidate one exact local transform on every floor."""
+
+        floor_candidates: list[PlacementCandidate] = []
+        for environment in environments:
+            if environment.done or len(environment.placements) >= int(settings["maxModules"]):
+                return None
+            room_core_costs = (
+                environment._room_crossing_costs_to_core()
+                if environment.core_ids
+                else {}
+            )
+            candidate = environment._candidate_from_anchor(
+                module,
+                rotation,
+                anchor_x,
+                anchor_y,
+                settings,
+                orientation_basis,
+                room_core_costs,
+                placement_category="core",
+            )
+            if candidate is None or not environment._materialize_candidate(
+                candidate, settings, orientation_basis
+            ):
+                return None
+            if len(candidate.features) == PLACEMENT_FEATURE_DIM - 2:
+                candidate.features.extend((0.0, 0.0))
+            if len(candidate.features) != PLACEMENT_FEATURE_DIM:
+                raise CoreStackingError("invalid feature width in shared core candidate")
+            floor_candidates.append(candidate)
+        if len(floor_candidates) != len(environments):
+            return None
+        return CoreStackCandidate(
+            module=module,
+            rotation=rotation,
+            anchor_x=float(anchor_x),
+            anchor_y=float(anchor_y),
+            floor_candidates=floor_candidates,
+        )
+
+    def _initial_core_proposals(
+        self,
+        environments: Sequence[FloorEnvironment],
+        dictionary: Sequence[dict],
+    ) -> list[tuple[dict, dict, float, float]]:
+        """Propose transforms from cells shared by all original floor sites."""
+
+        if not environments:
+            return []
+        common_keys = set(environments[0].site["cellSet"])
+        for environment in environments[1:]:
+            common_keys.intersection_update(environment.site["cellSet"])
+        if not common_keys:
+            return []
+
+        def target_score(cell_key: str) -> tuple[float, int, int]:
+            x_text, y_text = cell_key.split(",")
+            x, y = int(x_text), int(y_text)
+            clearance = min(
+                float(environment.site.get("distance", {}).get(cell_key, 0.0))
+                for environment in environments
+            )
+            return (-clearance, x, y)
+
+        targets = []
+        for cell_key in heapq.nsmallest(16, common_keys, key=target_score):
+            x_text, y_text = cell_key.split(",")
+            targets.append({"x": int(x_text), "y": int(y_text)})
+
+        proposals: list[tuple[dict, dict, float, float]] = []
+        seen: set[tuple[str, float, float, float]] = set()
+        for target in targets:
+            for module in dictionary:
+                for rotation in module.get("rotations", ()):
+                    for cell in rotation.get("cells", ())[:4]:
+                        anchor_x = float(target["x"] - cell["x"])
+                        anchor_y = float(target["y"] - cell["y"])
+                        signature = self._core_transform_signature(
+                            module, rotation, anchor_x, anchor_y
+                        )
+                        if signature in seen:
+                            continue
+                        seen.add(signature)
+                        proposals.append((module, rotation, anchor_x, anchor_y))
+                        if len(proposals) >= CORE_STACK_PROPOSAL_LIMIT:
+                            return proposals
+        return proposals
+
+    def _shared_core_stack_candidates(
+        self,
+        orientation_basis: float,
+        *,
+        environments: Sequence[FloorEnvironment] | None = None,
+        dictionary: Sequence[dict] | None = None,
+        settings: dict[str, Any] | None = None,
+    ) -> list[CoreStackCandidate]:
+        """Return exact shared transforms; a core is never a floor-local action."""
+
+        active_settings = settings or self.settings
+        floors = list(self.environments if environments is None else environments)
+        modules = list(self.dictionary if dictionary is None else dictionary)
+        if bool(active_settings["singleFloor"]) or len(floors) <= 1 or not modules:
+            return []
+        if any(
+            environment.done
+            or len(environment.placements) >= int(active_settings["maxModules"])
+            for environment in floors
+        ):
+            return []
+
+        placing_first = all(not environment.placements for environment in floors)
+        if not placing_first:
+            # A second core is also a building-level action. Offer it only
+            # after every floor has developed six rooms, matching the quality
+            # gate used by the independent-floor policy without allowing one
+            # advanced floor to force an early stack onto all peers.
+            core_counts = [
+                sum(
+                    1
+                    for placement in environment.placements
+                    if placement.get("category") == "core"
+                )
+                for environment in floors
+            ]
+            room_counts = [
+                sum(
+                    1
+                    for placement in environment.placements
+                    if placement.get("category") == "room"
+                )
+                for environment in floors
+            ]
+            if any(count == 0 or count >= 2 for count in core_counts):
+                return []
+            if any(count < SECOND_CORE_MIN_ROOMS for count in room_counts):
+                return []
+        proposal_by_signature: dict[
+            tuple[str, float, float, float], tuple[dict, dict, float, float]
+        ] = {}
+        if placing_first:
+            proposals = self._initial_core_proposals(floors, modules)
+            for module, rotation, anchor_x, anchor_y in proposals:
+                signature = self._core_transform_signature(
+                    module, rotation, anchor_x, anchor_y
+                )
+                proposal_by_signature[signature] = (
+                    module,
+                    rotation,
+                    anchor_x,
+                    anchor_y,
+                )
+        else:
+            # Existing layouts use their bounded exposed-edge frontiers as the
+            # proposal source. Every proposal is still rechecked on every floor.
+            for module in modules:
+                for environment in floors:
+                    for candidate in environment.generate_candidates_for_module(
+                        module,
+                        active_settings,
+                        orientation_basis,
+                        category_filter=("core",),
+                    ):
+                        if candidate.module.get("category") != "core":
+                            continue
+                        signature = self._core_transform_signature(
+                            module,
+                            candidate.rotation,
+                            candidate.anchor_x,
+                            candidate.anchor_y,
+                        )
+                        proposal_by_signature.setdefault(
+                            signature,
+                            (
+                                module,
+                                candidate.rotation,
+                                candidate.anchor_x,
+                                candidate.anchor_y,
+                            ),
+                        )
+                        if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
+                            break
+                    if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
+                        break
+                if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
+                    break
+
+        shared: list[CoreStackCandidate] = []
+        for signature in sorted(proposal_by_signature):
+            module, rotation, anchor_x, anchor_y = proposal_by_signature[signature]
+            candidate = self._core_stack_at_transform(
+                floors,
+                module,
+                rotation,
+                anchor_x,
+                anchor_y,
+                active_settings,
+                orientation_basis,
+            )
+            if candidate is not None:
+                shared.append(candidate)
+                if len(shared) >= CORE_STACK_CANDIDATE_LIMIT:
+                    break
+        return shared
+
+    def _commit_core_stack(
+        self,
+        candidate: CoreStackCandidate,
+        log_prob: torch.Tensor,
+        orientation_basis: float,
+        *,
+        decision_features: Sequence[Sequence[float]] | None = None,
+        decision_action_index: int = 0,
+        decision_temperature: float = 1.0,
+    ) -> list[dict]:
+        """Revalidate and atomically commit one building-level core action."""
+
+        revalidated = self._core_stack_at_transform(
+            self.environments,
+            candidate.module,
+            candidate.rotation,
+            candidate.anchor_x,
+            candidate.anchor_y,
+            self.settings,
+            orientation_basis,
+        )
+        if revalidated is None:
+            raise CoreStackingError("selected core stack became invalid before commit")
+
+        stack_id = (
+            f"g{self.generation_id}:e{self.episode}:"
+            f"core{len(self.core_stack_records)}"
+        )
+        checkpoints = [
+            environment._stack_commit_checkpoint()
+            for environment in self.environments
+        ]
+        placements: list[dict] = []
+        try:
+            for environment, floor_candidate in zip(
+                self.environments, revalidated.floor_candidates
+            ):
+                placements.append(
+                    environment.place(
+                        floor_candidate,
+                        core_stack_id=stack_id,
+                        core_stack_trigger_floor=None,
+                    )
+                )
+        except Exception as error:
+            for environment, checkpoint in zip(self.environments, checkpoints):
+                environment._restore_stack_commit_checkpoint(checkpoint)
+            raise CoreStackingError(
+                f"core stack {stack_id} rolled back after commit failure"
+            ) from error
+
+        # One building action contributes exactly one detached/recomputed
+        # policy decision, independent of floor count.
+        if decision_features is None:
+            self._record_placement_log_prob(
+                BUILDING_TRAJECTORY_INDEX, log_prob.detach().cpu()
+            )
+        else:
+            self._record_placement_decision(
+                BUILDING_TRAJECTORY_INDEX,
+                decision_features,
+                decision_action_index,
+                decision_temperature,
+                log_prob,
+            )
+        self.core_stack_records.append(
+            {
+                "id": stack_id,
+                "moduleId": str(candidate.module["id"]),
+                "rotation": float(candidate.rotation.get("angle", 0.0)),
+                "localAnchor": {
+                    "x": float(candidate.anchor_x),
+                    "y": float(candidate.anchor_y),
+                },
+                "floorCount": len(self.environments),
+                "floorIndices": [environment.index for environment in self.environments],
+                "placementIds": [placement["id"] for placement in placements],
+                "locked": True,
+                "decisionScope": "building",
+                "logProbTerms": 1,
+            }
+        )
+        self._prepared_initial_core_stacks = []
+        return placements
+
+    @staticmethod
+    def _local_poly_signature(poly: Sequence[dict]) -> tuple[tuple[float, float], ...]:
+        return tuple(
+            (round(float(point["x"]), 6), round(float(point["y"]), 6))
+            for point in poly
+        )
+
+    def _core_stacking_event(self) -> dict[str, Any]:
+        """Build protocol metadata and independently audit every locked core."""
+
+        enabled = not bool(self.settings["singleFloor"]) and len(self.environments) > 1
+        if not enabled:
+            disabled_status = (
+                "disabled-single-floor"
+                if bool(self.settings["singleFloor"])
+                else "disabled-single-environment"
+            )
+            return {
+                "enabled": False,
+                "status": disabled_status,
+                "mode": "disabled",
+                "boundaryPolicy": "unchanged",
+                "floorCount": len(self.environments),
+                "siteResampleAttempts": 0,
+                "initialCandidateCount": 0,
+                "stackCount": 0,
+                "lockedCoreCount": 0,
+                "exactLocalAlignment": True,
+                "violations": [],
+                "stacks": [],
+            }
+
+        violations: list[str] = []
+        locked_core_count = 0
+        for environment in self.environments:
+            for placement in environment.placements:
+                if placement.get("category") != "core":
+                    continue
+                if not placement.get("coreStackLocked"):
+                    violations.append(f"floor{environment.index}:unlockedCore:{placement['id']}")
+                else:
+                    locked_core_count += 1
+
+        audited_stacks: list[dict[str, Any]] = []
+        for record in self.core_stack_records:
+            floor_placements: list[dict] = []
+            for environment in self.environments:
+                matches = [
+                    placement
+                    for placement in environment.placements
+                    if placement.get("coreStackId") == record["id"]
+                ]
+                if len(matches) != 1:
+                    violations.append(
+                        f"{record['id']}:floor{environment.index}:count={len(matches)}"
+                    )
+                    continue
+                floor_placements.append(matches[0])
+            if floor_placements:
+                reference = floor_placements[0]
+                reference_poly = self._local_poly_signature(reference["poly"])
+                for placement in floor_placements[1:]:
+                    if placement.get("moduleId") != reference.get("moduleId"):
+                        violations.append(f"{record['id']}:moduleMismatch")
+                    if not math.isclose(
+                        float(placement.get("rotation", 0.0)),
+                        float(reference.get("rotation", 0.0)),
+                        abs_tol=1.0e-6,
+                    ):
+                        violations.append(f"{record['id']}:rotationMismatch")
+                    if placement.get("localAnchor") != reference.get("localAnchor"):
+                        violations.append(f"{record['id']}:anchorMismatch")
+                    if self._local_poly_signature(placement["poly"]) != reference_poly:
+                        violations.append(f"{record['id']}:localPolygonMismatch")
+            audited_stacks.append(dict(record))
+
+        event = {
+            **self.core_stacking_metadata,
+            "enabled": True,
+            "status": "locked" if self.core_stack_records else "ready",
+            "floorCount": len(self.environments),
+            "stackCount": len(self.core_stack_records),
+            "lockedCoreCount": locked_core_count,
+            "exactLocalAlignment": not violations,
+            "violations": violations,
+            "stacks": audited_stacks,
+        }
+        return event
 
     def _prepare_generation(
         self,

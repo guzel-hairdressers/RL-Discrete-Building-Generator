@@ -900,6 +900,31 @@ def is_simple_polygon(poly: Sequence[dict]) -> bool:
     return True
 
 
+def is_convex_polygon(poly: Sequence[dict]) -> bool:
+    """Return True if the polygon is strictly convex with consistent cross product signs."""
+
+    n = len(poly)
+    if n < 3:
+        return False
+
+    signs = []
+    for index in range(n):
+        p0 = poly[index]
+        p1 = poly[(index + 1) % n]
+        p2 = poly[(index + 2) % n]
+        dx1 = float(p1["x"]) - float(p0["x"])
+        dy1 = float(p1["y"]) - float(p0["y"])
+        dx2 = float(p2["x"]) - float(p1["x"])
+        dy2 = float(p2["y"]) - float(p1["y"])
+        cp = dx1 * dy2 - dy1 * dx2
+        if abs(cp) <= EPSILON:
+            return False
+        signs.append(cp > 0.0)
+
+    first_sign = signs[0]
+    return all(s == first_sign for s in signs)
+
+
 def convex_hull(points: Sequence[dict]) -> list[dict[str, float]]:
     """Return the counter-clockwise convex hull without duplicate collinear points."""
 
@@ -1512,6 +1537,146 @@ def _scale_polygon_to_box(poly: Sequence[dict], width: float, height: float) -> 
     ]
 
 
+SITE_AREA_TIER_RANGES: dict[str, tuple[float, float]] = {
+    "XS": (150.0, 600.0),
+    "S": (600.0, 1200.0),
+    "M": (1200.0, 2500.0),
+    "L": (2500.0, 4000.0),
+    "XL": (4000.0, 10000.0),
+}
+
+# Smooth log-normal site area parameters: mu = 7.1302, sigma = 0.7075
+# Yields continuous PDF across [150, 10000] m²:
+# XS (150–600 m²): ~15%, S (600–1200 m²): ~33%, M (1200–2500 m²): ~36%, L (2500–4000 m²): ~11%, XL (4000–10000 m²): ~5%
+LOGNORMAL_AREA_MU = 7.1302
+LOGNORMAL_AREA_SIGMA = 0.7075
+
+
+def _norm_cdf(x: float) -> float:
+    return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
+
+
+def _norm_ppf(p: float) -> float:
+    """Peter J. Acklam's inverse normal CDF approximation."""
+    if p <= 0.0:
+        return -8.0
+    if p >= 1.0:
+        return 8.0
+    a = [
+        -3.969683028665376e01,
+        2.209460984245205e02,
+        -2.759285104469687e02,
+        1.383577518672690e02,
+        -3.066479806614716e01,
+        2.506628277459239e00,
+    ]
+    b = [
+        -5.447609879822406e01,
+        1.615858368580409e02,
+        -1.556989798598866e02,
+        6.680131188771972e01,
+        -1.328068155288572e01,
+    ]
+    c = [
+        -7.784894002430293e-03,
+        -3.223964580411365e-01,
+        -2.400758277161838e00,
+        -2.549732539343734e00,
+        4.374664141464968e00,
+        2.938163982698783e00,
+    ]
+    d = [
+        7.784695709041462e-03,
+        3.224671290700398e-01,
+        2.445134137142996e00,
+        3.754408661907416e00,
+    ]
+    p_low = 0.02425
+    p_high = 1.0 - p_low
+    if p < p_low:
+        q = math.sqrt(-2.0 * math.log(p))
+        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
+            (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
+        )
+    if p <= p_high:
+        q = p - 0.5
+        r = q * q
+        return (
+            ((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]
+        ) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0)
+    q = math.sqrt(-2.0 * math.log(1.0 - p))
+    return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
+        (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
+    )
+
+
+def _sample_truncated_lognormal(
+    min_area: float, max_area: float, roll: float
+) -> float:
+    y_min = math.log(max(1.0, min_area))
+    y_max = math.log(max(y_min + 1.0, max_area))
+    u_min = _norm_cdf((y_min - LOGNORMAL_AREA_MU) / LOGNORMAL_AREA_SIGMA)
+    u_max = _norm_cdf((y_max - LOGNORMAL_AREA_MU) / LOGNORMAL_AREA_SIGMA)
+    u = u_min + roll * (u_max - u_min)
+    z = _norm_ppf(clamp(u, 1.0e-7, 1.0 - 1.0e-7))
+    y = LOGNORMAL_AREA_MU + LOGNORMAL_AREA_SIGMA * z
+    return math.exp(y)
+
+
+def sample_building_floor_areas(
+    tier: str = "ANY", count: int = 1, rng: RNG | None = None
+) -> list[float]:
+    """Sample building base area from continuous lognormal PDF, then sample floor areas from Gaussian(mean, 5% std)."""
+
+    tier = str(tier or "ANY").upper()
+    if tier == "ANY" or tier not in SITE_AREA_TIER_RANGES:
+        min_a, max_a = 150.0, 10000.0
+    else:
+        min_a, max_a = SITE_AREA_TIER_RANGES[tier]
+
+    roll = rng.uniform(0.0, 1.0) if rng is not None else 0.5
+    base_area = _sample_truncated_lognormal(min_a, max_a, roll)
+
+    floor_areas = []
+    for _ in range(max(1, count)):
+        if rng is not None:
+            u1 = max(1.0e-7, rng.uniform(0.0, 1.0))
+            u2 = rng.uniform(0.0, 1.0)
+            z0 = math.sqrt(-2.0 * math.log(u1)) * math.cos(2.0 * math.pi * u2)
+            floor_a = base_area + z0 * (0.05 * base_area)
+        else:
+            floor_a = base_area
+        floor_areas.append(clamp(floor_a, min_a * 0.8, max_a * 1.2))
+    return floor_areas
+
+
+def _apply_site_area_scaling(
+    outer: list[dict], options: dict, rng: RNG | None = None
+) -> list[dict]:
+    tier = str(options.get("siteAreaTier", "ANY")).upper()
+    target_area = options.get("targetSiteArea")
+    if target_area is None:
+        if "boundaryWidth" in options and "boundaryHeight" in options:
+            target_area = float(options["boundaryWidth"]) * float(options["boundaryHeight"])
+        else:
+            if tier == "ANY" or tier not in SITE_AREA_TIER_RANGES:
+                min_a, max_a = 150.0, 10000.0
+            else:
+                min_a, max_a = SITE_AREA_TIER_RANGES[tier]
+            roll = rng.uniform(0.0, 1.0) if rng is not None else 0.5
+            target_area = _sample_truncated_lognormal(min_a, max_a, roll)
+
+    if target_area is not None and float(target_area) > 0:
+        target = float(target_area)
+        current_area = polygon_area(outer)
+        if current_area > EPSILON:
+            scale = math.sqrt(target / current_area)
+            centroid = polygon_centroid(outer)
+            cx, cy = float(centroid["x"]), float(centroid["y"])
+            return [_point(cx + (float(p["x"]) - cx) * scale, cy + (float(p["y"]) - cy) * scale) for p in outer]
+    return outer
+
+
 def make_boundary(
     boundary_type: str = "free",
     seed: RNG | int | float = 0,
@@ -1543,6 +1708,7 @@ def make_boundary(
     # positions remain seed-parameterized rather than fixed coordinate constants.
     if family in ("rect", "rectangle"):
         outer = [_point(0, 0), _point(width, 0), _point(width, height), _point(0, height)]
+        outer = _apply_site_area_scaling(outer, options, rng)
         return {
             "outer": outer,
             "seed": seed_label,
@@ -1561,6 +1727,7 @@ def make_boundary(
             _point(width - notch_width, height),
             _point(0, height),
         ]
+        outer = _apply_site_area_scaling(outer, options, rng)
         return {
             "outer": outer,
             "seed": seed_label,
@@ -1588,6 +1755,7 @@ def make_boundary(
             _point(left_arm, height),
             _point(0, height),
         ]
+        outer = _apply_site_area_scaling(outer, options, rng)
         return {
             "outer": outer,
             "seed": seed_label,
@@ -1616,6 +1784,7 @@ def make_boundary(
             _point(stem_x, bar_height),
             _point(0, bar_height),
         ]
+        outer = _apply_site_area_scaling(outer, options, rng)
         return {
             "outer": outer,
             "seed": seed_label,
@@ -1684,6 +1853,7 @@ def make_boundary(
         # Ordered positive polar radii should always be simple.  A deterministic
         # convex hull is a safe numerical fallback, not a static shape template.
         outer = _scale_polygon_to_box(convex_hull(points), width, height)
+    outer = _apply_site_area_scaling(outer, options, rng)
     return {
         "outer": outer,
         "seed": seed_label,
@@ -1718,7 +1888,7 @@ def _clearance_candidates(poly: Sequence[dict]) -> list[tuple[float, dict[str, f
     box = bounds_of(poly)
     width = box["maxX"] - box["minX"]
     height = box["maxY"] - box["minY"]
-    step = max(0.5, min(width, height) / 30.0)
+    step = max(1.2, min(width, height) / 16.0)
     segments = _loop_segments(poly)
     candidates = []
     representative = polygon_representative_point(poly)
@@ -1853,19 +2023,25 @@ def build_site(boundary: dict, holes: Sequence[Sequence[dict]] | None = None) ->
         return field
 
     def touches_outer(cell: dict) -> bool:
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            neighbor = _point(cell["x"] + dx + 0.5, cell["y"] + dy + 0.5)
-            if not (point_in_polygon(neighbor, outer) or point_on_polygon(neighbor, outer)):
-                return True
-        return False
+        cx, cy = cell["x"], cell["y"]
+        return (
+            key(cx + 1, cy) not in cell_set
+            or key(cx - 1, cy) not in cell_set
+            or key(cx, cy + 1) not in cell_set
+            or key(cx, cy - 1) not in cell_set
+        )
 
     def touches_atrium(cell: dict) -> bool:
-        return any(
-            point_in_polygon(_point(cell["x"] + dx + 0.5, cell["y"] + dy + 0.5), hole)
-            or point_on_polygon(_point(cell["x"] + dx + 0.5, cell["y"] + dy + 0.5), hole)
-            for hole in accepted_holes
-            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
-        )
+        if not accepted_holes:
+            return False
+        cx, cy = cell["x"], cell["y"]
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nk = key(cx + dx, cy + dy)
+            if nk not in cell_set:
+                pt = _point(cx + dx + 0.5, cy + dy + 0.5)
+                if any(point_in_polygon(pt, hole) or point_on_polygon(pt, hole) for hole in accepted_holes):
+                    return True
+        return False
 
     outer_distance = make_distance_field(touches_outer)
     atrium_distance = make_distance_field(touches_atrium) if accepted_holes else {}
@@ -1873,12 +2049,27 @@ def build_site(boundary: dict, holes: Sequence[Sequence[dict]] | None = None) ->
     outer_segments = _loop_segments(outer)
     atrium_segments = [segment for hole in accepted_holes for segment in _loop_segments(hole)]
     all_wall_segments = outer_segments + atrium_segments
-    vector_wall_distance = {
-        key(cell["x"], cell["y"]): point_to_segments_dist(
-            _point(cell["x"] + 0.5, cell["y"] + 0.5), all_wall_segments
-        )
-        for cell in cells
-    }
+    wall_sig = _segment_signature(all_wall_segments)
+    if NATIVE_GEOMETRY_ENABLED and wall_sig:
+        packed_walls = _packed_segments_from_signature(wall_sig)
+        wall_count = len(wall_sig)
+        vector_wall_distance = {
+            key(cell["x"], cell["y"]): float(
+                _libfast_geo.point_to_segments_distance_c(
+                    _CPoint(float(cell["x"]) + 0.5, float(cell["y"]) + 0.5),
+                    packed_walls,
+                    wall_count,
+                )
+            )
+            for cell in cells
+        }
+    else:
+        vector_wall_distance = {
+            key(cell["x"], cell["y"]): point_to_segments_dist(
+                _point(cell["x"] + 0.5, cell["y"] + 0.5), all_wall_segments
+            )
+            for cell in cells
+        }
     exact_area = polygon_area(outer) - math.fsum(polygon_area(hole) for hole in accepted_holes)
     hull_area = polygon_area(convex_hull(outer))
     return {
@@ -2749,6 +2940,8 @@ def synthesize_custom_module(
     poly = synthesize_custom_polygon(k, edge_lengths, internal_angles)
     if not is_simple_polygon(poly) or polygon_area(poly) < 0.1:
         raise ValueError("Generated polygon is self-intersecting or degenerate")
+    if k == 4 and not is_convex_polygon(poly):
+        raise ValueError("Generated 4-gon (quad) is non-convex; placed quads must be convex")
 
     min_edge = float(settings.get("minEdge", 1.0))
     max_edge = float(settings.get("maxEdge", 9.0))

@@ -62,7 +62,17 @@ This document defines the master development plan for the **RL-Discrete-Building
   2. **Real Site Boundary Sampler**: Add real-world OSM site polygon sampler to `FloorEnvironment` in `src/server.py`.
   3. **Site Area Classification Filtering**: Filter real-world training sites by Area Tier (`XS`, `S`, `M`, `L`, `XL`).
   4. **Daylight & Shading Context Feature Signals**: Pass surrounding context building heights and shading angles into policy observation vectors.
-* **Target Metric**: Policy achieves $> 80.0\,\text{pts}$ mean score when generating multi-floor layouts on real-world OSM site boundaries.
+---
+
+### Phase 1C: BPE Vocabulary Regularization, Area Balance & Primitive Purging [IMMEDIATE ROADMAP]
+* **Target Objective**: *BPE Anti-Sprawl Penalty, Area-Balanced Proposals & Uniform Utilization*
+* **Status**: `[PLANNED / IMMEDIATE ROADMAP]` (Priority: High)
+* **Core Tasks**:
+  1. **Anti-Sprawl Penalty**: Limit subshapes per merged module ($N_{\text{subshapes}} \le 4$) and reject sprawling merges (compactness $< 0.35$ or aspect ratio $> 3.5$).
+  2. **Primitive Purging & Vocab Penalty**: Purge fully-consumed primitive shapes (e.g. `s3`) from the final dictionary; penalize active vocabulary size breaches.
+  3. **Module Area & Subshape Variance Penalty**: Reward uniform composite room areas ($15 – 35 \text{ m}^2$) and penalize high Coefficient of Variation ($\text{CV}$) across dictionary module sizes.
+  4. **Uniform Module Utilization Reward**: Evaluate Shannon Entropy $H(f)$ over module placement frequencies to encourage equal utilization of active dictionary modules.
+* **Target Metric**: Maximize BPE vocabulary compactness while maintaining $> 85.0\,\text{pts}$ layout score.
 
 ---
 

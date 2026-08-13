@@ -30,6 +30,7 @@ window.onerror = function(message, source, lineno, colno, error) {
 
   const SETTING_KEYS = Object.freeze([
     'boundaryType',
+    'siteAreaTier',
     'atriumPolicy',
     'singleFloor',
     'publicMode',

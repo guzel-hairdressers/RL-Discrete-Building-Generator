@@ -144,9 +144,36 @@ Symmetry must respect the rules of **2D rigid rotations** (only rotating in the 
 
 ---
 
-## 6. Directions for Future Agents
+---
 
-To solve current BPE merge misses, future models should investigate:
-1. **Symmetrical Angle Canonicalization**: Ensure that supplementary relative angles (like $60^\circ$ and $300^\circ$) map to a single representation in the BPE loop.
-2. **Global Graph Beam Search / Rollouts**: Run multiple rollout passes over the graph to find global minimums for unmerged shapes, escaping greedy local bottlenecks.
-3. **Deep (Triplet) Merging**: Support direct 3-shape merges (triplets) in a single BPE step to unify complex rooms or circulation clusters simultaneously.
+## 7. BPE Vocabulary Regularization & Area-Balanced Module Proposals
+
+To ensure BPE merges construct realistic, modular architectural layouts rather than stringy or fragmented assemblies, future merge passes and score evaluations must enforce the following four core regularization constraints:
+
+### I. Anti-Sprawl / Anti-Long Merge Penalty
+* **Problem**: Unconstrained BPE can greedily string together long chains of 6–10 subshapes, producing sprawling, snake-like or ribbon-like modules that violate compact room geometry.
+* **Proposed Rules**:
+  1. **Subshape Count Cap**: Hard-cap maximum constituent primitive shapes per composite module to $N_{\text{subshapes}} \le 4$.
+  2. **Aspect Ratio & Compactness Guard**: Evaluate Polsby-Popper compactness $4\pi A / P^2$ and bounding box aspect ratio for candidate merged polygons. If compactness $< 0.35$ or aspect ratio $> 3.5$, reject or penalize the candidate merge.
+
+### II. Primitive Purging & Final Vocabulary Size Penalty
+* **Problem**: Primitive shapes (e.g. small triangles `s3`) inflate the active dictionary if left behind after layout generation.
+* **Proposed Rules**:
+  1. **Purging Fully-Consumed Primitives**: If a primitive shape type is 100% merged into higher-level composite modules across all floors, purge the raw primitive type from the active building dictionary.
+  2. **Active Vocabulary Size Penalty**: Apply a penalty if the final post-merge dictionary exceeds the target vocabulary limit:
+     $$\text{Penalty}_{\text{vocab}} = \alpha \times \max(0, |\text{Active Building Vocabulary}| - \text{Dict Cap})$$
+
+### III. Area & Subshape Count Balance
+* **Problem**: A dictionary containing wildly different module sizes (e.g. one $5\text{ m}^2$ triangle and one $80\text{ m}^2$ monster module) reduces layout modularity.
+* **Proposed Rules**:
+  1. **Target Area & Subshape Bounds**: Composite room modules should target roughly uniform areas ($15 – 35 \text{ m}^2$) and constituent subshape counts ($2 – 4$ subshapes).
+  2. **Variance Penalty**: Penalize high Coefficient of Variation ($\text{CV} = \sigma / \mu$) in module areas and subshape counts across the dictionary:
+     $$\text{Penalty}_{\text{variance}} = \beta \cdot \text{CV}(\text{Area}_{\text{modules}}) + \gamma \cdot \text{CV}(N_{\text{subshapes}})$$
+
+### IV. Uniform Module Utilization Frequency
+* **Problem**: Disproportional usage where 1 module is used 50 times while 10 other modules are used only once fails to create standardized prefabrication benefits.
+* **Proposed Rules**:
+  1. **Entropy of Module Utilization**: Evaluate Normalized Shannon Entropy over module placement frequencies $f_i$:
+     $$H(f) = -\sum_{i=1}^M p_i \ln p_i \quad \text{where } p_i = \frac{f_i}{\sum f_j}$$
+  2. **Utilization Balance Reward**: Reward higher entropy $H(f)$ (uniform utilization of dictionary modules) and penalize skewed, single-use modules.
+
