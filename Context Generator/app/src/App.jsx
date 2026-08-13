@@ -8,6 +8,42 @@ import { BottomBar } from './components/BottomBar';
 import { CustomSiteModal } from './components/CustomSiteModal';
 import './App.css';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('App ErrorBoundary caught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: '#0f172a', fontFamily: 'sans-serif' }}>
+          <h2>Application Error</h2>
+          <p>{this.state.error?.toString()}</p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false });
+              window.location.reload();
+            }}
+            style={{ padding: '8px 16px', marginTop: '10px', cursor: 'pointer' }}
+          >
+            Reload App
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function App() {
   const setDataset = useStore((s) => s.setDataset);
 
@@ -23,14 +59,16 @@ export function App() {
   }, [setDataset]);
 
   return (
-    <div className="app-root">
-      <SceneViewer />
-      <SiteInfoCard />
-      <FilterBar />
-      <CarouselNav />
-      <BottomBar />
-      <CustomSiteModal />
-    </div>
+    <ErrorBoundary>
+      <div className="app-root">
+        <SceneViewer />
+        <SiteInfoCard />
+        <FilterBar />
+        <CarouselNav />
+        <BottomBar />
+        <CustomSiteModal />
+      </div>
+    </ErrorBoundary>
   );
 }
 

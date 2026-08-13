@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { useStore } from '../store/useStore';
 
 export const SceneViewer = () => {
@@ -14,47 +14,6 @@ export const SceneViewer = () => {
       : `/sites/${site.site_id}.html`
     : null;
 
-  // Active buffer tracking ('A' or 'B')
-  const [activeBuffer, setActiveBuffer] = useState('A');
-  const [srcA, setSrcA] = useState(targetSrc || '');
-  const [srcB, setSrcB] = useState('');
-
-  // When targetSrc changes, load it into the hidden buffer
-  useEffect(() => {
-    if (!targetSrc) return;
-
-    if (activeBuffer === 'A') {
-      if (srcA !== targetSrc) {
-        if (srcB === targetSrc) {
-          setActiveBuffer('B');
-        } else {
-          setSrcB(targetSrc);
-        }
-      }
-    } else {
-      if (srcB !== targetSrc) {
-        if (srcA === targetSrc) {
-          setActiveBuffer('A');
-        } else {
-          setSrcA(targetSrc);
-        }
-      }
-    }
-  }, [targetSrc, activeBuffer, srcA, srcB]);
-
-  // When hidden iframe finishes loading, cross-fade to it!
-  const handleLoadA = () => {
-    if (srcA && activeBuffer !== 'A') {
-      setActiveBuffer('A');
-    }
-  };
-
-  const handleLoadB = () => {
-    if (srcB && activeBuffer !== 'B') {
-      setActiveBuffer('B');
-    }
-  };
-
   if (!site || !targetSrc) {
     return (
       <div id="canvas-container" className="empty-scene">
@@ -69,50 +28,22 @@ export const SceneViewer = () => {
       style={{
         width: '100vw',
         height: '100vh',
-        position: 'absolute',
+        position: 'fixed',
         top: 0,
         left: 0,
+        zIndex: 0,
         background: '#f8fafc',
-        overflow: 'hidden',
       }}
     >
-      {/* Buffer A */}
       <iframe
-        src={srcA}
-        title="Scene Buffer A"
-        onLoad={handleLoadA}
+        key={site.site_id}
+        src={targetSrc}
+        title={site.site_id}
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
+          width: '100%',
+          height: '100%',
           border: 'none',
-          background: '#f8fafc',
-          opacity: activeBuffer === 'A' ? 1 : 0,
-          zIndex: activeBuffer === 'A' ? 2 : 1,
-          pointerEvents: activeBuffer === 'A' ? 'auto' : 'none',
-          transition: 'opacity 0.15s ease-in-out',
-        }}
-      />
-
-      {/* Buffer B */}
-      <iframe
-        src={srcB}
-        title="Scene Buffer B"
-        onLoad={handleLoadB}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          border: 'none',
-          background: '#f8fafc',
-          opacity: activeBuffer === 'B' ? 1 : 0,
-          zIndex: activeBuffer === 'B' ? 2 : 1,
-          pointerEvents: activeBuffer === 'B' ? 'auto' : 'none',
-          transition: 'opacity 0.15s ease-in-out',
+          display: 'block',
         }}
       />
     </div>

@@ -345,6 +345,21 @@ def create_3d_context_visualization(scene, output_path=None):
     calc_avg_h = float(np.mean(actual_heights)) if actual_heights else float(metrics.get("avgHeight", metrics.get("avg_height_m", 0.0)))
     calc_max_h = float(np.max(actual_heights)) if actual_heights else float(metrics.get("maxHeight", metrics.get("max_height_m", max_h)))
 
+    raw_debug = scene.get("debugLayers", scene.get("debug_layers", {}))
+    centered_debug = {}
+    if "convex_hull" in raw_debug and raw_debug["convex_hull"]:
+        centered_debug["convex_hull"] = [[p[0] - cx, p[1] - cy] for p in raw_debug["convex_hull"]]
+    if "setback_buffer" in raw_debug and raw_debug["setback_buffer"]:
+        centered_debug["setback_buffer"] = [[p[0] - cx, p[1] - cy] for p in raw_debug["setback_buffer"]]
+    if "road_setbacks" in raw_debug and raw_debug["road_setbacks"]:
+        centered_debug["road_setbacks"] = [[[p[0] - cx, p[1] - cy] for p in poly] for poly in raw_debug["road_setbacks"]]
+    if "voronoi_all_cells" in raw_debug and raw_debug["voronoi_all_cells"]:
+        centered_debug["voronoi_all_cells"] = [[[p[0] - cx, p[1] - cy] for p in cell] for cell in raw_debug["voronoi_all_cells"]]
+    if "voronoi_target_cell" in raw_debug and raw_debug["voronoi_target_cell"]:
+        centered_debug["voronoi_target_cell"] = [[p[0] - cx, p[1] - cy] for p in raw_debug["voronoi_target_cell"]]
+    if "voronoi_centroids" in raw_debug and raw_debug["voronoi_centroids"]:
+        centered_debug["voronoi_centroids"] = [[p[0] - cx, p[1] - cy] for p in raw_debug["voronoi_centroids"]]
+
     scene_data = json.dumps({
         "buildings": building_meshes,
         "site": site_mesh,
@@ -358,6 +373,7 @@ def create_3d_context_visualization(scene, output_path=None):
         "maxHeight": round(calc_max_h, 1),
         "cityName": city_name,
         "coords": coords,
+        "debugLayers": centered_debug,
         "metrics": {
             "siteArea": site_area,
             "areaTier": area_tier,
@@ -551,10 +567,23 @@ try {{
   const savedState = localStorage.getItem('context_generator_camera_view');
   if (savedState) {{
     const view = JSON.parse(savedState);
-    if (view && view.pos && view.target) {{
+    if (
+      view &&
+      view.pos &&
+      Array.isArray(view.pos) &&
+      !isNaN(view.pos[0]) &&
+      !isNaN(view.pos[1]) &&
+      !isNaN(view.pos[2]) &&
+      (Math.abs(view.pos[0]) > 0.001 || Math.abs(view.pos[1]) > 0.001 || Math.abs(view.pos[2]) > 0.001) &&
+      view.target &&
+      Array.isArray(view.target) &&
+      !isNaN(view.target[0]) &&
+      !isNaN(view.target[1]) &&
+      !isNaN(view.target[2])
+    ) {{
       cameraOrtho.position.set(view.pos[0], view.pos[1], view.pos[2]);
       cameraPersp.position.set(view.pos[0], view.pos[1], view.pos[2]);
-      if (view.zoom) cameraOrtho.zoom = view.zoom;
+      if (view.zoom && !isNaN(view.zoom)) cameraOrtho.zoom = view.zoom;
       cameraOrtho.updateProjectionMatrix();
       cameraPersp.updateProjectionMatrix();
       controls.target.set(view.target[0], view.target[1], view.target[2]);
@@ -562,21 +591,35 @@ try {{
         activeCamera = cameraPersp;
         controls.object = cameraPersp;
       }}
+    }} else {{
+      localStorage.removeItem('context_generator_camera_view');
     }}
   }}
-}} catch (e) {{}}
+}} catch (e) {{
+  localStorage.removeItem('context_generator_camera_view');
+}}
 
 controls.update();
 
 controls.addEventListener('change', () => {{
   try {{
-    const view = {{
-      pos: [activeCamera.position.x, activeCamera.position.y, activeCamera.position.z],
-      target: [controls.target.x, controls.target.y, controls.target.z],
-      zoom: cameraOrtho.zoom,
-      isPersp: activeCamera === cameraPersp,
-    }};
-    localStorage.setItem('context_generator_camera_view', JSON.stringify(view));
+    if (
+      !isNaN(activeCamera.position.x) &&
+      !isNaN(activeCamera.position.y) &&
+      !isNaN(activeCamera.position.z) &&
+      (Math.abs(activeCamera.position.x) > 0.001 || Math.abs(activeCamera.position.y) > 0.001 || Math.abs(activeCamera.position.z) > 0.001) &&
+      !isNaN(controls.target.x) &&
+      !isNaN(controls.target.y) &&
+      !isNaN(controls.target.z)
+    ) {{
+      const view = {{
+        pos: [activeCamera.position.x, activeCamera.position.y, activeCamera.position.z],
+        target: [controls.target.x, controls.target.y, controls.target.z],
+        zoom: cameraOrtho.zoom,
+        isPersp: activeCamera === cameraPersp,
+      }};
+      localStorage.setItem('context_generator_camera_view', JSON.stringify(view));
+    }}
   }} catch (e) {{}}
 }});
 
@@ -856,8 +899,10 @@ if (DATA.site) {{
   siteGroup.add(baseMesh);
   interactiveObjects.push(baseMesh);
 
+  // 4. Final Clipped Site Parcel Boundary (Solid Red Line)
   if (DATA.sitePerimeter && DATA.sitePerimeter.length >= 3) {{
-    const outPts = DATA.sitePerimeter.map(p => new THREE.Vector3(p[0], 0.25, -p[1]));
+    const outPts = DATA.sitePerimeter.map(p => new THREE.Vector3(p[0], 0.26, -p[1]));
+    outPts.push(outPts[0].clone());
     const siteLineGeom = new THREE.BufferGeometry().setFromPoints(outPts);
     const siteLineMat = new THREE.LineBasicMaterial({{ color: 0xef4444, linewidth: 2.5 }});
     siteGroup.add(new THREE.Line(siteLineGeom, siteLineMat));

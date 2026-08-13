@@ -32,23 +32,25 @@ export const SiteInfoCard = () => {
   const maxStoreys = Math.round((site.max_height_m || 0) / 3.2);
 
   const cityCoord = CITY_COORDS[site.city_code] || { lat: 48.8656, lon: 2.3364 };
-  const latVal = site.lat ?? cityCoord.lat;
-  const lonVal = site.lon ?? cityCoord.lon;
+  const latVal = typeof site.lat === 'number' && !isNaN(site.lat) ? site.lat : (cityCoord.lat || 0);
+  const lonVal = typeof site.lon === 'number' && !isNaN(site.lon) ? site.lon : (cityCoord.lon || 0);
 
   return (
     <div id="site-info-card" className="glass-card">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div id="site-city-title">
-          {site.city_name || site.city_code.toUpperCase()}
-          {site.is_custom && <span className="custom-badge">CUSTOM</span>}
+          {(site.city_name || site.city_code).toUpperCase()}
         </div>
         {site.is_custom && (
           <button
-            className="btn-delete-custom"
+            className="btn-icon-delete"
             onClick={() => deleteCustomSite(site.site_id)}
-            title="Delete Custom Site"
+            title="Remove Custom Site"
           >
-            &times; Delete
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         )}
       </div>

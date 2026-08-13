@@ -439,19 +439,65 @@ body, html, #root, .app-root {
   vertical-align: middle;
 }
 
-.btn-delete-custom {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 700;
+.btn-icon-delete {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
   cursor: pointer;
-  padding: 2px 8px;
-  transition: all 0.15s ease;
+  padding: 0 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
 }
 
-.btn-delete-custom:hover {
-  background: #ef4444;
-  color: #ffffff;
+.btn-icon-delete:hover {
+  background: transparent;
+  border-color: transparent;
+  color: #0f172a;
+}
+
+/* Stacked Action Buttons (Custom Site on top, Reset below) */
+.filter-action-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  justify-content: center;
+  align-self: center;
+}
+
+.btn-action-stacked {
+  min-width: 96px;
+  height: 25px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-action-stacked:hover {
+  background: #f8fafc;
+  border-color: #0f172a;
+}
+
+.btn-action-stacked.btn-reset {
+  color: #64748b;
+  border-color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.btn-action-stacked.btn-reset:hover {
+  color: #0f172a;
+  border-color: #0f172a;
+  background: #ffffff;
 }

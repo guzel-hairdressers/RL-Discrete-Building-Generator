@@ -118,19 +118,23 @@ export const FilterBar = () => {
         </div>
       </div>
 
-      {/* Custom Site Selector Trigger Button */}
-      <button
-        className="btn-secondary"
-        onClick={() => setCustomModalOpen(true)}
-        title="Harvest & Choose Custom Global Site Location"
-      >
-        🌐 Custom Site
-      </button>
-
-      {/* 4. Clean Reset Button (Far Right) */}
-      <button className="btn-secondary" onClick={resetFilters} title="Reset All Filters">
-        Reset
-      </button>
+      {/* 4. Action Buttons Stack (Custom Site on top of Reset, same width) */}
+      <div className="filter-action-stack">
+        <button
+          className="btn-action-stacked"
+          onClick={() => setCustomModalOpen(true)}
+          title="Fetch & Choose Custom Global Site Location"
+        >
+          Custom Site
+        </button>
+        <button
+          className="btn-action-stacked btn-reset"
+          onClick={resetFilters}
+          title="Reset All Filters"
+        >
+          Reset
+        </button>
+      </div>
 
     </div>
   );

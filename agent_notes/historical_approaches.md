@@ -58,6 +58,11 @@ It explicitly records **what was achieved** by successful approaches and **which
 * **Why it failed**: $>99\%$ of sampled continuous coordinates resulted in wall collisions or site boundary clipping, leading to constant collision penalties and complete policy gradient collapse.
 * **Condition for Re-visiting**: Only viable when paired with **Spatial Action Maps (PROP-07)** or **Offline Pre-training on Recorded Trajectories (PROP-10)**.
 
+### ❌ Approach: Voronoi Spatial Diagram Parceling Algorithm
+* **Status**: **DISCARDED**
+* **What was tried**: Replaced Convex Hull + yard setback expansion with Voronoi diagram spatial partitioning (both centroid-based and point-boundary sampled Voronoi).
+* **Why it failed**: In dense city contexts, point-sampled Voronoi bisectors created serrated comb-teeth artifacts between facing facades, and Voronoi cell partitioning generated unnatural parcel shapes. Convex Hull with yard setbacks was retained as the clean baseline.
+
 ### ❌ Approach: Uniform Terminal Return Subtraction Without GAE
 * **Status**: **DISCARDED (Phasing out in v0.8.2)**
 * **What was tried**: Computed advantage as $A = R_{\text{terminal}} - V(s_0)$, applying the exact same scalar advantage to all steps $t=0 \dots T-1$ in an episode.

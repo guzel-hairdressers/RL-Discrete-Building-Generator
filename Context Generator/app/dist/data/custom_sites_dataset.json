@@ -1,17 +1,47 @@
 [
   {
-    "site_id": "custom_l_1786562985",
+    "site_id": "custom_xl_1786629047",
     "is_custom": true,
     "city_code": "custom",
-    "city_name": "Berlin (Mitte)",
-    "lat": 52.520701,
-    "lon": 13.405149,
-    "area_tier": "L",
-    "site_area_m2": 2762.0,
-    "avg_height_m": 47.5,
-    "max_height_m": 68.4,
-    "building_count": 2,
-    "far": 1.56,
-    "render_html": "sites/custom_l_1786562985.html"
+    "city_name": "Paris Convex Hull Pure",
+    "lat": 48.855672,
+    "lon": 2.346818,
+    "area_tier": "XL",
+    "site_area_m2": 4649.5,
+    "avg_height_m": 15.0,
+    "max_height_m": 15.0,
+    "building_count": 10,
+    "far": 0.11,
+    "render_html": "sites/custom_xl_1786629047.html"
+  },
+  {
+    "site_id": "custom_xs_1786628848",
+    "is_custom": true,
+    "city_code": "custom",
+    "city_name": "Paris",
+    "lat": 48.84434,
+    "lon": 2.340671,
+    "area_tier": "XS",
+    "site_area_m2": 921.84,
+    "avg_height_m": 15.0,
+    "max_height_m": 15.0,
+    "building_count": 40,
+    "far": 0.53,
+    "render_html": "sites/custom_xs_1786628848.html"
+  },
+  {
+    "site_id": "custom_xs_1786628742",
+    "is_custom": true,
+    "city_code": "custom",
+    "city_name": "Paris",
+    "lat": 48.853445,
+    "lon": 2.350209,
+    "area_tier": "XS",
+    "site_area_m2": 495.92,
+    "avg_height_m": 15.0,
+    "max_height_m": 15.0,
+    "building_count": 27,
+    "far": 0.6,
+    "render_html": "sites/custom_xs_1786628742.html"
   }
 ]

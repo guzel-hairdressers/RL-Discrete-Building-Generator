@@ -67,15 +67,28 @@ export const useStore = create((set, get) => ({
     get().applyFilters();
   },
 
-  // Add newly harvested custom site to state
+  // Add newly harvested custom site to state and immediately activate it
   addCustomSite: (customSite) => {
+    const siteWithCacheBust = {
+      ...customSite,
+      render_html: customSite.render_html
+        ? (customSite.render_html.includes('?') ? customSite.render_html : `${customSite.render_html}?t=${Date.now()}`)
+        : `sites/${customSite.site_id}.html?t=${Date.now()}`
+    };
+
     set((state) => {
       const exists = state.allSites.some((s) => s.site_id === customSite.site_id);
-      const newSites = exists ? state.allSites : [customSite, ...state.allSites];
-      return { allSites: newSites };
+      const newSites = exists
+        ? state.allSites.map((s) => (s.site_id === customSite.site_id ? siteWithCacheBust : s))
+        : [siteWithCacheBust, ...state.allSites];
+      return {
+        allSites: newSites,
+        filters: { ...DEFAULT_FILTERS }, // Reset filters so custom site is never filtered out
+      };
     });
+
     get().applyFilters();
-    // Set active site index to the new custom site
+
     const filtered = get().filteredSites;
     const idx = filtered.findIndex((s) => s.site_id === customSite.site_id);
     if (idx !== -1) {
@@ -83,13 +96,23 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  // Delete custom site from state
-  deleteCustomSite: (siteId) => {
+  // Delete custom site from state and persistently remove from backend JSON dataset
+  deleteCustomSite: async (siteId) => {
     set((state) => {
       const updated = state.allSites.filter((s) => s.site_id !== siteId);
       return { allSites: updated, activeSiteIndex: 0 };
     });
     get().applyFilters();
+
+    try {
+      await fetch('/api/delete-custom-site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ site_id: siteId }),
+      });
+    } catch (err) {
+      console.error('Failed to persistently delete custom site:', err);
+    }
   },
 
   // Update specific filter property
@@ -142,6 +165,9 @@ export const useStore = create((set, get) => ({
     const currentSite = filteredSites[activeSiteIndex];
 
     const filtered = allSites.filter((site) => {
+      // ALWAYS include user-generated custom sites so newly created locations are never hidden!
+      if (site.is_custom) return true;
+
       // City Filter
       if (filters.city !== 'ALL' && site.city_code !== filters.city) return false;
 
