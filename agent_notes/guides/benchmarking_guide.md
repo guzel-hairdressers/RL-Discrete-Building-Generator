@@ -10,36 +10,39 @@ This guide is the authoritative reference for running benchmarks, evaluating per
 
 All benchmarks are executed using `benchmarks/benchmark.py`. The controller executes every test in a fresh, isolated child Python interpreter to eliminate `sys.modules` contamination, memory leaks, and native library state carryover.
 
-### Standard 40-Episode Phase Verification Benchmark
+### Standard Phase & Subphase Benchmark Protocols
 
-For all roadmap phases and major architectural updates, run a **40-episode benchmark** with full JSON and CSV telemetry:
+Benchmarks must be executed **after EACH phase and subphase** to evaluate performance deltas and metric dynamics before deciding on node transitions:
 
-```bash
-python3 benchmarks/benchmark.py \
-  --episodes 40 \
-  --json-out agent_notes/benchmarks/YY-MM-DD_version-eval/benchmark_40ep.json \
-  --csv-out agent_notes/benchmarks/YY-MM-DD_version-eval/episodes_40ep.csv
-```
+1. **Major Phase Verification (50 Episodes)**:
+   For major roadmap phases (e.g. Phase 1, Phase 2, Phase 3, Phase 4), execute a **50-episode comparative A/B benchmark** against the prior baseline state:
+   ```bash
+   python3 benchmarks/benchmark.py \
+     --module-dir baseline=/path/to/prior_baseline \
+     --module-dir contender=. \
+     --episodes 50 \
+     --seed 123 \
+     --json-out agent_notes/benchmarks/YY-MM-DD_version-eval/comparative_50ep.json \
+     --csv-out agent_notes/benchmarks/YY-MM-DD_version-eval/comparative_50ep.csv
+   ```
 
-### Comparative A/B Benchmark Across Release Branches
-
-To benchmark two versions or git checkouts side-by-side:
-
-```bash
-python3 benchmarks/benchmark.py \
-  --module-dir baseline=/path/to/baseline \
-  --module-dir contender=. \
-  --episodes 40 \
-  --seed 123 \
-  --json-out comparison_40ep.json \
-  --csv-out comparison_40ep.csv
-```
+2. **Subphase Verification (25 Episodes)**:
+   For subphases (e.g. Phase 1A, Phase 1B, Phase 1C), execute a **25-episode comparative A/B benchmark**:
+   ```bash
+   python3 benchmarks/benchmark.py \
+     --module-dir baseline=/path/to/prior_baseline \
+     --module-dir contender=. \
+     --episodes 25 \
+     --seed 123 \
+     --json-out agent_notes/benchmarks/YY-MM-DD_version-eval/comparative_25ep.json \
+     --csv-out agent_notes/benchmarks/YY-MM-DD_version-eval/comparative_25ep.csv
+   ```
 
 ### Key CLI Flags & Options
 
 | Flag | Default | Description |
 | :--- | :--- | :--- |
-| `--episodes N` | `10` | Number of complete measured multi-floor episodes per seed (**use 40 for phase verification**). |
+| `--episodes N` | `10` | Number of complete measured episodes per seed (**50 for full phases, 25 for subphases**). |
 | `--warmup N` | `0` | Number of unmeasured training episodes to run before benchmarking. |
 | `--seed S` | `123` | Deterministic random seed(s). Repeat `--seed` or pass comma-separated list (e.g. `--seed 123,508,808`). |
 | `--settings JSON` | `{}` | Custom transactional settings JSON string or file path (`@settings.json`). |

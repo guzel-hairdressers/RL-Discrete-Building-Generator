@@ -79,16 +79,18 @@ Whenever code features, bug fixes, performance optimizations, or architectural u
 Whenever a user requests to run the development roadmap (e.g. via `/goal` or "run roadmap till step X"):
 
 1. **Iterative Phase Execution**:
-   - For each target phase and decision node in [`agent_notes/roadmap.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/roadmap.md), implement the specified architectural features, algorithm improvements, and geometric constraints.
+   - For each target phase, subphase, and decision node in [`agent_notes/roadmap.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/roadmap.md), implement the specified architectural features, algorithm improvements, and geometric constraints.
 2. **Debug Until 100% Functional**:
    - Debug and fix all regressions until all unit tests pass (`python3 -m unittest discover -s tests -p "test_*.py"`).
-3. **Performance & Milestone Verification (40 Episodes & Metric Dynamics)**:
-   - Run phase benchmarks for **40 episodes** (`python3 benchmarks/benchmark.py --episodes 40 --json-out <path> --csv-out <path>`).
-   - Evaluate both computational throughput (wall time, step latency) AND metric/learning progression (score progression, variance reduction $\sigma$, rentable ratio, 0% topology violation rate, BPE reuse saturation, and unmerged triangle penalties).
+3. **Mandatory Post-Phase / Post-Subphase Comparative Benchmarking**:
+   - **Full Phase Benchmarks**: Run **50 episodes** after each major phase (`--episodes 50`).
+   - **Subphase Benchmarks**: Run **25 episodes** after each subphase (`--episodes 25`).
+   - **Comparative Baseline Evaluation**: Benchmarks MUST be executed **after EACH phase and subphase** comparing directly against the prior baseline state (`--module-dir baseline=<prior_state> --module-dir contender=.`).
+   - **Metric & Learning Dynamics Evaluation**: Evaluate whether the changes improved performance: score progression, variance reduction $\sigma$, rentable ratio, 0% topology violation rate, BPE reuse saturation, and unmerged triangle penalties. If changes are regressions, iterate and fix before proceeding.
 4. **Decision Node Transition**:
-   - Evaluate decision branches (e.g. variance thresholds, convergence checks) before advancing to subsequent phases.
+   - Evaluate decision branches (e.g. variance thresholds, convergence checks) based on the comparative benchmark data before advancing to subsequent phases.
 5. **Mandatory Documentation Sync**:
-   - Synchronize all files in [`agent_notes/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/README.md) (`historical_approaches.md`, `issues.md`, `roadmap.md`, `benchmarks/`, `guides/`), saving 40-episode reports under [`agent_notes/benchmarks/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/benchmarks/).
+   - Synchronize all files in [`agent_notes/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/README.md) (`historical_approaches.md`, `issues.md`, `roadmap.md`, `benchmarks/`, `guides/`), saving reports under [`agent_notes/benchmarks/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/benchmarks/).
 6. **Cross-Subversion Code Sync**:
    - Propagate and test all general features across all active subversion branches of the version family (e.g., `version/v0.8.1`, `version/v0.9.1`, etc.).
 7. **Local Commit & User Push Approval**:

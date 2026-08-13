@@ -61,6 +61,7 @@ agent_notes/
    Verify that all code changes, bug resolutions, benchmark data, roadmap progress, or architectural modifications are fully documented and updated across `agent_notes/`. **Do NOT execute `git push` unless the user explicitly requests it in a prompt.**
 
 7. **Iterative Roadmap Execution Protocol**:
-   When requested to execute roadmaps or goals, follow the 7-step loop: (1) Implement target phase tasks; (2) Debug until all unit tests pass; (3) Run **40-episode benchmarks** (`--episodes 40`) evaluating both computational throughput and metric/learning dynamics (score variance reduction, rentable ratio, 0% topology violations, BPE reuse); (4) Evaluate decision nodes; (5) Synchronize documentation under `agent_notes/`; (6) Synchronize cross-subversion branches (`version/v0.8.1`, `version/v0.9.1`, etc.); (7) Commit locally and request push approval.
+   When requested to execute roadmaps or goals, follow the 7-step loop: (1) Implement target phase tasks; (2) Debug until all unit tests pass; (3) Run **comparative benchmarks after EACH phase and subphase** (**50 episodes** for full phases, **25 episodes** for subphases) comparing directly against the prior baseline state (`baseline` vs `contender`) and evaluating metric dynamics (variance reduction, rentable ratio, 0% topology violations, BPE reuse); (4) Evaluate decision nodes; (5) Synchronize documentation under `agent_notes/`; (6) Synchronize cross-subversion branches (`version/v0.8.1`, `version/v0.9.1`, etc.); (7) Commit locally and request push approval.
+
 
 
