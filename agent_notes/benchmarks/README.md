@@ -4,6 +4,9 @@
 
 This directory contains categorized, reproducible benchmark datasets, execution metrics, and visual evaluations for the **RL-Discrete-Building-Generator** (Module Lab).
 
+> [!TIP]
+> For instructions on how to run benchmarks, what metrics to measure, and how to analyze learning dynamics, see the comprehensive **[Benchmarking & Metric Dynamics Guide](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/benchmarking_guide.md)**.
+
 ---
 
 ## Directory Organization

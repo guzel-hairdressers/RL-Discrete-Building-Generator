@@ -30,7 +30,8 @@ agent_notes/
 │   └── 26-08-14_v0.8.0-phase1-3-eval/
 └── guides/                            # Component guides & architectural documentation
     ├── bpe_merge_guide.md             # BPE vocabulary & polygon merge guide
-    └── core_stacking_guide.md         # Multi-floor shaft alignment guide
+    ├── core_stacking_guide.md         # Multi-floor shaft alignment guide
+    └── benchmarking_guide.md          # 40-episode benchmarking & metric dynamics guide
 ```
 
 ---
@@ -39,6 +40,7 @@ agent_notes/
 
 * 📜 **Historical Ledger & Failed Approaches**: [`historical_approaches.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/historical_approaches.md)
 * 🗺️ **Master Roadmap**: [`roadmap.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/roadmap.md)
+* 📊 **Benchmarking & Metrics Guide**: [`guides/benchmarking_guide.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/benchmarking_guide.md)
 * 💡 **RL Architectural Proposals & Ratings**: [`proposals/rl_architecture_proposals.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/proposals/rl_architecture_proposals.md)
 * 🐛 **Issue Tracker**: [`issues.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/issues.md)
 * ⚡ **Benchmark Summary**: [`benchmarks/BENCHMARK_SUMMARY.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/benchmarks/BENCHMARK_SUMMARY.md)
