@@ -65,3 +65,9 @@ Whenever code features, bug fixes, performance optimizations, or architectural u
    - **Performance Data & Benchmarks**: Save categorized run data under [`agent_notes/benchmarks/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/benchmarks/).
    - **Architectural Guides**: Update guide files in [`agent_notes/guides/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/).
    - **Central Directory Index**: Keep [`agent_notes/README.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/README.md) links up to date.
+
+---
+
+## 5. Git Push Approval Rule
+
+- **Do NOT execute `git push` unless explicitly instructed**: AI agents must **NEVER** push commits to remote repositories (`git push`) unless the user explicitly commands it in a prompt (e.g. "push", "push once done"). Keep all code edits, commits, subversion feature sync, and documentation updates local until explicit user consent is given.

@@ -57,5 +57,5 @@ agent_notes/
 5. **Mandatory Feature & Documentation Subversion Synchronization Before Push**:
    Whenever a new code feature, bug fix, performance optimization, or layout constraint is implemented that applies generally across subversions of any version family (e.g. `v0.8.x`, `v0.9.x`, `v1.0.x`, etc. — unless strictly variant-specific), AI agents and developers **MUST update both the source code features AND `agent_notes/` documentation across all active subversion branches of that version family before executing git push**.
 
-6. **Mandatory Documentation Update on Every Push**:
-   Before executing a git commit or pushing to `main` or any release branch across present and future versions (`v0.8.x`, `v0.9.x`, `v1.0.x`, etc.), verify that all code changes, bug resolutions, benchmark data, roadmap progress, or architectural modifications are fully documented and updated across `agent_notes/`.
+6. **Mandatory Documentation Update & Git Push Approval**:
+   Verify that all code changes, bug resolutions, benchmark data, roadmap progress, or architectural modifications are fully documented and updated across `agent_notes/`. **Do NOT execute `git push` unless the user explicitly requests it in a prompt.**
