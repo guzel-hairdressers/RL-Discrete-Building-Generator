@@ -44,7 +44,7 @@ import graph  # noqa: E402
 import server  # noqa: E402
 
 
-Anchor = tuple[float, float, int | None]
+Anchor = tuple[float, float, Any]
 
 
 def _edge_anchors(

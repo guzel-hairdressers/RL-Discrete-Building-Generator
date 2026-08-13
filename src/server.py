@@ -568,7 +568,10 @@ class PolicyModel(nn.Module):
         )
 
 
-@dataclass(slots=True)
+_DATACLASS_SLOTS = {"slots": True} if sys.version_info >= (3, 10) else {}
+
+
+@dataclass(**_DATACLASS_SLOTS)
 class PlacementCandidate:
     """One legal vector placement and its learned feature representation."""
 
@@ -584,7 +587,7 @@ class PlacementCandidate:
     anchor_y: float = 0.0
 
 
-@dataclass(slots=True)
+@dataclass(**_DATACLASS_SLOTS)
 class CoreStackCandidate:
     """One exact module/rotation/local-anchor action valid on every floor."""
 
@@ -608,7 +611,7 @@ class CoreStackCandidate:
         return _mean_feature_rows(candidate.features for candidate in self.floor_candidates)
 
 
-@dataclass(slots=True)
+@dataclass(**_DATACLASS_SLOTS)
 class PlacementPolicyDecision:
     """Detached ragged categorical data, recomputed once during learning."""
 
