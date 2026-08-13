@@ -87,6 +87,7 @@ Whenever a user requests to run the development roadmap (e.g. via `/goal` or "ru
    - **Subphase Benchmarks**: Run **25 episodes** after each subphase (`--episodes 25`).
    - **Comparative Baseline Evaluation**: Benchmarks MUST be executed **after EACH phase and subphase** comparing directly against the prior baseline state (`--module-dir baseline=<prior_state> --module-dir contender=.`).
    - **Metric & Learning Dynamics Evaluation**: Evaluate whether the changes improved performance: score progression, variance reduction $\sigma$, rentable ratio, 0% topology violation rate, BPE reuse saturation, and unmerged triangle penalties. If changes are regressions, iterate and fix before proceeding.
+   - **Cross-Subversion Universality Benchmarks**: Benchmarks MUST ALSO be executed on all active subversion branches (e.g. `version/v0.8.1` dynamic parametric shape generator) to test whether architectural updates are universally useful across variant mechanics or if there are specific domain/extent boundaries to their use cases.
 4. **Decision Node Transition**:
    - Evaluate decision branches (e.g. variance thresholds, convergence checks) based on the comparative benchmark data before advancing to subsequent phases.
 5. **Mandatory Documentation Sync**:
