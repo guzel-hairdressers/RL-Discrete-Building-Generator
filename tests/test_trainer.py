@@ -303,8 +303,7 @@ class ParallelTrainerTests(unittest.TestCase):
         trainer = self.make_trainer(3)
         event = trainer.site_event()
         self.assertEqual(len(event["boundaries"]), 3)
-        self.assertEqual(len(event["dictionary"]), 1)
-        self.assertEqual(event["dictionary"][0]["category"], "core")
+        self.assertEqual(len(event["dictionary"]), 0)
         self.assertTrue(all(environment.dictionary is not trainer.dictionary for environment in trainer.environments))
         self.assertTrue(all(environment.dictionary == trainer.dictionary for environment in trainer.environments))
 

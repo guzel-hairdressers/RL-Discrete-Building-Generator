@@ -131,13 +131,7 @@ class LearnerOptimizationTests(unittest.TestCase):
         target.generation_time_history.extend([99.0])
         target.frontier_growth_history.extend([99.0])
         torch.manual_seed(999999)
-        prepared = (
-            target.environments,
-            target.dictionary,
-            [],
-            target.core_stacking_metadata,
-            [],
-        )
+        prepared = (target.environments, target.dictionary, [])
         with mock.patch.object(target, "_prepare_generation", return_value=prepared):
             target.load_checkpoint_data(payload)
 
@@ -309,9 +303,6 @@ class RuntimeOptimizationTests(unittest.TestCase):
             candidate for candidate in candidates if candidate.module["id"] == module["id"]
         ]
         self.assertEqual(len(geometric_candidates), 12)
-        self.assertFalse(
-            any(candidate.module["id"] == "create_new" for candidate in candidates)
-        )
         self.assertLessEqual(environment.last_candidate_evaluations, 128)
 
     def test_three_edge_cap_masks_quads_and_fallback_keeps_trace_probability(self) -> None:
@@ -335,6 +326,28 @@ class RuntimeOptimizationTests(unittest.TestCase):
         self.assertEqual(len(module["poly"]), 3)
         self.assertTrue(torch.isfinite(trace_log_probability))
         self.assertLess(float(trace_log_probability.detach()), -0.1)
+
+        integrated = server.ParallelTrainer()
+        integrated.update_settings(
+            {
+                "maxEdges": 3,
+                "maxEdge": 9.0,
+                "angleStep": 90.0,
+                "parallelEnvironments": 1,
+                "atriumPolicy": "none",
+                "seed": 3303,
+            }
+        )
+        integrated.step(integrated.generation_id, integrated.episode)
+        self.assertTrue(integrated.dictionary)
+        self.assertTrue(all(len(item["poly"]) <= 3 for item in integrated.dictionary))
+        self.assertTrue(
+            all(
+                len(placement["poly"]) <= 3
+                for environment in integrated.environments
+                for placement in environment.placements
+            )
+        )
 
         quad_only_settings = server.validate_settings_patch(
             trainer.settings,

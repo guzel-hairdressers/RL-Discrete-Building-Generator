@@ -1,4 +1,4 @@
-"""Module Lab v0.8.0 PyTorch training and WebSocket server.
+"""Module Lab v0.8.1 PyTorch training and WebSocket server.
 
 Each WebSocket owns a completely independent :class:`ParallelTrainer`.  Within
 that trainer all floor environments share one policy and one optimizer.  Shape
@@ -8,9 +8,6 @@ actions, so terminal aggregate reward trains the complete design policy.
 Vector geometry is authoritative for containment, overlap, adjacency, exposed
 walls, perimeter, and terminal daylight.  Integer cells are used only as a
 candidate-search acceleration structure.
-
-Multi-floor cores are exact building-level transactions: one learned action
-selects a shared module, rotation, and local anchor for every floor.
 """
 
 from __future__ import annotations
@@ -66,25 +63,20 @@ SPATIAL_PADDING = 1.0e-6
 ATTACHMENT_FRONTIER_LIMIT = 144
 ATTACHMENT_MATCH_LIMIT = 12
 ATTACHMENT_ANGLE_SCALE = 1_000_000.0
-MAX_CONSECUTIVE_PROPOSAL_FAILURES = 8
-SECOND_CORE_MIN_ROOMS = 6
 RELATIVE_TIME_WINDOW = 20
 BASELINE_TRANSITION_EPISODES = 5
 MAX_CHECKPOINT_BYTES = 64 * 1024 * 1024
 MAX_FRONTIER_REWARD = 4.0
 UNMERGED_TRIANGLE_PENALTY = 8.0
 BPE_REUSE_BONUS_PER_MODULE = 3.0
-CORE_STACK_CANDIDATE_LIMIT = 16
-CORE_STACK_PROPOSAL_LIMIT = 512
-CORE_SITE_TRANSACTION_ATTEMPTS = 24
-BUILDING_TRAJECTORY_INDEX = -1
+MAX_CONSECUTIVE_PROPOSAL_FAILURES = 8
+SECOND_CORE_MIN_ROOMS = 6
 _TORCH_RUNTIME_LOCK = threading.Lock()
 _TORCH_RUNTIME_CONFIGURED = False
 
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     "boundaryType": "lobed",
-    "siteAreaTier": "ANY",
     "atriumPolicy": "agent",
     "singleFloor": False,
     "publicMode": False,
@@ -104,7 +96,6 @@ DEFAULT_SETTINGS: dict[str, Any] = {
 }
 
 BOUNDARY_TYPES = {"lobed", "lshape", "ushape", "tshape", "convex", "rect", "free"}
-SITE_AREA_TIERS = {"ANY", "XS", "S", "M", "L", "XL"}
 ATRIUM_POLICIES = {"agent", "central", "none"}
 
 
@@ -114,10 +105,6 @@ class SettingsError(ValueError):
 
 class StaleStepError(RuntimeError):
     """Raised before mutation when a step targets an obsolete generation."""
-
-
-class CoreStackingError(RuntimeError):
-    """Raised when an exact cross-floor core transaction cannot be prepared."""
 
 
 def _finite_number(value: Any, name: str) -> float:
@@ -189,9 +176,6 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     boundary_type = merged["boundaryType"]
     if not isinstance(boundary_type, str) or boundary_type not in BOUNDARY_TYPES:
         raise SettingsError("boundaryType is not supported")
-    site_area_tier = merged["siteAreaTier"]
-    if not isinstance(site_area_tier, str) or site_area_tier not in SITE_AREA_TIERS:
-        raise SettingsError("siteAreaTier is not supported")
     atrium_policy = merged["atriumPolicy"]
     if not isinstance(atrium_policy, str) or atrium_policy not in ATRIUM_POLICIES:
         raise SettingsError("atriumPolicy is not supported")
@@ -568,7 +552,10 @@ class PolicyModel(nn.Module):
         )
 
 
-@dataclass(slots=True)
+_DATACLASS_SLOTS = {"slots": True} if sys.version_info >= (3, 10) else {}
+
+
+@dataclass(**_DATACLASS_SLOTS)
 class PlacementCandidate:
     """One legal vector placement and its learned feature representation."""
 
@@ -580,35 +567,9 @@ class PlacementCandidate:
     shared_overlap: float
     outer_exposure: float
     features: list[float]
-    anchor_x: float = 0.0
-    anchor_y: float = 0.0
 
 
-@dataclass(slots=True)
-class CoreStackCandidate:
-    """One exact module/rotation/local-anchor action valid on every floor."""
-
-    module: dict
-    rotation: dict
-    anchor_x: float
-    anchor_y: float
-    floor_candidates: list[PlacementCandidate]
-
-    @property
-    def signature(self) -> tuple[str, float, float, float]:
-        return (
-            str(self.module["id"]),
-            round(float(self.rotation.get("angle", 0.0)), 6),
-            round(float(self.anchor_x), 6),
-            round(float(self.anchor_y), 6),
-        )
-
-    @property
-    def features(self) -> list[float]:
-        return _mean_feature_rows(candidate.features for candidate in self.floor_candidates)
-
-
-@dataclass(slots=True)
+@dataclass(**_DATACLASS_SLOTS)
 class PlacementPolicyDecision:
     """Detached ragged categorical data, recomputed once during learning."""
 
@@ -620,20 +581,6 @@ class PlacementPolicyDecision:
 
 def _mean(values: Sequence[float]) -> float:
     return math.fsum(values) / len(values) if values else 0.0
-
-
-def _mean_feature_rows(rows: Iterable[Sequence[float]]) -> list[float]:
-    """Pool equal-width action features without changing their model contract."""
-
-    materialized = [list(row) for row in rows]
-    if not materialized:
-        return [0.0] * PLACEMENT_FEATURE_DIM
-    if any(len(row) != PLACEMENT_FEATURE_DIM for row in materialized):
-        raise CoreStackingError("core-stack feature width does not match the placement policy")
-    return [
-        math.fsum(row[column] for row in materialized) / len(materialized)
-        for column in range(PLACEMENT_FEATURE_DIM)
-    ]
 
 
 def _std(values: Sequence[float]) -> float:
@@ -1366,8 +1313,6 @@ class FloorEnvironment:
             shared_overlap=shared_overlap,
             outer_exposure=outer_exposure,
             features=features,
-            anchor_x=float(anchor_x),
-            anchor_y=float(anchor_y),
         )
 
     def _sample_attachment_ids(self, identifiers: Sequence[int]) -> list[int]:
@@ -1441,16 +1386,12 @@ class FloorEnvironment:
                 placed_length = edge["length"]
                 placed_poly = self.placement_by_id[edge["placementId"]]["poly"]
                 full_first = placed_poly[edge["edgeIndex"]]
-                full_second = placed_poly[
-                    (edge["edgeIndex"] + 1) % len(placed_poly)
-                ]
+                full_second = placed_poly[(edge["edgeIndex"] + 1) % len(placed_poly)]
                 full_placed_length = math.hypot(
                     full_second["x"] - full_first["x"],
                     full_second["y"] - full_first["y"],
                 )
-                length_ratio = candidate_length / max(
-                    full_placed_length, G.EPSILON
-                )
+                length_ratio = candidate_length / max(full_placed_length, G.EPSILON)
                 if not any(
                     abs(length_ratio - valid_ratio) < 5.0e-3
                     for valid_ratio in (0.5, 1.0, 2.0)
@@ -1606,7 +1547,6 @@ class FloorEnvironment:
         orientation_basis: float,
         profiler: Any | None = None,
         limit: int = 12,
-        category_filter: Sequence[str] | None = None,
     ) -> list[PlacementCandidate]:
         """Generate legal actions specifically for a single module."""
         cg_sub_totals = {
@@ -1630,11 +1570,6 @@ class FloorEnvironment:
                 or (core_count < 2 and room_count >= SECOND_CORE_MIN_ROOMS)
             ):
                 allowed_cats.append("core")
-        if category_filter is not None:
-            permitted = set(category_filter)
-            allowed_cats = [
-                category for category in allowed_cats if category in permitted
-            ]
 
         room_core_costs = self._room_crossing_costs_to_core() if self.core_ids else {}
         rotations = self.rng.shuffle(module["rotations"])
@@ -1846,8 +1781,6 @@ class FloorEnvironment:
             shared_overlap=shared_overlap,
             outer_exposure=outer_exposure,
             features=features,
-            anchor_x=float(anchor_x),
-            anchor_y=float(anchor_y),
         )
 
     def _materialize_candidate(
@@ -1881,7 +1814,6 @@ class FloorEnvironment:
         orientation_basis: float = 0.0,
         limit: int = 12,
         profiler: Any | None = None,
-        allow_core: bool = True,
     ) -> list[PlacementCandidate]:
         """Generate legal actions with exact vector contacts and bounded work."""
         cg_sub_totals = {
@@ -1910,10 +1842,6 @@ class FloorEnvironment:
                 or (core_count < 2 and room_count >= SECOND_CORE_MIN_ROOMS)
             ):
                 allowed_cats.append("core")
-        if not allow_core:
-            allowed_cats = [
-                category for category in allowed_cats if category != "core"
-            ]
 
         core_candidates: list[PlacementCandidate] = []
         room_candidates: list[PlacementCandidate] = []
@@ -2002,7 +1930,7 @@ class FloorEnvironment:
             and not early_break
             and len(self.dictionary) >= int(settings.get("dictCap", 10))
         ):
-            # An edge that rejects the current vocabulary may still be the
+            # An edge that rejects the *current* vocabulary may still be the
             # exact port needed by a later learned/frontier-compatible shape.
             # Retire it only once no create-new action remains.
             unattachable_edges = checked_edges - successful_edges
@@ -2105,86 +2033,9 @@ class FloorEnvironment:
                 profiler.record(label, total_sec)
         return core_candidates[:cat_limit] + room_candidates[:cat_limit] + special_candidates
 
-    def _stack_commit_checkpoint(self) -> dict[str, Any]:
-        """Capture only placement-owned mutable indexes for an atomic stack commit.
-
-        Boundaries, sites, dictionaries, RNGs, and model state are intentionally
-        excluded.  A rollback therefore restores the exact affected floor state
-        without copying an entire environment or its immutable geometry.
-        """
-
-        return {
-            "placements": list(self.placements),
-            "placement_by_id": dict(self.placement_by_id),
-            "adjacency_map": {
-                identifier: set(neighbors)
-                for identifier, neighbors in self.adjacency_map.items()
-            },
-            "occupied": dict(self.occupied),
-            "module_uses": dict(self.module_uses),
-            "spatial_buckets": {
-                bucket: set(identifiers)
-                for bucket, identifiers in self.spatial_buckets.items()
-            },
-            "placement_bounds": dict(self.placement_bounds),
-            "core_ids": set(self.core_ids),
-            "attachment_edges": {
-                edge_id: dict(edge) for edge_id, edge in self.attachment_edges.items()
-            },
-            "attachment_by_angle": {
-                angle: set(edge_ids)
-                for angle, edge_ids in self.attachment_by_angle.items()
-            },
-            "attachment_by_placement": {
-                identifier: set(edge_ids)
-                for identifier, edge_ids in self.attachment_by_placement.items()
-            },
-            "attachment_order": deque(self.attachment_order),
-            "next_attachment_id": self.next_attachment_id,
-            "filled_area": self.filled_area,
-            "rentable_area": self.rentable_area,
-            "repeated_uses": self.repeated_uses,
-            "done": self.done,
-            "consecutive_proposal_failures": self.consecutive_proposal_failures,
-            "attachment_query_cursor": self.attachment_query_cursor,
-        }
-
-    def _restore_stack_commit_checkpoint(self, checkpoint: dict[str, Any]) -> None:
-        """Restore the exact placement-owned state captured above."""
-
-        self.placements = checkpoint["placements"]
-        self.placement_by_id = checkpoint["placement_by_id"]
-        self.adjacency_map = checkpoint["adjacency_map"]
-        self.occupied = checkpoint["occupied"]
-        self.module_uses = checkpoint["module_uses"]
-        self.spatial_buckets = checkpoint["spatial_buckets"]
-        self.placement_bounds = checkpoint["placement_bounds"]
-        self.core_ids = checkpoint["core_ids"]
-        self.attachment_edges = checkpoint["attachment_edges"]
-        self.attachment_by_angle = checkpoint["attachment_by_angle"]
-        self.attachment_by_placement = checkpoint["attachment_by_placement"]
-        self.attachment_order = checkpoint["attachment_order"]
-        self.next_attachment_id = checkpoint["next_attachment_id"]
-        self.filled_area = checkpoint["filled_area"]
-        self.rentable_area = checkpoint["rentable_area"]
-        self.repeated_uses = checkpoint["repeated_uses"]
-        self.done = checkpoint["done"]
-        self.consecutive_proposal_failures = checkpoint[
-            "consecutive_proposal_failures"
-        ]
-        self.attachment_query_cursor = checkpoint["attachment_query_cursor"]
-
-    def place(
-        self,
-        candidate: PlacementCandidate,
-        *,
-        core_stack_id: str | None = None,
-        core_stack_trigger_floor: int | None = None,
-    ) -> dict:
+    def place(self, candidate: PlacementCandidate) -> dict:
         """Commit one candidate and return its world-space protocol record."""
 
-        if core_stack_id is not None and candidate.module.get("category") != "core":
-            raise CoreStackingError("only core placements may be locked into a core stack")
         if candidate.poly and not candidate.cells:
             candidate.cells = G.rasterize_polygon(candidate.poly)
         identifier = f"f{self.index}:p{len(self.placements)}"
@@ -2206,18 +2057,6 @@ class FloorEnvironment:
             "bornAt": time.time() * 1000.0,
             "instanceIdx": self.index,
         }
-        if core_stack_id is not None:
-            placement.update(
-                {
-                    "coreStackId": core_stack_id,
-                    "coreStackLocked": True,
-                    "coreStackTriggerFloor": core_stack_trigger_floor,
-                    "localAnchor": {
-                        "x": float(candidate.anchor_x),
-                        "y": float(candidate.anchor_y),
-                    },
-                }
-            )
         self.placements.append(placement)
         self.placement_by_id[identifier] = placement
         self.adjacency_map[identifier] = set(candidate.neighbors)
@@ -2230,17 +2069,17 @@ class FloorEnvironment:
         if prior_uses:
             self.repeated_uses += 1
         self.filled_area += placement["area"]
+        self.consecutive_proposal_failures = 0
         if placement["category"] in ("room", "special"):
             self.rentable_area += placement["area"]
         if placement["category"] == "core":
             self.core_ids.add(identifier)
         self._index_placement(placement)
         self._update_attachment_frontier(placement, candidate.module, candidate.neighbors)
-        self.consecutive_proposal_failures = 0
 
         dx, dy = self.offset
         world_center = {"x": center["x"] + dx, "y": center["y"] + dy}
-        public_record = {
+        return {
             "id": identifier,
             "instanceIdx": self.index,
             "poly": G.translate_polygon(candidate.poly, dx, dy),
@@ -2255,19 +2094,6 @@ class FloorEnvironment:
                 "triangle": placement["triangle"],
             },
         }
-        if core_stack_id is not None:
-            stack_fields = {
-                "coreStackId": core_stack_id,
-                "coreStackLocked": True,
-                "coreStackTriggerFloor": core_stack_trigger_floor,
-                "localAnchor": {
-                    "x": float(candidate.anchor_x),
-                    "y": float(candidate.anchor_y),
-                },
-            }
-            public_record.update(stack_fields)
-            public_record["module"].update(stack_fields)
-        return public_record
 
     def online_metrics(self) -> dict[str, Any]:
         filled = self.filled_area
@@ -2497,18 +2323,7 @@ class ParallelTrainer:
         self.environments: list[FloorEnvironment] = []
         self.dictionary: list[dict] = []
         self.shape_log_probs: list[torch.Tensor] = []
-        self.building_shape_log_probs: list[torch.Tensor] = []
         self.placement_log_probs: list[torch.Tensor] = []
-        self.core_stack_records: list[dict[str, Any]] = []
-        self.core_stacking_metadata: dict[str, Any] = {
-            "enabled": False,
-            "status": "unprepared",
-            "mode": "disabled",
-            "boundaryPolicy": "unchanged",
-            "siteResampleAttempts": 0,
-            "initialCandidateCount": 0,
-        }
-        self._prepared_initial_core_stacks: list[CoreStackCandidate] = []
         self.placement_log_probs_by_environment: dict[int, list[torch.Tensor]] = {}
         self.placement_decisions: list[PlacementPolicyDecision] = []
         self.baseline = 0.35
@@ -2613,7 +2428,11 @@ class ParallelTrainer:
         def freeze(value: Any) -> Any:
             if isinstance(value, (list, tuple)):
                 return tuple(freeze(item) for item in value)
-            return value
+            if value is None or isinstance(value, (str, bool, int)):
+                return value
+            if isinstance(value, float) and math.isfinite(value):
+                return value
+            raise ValueError("checkpoint reward settings signature is invalid")
 
         signature = freeze(state.get("settingsSignature"))
         if not isinstance(signature, tuple) or len(signature) != 3:
@@ -2983,14 +2802,10 @@ class ParallelTrainer:
         self,
         settings: dict[str, Any],
         generation_id: int,
-        attempt: int = 0,
     ) -> tuple[list[FloorEnvironment], list[torch.Tensor]]:
         records: list[tuple[dict, dict, dict, G.RNG]] = []
         atrium_log_probs: list[torch.Tensor] = []
-        # A failed common-core preflight rejects this entire group of floors.
-        # The next attempt changes every floor seed together; individual floors
-        # are never silently replaced or relaxed to rectangular boundaries.
-        base_seed = int(settings["seed"]) + generation_id * 104729 + attempt * 1_000_003
+        base_seed = int(settings["seed"]) + generation_id * 104729
         for index in range(int(settings["parallelEnvironments"])):
             rng = G.RNG(base_seed + index * 8191)
             boundary = G.make_boundary(settings["boundaryType"], rng.fork(11), settings)
@@ -3053,22 +2868,14 @@ class ParallelTrainer:
         generation_id: int,
         episode: int,
     ) -> tuple[list[dict], list[torch.Tensor]]:
-        """Seed multi-floor episodes with one learned, stackable core module."""
-
-        if bool(settings["singleFloor"]) or len(environments) <= 1:
-            return [], []
-        module, log_prob = self._sample_custom_shape(
-            settings, environments, slot_index=0, force_core=True
-        )
-        return [module], [log_prob]
+        """Start with an empty dictionary. Shapes are synthesized dynamically."""
+        return [], []
 
     def _sample_custom_shape(
         self,
         settings: dict[str, Any],
         environments: Sequence[FloorEnvironment],
         slot_index: int,
-        *,
-        force_core: bool = False,
     ) -> tuple[dict, torch.Tensor]:
         """Propose and synthesize one custom shape dynamically."""
         floor_tensor = torch.tensor(
@@ -3085,9 +2892,8 @@ class ParallelTrainer:
         
         num_edges_logits = parameter_logits[0] / max(0.32, 0.90 * math.exp(-self.episode / 45.0))
         num_edges_logits = num_edges_logits + torch.tensor([0.0, 0.8], device=self.device)
-        is_step0 = force_core or (
-            any(not env.placements for env in environments)
-            and not bool(settings.get("singleFloor"))
+        is_step0 = any(not env.placements for env in environments) and not bool(
+            settings.get("singleFloor")
         )
         triangle_core_feasible = (
             float(settings["maxEdge"]) ** 2 * math.sqrt(3.0) * 0.25 + 1.0e-8 >= 24.0
@@ -3307,12 +3113,6 @@ class ParallelTrainer:
                 source_parameters={"generator": "guaranteed-core-fallback"},
             )
             
-        if force_core:
-            module = {
-                **module,
-                "category": "core",
-                "name": f"Stacked Core {slot_index + 1}",
-            }
         canonical = self._canonical_module(
             module, float(settings["angleStep"]), phase=self.episode + slot_index
         )
@@ -3394,486 +3194,19 @@ class ParallelTrainer:
             )
         return modules
 
-    @staticmethod
-    def _core_transform_signature(
-        module: dict,
-        rotation: dict,
-        anchor_x: float,
-        anchor_y: float,
-    ) -> tuple[str, float, float, float]:
-        return (
-            str(module["id"]),
-            round(float(rotation.get("angle", 0.0)), 6),
-            round(float(anchor_x), 6),
-            round(float(anchor_y), 6),
-        )
-
-    def _core_stack_at_transform(
-        self,
-        environments: Sequence[FloorEnvironment],
-        module: dict,
-        rotation: dict,
-        anchor_x: float,
-        anchor_y: float,
-        settings: dict[str, Any],
-        orientation_basis: float,
-    ) -> CoreStackCandidate | None:
-        """Prevalidate one exact local transform on every floor."""
-
-        floor_candidates: list[PlacementCandidate] = []
-        for environment in environments:
-            if environment.done or len(environment.placements) >= int(settings["maxModules"]):
-                return None
-            room_core_costs = (
-                environment._room_crossing_costs_to_core()
-                if environment.core_ids
-                else {}
-            )
-            candidate = environment._candidate_from_anchor(
-                module,
-                rotation,
-                anchor_x,
-                anchor_y,
-                settings,
-                orientation_basis,
-                room_core_costs,
-                placement_category="core",
-            )
-            if candidate is None or not environment._materialize_candidate(
-                candidate, settings, orientation_basis
-            ):
-                return None
-            if len(candidate.features) == PLACEMENT_FEATURE_DIM - 2:
-                candidate.features.extend((0.0, 0.0))
-            if len(candidate.features) != PLACEMENT_FEATURE_DIM:
-                raise CoreStackingError("invalid feature width in shared core candidate")
-            floor_candidates.append(candidate)
-        if len(floor_candidates) != len(environments):
-            return None
-        return CoreStackCandidate(
-            module=module,
-            rotation=rotation,
-            anchor_x=float(anchor_x),
-            anchor_y=float(anchor_y),
-            floor_candidates=floor_candidates,
-        )
-
-    def _initial_core_proposals(
-        self,
-        environments: Sequence[FloorEnvironment],
-        dictionary: Sequence[dict],
-    ) -> list[tuple[dict, dict, float, float]]:
-        """Propose transforms from cells shared by all original floor sites."""
-
-        if not environments:
-            return []
-        common_keys = set(environments[0].site["cellSet"])
-        for environment in environments[1:]:
-            common_keys.intersection_update(environment.site["cellSet"])
-        if not common_keys:
-            return []
-
-        def target_score(cell_key: str) -> tuple[float, int, int]:
-            x_text, y_text = cell_key.split(",")
-            x, y = int(x_text), int(y_text)
-            clearance = min(
-                float(environment.site.get("distance", {}).get(cell_key, 0.0))
-                for environment in environments
-            )
-            return (-clearance, x, y)
-
-        targets = []
-        for cell_key in sorted(common_keys, key=target_score)[:64]:
-            x_text, y_text = cell_key.split(",")
-            targets.append({"x": int(x_text), "y": int(y_text)})
-
-        proposals: list[tuple[dict, dict, float, float]] = []
-        seen: set[tuple[str, float, float, float]] = set()
-        for target in targets:
-            for module in dictionary:
-                for rotation in module.get("rotations", ()):
-                    for cell in rotation.get("cells", ())[:4]:
-                        anchor_x = float(target["x"] - cell["x"])
-                        anchor_y = float(target["y"] - cell["y"])
-                        signature = self._core_transform_signature(
-                            module, rotation, anchor_x, anchor_y
-                        )
-                        if signature in seen:
-                            continue
-                        seen.add(signature)
-                        proposals.append((module, rotation, anchor_x, anchor_y))
-                        if len(proposals) >= CORE_STACK_PROPOSAL_LIMIT:
-                            return proposals
-        return proposals
-
-    def _shared_core_stack_candidates(
-        self,
-        orientation_basis: float,
-        *,
-        environments: Sequence[FloorEnvironment] | None = None,
-        dictionary: Sequence[dict] | None = None,
-        settings: dict[str, Any] | None = None,
-    ) -> list[CoreStackCandidate]:
-        """Return exact shared transforms; a core is never a floor-local action."""
-
-        active_settings = settings or self.settings
-        floors = list(self.environments if environments is None else environments)
-        modules = list(self.dictionary if dictionary is None else dictionary)
-        if bool(active_settings["singleFloor"]) or len(floors) <= 1 or not modules:
-            return []
-        if any(
-            environment.done
-            or len(environment.placements) >= int(active_settings["maxModules"])
-            for environment in floors
-        ):
-            return []
-
-        placing_first = all(not environment.placements for environment in floors)
-        if not placing_first:
-            # A second core is also a building-level action. Offer it only
-            # after every floor has developed six rooms, matching the quality
-            # gate used by the independent-floor policy without allowing one
-            # advanced floor to force an early stack onto all peers.
-            core_counts = [
-                sum(
-                    1
-                    for placement in environment.placements
-                    if placement.get("category") == "core"
-                )
-                for environment in floors
-            ]
-            room_counts = [
-                sum(
-                    1
-                    for placement in environment.placements
-                    if placement.get("category") == "room"
-                )
-                for environment in floors
-            ]
-            if any(count == 0 or count >= 2 for count in core_counts):
-                return []
-            if any(count < SECOND_CORE_MIN_ROOMS for count in room_counts):
-                return []
-        proposal_by_signature: dict[
-            tuple[str, float, float, float], tuple[dict, dict, float, float]
-        ] = {}
-        if placing_first:
-            proposals = self._initial_core_proposals(floors, modules)
-            for module, rotation, anchor_x, anchor_y in proposals:
-                signature = self._core_transform_signature(
-                    module, rotation, anchor_x, anchor_y
-                )
-                proposal_by_signature[signature] = (
-                    module,
-                    rotation,
-                    anchor_x,
-                    anchor_y,
-                )
-        else:
-            # Existing layouts use their bounded exposed-edge frontiers as the
-            # proposal source. Every proposal is still rechecked on every floor.
-            for module in modules:
-                for environment in floors:
-                    for candidate in environment.generate_candidates_for_module(
-                        module,
-                        active_settings,
-                        orientation_basis,
-                        category_filter=("core",),
-                    ):
-                        if candidate.module.get("category") != "core":
-                            continue
-                        signature = self._core_transform_signature(
-                            module,
-                            candidate.rotation,
-                            candidate.anchor_x,
-                            candidate.anchor_y,
-                        )
-                        proposal_by_signature.setdefault(
-                            signature,
-                            (
-                                module,
-                                candidate.rotation,
-                                candidate.anchor_x,
-                                candidate.anchor_y,
-                            ),
-                        )
-                        if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
-                            break
-                    if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
-                        break
-                if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
-                    break
-
-        shared: list[CoreStackCandidate] = []
-        for signature in sorted(proposal_by_signature):
-            module, rotation, anchor_x, anchor_y = proposal_by_signature[signature]
-            candidate = self._core_stack_at_transform(
-                floors,
-                module,
-                rotation,
-                anchor_x,
-                anchor_y,
-                active_settings,
-                orientation_basis,
-            )
-            if candidate is not None:
-                shared.append(candidate)
-                if len(shared) >= CORE_STACK_CANDIDATE_LIMIT:
-                    break
-        return shared
-
-    def _commit_core_stack(
-        self,
-        candidate: CoreStackCandidate,
-        log_prob: torch.Tensor,
-        orientation_basis: float,
-        *,
-        decision_features: Sequence[Sequence[float]] | None = None,
-        decision_action_index: int = 0,
-        decision_temperature: float = 1.0,
-    ) -> list[dict]:
-        """Revalidate and atomically commit one building-level core action."""
-
-        revalidated = self._core_stack_at_transform(
-            self.environments,
-            candidate.module,
-            candidate.rotation,
-            candidate.anchor_x,
-            candidate.anchor_y,
-            self.settings,
-            orientation_basis,
-        )
-        if revalidated is None:
-            raise CoreStackingError("selected core stack became invalid before commit")
-
-        stack_id = (
-            f"g{self.generation_id}:e{self.episode}:"
-            f"core{len(self.core_stack_records)}"
-        )
-        checkpoints = [
-            environment._stack_commit_checkpoint()
-            for environment in self.environments
-        ]
-        placements: list[dict] = []
-        try:
-            for environment, floor_candidate in zip(
-                self.environments, revalidated.floor_candidates
-            ):
-                placements.append(
-                    environment.place(
-                        floor_candidate,
-                        core_stack_id=stack_id,
-                        core_stack_trigger_floor=None,
-                    )
-                )
-        except Exception as error:
-            for environment, checkpoint in zip(self.environments, checkpoints):
-                environment._restore_stack_commit_checkpoint(checkpoint)
-            raise CoreStackingError(
-                f"core stack {stack_id} rolled back after commit failure"
-            ) from error
-
-        # One building action contributes exactly one detached/recomputed
-        # policy decision, independent of floor count.
-        if decision_features is None:
-            self._record_placement_log_prob(
-                BUILDING_TRAJECTORY_INDEX, log_prob.detach().cpu()
-            )
-        else:
-            self._record_placement_decision(
-                BUILDING_TRAJECTORY_INDEX,
-                decision_features,
-                decision_action_index,
-                decision_temperature,
-                log_prob,
-            )
-        self.core_stack_records.append(
-            {
-                "id": stack_id,
-                "moduleId": str(candidate.module["id"]),
-                "rotation": float(candidate.rotation.get("angle", 0.0)),
-                "localAnchor": {
-                    "x": float(candidate.anchor_x),
-                    "y": float(candidate.anchor_y),
-                },
-                "floorCount": len(self.environments),
-                "floorIndices": [environment.index for environment in self.environments],
-                "placementIds": [placement["id"] for placement in placements],
-                "locked": True,
-                "decisionScope": "building",
-                "logProbTerms": 1,
-            }
-        )
-        self._prepared_initial_core_stacks = []
-        return placements
-
-    @staticmethod
-    def _local_poly_signature(poly: Sequence[dict]) -> tuple[tuple[float, float], ...]:
-        return tuple(
-            (round(float(point["x"]), 6), round(float(point["y"]), 6))
-            for point in poly
-        )
-
-    def _core_stacking_event(self) -> dict[str, Any]:
-        """Build protocol metadata and independently audit every locked core."""
-
-        enabled = not bool(self.settings["singleFloor"]) and len(self.environments) > 1
-        if not enabled:
-            disabled_status = (
-                "disabled-single-floor"
-                if bool(self.settings["singleFloor"])
-                else "disabled-single-environment"
-            )
-            return {
-                "enabled": False,
-                "status": disabled_status,
-                "mode": "disabled",
-                "boundaryPolicy": "unchanged",
-                "floorCount": len(self.environments),
-                "siteResampleAttempts": 0,
-                "initialCandidateCount": 0,
-                "stackCount": 0,
-                "lockedCoreCount": 0,
-                "exactLocalAlignment": True,
-                "violations": [],
-                "stacks": [],
-            }
-
-        violations: list[str] = []
-        locked_core_count = 0
-        for environment in self.environments:
-            for placement in environment.placements:
-                if placement.get("category") != "core":
-                    continue
-                if not placement.get("coreStackLocked"):
-                    violations.append(f"floor{environment.index}:unlockedCore:{placement['id']}")
-                else:
-                    locked_core_count += 1
-
-        audited_stacks: list[dict[str, Any]] = []
-        for record in self.core_stack_records:
-            floor_placements: list[dict] = []
-            for environment in self.environments:
-                matches = [
-                    placement
-                    for placement in environment.placements
-                    if placement.get("coreStackId") == record["id"]
-                ]
-                if len(matches) != 1:
-                    violations.append(
-                        f"{record['id']}:floor{environment.index}:count={len(matches)}"
-                    )
-                    continue
-                floor_placements.append(matches[0])
-            if floor_placements:
-                reference = floor_placements[0]
-                reference_poly = self._local_poly_signature(reference["poly"])
-                for placement in floor_placements[1:]:
-                    if placement.get("moduleId") != reference.get("moduleId"):
-                        violations.append(f"{record['id']}:moduleMismatch")
-                    if not math.isclose(
-                        float(placement.get("rotation", 0.0)),
-                        float(reference.get("rotation", 0.0)),
-                        abs_tol=1.0e-6,
-                    ):
-                        violations.append(f"{record['id']}:rotationMismatch")
-                    if placement.get("localAnchor") != reference.get("localAnchor"):
-                        violations.append(f"{record['id']}:anchorMismatch")
-                    if self._local_poly_signature(placement["poly"]) != reference_poly:
-                        violations.append(f"{record['id']}:localPolygonMismatch")
-            audited_stacks.append(dict(record))
-
-        event = {
-            **self.core_stacking_metadata,
-            "enabled": True,
-            "status": "locked" if self.core_stack_records else "ready",
-            "floorCount": len(self.environments),
-            "stackCount": len(self.core_stack_records),
-            "lockedCoreCount": locked_core_count,
-            "exactLocalAlignment": not violations,
-            "violations": violations,
-            "stacks": audited_stacks,
-        }
-        return event
-
     def _prepare_generation(
         self,
         settings: dict[str, Any],
         generation_id: int,
         episode: int,
-    ) -> tuple[
-        list[FloorEnvironment],
-        list[dict],
-        list[torch.Tensor],
-        dict[str, Any],
-        list[CoreStackCandidate],
-    ]:
-        attempt_limit = 1 if bool(settings["singleFloor"]) else CORE_SITE_TRANSACTION_ATTEMPTS
-        for attempt in range(attempt_limit):
-            environments, atrium_logs = self._build_sites(
-                settings, generation_id, attempt=attempt
-            )
-            dictionary, shape_logs = self._synthesize_dictionary(
-                settings, environments, generation_id, episode
-            )
-            for environment in environments:
-                environment.reset(dictionary)
-            if bool(settings["singleFloor"]):
-                return (
-                    environments,
-                    dictionary,
-                    atrium_logs + shape_logs,
-                    {
-                        "enabled": False,
-                        "status": "disabled-single-floor",
-                        "mode": "disabled",
-                        "boundaryPolicy": "unchanged",
-                        "siteResampleAttempts": 0,
-                        "initialCandidateCount": 0,
-                    },
-                    [],
-                )
-            if len(environments) == 1:
-                return (
-                    environments,
-                    dictionary,
-                    atrium_logs + shape_logs,
-                    {
-                        "enabled": False,
-                        "status": "disabled-single-environment",
-                        "mode": "disabled",
-                        "boundaryPolicy": "unchanged",
-                        "siteResampleAttempts": 0,
-                        "initialCandidateCount": 0,
-                    },
-                    [],
-                )
-
-            initial_stacks = self._shared_core_stack_candidates(
-                0.0,
-                environments=environments,
-                dictionary=dictionary,
-                settings=settings,
-            )
-            if initial_stacks:
-                return (
-                    environments,
-                    dictionary,
-                    atrium_logs + shape_logs,
-                    {
-                        "enabled": True,
-                        "status": "ready",
-                        "mode": "exact-shared-transform",
-                        "boundaryPolicy": "whole-site-resample",
-                        "siteResampleAttempts": attempt,
-                        "initialCandidateCount": len(initial_stacks),
-                    },
-                    initial_stacks,
-                )
-        raise CoreStackingError(
-            "no exact common core transform after "
-            f"{attempt_limit} whole-site transactions; original boundary families were preserved"
+    ) -> tuple[list[FloorEnvironment], list[dict], list[torch.Tensor]]:
+        environments, atrium_logs = self._build_sites(settings, generation_id)
+        dictionary, shape_logs = self._synthesize_dictionary(
+            settings, environments, generation_id, episode
         )
+        for environment in environments:
+            environment.reset(dictionary)
+        return environments, dictionary, atrium_logs + shape_logs
 
     def _commit_generation(
         self,
@@ -3882,8 +3215,6 @@ class ParallelTrainer:
         environments: list[FloorEnvironment],
         dictionary: list[dict],
         shape_logs: list[torch.Tensor],
-        core_stacking_metadata: dict[str, Any],
-        initial_core_stacks: list[CoreStackCandidate],
     ) -> None:
         next_reward_signature = (
             self._reward_signature(settings),
@@ -3904,15 +3235,7 @@ class ParallelTrainer:
         self.environments = environments
         self.dictionary = dictionary
         self.shape_log_probs = shape_logs
-        self.building_shape_log_probs = (
-            [shape_logs[-1]]
-            if bool(core_stacking_metadata.get("enabled")) and shape_logs
-            else []
-        )
         self.placement_log_probs = []
-        self.core_stack_records = []
-        self.core_stacking_metadata = dict(core_stacking_metadata)
-        self._prepared_initial_core_stacks = list(initial_core_stacks)
         self.placement_log_probs_by_environment = {}
         self.placement_decisions = []
         self.step_number = 0
@@ -3926,18 +3249,18 @@ class ParallelTrainer:
 
         proposed = validate_settings_patch(self.settings, patch)
         generation = self.generation_id + 1
-        prepared = self._prepare_generation(proposed, generation, self.episode)
-        self._commit_generation(proposed, generation, *prepared)
+        environments, dictionary, shape_logs = self._prepare_generation(proposed, generation, self.episode)
+        self._commit_generation(proposed, generation, environments, dictionary, shape_logs)
         return self.site_event()
 
     def new_site(self) -> dict[str, Any]:
         """Atomically replace local sites while preserving learned policy state."""
 
         generation = self.generation_id + 1
-        prepared = self._prepare_generation(
+        environments, dictionary, shape_logs = self._prepare_generation(
             self.settings, generation, self.episode
         )
-        self._commit_generation(self.settings, generation, *prepared)
+        self._commit_generation(self.settings, generation, environments, dictionary, shape_logs)
         return self.site_event()
 
     def reset_policy(self) -> dict[str, Any]:
@@ -3951,7 +3274,7 @@ class ParallelTrainer:
         try:
             self.episode = 0
             generation = self.generation_id + 1
-            prepared = self._prepare_generation(
+            environments, dictionary, shape_logs = self._prepare_generation(
                 self.settings, generation, self.episode
             )
         except Exception:
@@ -3976,7 +3299,7 @@ class ParallelTrainer:
         self.baseline_transition_remaining = 0
         self.baseline_transition_anchor_reward = 0.0
         self.last_frontier_reward = 0.0
-        self._commit_generation(self.settings, generation, *prepared)
+        self._commit_generation(self.settings, generation, environments, dictionary, shape_logs)
         return self.site_event()
 
     def _aggregate_online(self) -> dict[str, Any]:
@@ -4004,7 +3327,6 @@ class ParallelTrainer:
             "daylightRatio": 0.0,
             "score": score,
             "perSite": per_site,
-            "coreStacking": self._core_stacking_event(),
         }
 
     def _runtime_diagnostics(self) -> dict[str, Any]:
@@ -4039,7 +3361,7 @@ class ParallelTrainer:
             else {"available": False, "enabled": False, "loadError": "unsupported"}
         )
         return {
-            "device": self.device.type,
+            "device": str(self.device),
             "nativeGeometry": native_status,
             "processPeakRssBytes": peak_rss_bytes,
             "acceleratorAllocatedBytes": accelerator_allocated,
@@ -4055,14 +3377,13 @@ class ParallelTrainer:
             "type": "site",
             "generationId": self.generation_id,
             "episode": self.episode,
-            "device": self.device.type,
+            "device": str(self.device),
             "boundaries": [environment.world_boundary() for environment in self.environments],
             "dictionary": [_public_module(module) for module in self.dictionary],
             "metrics": metrics,
             "diagnostics": diagnostics,
             "scoreHistory": list(self.score_history),
             "bestScore": float(self.best_score),
-            "coreStacking": self._core_stacking_event(),
         }
 
     def _aggregate_terminal(
@@ -4191,7 +3512,6 @@ class ParallelTrainer:
             "partialConnectionPenalty": partial_connection_penalty * 100.0,
             "score": score,
             "perSite": list(per_site),
-            "coreStacking": self._core_stacking_event(),
         }
 
     def _try_place_new_module(
@@ -4210,18 +3530,7 @@ class ParallelTrainer:
             orientation_basis,
             profiler=self.step_profiler,
             limit=per_environment_limit,
-            category_filter=("room",)
-            if not bool(self.settings["singleFloor"]) and len(self.environments) > 1
-            else None,
         )
-        if not bool(self.settings["singleFloor"]) and len(self.environments) > 1:
-            # Exact multi-floor cores are exclusively owned by the shared
-            # building gate; a shape-repair path must never create one locally.
-            candidates = [
-                candidate
-                for candidate in candidates
-                if candidate.module.get("category") != "core"
-            ]
         if not candidates:
             return None
         self.dictionary.append(module)
@@ -4231,9 +3540,7 @@ class ParallelTrainer:
                 peer.module_uses[module["id"]] = 0
 
         features = [candidate.features for candidate in candidates]
-        feature_tensor = torch.tensor(
-            features, dtype=torch.float32, device=self.device
-        )
+        feature_tensor = torch.tensor(features, dtype=torch.float32, device=self.device)
         with torch.no_grad():
             logits = torch.nan_to_num(
                 self.model.placement_logits(feature_tensor),
@@ -4321,27 +3628,14 @@ class ParallelTrainer:
                 terms.append(trajectory_term)
         elif self.placement_log_probs:
             terms.append(torch.stack(self.placement_log_probs).sum())
-        building_shape_ids = {
-            id(log_probability)
-            for log_probability in self.building_shape_log_probs
-        }
-        floor_shape_log_probs = [
-            log_probability
-            for log_probability in self.shape_log_probs
-            if id(log_probability) not in building_shape_ids
-        ]
-        if floor_shape_log_probs:
-            # Atrium and dynamic-shape actions belong to floor rollouts. Keep
-            # their aggregate scale stable when moving between 4 and 8 floors.
+        if self.shape_log_probs:
+            # Shape/atrium actions also belong to independent floor rollouts;
+            # keep their scale invariant as a run moves from 4 to 8 floors.
             terms.append(
                 0.8
-                * torch.stack(floor_shape_log_probs).sum()
+                * torch.stack(self.shape_log_probs).sum()
                 / max(1, len(self.environments))
             )
-        if self.building_shape_log_probs:
-            # The mandatory core geometry is sampled once for the entire
-            # building and therefore remains one unscaled policy action.
-            terms.append(0.8 * torch.stack(self.building_shape_log_probs).sum())
 
         floor_descriptors = self._site_descriptor(self.environments, self.settings)
         if not floor_descriptors:
@@ -4385,7 +3679,6 @@ class ParallelTrainer:
     def _finish_episode(self) -> dict[str, Any]:
         episode_start_time = getattr(self, "episode_start_time", time.perf_counter())
         completed_episode = self.episode
-        completed_core_stacking = self._core_stacking_event()
         
         terminal_metrics_start = time.perf_counter()
         per_site = [
@@ -4477,7 +3770,7 @@ class ParallelTrainer:
             dx, dy = environment.offset
             for placement in environment.placements:
                 world_poly = G.translate_polygon(placement["poly"], dx, dy)
-                formatted_placement = {
+                individual_placements_formatted.append({
                     "id": placement["id"],
                     "poly": world_poly,
                     "instanceIdx": env_idx,
@@ -4486,105 +3779,23 @@ class ParallelTrainer:
                         "id": placement.get("shapeType", placement.get("moduleId", placement["id"])),
                         "category": placement.get("category", "room"),
                     },
-                }
-                if placement.get("coreStackLocked"):
-                    stack_fields = {
-                        "coreStackId": placement["coreStackId"],
-                        "coreStackLocked": True,
-                        "coreStackTriggerFloor": placement.get("coreStackTriggerFloor"),
-                        "localAnchor": dict(placement["localAnchor"]),
-                    }
-                    formatted_placement.update(stack_fields)
-                    formatted_placement["module"].update(stack_fields)
-                individual_placements_formatted.append(formatted_placement)
+                })
         self.step_profiler.record("episodeFormatting", time.perf_counter() - episode_formatting_start)
 
         self.episode += 1
         dict_synthesis_start = time.perf_counter()
-        next_initial_stacks: list[CoreStackCandidate] = []
-        if not bool(self.settings["singleFloor"]) and len(self.environments) > 1:
-            # Keep the already-proven learned core across episodes on this site.
-            # New room vocabulary remains dynamic, but a later episode can never
-            # enter an unvalidated partial-core state.
-            primary_core = next(
-                (
-                    module
-                    for module in self.dictionary
-                    if module.get("category") == "core"
-                ),
-                None,
-            )
-            if primary_core is None:
-                raise CoreStackingError("completed multi-floor episode lost its primary core module")
-            next_dictionary = [primary_core]
-            next_shape_logs = []
-            empty_floors: list[FloorEnvironment] = []
-            for environment in self.environments:
-                empty = FloorEnvironment(
-                    environment.index,
-                    environment.boundary,
-                    environment.atrium_choice,
-                    environment.site,
-                    environment.offset,
-                    G.RNG(
-                        int(self.settings["seed"])
-                        + self.generation_id * 104729
-                        + self.episode * 65537
-                        + environment.index * 8191
-                    ),
-                )
-                empty.reset(next_dictionary)
-                empty_floors.append(empty)
-            next_basis = (
-                0.0
-                if float(self.settings["angleStep"]) <= 0.0
-                else (self.episode * float(self.settings["angleStep"]) * 3.0) % 180.0
-            )
-            preflight = self._shared_core_stack_candidates(
-                next_basis,
-                environments=empty_floors,
-                dictionary=next_dictionary,
-                settings=self.settings,
-            )
-            if not preflight:
-                raise CoreStackingError(
-                    "the proven core failed empty-floor prevalidation for the next episode"
-                )
-        else:
-            next_dictionary, next_shape_logs = self._synthesize_dictionary(
-                self.settings, self.environments, self.generation_id, self.episode
-            )
+        next_dictionary, next_shape_logs = self._synthesize_dictionary(
+            self.settings, self.environments, self.generation_id, self.episode
+        )
         self.step_profiler.record("dictSynthesis", time.perf_counter() - dict_synthesis_start)
         self.dictionary = next_dictionary
         self.shape_log_probs = next_shape_logs
-        self.building_shape_log_probs = []
         self.placement_log_probs = []
-        self.core_stack_records = []
         self.placement_log_probs_by_environment = {}
         self.placement_decisions = []
         self.step_number = 0
         for environment in self.environments:
             environment.reset(next_dictionary)
-        if not bool(self.settings["singleFloor"]) and len(self.environments) > 1:
-            next_initial_stacks = self._shared_core_stack_candidates(next_basis)
-            if not next_initial_stacks:
-                raise CoreStackingError("next episode lost its prevalidated core transforms")
-            self.core_stacking_metadata = {
-                **self.core_stacking_metadata,
-                "enabled": True,
-                "status": "ready",
-                "initialCandidateCount": len(next_initial_stacks),
-            }
-        else:
-            self.core_stacking_metadata = {
-                "enabled": False,
-                "status": "disabled-single-floor",
-                "mode": "disabled",
-                "boundaryPolicy": "unchanged",
-                "siteResampleAttempts": 0,
-                "initialCandidateCount": 0,
-            }
-        self._prepared_initial_core_stacks = next_initial_stacks
         self._reset_episode_reward_telemetry()
             
         # 4. Format merged placements for rendering
@@ -4660,15 +3871,13 @@ class ParallelTrainer:
             "mergedDictionary": [_public_merged_module(module) for module in merged_vocab],
             "placements": individual_placements_formatted,
             "mergedPlacements": merged_placements_formatted,
-            "coreStacking": completed_core_stacking,
-            "nextCoreStacking": self._core_stacking_event(),
             "diagnostics": diagnostics,
         }
 
     def step(self, generation_id: Any, episode: Any) -> dict[str, Any]:
-        """Advance active floors while keeping cores as one building action."""
-
+        """Advance every active floor with one batched placement-policy call."""
         step_start_time = time.perf_counter()
+
         if self.step_number == 0 or not hasattr(self, "episode_start_time"):
             self.episode_start_time = step_start_time
 
@@ -4690,44 +3899,12 @@ class ParallelTrainer:
             return self._finish_episode()
 
         angle_step = float(self.settings["angleStep"])
-        orientation_basis = (
-            0.0
-            if angle_step <= 0.0
-            else (self.episode * angle_step * 3.0) % 180.0
-        )
-        multi_floor = (
-            not bool(self.settings["singleFloor"])
-            and len(self.environments) > 1
-        )
-        core_presence = [bool(environment.core_ids) for environment in self.environments]
-        if multi_floor and any(core_presence) and not all(core_presence):
-            raise CoreStackingError("partial core state detected before building action")
-        initial_core_required = multi_floor and not any(core_presence)
-
-        shared_stacks: list[CoreStackCandidate] = []
-        if multi_floor:
-            if initial_core_required and self._prepared_initial_core_stacks:
-                for prepared_stack in self._prepared_initial_core_stacks:
-                    revalidated = self._core_stack_at_transform(
-                        self.environments,
-                        prepared_stack.module,
-                        prepared_stack.rotation,
-                        prepared_stack.anchor_x,
-                        prepared_stack.anchor_y,
-                        self.settings,
-                        orientation_basis,
-                    )
-                    if revalidated is not None:
-                        shared_stacks.append(revalidated)
-            if not shared_stacks:
-                shared_stacks = self._shared_core_stack_candidates(orientation_basis)
-            if initial_core_required and not shared_stacks:
-                raise CoreStackingError(
-                    "the prevalidated first core has no exact transform on every floor"
-                )
-
+        orientation_basis = 0.0 if angle_step <= 0.0 else (self.episode * angle_step * 3.0) % 180.0
         candidate_groups: list[tuple[FloorEnvironment, list[PlacementCandidate]]] = []
         all_features: list[list[float]] = []
+        # Keep the shared action batch bounded as the number of floors grows.
+        # Twelve exact actions per floor preserve enough geometric diversity
+        # for each environment to reach its requested episode cap.
         per_environment_limit = max(12, 48 // max(1, len(self.environments)))
         active_environments: list[FloorEnvironment] = []
         for environment in self.environments:
@@ -4735,9 +3912,6 @@ class ParallelTrainer:
                 continue
             if len(environment.placements) >= int(self.settings["maxModules"]):
                 environment.done = True
-                continue
-            if initial_core_required:
-                # The first multi-floor action is indivisible and mandatory.
                 continue
             active_environments.append(environment)
 
@@ -4750,250 +3924,148 @@ class ParallelTrainer:
                 orientation_basis,
                 limit=per_environment_limit,
                 profiler=self.step_profiler,
-                allow_core=not multi_floor,
             )
-            if multi_floor:
-                # Floor-local trajectories never own core actions.
-                candidates = [
-                    candidate
-                    for candidate in candidates
-                    if candidate.module.get("category") != "core"
-                ]
             return environment, candidates, time.perf_counter() - generation_started
 
         if len(active_environments) > 1:
-            generated = list(
-                self.executor.map(generate_for_environment, active_environments)
-            )
+            generated = list(self.executor.map(generate_for_environment, active_environments))
         else:
-            generated = [
-                generate_for_environment(environment)
-                for environment in active_environments
-            ]
+            generated = [generate_for_environment(environment) for environment in active_environments]
 
         for environment, candidates, candidate_generation_duration in generated:
-            self.step_profiler.record(
-                "candidateGeneration", candidate_generation_duration
+            self.step_profiler.record("candidateGeneration", candidate_generation_duration)
+            self._record_frontier_sample(
+                environment,
+                candidate_generation_duration,
             )
-            self._record_frontier_sample(environment, candidate_generation_duration)
             if not candidates:
-                if not shared_stacks:
-                    environment.done = True
+                environment.done = True
                 continue
             candidate_groups.append((environment, candidates))
             all_features.extend(candidate.features for candidate in candidates)
 
-        if not candidate_groups and not shared_stacks:
+        if not candidate_groups:
             return self._finish_episode()
 
+        feature_tensor = torch.tensor(all_features, dtype=torch.float32, device=self.device)
+        policy_inference_start = time.perf_counter()
+        with torch.no_grad():
+            logits = torch.nan_to_num(
+                self.model.placement_logits(feature_tensor),
+                nan=0.0,
+                posinf=20.0,
+                neginf=-20.0,
+            ).clamp(-30.0, 30.0)
+        self.step_profiler.record("policyInference", time.perf_counter() - policy_inference_start)
         temperature = max(0.32, 0.90 * math.exp(-self.episode / 45.0))
         placements: list[dict] = []
-        stack_selected = False
-
-        if shared_stacks:
-            gate_actions: list[CoreStackCandidate | None] = []
-            gate_features: list[list[float]] = []
-            if candidate_groups and not initial_core_required:
-                floor_alternatives = [
-                    _mean_feature_rows(
-                        candidate.features for candidate in candidates
-                    )
-                    for _, candidates in candidate_groups
-                ]
-                gate_actions.append(None)
-                gate_features.append(_mean_feature_rows(floor_alternatives))
-            gate_actions.extend(shared_stacks)
-            gate_features.extend(stack.features for stack in shared_stacks)
-            gate_tensor = torch.tensor(
-                gate_features, dtype=torch.float32, device=self.device
+        cursor = 0
+        for environment, candidates in candidate_groups:
+            group_logits = logits[cursor : cursor + len(candidates)] / temperature
+            cursor += len(candidates)
+            distribution = torch.distributions.Categorical(logits=group_logits)
+            selected_index = distribution.sample()
+            selected_offset = int(selected_index.item())
+            selected_candidate = candidates[selected_offset]
+            self._record_placement_decision(
+                environment.index,
+                [candidate.features for candidate in candidates],
+                selected_offset,
+                temperature,
+                distribution.log_prob(selected_index),
             )
-            gate_started = time.perf_counter()
-            with torch.no_grad():
-                gate_logits = torch.nan_to_num(
-                    self.model.placement_logits(gate_tensor),
-                    nan=0.0,
-                    posinf=20.0,
-                    neginf=-20.0,
-                ).clamp(-30.0, 30.0) / temperature
-            gate_distribution = torch.distributions.Categorical(logits=gate_logits)
-            gate_index = gate_distribution.sample()
-            gate_offset = int(gate_index.item())
-            gate_log_prob = gate_distribution.log_prob(gate_index)
-            self.step_profiler.record(
-                "policyInference", time.perf_counter() - gate_started
-            )
-            selected_stack = gate_actions[gate_offset]
-            if selected_stack is not None:
-                placement_started = time.perf_counter()
-                placements.extend(
-                    self._commit_core_stack(
-                        selected_stack,
-                        gate_log_prob,
-                        orientation_basis,
-                        decision_features=gate_features,
-                        decision_action_index=gate_offset,
-                        decision_temperature=temperature,
-                    )
-                )
-                self.step_profiler.record(
-                    "placement", time.perf_counter() - placement_started
-                )
-                stack_selected = True
-            else:
-                self._record_placement_decision(
-                    BUILDING_TRAJECTORY_INDEX,
-                    gate_features,
-                    gate_offset,
-                    temperature,
-                    gate_log_prob,
-                )
-
-        if not stack_selected:
-            if not candidate_groups:
-                return self._finish_episode()
-            feature_tensor = torch.tensor(
-                all_features, dtype=torch.float32, device=self.device
-            )
-            inference_started = time.perf_counter()
-            with torch.no_grad():
-                logits = torch.nan_to_num(
-                    self.model.placement_logits(feature_tensor),
-                    nan=0.0,
-                    posinf=20.0,
-                    neginf=-20.0,
-                ).clamp(-30.0, 30.0)
-            self.step_profiler.record(
-                "policyInference", time.perf_counter() - inference_started
-            )
-
-            cursor = 0
-            for environment, candidates in candidate_groups:
-                group_logits = logits[cursor : cursor + len(candidates)] / temperature
-                cursor += len(candidates)
-                distribution = torch.distributions.Categorical(logits=group_logits)
-                selected_index = distribution.sample()
-                selected_offset = int(selected_index.item())
-                selected_candidate = candidates[selected_offset]
-                self._record_placement_decision(
-                    environment.index,
-                    [candidate.features for candidate in candidates],
-                    selected_offset,
-                    temperature,
-                    distribution.log_prob(selected_index),
-                )
-
-                if selected_candidate.module["id"] == "stop":
-                    environment.done = True
-                    continue
-                if selected_candidate.module["id"] == "create_new":
-                    slot_index = len(self.dictionary)
-                    placed = False
-                    synthesis_started = time.perf_counter()
-                    for _attempt in range(2):
-                        try:
-                            new_module, shape_log_prob = self._sample_custom_shape(
-                                self.settings, self.environments, slot_index
-                            )
-                            # Sampling the shape is a real decision even if its
-                            # placement mask is empty.
-                            self.shape_log_probs.append(shape_log_prob)
-                            placement = self._try_place_new_module(
-                                environment,
-                                new_module,
-                                orientation_basis,
-                                per_environment_limit,
-                                temperature,
-                            )
-                            if placement is not None:
-                                placements.append(placement)
-                                placed = True
-                                break
-                        except ValueError:
-                            continue
-
-                    if not placed:
-                        fallback_candidates = [
-                            candidate
-                            for candidate in candidates
-                            if candidate.module["id"] not in ("create_new", "stop")
-                        ]
-                        if fallback_candidates:
-                            fallback_features = [
-                                candidate.features
-                                for candidate in fallback_candidates
-                            ]
-                            fallback_tensor = torch.tensor(
-                                fallback_features,
-                                dtype=torch.float32,
-                                device=self.device,
-                            )
-                            with torch.no_grad():
-                                fallback_logits = torch.nan_to_num(
-                                    self.model.placement_logits(fallback_tensor),
-                                    nan=0.0,
-                                    posinf=20.0,
-                                    neginf=-20.0,
-                                ).clamp(-30.0, 30.0) / temperature
-                            fallback_distribution = torch.distributions.Categorical(
-                                logits=fallback_logits
-                            )
-                            fallback_index = fallback_distribution.sample()
-                            fallback_offset = int(fallback_index.item())
-                            self._record_placement_decision(
-                                environment.index,
-                                fallback_features,
-                                fallback_offset,
-                                temperature,
-                                fallback_distribution.log_prob(fallback_index),
-                            )
-                            placements.append(
-                                environment.place(
-                                    fallback_candidates[fallback_offset]
-                                )
-                            )
+            
+            if selected_candidate.module["id"] == "stop":
+                environment.done = True
+                continue
+            elif selected_candidate.module["id"] == "create_new":
+                slot_idx = len(self.dictionary)
+                placed = False
+                shape_synthesis_start = time.perf_counter()
+                for _attempt in range(2):
+                    try:
+                        new_module, shape_log_prob = self._sample_custom_shape(self.settings, self.environments, slot_idx)
+                        # The proposal is a real stochastic decision even when
+                        # geometry later masks every placement for that shape.
+                        self.shape_log_probs.append(shape_log_prob)
+                        placement = self._try_place_new_module(
+                            environment,
+                            new_module,
+                            orientation_basis,
+                            per_environment_limit,
+                            temperature,
+                        )
+                        if placement is not None:
+                            placements.append(placement)
                             placed = True
-                        else:
-                            if environment.placements:
-                                for repair_module in self._frontier_compatible_modules(
-                                    self.settings, environment, slot_index
-                                ):
-                                    placement = self._try_place_new_module(
-                                        environment,
-                                        repair_module,
-                                        orientation_basis,
-                                        per_environment_limit,
-                                        temperature,
-                                    )
-                                    if placement is not None:
-                                        placements.append(placement)
-                                        placed = True
-                                        break
-                            if not placed:
-                                environment.consecutive_proposal_failures += 1
-                                environment.done = (
-                                    environment.consecutive_proposal_failures
-                                    >= MAX_CONSECUTIVE_PROPOSAL_FAILURES
+                            break
+                    except ValueError:
+                        continue
+                if not placed:
+                    # Fallback to existing non-create_new candidates for this floor
+                    fallback_candidates = [c for c in candidates if c.module["id"] not in ("create_new", "stop")]
+                    if fallback_candidates:
+                        fb_features = [c.features for c in fallback_candidates]
+                        fb_tensor = torch.tensor(fb_features, dtype=torch.float32, device=self.device)
+                        with torch.no_grad():
+                            fb_logits = torch.nan_to_num(
+                                self.model.placement_logits(fb_tensor),
+                                nan=0.0,
+                                posinf=20.0,
+                                neginf=-20.0,
+                            ).clamp(-30.0, 30.0) / temperature
+                        fb_dist = torch.distributions.Categorical(logits=fb_logits)
+                        fb_sel = fb_dist.sample()
+                        fb_selected_offset = int(fb_sel.item())
+                        self._record_placement_decision(
+                            environment.index,
+                            fb_features,
+                            fb_selected_offset,
+                            temperature,
+                            fb_dist.log_prob(fb_sel),
+                        )
+                        placement = environment.place(fallback_candidates[fb_selected_offset])
+                        placements.append(placement)
+                        placed = True
+                    else:
+                        if environment.placements:
+                            for repair_module in self._frontier_compatible_modules(
+                                self.settings, environment, slot_idx
+                            ):
+                                placement = self._try_place_new_module(
+                                    environment,
+                                    repair_module,
+                                    orientation_basis,
+                                    per_environment_limit,
+                                    temperature,
                                 )
-                    self.step_profiler.record(
-                        "shapeSynthesis", time.perf_counter() - synthesis_started
-                    )
-                else:
-                    placement_started = time.perf_counter()
-                    placements.append(environment.place(selected_candidate))
-                    self.step_profiler.record(
-                        "placement", time.perf_counter() - placement_started
-                    )
-
-                if len(environment.placements) >= int(self.settings["maxModules"]):
-                    environment.done = True
-
-        for environment in self.environments:
+                                if placement is not None:
+                                    placements.append(placement)
+                                    placed = True
+                                    break
+                        if not placed:
+                            environment.consecutive_proposal_failures += 1
+                            environment.done = (
+                                environment.consecutive_proposal_failures
+                                >= MAX_CONSECUTIVE_PROPOSAL_FAILURES
+                            )
+                self.step_profiler.record(
+                    "shapeSynthesis", time.perf_counter() - shape_synthesis_start
+                )
+            else:
+                placement_start = time.perf_counter()
+                placement = environment.place(selected_candidate)
+                placements.append(placement)
+                self.step_profiler.record("placement", time.perf_counter() - placement_start)
+                
             if len(environment.placements) >= int(self.settings["maxModules"]):
                 environment.done = True
 
         self.step_number += 1
-        # BPE remains terminal/evaluate-only; rebuilding on every delta is
-        # quadratic and does not affect transitions.
+        
+        # Full BPE is available through evaluate() while paused and is run at
+        # episode completion. Rebuilding the complete graph after every delta
+        # is quadratic work that does not affect environment transitions.
         merged_vocab: list[graph.MergedModule] = []
         merged_placements_formatted: list[dict[str, Any]] = []
         self.step_profiler.record("bpeMerge", 0.0)
@@ -5010,12 +4082,9 @@ class ParallelTrainer:
             "step": self.step_number,
             "placements": placements,
             "mergedPlacements": merged_placements_formatted,
-            "mergedDictionary": [
-                _public_merged_module(module) for module in merged_vocab
-            ],
+            "mergedDictionary": [_public_merged_module(module) for module in merged_vocab],
             "dictionary": [_public_module(module) for module in self.dictionary],
             "metrics": metrics,
-            "coreStacking": self._core_stacking_event(),
             "diagnostics": diagnostics,
         }
 
@@ -5161,7 +4230,6 @@ class ParallelTrainer:
             "mergedPlacements": merged_placements_formatted,
             "mergedDictionary": [_public_merged_module(module) for module in merged_vocab],
             "metrics": metrics,
-            "coreStacking": self._core_stacking_event(),
             "diagnostics": diagnostics,
         }
 
@@ -5245,11 +4313,7 @@ class ParallelTrainer:
             self.environments,
             self.dictionary,
             self.shape_log_probs,
-            self.building_shape_log_probs,
             self.placement_log_probs,
-            self.core_stack_records,
-            self.core_stacking_metadata,
-            self._prepared_initial_core_stacks,
             self.placement_log_probs_by_environment,
             self.placement_decisions,
             self.step_number,
@@ -5399,10 +4463,12 @@ class ParallelTrainer:
             
             # Prepare new generation using the loaded policy/settings
             generation = self.generation_id + 1
-            prepared = self._prepare_generation(
+            environments, dictionary, shape_logs = self._prepare_generation(
                 self.settings, generation, self.episode
             )
-            self._commit_generation(self.settings, generation, *prepared)
+            self._commit_generation(
+                self.settings, generation, environments, dictionary, shape_logs
+            )
             event = self.site_event()
         except Exception:
             # Restore original state if anything failed
@@ -5422,11 +4488,7 @@ class ParallelTrainer:
                 self.environments,
                 self.dictionary,
                 self.shape_log_probs,
-                self.building_shape_log_probs,
                 self.placement_log_probs,
-                self.core_stack_records,
-                self.core_stacking_metadata,
-                self._prepared_initial_core_stacks,
                 self.placement_log_probs_by_environment,
                 self.placement_decisions,
                 self.step_number,
@@ -5450,7 +4512,7 @@ class ParallelTrainer:
 
 
 
-app = FastAPI(title="Module Lab v0.8.0")
+app = FastAPI(title="Module Lab v0.8.1")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -5636,17 +4698,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                         trainer, str(error), command=command, code="invalid_settings", recoverable=True
                     ),
                 )
-            except CoreStackingError as error:
-                await _send_json(
-                    websocket,
-                    _error_event(
-                        trainer,
-                        str(error),
-                        command=command,
-                        code="core_stacking_error",
-                        recoverable=True,
-                    ),
-                )
             except Exception as error:
                 print(f"{command} failed: {error}")
                 await _send_json(
@@ -5664,6 +4715,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
 
 if __name__ == "__main__":
-    print(f"Module Lab v0.8.0 policy device: {select_device().type}")
+    print(f"Module Lab v0.8.1 policy device: {select_device()}")
     port = int(os.environ.get("PORT", "8000"))
     uvicorn.run(app, host="127.0.0.1", port=port)

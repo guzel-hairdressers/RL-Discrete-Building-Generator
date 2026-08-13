@@ -15,7 +15,7 @@ The benchmark compares four anchor providers:
     The endpoint-only, never-retired FrontierGraph proposal recovered from the
     upstream feature branch.  It is reproduced here rather than integrated.
 
-Run from the v0.8.0 or v0.8.1 directory (or anywhere else):
+Run from the v0.8.1 directory (or anywhere else):
 
     python3 scratch/benchmark_graph_frontier.py --repetitions 250
 
@@ -36,6 +36,8 @@ from typing import Any
 
 
 MODULE_DIR = pathlib.Path(__file__).resolve().parents[1]
+if str(MODULE_DIR / "src") not in sys.path:
+    sys.path.insert(0, str(MODULE_DIR / "src"))
 if str(MODULE_DIR) not in sys.path:
     sys.path.insert(0, str(MODULE_DIR))
 
@@ -44,11 +46,10 @@ import graph  # noqa: E402
 import server  # noqa: E402
 
 
-Anchor = tuple[float, float, int | None]
+Anchor = tuple[float, float, Any]
 
 
 def _edge_anchors(
-    environment: server.FloorEnvironment,
     candidate_first: dict[str, float],
     candidate_second: dict[str, float],
     edge: dict[str, Any],
@@ -66,19 +67,6 @@ def _edge_anchors(
     placed_dx = placed_second["x"] - placed_first["x"]
     placed_dy = placed_second["y"] - placed_first["y"]
     placed_length = float(edge["length"])
-    placed_poly = environment.placement_by_id[edge["placementId"]]["poly"]
-    full_first = placed_poly[edge["edgeIndex"]]
-    full_second = placed_poly[(edge["edgeIndex"] + 1) % len(placed_poly)]
-    full_placed_length = math.hypot(
-        full_second["x"] - full_first["x"],
-        full_second["y"] - full_first["y"],
-    )
-    length_ratio = candidate_length / max(full_placed_length, G.EPSILON)
-    if not any(
-        abs(length_ratio - valid_ratio) < 5.0e-3
-        for valid_ratio in (0.5, 1.0, 2.0)
-    ):
-        return []
     cross = placed_dx * candidate_dy - placed_dy * candidate_dx
     if abs(cross) > 1.0e-7 * placed_length * candidate_length:
         return []
@@ -143,11 +131,7 @@ def exhaustive_residual_anchors(
     for index, candidate_first in enumerate(candidate_poly):
         candidate_second = candidate_poly[(index + 1) % len(candidate_poly)]
         for edge in environment.attachment_edges.values():
-            anchors.extend(
-                _edge_anchors(
-                    environment, candidate_first, candidate_second, edge
-                )
-            )
+            anchors.extend(_edge_anchors(candidate_first, candidate_second, edge))
     return anchors
 
 
@@ -175,11 +159,7 @@ def exact_indexed_anchors(
         for edge_id in edge_ids:
             edge = environment.attachment_edges.get(edge_id)
             if edge is not None:
-                anchors.extend(
-                    _edge_anchors(
-                        environment, candidate_first, candidate_second, edge
-                    )
-                )
+                anchors.extend(_edge_anchors(candidate_first, candidate_second, edge))
     return anchors
 
 
@@ -549,7 +529,7 @@ def run_benchmark(repetitions: int, include_rollouts: bool = True) -> dict[str, 
         for name, environment, probe_module, probe_rotation, build_ms in scenarios
     ]
     return {
-        "benchmark": "v0.8.0 graph-frontier evaluation",
+        "benchmark": "v0.8.1 graph-frontier evaluation",
         "python": sys.version.split()[0],
         "attachment_match_limit": server.ATTACHMENT_MATCH_LIMIT,
         "attachment_frontier_limit": server.ATTACHMENT_FRONTIER_LIMIT,

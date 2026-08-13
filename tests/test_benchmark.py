@@ -13,7 +13,8 @@ import textwrap
 import unittest
 
 
-BENCHMARK_PATH = Path(__file__).resolve().parents[1] / "benchmarks" / "benchmark.py"
+MODULE_DIR = Path(__file__).resolve().parents[1]
+BENCHMARK_PATH = (MODULE_DIR / "benchmarks" / "benchmark.py") if (MODULE_DIR / "benchmarks" / "benchmark.py").is_file() else (MODULE_DIR / "scratch" / "benchmark.py")
 SPEC = importlib.util.spec_from_file_location("module_lab_benchmark", BENCHMARK_PATH)
 assert SPEC is not None and SPEC.loader is not None
 benchmark = importlib.util.module_from_spec(SPEC)

@@ -1,358 +1,255 @@
-# v0.8.0 optimization report
+# v0.8.1 optimization report
 
-## Outcome and lineage
+## Outcome
 
-v0.8.0 turns the old core-stacking idea into an explicit building transaction on the optimized Module Lab kernel. It does not build directly on the slow v0.6-c implementation: v0.6-c supplies the behavioral goal, while v0.8.0 uses the current exact geometry, bounded proposal search, native broad phases, terminal-only BPE, and Monte Carlo actor–critic.
+v0.8.1 removes the dominant repeated work from the v0.7-D placement loop without replacing its exact vector-geometry acceptance rules. The final-code representative result is a **5.919139752213579x** reduction in mean episode wall time on the 10-episode lobed workload when compared with the separately recorded, same-configuration root baseline. A 20-episode rectangular artifact retains a **5.067408708026263x** paired result from an earlier development point; it is useful historical paired evidence but does not measure the final release code.
 
-The output has three independently checkable claims:
+Those are CPU results from one Linux machine, not projections for Apple MPS or RTX hardware. Quality moved differently by workload: the paired rectangular run improved composite score, fill, topology validity, and shape diversity; the harder lobed run improved fill, topology validity, and diversity but reduced rentable ratio and the composite BPE-weighted score.
 
-1. targeted tests establish the exact 4–8-floor stacking invariants, rollback behavior, and irregular-site transaction policy; and
-2. a same-host, same-settings, same-seed historical comparison measures the genuine archived v0.6-c against final v0.8.0; and
-3. a separate 10-episode artifact establishes absolute runtime, memory, and early quality for the harder default four-floor workload.
+## Scope and measurement method
 
-The matched historical result is a **6.539320468817443x** episode-wall speed-up and a **14.069987717848928x** action-step speed-up. The v0.6-c source was recovered from commit `49692e04d379ec91ae349e3d446a6d63d6ad46c4`, subtree `rl_v0.6-c`; the current row uses the final v0.8.0 folder. Comparing v0.8.0 with v0.8.1 or root v0.7-D would be less meaningful because those variants do not pursue the same building-core goal.
+The benchmark harness in `scratch/benchmark.py` starts each module/seed pair in a fresh Python process. It fixes `PYTHONHASHSEED`, Python random state, and Torch random state; completes optional warm-up episodes; and then records complete episodes until the requested count is reached. It collects:
 
-## Exact building action
+- episode and step-call wall time, including p50/p95;
+- count-weighted internal profiler phases;
+- process RSS, `tracemalloc`, and available accelerator memory counters;
+- score, fill, rentable ratio, topology, BPE, triangle, and candidate metrics;
+- category entropy and unique module/placement shape signatures; and
+- stable action, layout, and dictionary hashes.
 
-A shared core candidate is keyed by:
+All benchmark artifacts below report Linux 6.8, Python 3.10.18, Torch 2.1.0+cu121, and `device=cpu`. No CUDA or MPS run was measured during this pass.
 
-```text
-(module id, rotation angle, local anchor x, local anchor y)
-```
+The representative lobed artifact was generated from the final checked-in v0.8.1 code, including the `SECOND_CORE_MIN_ROOMS = 6` candidate filter. The earlier [`scratch/results_10ep_lobed_seed123_v081_finalcandidate.json`](scratch/results_10ep_lobed_seed123_v081_finalcandidate.json) and [`scratch/results_10ep_lobed_seed123_v081_candidatefilter.json`](scratch/results_10ep_lobed_seed123_v081_candidatefilter.json) are retained as historical evidence but are not used for the current headline. The root baseline is taken only from `results_10ep_lobed_seed123.json`; that file's earlier v0.8.1 contender is also superseded.
 
-For each proposed signature, v0.8.0 constructs the candidate independently on every floor and applies the same authoritative checks used for ordinary placement. The world-space UI offset is irrelevant; the local polygon is the audited object.
+## Benchmark A: lobed boundary, first 10 episodes
 
-The initial proposal path intersects the original raster-cell keys from all floors to obtain a bounded set of high-clearance anchors, but this is only a broad phase. Every transform must still pass vector containment, hole avoidance, positive-area collision, core spacing, alignment, neighbor/contact, and final site-cell materialization on every floor. Up to 512 signatures are proposed and at most 16 exact shared candidates are retained for the building policy.
-
-### First and later cores
-
-- Multi-floor generation first samples one learned core module for the building. Settings validation ensures the active edge constraints can form the required minimum 24 m² core.
-- The first action is mandatory: there is no no-stack option until every floor owns the first locked core.
-- The gate pools the per-floor feature rows for each shared transform. Selecting one signature creates one categorical decision, one log-probability term, and one stack record, while emitting one placement per floor.
-- Floor-local proposal and repair paths are forbidden from introducing cores in multi-floor mode.
-- A second stack is eligible only when every floor has exactly one core and at least `SECOND_CORE_MIN_ROOMS = 6` rooms. At that point the gate may select a shared transform or a building-level no-stack action. No third stack is offered by this policy.
-
-The primary core module and its already-proven site relationship persist across episodes on the same generation. The next episode prevalidates the empty-floor transform again before clearing the old placements. A new site or settings generation samples a new building transaction.
-
-### Actor–critic accounting
-
-Building placement decisions use the reserved trajectory index `-1`; floor trajectories retain their own indices. During terminal learning, log-probabilities are summed within each trajectory and independent trajectories are averaged. The primary core's shape log-probability is stored once as a building-shape decision and is not divided by floor count. This prevents an eight-floor stack from contributing twice the policy weight of a four-floor stack.
-
-The critic predicts normalized terminal score from the pooled floor descriptors. The update uses clipped advantage, smooth-L1 value loss, normalized placement entropy, and a gradient-norm cap of 2. It is a Monte Carlo actor–critic, not PPO, TD, GAE, or off-policy replay; exact terminal geometry remains the return source.
-
-Checkpoint format 5 includes the critic, learner telemetry, bounded reward-reference state, and CPU/available-accelerator RNG state. Loading requires PyTorch 2.6 or newer, uses its restricted weights-only decoder, limits input to 64 MiB, validates tensor/scalar state plus Adam group and moment invariants, and commits transactionally—including v0.8.0's core-stack generation state. Saves use atomic temporary-file replacement with partial-file cleanup. Older runtimes fail closed because their weights-only loader is affected by [CVE-2025-32434](https://github.com/pytorch/pytorch/security/advisories/GHSA-53q9-r3pm-6pq6). Format-3 checkpoints can load the actor while initializing a genuinely fresh critic/optimizer; historical learning rates are clamped to the stable range and marginal 20 m² core settings are expanded to the current 24 m² feasibility envelope. Format-4 checkpoints remain loadable and reset the reward references they did not store.
-
-## Whole-site irregular-boundary transaction
-
-Before committing a multi-floor generation, v0.8.0 performs this transaction:
-
-1. Generate every requested floor boundary and atrium from deterministic attempt/floor seeds.
-2. Synthesize the first learned building core.
-3. Reset temporary environments with that module.
-4. Search for at least one exact shared local transform.
-5. If none exists, discard the complete temporary group and repeat with new seeds for **all** floors.
-6. Commit settings, generation ID, environments, dictionary, shape policy terms, and prevalidated stacks only after the group succeeds.
-
-There are at most 24 complete site attempts, indexed 0–23. The requested boundary family is passed unchanged to every attempt. A lobed, L-, U-, T-, convex, or free-form request is never relaxed to a rectangle, individual floors are never swapped into an otherwise rejected group, and boundaries are not enlarged. If all attempts fail, `CoreStackingError` leaves the previous generation, sites, and dictionary unchanged.
-
-For the measured seed-123 configuration, deterministic initialization reported:
-
-| Initial core audit field | Value |
-|---|---:|
-| Enabled | true |
-| Status / mode | ready / exact-shared-transform |
-| Floor count | 4 |
-| Boundary policy | whole-site-resample |
-| `siteResampleAttempts` | 3 |
-| Exact initial candidates | 2 |
-| Pre-step stacks / locked cores | 0 / 0 |
-| Exact local alignment / violations | true / 0 |
-
-`siteResampleAttempts = 3` is the successful zero-based attempt index: three complete groups were rejected and the fourth was accepted. A matching native-status probe reported ABI 3 available and enabled with no load error.
-
-The matching first live step produced four placements, one stack record, four locked cores, exact local alignment, `decisionScope: "building"`, and `logProbTerms: 1`. This checks the distinction between a four-floor mutation and a single learned action directly rather than inferring it from placement counts.
-
-## Atomic stack commit
-
-Selection is not permission to mutate blindly. The chosen signature is revalidated against the live state immediately before placement. Each floor then captures only placement-owned mutable state:
-
-- placements, placement lookup, AABBs, spatial buckets, and adjacency;
-- occupied cells, filled/rentable area, module-use counters, and core IDs;
-- attachment edges, angle/placement indexes, order/cursor state; and
-- done/proposal-failure scalars.
-
-Sites, boundary polygons, dictionaries, RNGs, and model parameters are not deep-copied. If any floor placement raises, all targeted checkpoints are restored and neither the building decision nor stack audit is appended. Targeted tests inject a failure on the second floor and compare every captured structure before and after rollback.
-
-## Shared optimization kernel
-
-### Native and broad-phase geometry
-
-The optional ABI-3 C library accelerates positive-interior polygon overlap, concave-site containment with split intervals, longest/total shared overlap, tolerant symmetric segment overlap, and point-to-segment distance. Packed native buffers are value-keyed and cached; differential tests compare the C path to the deterministic Python reference over contact, holes, concavity, long-coordinate tolerances, and randomized polygons.
-
-Candidate rejection proceeds from cheap to expensive: cached rotation/site bounds, placement AABB and spatial-bucket lookup, exact vector predicates, then rasterization only for a legal survivor. Incremental adjacency and exposed residual edges avoid repeated all-placement scans. The angle-indexed frontier exposes a rotating stratified view of at most 12 entries, preventing the same recent edges from monopolizing every bounded query.
-
-### Parallel placement loop and BPE
-
-Active floors generate candidates concurrently and the placement head scores the combined legal rows in one tensor call. Torch CPU execution defaults to one intra-op thread for the small policy batches.
-
-Full layout-graph extraction and BPE merging occur at episode completion or explicit paused evaluation, not after each placement. Per-step telemetry retains `bpeMerge = 0` so the deferred work is visible. BPE rewards exactly +3 per globally reused merged-module occurrence; triangle and dictionary-cap penalties remain terminal components.
-
-### Deterministic reward and diagnostics
-
-Generation time, size-normalized time, profiler phase timing, and memory are telemetry only. Reward uses deterministic frontier growth and geometry/quality components, so workstation load or device choice does not directly change the target. Repeated paused evaluation is state-pure.
-
-The hidden `Ctrl/Cmd+Shift+D` panel exposes score history, reward bars, candidate evaluations, native status, process/accelerator memory, actor/critic telemetry, and profiler averages/maxima/counts. Core-specific invariants are exported in the `coreStacking` protocol audit rather than inferred from canvas coordinates.
-
-## Matched historical v0.6-c comparison
+Configuration: `boundaryType=lobed`, `atriumPolicy=agent`, `parallelEnvironments=4`, `maxModules=20`, `dictCap=10`, `angleStep=15`, seed 123, zero warm-up episodes, and 10 measured episodes.
 
 Sources:
 
-- genuine v0.6-c: [`benchmark_results/historical_v0.6c_seed808_10ep.json`](benchmark_results/historical_v0.6c_seed808_10ep.json) and [`benchmark_results/historical_v0.6c_seed808_10ep.csv`](benchmark_results/historical_v0.6c_seed808_10ep.csv)
-- final v0.8.0: [`benchmark_results/v0.8.0_seed808_matched_v06c_10ep.json`](benchmark_results/v0.8.0_seed808_matched_v06c_10ep.json) and [`benchmark_results/v0.8.0_seed808_matched_v06c_10ep.csv`](benchmark_results/v0.8.0_seed808_matched_v06c_10ep.csv)
+- root baseline: [`scratch/results_10ep_lobed_seed123.json`](scratch/results_10ep_lobed_seed123.json) and [`scratch/results_10ep_lobed_seed123.csv`](scratch/results_10ep_lobed_seed123.csv)
+- final-code v0.8.1: [`scratch/results_10ep_lobed_seed123_v081_release.json`](scratch/results_10ep_lobed_seed123_v081_release.json) and [`scratch/results_10ep_lobed_seed123_v081_release.csv`](scratch/results_10ep_lobed_seed123_v081_release.csv)
 
-The historical code was recovered from commit `49692e04d379ec91ae349e3d446a6d63d6ad46c4`, subtree `rl_v0.6-c`. Both runs used the same Linux host, Python 3.10.18, Torch 2.1.0+cu121, CPU device, seed 808, zero warm-up episodes, and 10 measured episodes. Shared settings were lobed boundaries, no atrium, four floors, 10 maximum modules per floor, dictionary cap 6, and 90-degree angle steps.
+The two rows are separate point-in-time runs with the same workload and host, not a single paired controller report. The speed-up is the exact ratio of their recorded mean episode times.
 
-The artifacts were produced separately rather than by one combined controller invocation, so this is a matched cross-artifact comparison, not a paired-episode statistical test. Their workload, seed, interpreter, host, and timing implementation match. The historical run used a 40-step controller safety cap and the current run used 2000; no episode approached either cap—the observed maxima were 10 and 17 action steps—so this did not truncate either sample.
-
-### Timing
-
-| Metric | Genuine v0.6-c | Final v0.8.0 | Ratio |
-|---|---:|---:|---:|
-| Episode wall mean, s | 5.3411565833899655 | 0.8167754751979374 | 6.539320468817443x |
-| Episode wall p50, s | 5.495239505980862 | 0.8016204159939662 | — |
-| Episode wall p95, s | 7.708047809638082 | 1.0205294168845283 | — |
-| Episode wall min, s | 2.780117426009383 | 0.6745507380110212 | — |
-| Episode wall max, s | 8.238769116986077 | 1.0903770389850251 | — |
-| Episodes per second | 0.18707200544290747 | 1.218310244698204 | — |
-| Action-step mean, s | 0.5277815892453012 | 0.03751116204428289 | 14.069987717848928x |
-| Action-step p50, s | 0.5252660679980181 | 0.034650760993827134 | — |
-| Action-step p95, s | 1.0018451273092066 | 0.07413469078019258 | — |
-| All step-call p50, s | 0.4810997589956969 | 0.035289695020765066 | — |
-| All step-call p95, s | 0.9797533814096823 | 0.17007169941207378 | — |
-| Action steps / terminal calls | 95 / 10 | 165 / 10 | — |
-| Total measured wall, s | 53.45535253296839 | 8.208089888037648 | — |
-
-Mean episode wall time fell by 84.70789121333829%. The current run executed 165 action steps versus 95 in the historical run, yet its mean action step was 92.89267325563179% faster. That per-step result helps separate kernel/proposal improvements from early episode termination.
-
-### Quality, work, and diversity
-
-| Metric | Genuine v0.6-c | Final v0.8.0 |
+| Timing metric | Root v0.7-D baseline | Final v0.8.1 release |
 |---|---:|---:|
-| Composite score mean | 25.81494 | 39.34408 |
-| Composite score p50 | 33.6699 | 40.66305 |
-| Fill ratio mean | 0.191089169989359 | 0.3639566176192635 |
-| Rentable ratio mean | 0.4612095454999678 | 0.8479913144706932 |
-| Topology-valid rate | 1.0 | 1.0 |
-| Topology penalty mean | 0.0 | 0.0 |
-| Module count mean | 38.0 | 29.3 |
-| Dictionary length mean | 6.0 | 3.4 |
-| BPE bonus / reused occurrences mean | 22.5 / 7.5 | 20.4 / 6.8 |
-| Unmerged triangles / penalty mean | 2.3 / 4.6 | 3.7 / 7.4 |
-| Triangle ratio mean | 0.0984144056825796 | 0.8624718993115295 |
-| Core / room placement counts | 152 / 228 | 40 / 253 |
-| Unique module / placement shape signatures | 15 / 20 | 6 / 6 |
-| Unique action / layout / dictionary hashes | 10 / 10 / 10 | 10 / 10 / 7 |
+| Episode wall mean, s | 7.604500205116347 | 1.2847306405077688 |
+| Episode wall p50, s | 7.791219950013328 | 1.2129170919943135 |
+| Episode wall p95, s | 10.240738575020805 | 1.8870772354974177 |
+| Episode wall min, s | 5.54078847396886 | 0.6489926560316235 |
+| Episode wall max, s | 10.330979028018191 | 1.9360698380041867 |
+| Step-call p50, s | 0.2800938215223141 | 0.065461503516417 |
+| Step-call p95, s | 1.4533910306054114 | 0.1309129648172528 |
+| Episodes per second | 0.13139436119330128 | 0.7746841862097575 |
+| Mean episode speed-up | 1.0x | 5.919139752213579x |
 
-Mean composite score increased by 13.529139999999998, fill by 0.1728674476299045, and rentable ratio by 0.3867817689707254. Both runs were topology-valid in all ten episodes. The current implementation reached those results with fewer final placements and slightly less immediate BPE repetition.
+Quality and diversity means from those same runs:
 
-This is not action-for-action semantic parity. The historical final layouts contained 152 core placements, while exact v0.8.0 contained 40—one locked four-floor primary stack per episode. v0.8.0 also ended with 29.3 rather than 38.0 mean placements. Those differences are part of the intended algorithm correction, but they mean the 6.539320468817443x number is end-to-end configured-workload speed-up, not the isolated speed of identical trajectories. The 14.069987717848928x action-step result is the cleaner hot-loop comparison. Composite reward definitions and learning updates also evolved, so fill, rentable ratio, topology, and component metrics should accompany the headline score.
-
-### Memory
-
-| Metric, bytes | Genuine v0.6-c | Final v0.8.0 |
+| Metric | Root v0.7-D baseline | Final v0.8.1 release |
 |---|---:|---:|
-| RSS at measurement start | 524640256 | 524062720 |
-| Observed RSS peak | 538607616 | 581517312 |
-| RSS at end | 538439680 | 581517312 |
-| `tracemalloc` start | 96925275 | 96953034 |
-| `tracemalloc` peak | 101428315 | 115187171 |
-| `tracemalloc` peak growth | 4503040 | 18234137 |
+| Raw geometry/quality score | 19.515618350798185 | 20.34006515055671 |
+| Final composite score | 47.1518 | 23.59606 |
+| Fill ratio | 0.24981321331025047 | 0.29292073427368187 |
+| Rentable ratio | 0.7318810787075865 | 0.6981978676144853 |
+| Topology-valid rate | 0.0 | 1.0 |
+| Mean topology penalty | 4.873028 | 0.0 |
+| Mean BPE bonus | 36.77644494706176 | 14.4 |
+| Mean reused BPE occurrences | 12.9 | 4.8 |
+| Mean unmerged-triangle penalty | 3.8 | 11.2 |
+| Mean unmerged triangles | 1.9 | 5.6 |
+| Mean module count | 45.0 | 31.1 |
+| Mean dictionary length | 4.0 | 9.6 |
+| Mean candidate evaluations | 5795.7 | 4378.0 |
+| Unique module shape signatures | 19 | 71 |
+| Unique placement shape signatures | 32 | 103 |
+| Unique action/layout hashes | 10 / 10 | 10 / 10 |
 
-v0.8.0 used more measured memory in this comparison. The difference includes Python/Torch runtime state and the new critic, cached geometry buffers, exact stack candidates, and incremental indexes; the artifacts do not isolate those contributors. Neither run used accelerator memory.
+The lobed result is not a blanket quality win. Fill increased by 0.0431075209634314 and all 10 episodes were topology-valid, while rentable ratio fell by 0.0336832110931012. The raw score increased by 0.824446799758525, but the final composite score fell by 23.55574. The logged components show the main visible causes: the mean reuse bonus fell from 36.77644494706176 to 14.4 and the triangle penalty rose from 3.8 to 11.2. Because v0.8.1 also removes hardware time from reward, the final composite is not a pure like-for-like geometry metric; raw score, fill, rentable ratio, topology, and diversity should be inspected alongside it.
 
-The historical server emitted no internal phase profiler records, so phase-by-phase speed-up is not reported. Only the common controller wall timers are compared.
+The release run produced 71 unique module-shape signatures and 103 placement-shape signatures, versus 19 and 32 in the baseline. That is materially more geometric variety over these 10 episodes, although it also means less immediate BPE repetition.
 
-## Harder default-setting absolute run
+Selected count-weighted profiler averages explain where the wall-time reduction came from:
 
-Source artifacts:
-
-- [`benchmark_results/v0.8.0_seed123_10ep.json`](benchmark_results/v0.8.0_seed123_10ep.json)
-- [`benchmark_results/v0.8.0_seed123_10ep.csv`](benchmark_results/v0.8.0_seed123_10ep.csv)
-
-Configuration: lobed boundaries, agent-selected atria, `singleFloor=false`, 4 floors, `maxModules=130`, learning rate 0.001, 3–9 m edges, at most 8 edges, `dictCap=10`, `angleStep=15`, `coreSpacing=8`, `travelLimit=12`, corridors and stop disabled, seed 123, zero warm-up episodes, and 10 measured episodes.
-
-Environment recorded by the artifact: Linux 6.8, Python 3.10.18, Torch 2.1.0+cu121, `device=cpu`. The processor model is not recorded. Native ABI 3 was loaded and enabled in the matching deterministic initialization probe. No MPS, CUDA, second-GPU, or eight-floor performance measurement was made.
-
-### Timing
-
-| Metric | Exact artifact value |
-|---|---:|
-| Episode wall mean, s | 1.4606903691019397 |
-| Episode wall p50, s | 1.3355903929914348 |
-| Episode wall p95, s | 2.0379458730836633 |
-| Episode wall min, s | 1.179163855034858 |
-| Episode wall max, s | 2.0896430169814266 |
-| Episodes per second | 0.6828369809729088 |
-| Action-step mean, s | 0.04786676697794495 |
-| Action-step p50, s | 0.044811322004534304 |
-| Action-step p95, s | 0.0838590411003679 |
-| All step-call p50, s | 0.045586714026285335 |
-| All step-call p95, s | 0.1386718439782205 |
-| Action steps / terminal calls | 190 / 10 |
-| Total measured wall, s | 14.644783862982877 |
-
-The action-step mean is 47.86676697794495 ms, below the project's 50 ms average-step target for this workload. Mean episode wall time is still 1.4606903691019397 seconds; it does not meet the old 250 ms episode aspiration. The workload completed an average 19.7 placements across four floors rather than reaching the configured 130-per-floor cap, so it is an early-termination workload, not a 520-placement stress test.
-
-Selected count-weighted profiler averages:
-
-| Phase | Mean ms | Sample count |
+| Profiler phase, mean ms | Root v0.7-D baseline | Final v0.8.1 release |
 |---|---:|---:|
-| Candidate generation | 7.36669946466309 | 530 |
-| Site boundary | 0.09832805494370107 | 3924 |
-| Overlap/collisions | 0.7073197898428382 | 3924 |
-| Policy inference | 0.16691207971521899 | 190 |
-| Shape synthesis | 15.722651778564392 | 439 |
-| Placement commit | 0.45921463095168075 | 101 |
-| Step BPE | 0.0 | 190 |
-| Step total | 47.50626966185672 | 190 |
-| Terminal metrics | 10.11400229181163 | 10 |
-| Episode BPE | 48.1212561018765 | 10 |
-| Learning | 36.18427330511622 | 10 |
-| Next-episode dictionary/core preflight | 220.80462881713174 | 10 |
-| Episode total | 1457.470546598779 | 10 |
+| Candidate generation | 50.65104792396626 | 19.018010795306232 |
+| Site-boundary checks | 38.23820675933785 | 0.39024465925740354 |
+| Overlap/collision checks | 27.919441368582042 | 2.316665130336288 |
+| Neighbor analysis | 6.717015716890568 | 0.050973928665608535 |
+| Edge alignment | 1.8928284304595988 | 0.033508535782804945 |
+| Feature extraction | 3.729162321296708 | 0.03389397364080396 |
+| Policy inference | 7.8540294606442 | 0.22090964937686092 |
+| Shape synthesis | 349.1808055064586 | 16.9024163473363 |
+| Per-step BPE | 90.75717377575414 | 0.0 |
+| Terminal BPE | 183.94655140582472 | 122.00650201411918 |
+| Learning | 150.9999349131249 | 36.439332290319726 |
+| Step total | 412.07772720706834 | 59.693068583470044 |
+| Episode total | 7602.723605197389 | 1282.3845732957125 |
 
-The legacy `dictSynthesis` profiler label includes the exact next-episode primary-core preflight. At 220.80462881713174 ms it is the largest named terminal phase and a clear target for future cache or proposal reuse, provided revalidation semantics are preserved.
+Memory is a secondary result because both processes include the Python and Torch runtimes. The observed RSS peak was 630947840 bytes for the root baseline and 591826944 bytes for the final release. `tracemalloc` peak was 135034604 and 117631795 bytes, while peak growth was 38792037 and 21004945 bytes, respectively. No accelerator-memory sample was present because both runs used CPU.
 
-### Quality and diversity
+## Benchmark B: rectangular boundary, first 20 measured episodes
 
-| Metric | Exact artifact value |
-|---|---:|
-| Composite score mean | 31.719450000000002 |
-| Composite score p50 / p95 | 33.6542 / 38.282379999999996 |
-| Raw score mean | 19.770131989906165 |
-| Fill ratio mean | 0.25898392102244655 |
-| Rentable ratio mean | 0.7543502830836528 |
-| Topology-valid rate | 1.0 |
-| Topology penalty mean | 0.0 |
-| Module count mean | 19.7 |
-| Dictionary length mean | 3.7 |
-| Candidate evaluations mean | 1886.2 |
-| BPE bonus / reused occurrences mean | 15.0 / 5.0 |
-| BPE rounds mean | 2.5 |
-| Unmerged triangles / penalty mean | 1.7 / 3.4 |
-| Triangle ratio mean | 0.04449380751424684 |
-| Core / room placement counts | 40 / 157 |
-| Unique module / placement shape signatures | 20 / 26 |
-| Unique action / layout / dictionary hashes | 10 / 10 / 8 |
+Configuration: `boundaryType=rect`, `atriumPolicy=none`, `parallelEnvironments=4`, `maxModules=10`, `dictCap=6`, `angleStep=90`, seed 812, one warm-up episode, and 20 measured episodes.
 
-Forty core placements across ten four-floor episodes is exactly four core placements per episode. The benchmark artifact does not itself serialize the `coreStacking` audit; targeted core tests independently verify that the four placements are one locked building action with one policy term and exact local equality. All ten episodes were topology-valid, and every episode had a unique action and layout hash. This is evidence of early-run variation, not proof of converged policy diversity.
+Sources: [`scratch/results_20ep_rect_seed812.json`](scratch/results_20ep_rect_seed812.json) and [`scratch/results_20ep_rect_seed812.csv`](scratch/results_20ep_rect_seed812.csv). Both variants were run by one controller, so the recorded comparison is paired by measured episode index. This artifact predates the final release measurement above; it is retained because pairing gives useful historical evidence, but its v0.8.1 row must not be presented as final-code performance.
 
-### Memory
+| Timing metric | Root v0.7-D baseline | Historical v0.8.1 snapshot |
+|---|---:|---:|
+| Episode wall mean, s | 3.28561883145012 | 0.6483824417489814 |
+| Episode wall p50, s | 3.2552898224967066 | 0.6549155310203787 |
+| Episode wall p95, s | 3.8206527839152846 | 0.7626254646136659 |
+| Episode wall min, s | 2.4741114859934896 | 0.5014499590033665 |
+| Episode wall max, s | 3.989880404958967 | 0.7643361029913649 |
+| Step-call p50, s | 0.2570610969851259 | 0.043457006016978994 |
+| Step-call p95, s | 0.7008613813784904 | 0.22824161007010837 |
+| Episodes per second | 0.3038610733528656 | 1.5305294505521627 |
+| Paired mean speed-up | 1.0x | 5.067408708026263x |
 
-| Metric | Exact artifact value, bytes |
-|---|---:|
-| RSS at measurement start | 536518656 |
-| Observed RSS peak | 583000064 |
-| RSS at end | 583000064 |
-| `tracemalloc` start | 100998268 |
-| `tracemalloc` peak | 114098615 |
-| `tracemalloc` peak growth | 13100347 |
+| Quality metric | Root v0.7-D baseline | Historical v0.8.1 snapshot |
+|---|---:|---:|
+| Raw geometry/quality score | 18.063041780585134 | 23.48353614115165 |
+| Final composite score | 45.20404 | 49.730689999999996 |
+| Paired mean score delta | 0.0 | 4.526650000000001 |
+| Fill ratio | 0.2888843070077018 | 0.3745877947740014 |
+| Rentable ratio | 0.7954193047061673 | 0.7668160930879074 |
+| Topology-valid rate | 0.3 | 0.95 |
+| Mean topology-violation rate | 0.31050000000000005 | 0.013500000000000002 |
+| Mean BPE bonus | 29.64072211310019 | 29.7 |
+| Mean unmerged-triangle penalty | 0.6 | 3.3 |
+| Mean module count | 39.3 | 37.4 |
+| Mean candidate evaluations | 4599.85 | 2645.55 |
+| Unique module shape signatures | 62 | 82 |
+| Unique placement shape signatures | 76 | 89 |
+| Unique action/layout hashes | 20 / 20 | 20 / 20 |
 
-These figures include the Python and Torch runtimes. Accelerator dictionaries were empty because the run used CPU.
+Here the speed-up did not require a composite-score concession: mean score increased by 4.526650000000001 and fill increased by 0.0857034877662996. Rentable ratio decreased by 0.0286032116182599 and triangle use increased, so the individual components still matter. Topology validity rose from 30% to 95%, candidate evaluations fell by 42.48616802721828%, and the run retained more unique shape signatures.
 
-## Reproduction
+The action and layout hashes did not match between variants in either comparison. That is expected after proposal bounds, policy learning, reward, and shape availability changed; the hashes are regression identifiers, not a claim of action parity. Every measured episode within each run had a unique action and layout hash.
 
-From `v0.8.0`, build the native library. Reproduce the matched current row with:
+## Architecture changes
+
+### 1. Exact geometry with cheaper broad phases
+
+The acceptance order now puts inexpensive rejection first:
+
+1. cached rotation and site AABB bounds;
+2. spatial-bucket lookup of nearby placements;
+3. exact site containment and positive-area polygon overlap;
+4. exact neighbor/shared-wall and strict alignment checks; and
+5. cell rasterization only for a surviving candidate.
+
+Placements maintain AABBs, spatial-bucket membership, adjacency, and exposed residual attachment edges incrementally. Attachment edges are indexed by angle. A bounded query takes a rotating stratified view of at most 12 entries instead of permanently favoring one end of a large bucket. Candidate category quotas stop the initial search once enough legal actions exist.
+
+The C ABI combines related traversals, caches value-keyed packed buffers safely, and covers:
+
+- positive-interior polygon overlap, preserving wall/vertex contact as non-overlap;
+- site containment that splits candidate edges at every boundary intersection, including concave escape/re-entry cases;
+- longest and total shared-wall overlap in one traversal;
+- symmetric tolerant segment overlap used by BPE port matching; and
+- minimum point-to-segment distance used by wall/daylight metrics.
+
+`tests/test_native_geometry.py` compares native and Python behavior on contact, containment, holes, concavity, length-scaled tolerances, randomized polygons, 1,000 tolerant segment cases, and mutable-input cache safety.
+
+### 2. Bounded parallel placement loop
+
+Active floors generate proposals concurrently through a fixed thread pool, but results are consumed in deterministic floor order. The placement policy scores all legal candidates in one tensor call. On CPU, Torch defaults to one intra-op thread because these batches are too small to amortize a large math thread pool.
+
+Full BPE and layout-graph reconstruction do not influence environment transitions, so they now run only at terminal completion or when the paused UI explicitly requests evaluation. The per-step `bpeMerge` profiler record remains present at zero to make the change visible in telemetry. Terminal BPE remains a measurable cost and is intentionally not hidden.
+
+### 3. Monte Carlo actor–critic
+
+The old terminal REINFORCE-style learner averaged individual action log-probabilities, which gives short and dead-ended trajectories disproportionate weight and retains a high-variance scalar baseline. v0.8.1:
+
+- samples placement actions without retaining a full per-step autograd graph;
+- stores bounded candidate feature matrices and selected action indices;
+- recomputes placement logits in one differentiable terminal batch;
+- sums log-probabilities within each floor trajectory, then averages independent floor trajectories;
+- trains a value head against normalized terminal score with smooth L1 loss;
+- clips the terminal advantage to `[-1, 1]`;
+- adds normalized categorical entropy and clips gradient norm to 2; and
+- uses a default learning rate of 0.001, validated within 0.0001–0.05.
+
+This is a Monte Carlo critic, not PPO, TD(n), GAE, or off-policy replay. Exact terminal geometry remains the return source. That is the lowest-risk variance reduction that fixes trajectory weighting without introducing a proxy intermediate value whose relation to the final topology checks has not been validated. Long-horizon convergence stability still needs a larger multi-seed study; the checked-in 10/20-episode runs establish runtime and early behavior, not convergence.
+
+Checkpoint format 5 includes the critic, learner telemetry, bounded reward-reference state, and CPU/available-accelerator RNG state. Loading requires PyTorch 2.6 or newer, uses its restricted weights-only decoder, limits input to 64 MiB, validates tensor/scalar state plus canonical Adam group and moment invariants, and commits transactionally. Saves use atomic temporary-file replacement with partial-file cleanup. Older runtimes fail closed because their weights-only loader is affected by [CVE-2025-32434](https://github.com/pytorch/pytorch/security/advisories/GHSA-53q9-r3pm-6pq6). Format-3 checkpoints can load the actor while initializing a genuinely fresh critic/optimizer; historical learning rates are clamped to the new stable range and marginal 20m² core settings are expanded to the current 24m² feasibility envelope. Format-4 checkpoints remain loadable and reset the reward references they did not store.
+
+### 4. Reward and diagnostics
+
+Elapsed generation time and size-normalized time are reported but are not reward inputs. A faster GPU, a loaded workstation, or a profiler should therefore not change the target solely through wall clock. The relative term rewards deterministic exposed-frontier growth and applies a small-shape exploitation penalty.
+
+Terminal scoring reports raw score and its fill, rentable, daylight, reuse, constructibility, envelope, topology, BPE, triangle, frontier, and dictionary-cap components. BPE reuse is exactly +3 per globally reused occurrence. Repeated paused evaluation is state-pure: it does not advance topology multipliers or reward baselines.
+
+The hidden developer panel (`Ctrl/Cmd+Shift+D`) renders the latest 120 score points, reward bars, native ABI/load state, candidate counts, peak process/accelerator memory, actor/value/entropy/advantage/gradient telemetry, and average/max/count for major profiler phases. It updates only while open to keep UI work bounded.
+
+## Native build and fallback
+
+From `v0.8.1`:
 
 ```bash
 python3 build_native.py
-python3 scratch/benchmark.py \
-  --module-dir v0.8.0=. \
-  --episodes 10 \
-  --warmup 0 \
-  --seed 808 \
-  --settings '{"boundaryType":"lobed","atriumPolicy":"none","parallelEnvironments":4,"maxModules":10,"dictCap":6,"angleStep":90.0}' \
-  --max-steps 2000 \
-  --episode-timeout 120 \
-  --run-timeout 1260 \
-  --json-out benchmark_results/repro_v0.8.0_seed808_matched_v06c_10ep.json \
-  --csv-out benchmark_results/repro_v0.8.0_seed808_matched_v06c_10ep.csv
 ```
 
-To reproduce the historical row, first export the exact subtree from a checkout that contains the archived commit:
+The script uses `CC` when supplied, otherwise finds `cc`, `clang`, or `gcc`; compiles C11 with warnings as errors; emits a macOS `.dylib` or Linux `.so`; loads the temporary output; verifies ABI 3; and only then replaces the installed library. `--debug` uses `-O0 -g`, and `--clean` removes the current platform library.
 
-```bash
-baseline_dir=$(mktemp -d /tmp/v06c-genuine.XXXXXX)
-git archive 49692e04d379ec91ae349e3d446a6d63d6ad46c4 rl_v0.6-c \
-  | tar -x -C "$baseline_dir" --strip-components=1
-```
+Import does not require the native library. A missing file, ABI mismatch, load error, unsupported platform, or `MODULE_LAB_DISABLE_NATIVE_GEOMETRY=1` leaves the Python reference active. `native_geometry_status()` exposes availability, enabled state, ABI, selected library, load error, and environment override to the UI.
 
-Then, from `v0.8.0` in the same shell, run the current benchmark controller against the export:
+No macOS, MPS, CUDA, or RTX timing is included in this report. `MODULE_LAB_DEVICE=mps`, `cuda`, and `cuda:N` are device-selection controls, not measured speed-up claims. Proposal generation and vector geometry remain CPU work even when Torch uses an accelerator.
+
+## Graph proposal decision
+
+The recovered raw `FrontierGraph` was evaluated, not merged. At 96 modules its query was 13.6x slower than the current bounded residual-edge query and emitted 79% more anchors. The bounded production view retained 24 of 40 legal actions; the unbounded existing angle index and raw graph both reached all 40, but exact geometry rejected the raw graph's extra internal-edge anchors. The unbounded angle index matched exhaustive residual-edge scanning, demonstrating that the useful graph broad phase already exists in production state.
+
+The evaluation's low-risk follow-up—rotate and stratify the bounded view instead of permanently favoring recent edges—is implemented in v0.8.1. Rebuilding the full layout graph also grew from 0.243 ms at 6 modules to 9.552 ms at 96 modules. This supports terminal-only BPE extraction. Exact benchmark tables, methodology, and the GNN follow-up criteria are in [GRAPH_EVALUATION.md](GRAPH_EVALUATION.md).
+
+## Reproduction commands
+
+Run from `v0.8.1`. These commands write new files so the checked-in evidence remains unchanged.
+
+Final-code lobed run and same-configuration root baseline, 10 measured episodes:
 
 ```bash
 python3 scratch/benchmark.py \
-  --module-dir "historical-v0.6-c=$baseline_dir" \
-  --episodes 10 \
-  --warmup 0 \
-  --seed 808 \
-  --settings '{"boundaryType":"lobed","atriumPolicy":"none","parallelEnvironments":4,"maxModules":10,"dictCap":6,"angleStep":90.0}' \
-  --max-steps 40 \
-  --episode-timeout 120 \
-  --json-out benchmark_results/repro_historical_v0.6c_seed808_10ep.json \
-  --csv-out benchmark_results/repro_historical_v0.6c_seed808_10ep.csv
-```
-
-The checked-in historical JSON/CSV are unchanged copies of that run's output. Their `moduleDir` records the temporary absolute path used during the original execution; it is provenance, not a path expected to exist on another machine.
-
-Reproduce the harder default-setting row with new artifact names:
-
-```bash
-python3 build_native.py
-python3 scratch/benchmark.py \
-  --module-dir v0.8.0=. \
+  --module-dir baseline=.. \
+  --module-dir v0.8.1=. \
   --episodes 10 \
   --seed 123 \
-  --settings '{"allowCorridors":false,"allowStop":false,"angleStep":15.0,"atriumPolicy":"agent","boundaryType":"lobed","coreSpacing":8.0,"dictCap":10,"learningRate":0.001,"maxEdge":9.0,"maxEdges":8,"maxModules":130,"minEdge":3.0,"parallelEnvironments":4,"publicMode":false,"singleFloor":false,"travelLimit":12}' \
-  --json-out benchmark_results/repro_v0.8.0_seed123_10ep.json \
-  --csv-out benchmark_results/repro_v0.8.0_seed123_10ep.csv
+  --settings '{"boundaryType":"lobed","atriumPolicy":"agent","parallelEnvironments":4,"maxModules":20,"dictCap":10,"angleStep":15}' \
+  --json-out scratch/repro_10ep_lobed_seed123_release.json \
+  --csv-out scratch/repro_10ep_lobed_seed123_release.csv
 ```
 
-Core and native contracts:
+Rectangular, one warm-up plus 20 measured episodes:
 
 ```bash
-python3 -m unittest discover -s tests -p "test_core_stacking.py" -v
-python3 -m unittest discover -s tests -p "test_native_geometry.py" -v
-python3 -m unittest discover -s tests -p "test_optimization.py" -v
+python3 scratch/benchmark.py \
+  --module-dir baseline=.. \
+  --module-dir v0.8.1=. \
+  --episodes 20 \
+  --warmup 1 \
+  --seed 812 \
+  --settings '{"boundaryType":"rect","atriumPolicy":"none","parallelEnvironments":4,"maxModules":10,"dictCap":6,"angleStep":90}' \
+  --json-out scratch/repro_20ep_rect_seed812.json \
+  --csv-out scratch/repro_20ep_rect_seed812.csv
 ```
 
-The final verified non-WebSocket suite rebuilt native ABI 3 and ran 157 tests successfully with 2 intentional legacy skips:
+Graph-frontier evaluation:
 
 ```bash
-python3 -m unittest \
-  tests.test_benchmark tests.test_bpe_merge tests.test_core_stacking \
-  tests.test_frontend_contract tests.test_geometry tests.test_graph_evaluation \
-  tests.test_learned_policy tests.test_native_geometry tests.test_optimization \
-  tests.test_trainer tests.test_v06b_dynamic tests.test_v06d_custom
+python3 scratch/benchmark_graph_frontier.py --repetitions 250
+python3 -m unittest discover -s tests -p "test_graph_evaluation.py" -v
 ```
 
-The two `tests.test_websocket` cases are excluded because this restricted runner blocks inside FastAPI/Starlette `TestClient.__enter__`, including for a minimal empty FastAPI app. That is an environment/dependency limitation, not a passing integration result; rerun them with a normal host or real server process.
+The benchmark's fresh processes are important. Importing the baseline and contender into one interpreter would contaminate `sys.modules`, native-library selection, caches, and Torch runtime state.
 
-The benchmark's fresh child process matters: it prevents baseline/module imports, native-library paths, Torch pools, and caches from contaminating a run.
+## Known limitations and next measurements
 
-## Graph decision
-
-The recovered endpoint-only graph was not integrated. On the measured 96-module probe in the separate graph evaluation, its query was 13.6x slower than the bounded residual-edge query and emitted 79% more anchors, only for exact geometry to reject the extras. The current angle index already supplies the useful graph broad phase. v0.8.0 implements the deterministic rotating-stratified sample recommended by that study. Full data and GNN acceptance criteria are in [GRAPH_EVALUATION.md](GRAPH_EVALUATION.md).
-
-## Limitations and next work
-
-- The genuine v0.6-c and current runs match hardware, interpreter, seed, floor count, and settings, but not exact action semantics. Treat 6.539320468817443x as configured-workload speed-up and 14.069987717848928x as the closer per-action hot-loop comparison.
-- Each benchmark covers one seed, the first 10 episodes, four floors, and CPU. Neither measures 8 floors, Apple CPU/MPS, CUDA, either RTX GPU, or multi-GPU scaling.
-- Floor count is fixed within a generation. Users can atomically switch from 4 to 8 between settings generations, but v0.8.0 does not randomly vary it each episode.
-- Accepting only sites with a common local core transform can bias the retained irregular-site sample toward larger common feasible regions. It preserves boundary families and never relaxes to rectangles, but the acceptance filter is still real.
-- The primary core persists across episodes on one site. This guarantees feasibility but reduces core-shape variation until a new site/settings generation.
-- The optional second core may be rare because all floors must independently reach six rooms and share another exact transform.
-- The bounded frontier intentionally trades exhaustive legal-action recall for predictable work. Rotation/stratification prevents permanent edge starvation but is not a lossless scan.
-- Terminal core preflight and BPE remain substantial costs. Any cache must retain immediate live-state revalidation and atomic rollback.
-- The 10-episode result establishes early behavior, not convergence or lower-gradient variance over a long learning curve. A multi-seed, fixed-wall-budget comparison is still required before preferring this learner to PPO/GAE or TD alternatives.
-- One trainer uses one accelerator. Two `cuda:N` processes are independent policies, not one distributed building batch.
-- In the restricted development sandbox, FastAPI `TestClient` WebSocket integration can block on cross-thread event-loop wakeup. Use direct trainer tests or a real process there and rerun WebSocket integration on a normal host/CI runner.
+- The hard speed numbers cover one CPU host and two settings. Run the same harness on Apple CPU/MPS and on each RTX device before choosing deployment defaults.
+- The first 10/20 episodes show early training behavior, not convergence. A multi-seed, fixed-wall-budget learning-curve comparison is still needed for MC actor–critic versus PPO/GAE or TD methods.
+- Candidate and shape generation, learning, and terminal BPE remain the largest named costs in the final lobed artifact. Terminal BPE was deferred, not eliminated.
+- The bounded 12-edge frontier view trades exhaustive legal-action recall for stable work. Rotation/stratification prevents permanent edge starvation, but a lossless evaluation mode costs more and can expose more placements.
+- The lobed workload demonstrates a real composite-score/reuse trade-off. More unique shapes do not automatically mean a better learned vocabulary.
+- A single trainer does not distribute one episode across two GPUs. Two `cuda:N` processes are independent experiments.
+- In the restricted development sandbox, in-process FastAPI `TestClient` WebSocket tests can block on cross-thread event-loop wakeup. Use a real server process there and rerun `tests/test_websocket.py` on a normal host or CI runner.
+- The lobed release artifact measures the final checked-in code. The rectangular paired result and superseded lobed candidates predate later edits and remain historical point-in-time evidence; none justify claims for hardware that was not measured.

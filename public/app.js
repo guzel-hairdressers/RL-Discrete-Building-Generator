@@ -42,8 +42,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     'dictCap',
     'angleStep',
     'coreSpacing',
-    'travelLimit',
-    'enableLookahead'
+    'travelLimit'
   ]);
 
   const MAX_RETAINED_SCORE_HISTORY = 360;
@@ -1597,12 +1596,11 @@ window.onerror = function(message, source, lineno, colno, error) {
     dom.stepValue.textContent = padMetric(state.step);
     dom.moduleCountValue.textContent = `${state.placements.size} ${state.placements.size === 1 ? 'module' : 'modules'}`;
     updateScoreBreakdown();
-    renderPerfTimings();
+    updatePerformanceTimings();
     scheduleDeveloperPanelUpdate();
   }
 
-  function renderPerfTimings() {
-    if (!dom.perfTimingsCard || !dom.perfTimingsDetails) return;
+  function updatePerformanceTimings() {
     const metrics = metricRoot(state.serverMetrics);
     const timings = metrics.performanceTimings;
     

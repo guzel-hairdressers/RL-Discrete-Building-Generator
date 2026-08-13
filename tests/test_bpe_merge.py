@@ -17,9 +17,9 @@ import unittest
 from unittest import mock
 
 # Add parent directory to path so we can import graph and geometry
-root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(root_dir, "src"))
-sys.path.insert(0, root_dir)
+MODULE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(MODULE_DIR, "src"))
+sys.path.insert(0, MODULE_DIR)
 
 import graph
 import geometry as G

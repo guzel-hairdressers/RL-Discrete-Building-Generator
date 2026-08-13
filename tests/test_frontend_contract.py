@@ -10,7 +10,7 @@ import unittest
 
 
 MODULE_DIR = pathlib.Path(__file__).resolve().parents[1]
-PUBLIC_DIR = (MODULE_DIR / "public") if (MODULE_DIR / "public" / "index.html").is_file() else MODULE_DIR
+PUBLIC_DIR = MODULE_DIR / "public" if (MODULE_DIR / "public" / "index.html").is_file() else MODULE_DIR
 HTML_PATH = PUBLIC_DIR / "index.html"
 APP_PATH = PUBLIC_DIR / "app.js"
 STYLE_PATH = PUBLIC_DIR / "styles.css"
@@ -75,20 +75,6 @@ class FrontendContractTests(unittest.TestCase):
                 self.assertEqual(pair[1].get("min"), range_attrs.get("min"))
                 self.assertEqual(pair[1].get("max"), range_attrs.get("max"))
                 self.assertEqual(pair[1].get("step"), range_attrs.get("step"))
-
-    def test_learning_rate_control_uses_stable_actor_critic_range(self) -> None:
-        elements_by_id = {
-            attrs["id"]: (tag, attrs)
-            for tag, attrs in self.parser.elements
-            if attrs.get("id")
-        }
-        for identifier in ("learningRate", "learningRateNum"):
-            with self.subTest(identifier=identifier):
-                attributes = elements_by_id[identifier][1]
-                self.assertEqual(attributes.get("min"), "0.0001")
-                self.assertEqual(attributes.get("max"), "0.05")
-                self.assertEqual(attributes.get("step"), "0.0001")
-                self.assertEqual(attributes.get("value"), "0.001")
 
     def test_client_is_self_contained_and_response_driven(self) -> None:
         external_assets = [

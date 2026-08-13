@@ -21,9 +21,14 @@ agent_notes/benchmarks/
 ├── 26-08-10_v0.8.0-stress-test-130modules/            # High-capacity workload evaluation (130 modules, Seed 123)
 │   ├── v0.8.0_seed123_10ep.csv
 │   └── v0.8.0_seed123_10ep.json
-└── 26-08-11_v0.8.0-visual-grid-evaluations/           # Visual layout rendering grids & JSON floor plan layouts
-    ├── v0.8.0_seed123_first3_grid.json
-    └── v0.8.0_seed123_first3_grid.png
+├── 26-08-11_v0.8.0-visual-grid-evaluations/           # Visual layout rendering grids & JSON floor plan layouts
+│   ├── v0.8.0_seed123_first3_grid.json
+│   └── v0.8.0_seed123_first3_grid.png
+└── 26-08-14_v0.8.1-lobed-evaluations/                 # v0.8.1 Dynamic Parametric Shape generator evaluations (5.92x speedup)
+    ├── results_10ep_lobed_seed123_v081_release.csv
+    ├── results_10ep_lobed_seed123_v081_release.json
+    ├── v0.8.1_seed123_first3_grid.json
+    └── v0.8.1_seed123_first3_grid.png
 ```
 
 ---

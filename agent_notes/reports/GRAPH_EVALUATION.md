@@ -73,7 +73,7 @@ representation. Candidate selection needs at most 12 returned actions, so even
 the capped cases retained twice that number for the square probe, but always
 favoring recent/preferred edges can narrow spatial diversity over time.
 
-Both v0.8.0 and v0.8.1 implement the lowest-risk follow-up: a deterministic rotating,
+v0.8.1 implements the lowest-risk follow-up: a deterministic rotating,
 stratified sample of the existing angle bucket. It preserves bounded work while
 preventing the same newest 12 edges from monopolizing every query. If a strict
 lossless mode is desired for evaluation, make the match cap optional; the
@@ -95,5 +95,5 @@ a demonstrated speed optimization. Such an experiment should consume the
 already-maintained `adjacency_map` and residual-edge features, compare fixed
 seed learning curves and wall time against the current pooled encoder, and be
 accepted only if quality/sample efficiency improves enough to pay for message
-passing. No graph-policy code was integrated in v0.8.0 or v0.8.1 because that evidence is
+passing. No graph-policy code was integrated in v0.8.1 because that evidence is
 not present.

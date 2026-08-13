@@ -1,4 +1,4 @@
-"""Deterministic vector geometry for Module Lab v0.8.0.
+"""Deterministic vector geometry for Module Lab v0.8.1.
 
 The kernel deliberately keeps topology decisions in vector space.  Raster cells
 are only a placement acceleration structure; they are never used as a substitute
@@ -1512,30 +1512,6 @@ def _scale_polygon_to_box(poly: Sequence[dict], width: float, height: float) -> 
     ]
 
 
-SITE_AREA_TIER_TARGETS: dict[str, float] = {
-    "XS": 350.0,
-    "S": 900.0,
-    "M": 1850.0,
-    "L": 3250.0,
-    "XL": 6000.0,
-}
-
-
-def _apply_site_area_scaling(outer: list[dict], options: dict) -> list[dict]:
-    tier = options.get("siteAreaTier")
-    target_area = options.get("targetSiteArea")
-    if target_area is None and tier in SITE_AREA_TIER_TARGETS:
-        target_area = SITE_AREA_TIER_TARGETS[tier]
-    if target_area is not None and float(target_area) > 0:
-        target = float(target_area)
-        current_area = polygon_area(outer)
-        if current_area > EPSILON:
-            scale = math.sqrt(target / current_area)
-            cx, cy = polygon_centroid(outer)
-            return [_point(cx + (p["x"] - cx) * scale, cy + (p["y"] - cy) * scale) for p in outer]
-    return outer
-
-
 def make_boundary(
     boundary_type: str = "free",
     seed: RNG | int | float = 0,
@@ -1567,7 +1543,6 @@ def make_boundary(
     # positions remain seed-parameterized rather than fixed coordinate constants.
     if family in ("rect", "rectangle"):
         outer = [_point(0, 0), _point(width, 0), _point(width, height), _point(0, height)]
-        outer = _apply_site_area_scaling(outer, options)
         return {
             "outer": outer,
             "seed": seed_label,
@@ -1586,7 +1561,6 @@ def make_boundary(
             _point(width - notch_width, height),
             _point(0, height),
         ]
-        outer = _apply_site_area_scaling(outer, options)
         return {
             "outer": outer,
             "seed": seed_label,
@@ -1614,7 +1588,6 @@ def make_boundary(
             _point(left_arm, height),
             _point(0, height),
         ]
-        outer = _apply_site_area_scaling(outer, options)
         return {
             "outer": outer,
             "seed": seed_label,
@@ -1643,7 +1616,6 @@ def make_boundary(
             _point(stem_x, bar_height),
             _point(0, bar_height),
         ]
-        outer = _apply_site_area_scaling(outer, options)
         return {
             "outer": outer,
             "seed": seed_label,
@@ -1712,7 +1684,6 @@ def make_boundary(
         # Ordered positive polar radii should always be simple.  A deterministic
         # convex hull is a safe numerical fallback, not a static shape template.
         outer = _scale_polygon_to_box(convex_hull(points), width, height)
-    outer = _apply_site_area_scaling(outer, options)
     return {
         "outer": outer,
         "seed": seed_label,
