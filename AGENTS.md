@@ -71,3 +71,25 @@ Whenever code features, bug fixes, performance optimizations, or architectural u
 ## 5. Git Push Approval Rule
 
 - **Do NOT execute `git push` unless explicitly instructed**: AI agents must **NEVER** push commits to remote repositories (`git push`) unless the user explicitly commands it in a prompt (e.g. "push", "push once done"). Keep all code edits, commits, subversion feature sync, and documentation updates local until explicit user consent is given.
+
+---
+
+## 6. Standard Roadmap Execution Protocol (`/goal` & Roadmap Requests)
+
+Whenever a user requests to run the development roadmap (e.g. via `/goal` or "run roadmap till step X"):
+
+1. **Iterative Phase Execution**:
+   - For each target phase and decision node in [`agent_notes/roadmap.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/roadmap.md), implement the specified architectural features, algorithm improvements, and geometric constraints.
+2. **Debug Until 100% Functional**:
+   - Debug and fix all regressions until all unit tests pass (`python3 -m unittest discover -s tests -p "test_*.py"`).
+3. **Performance & Milestone Verification**:
+   - Run benchmarks (`python3 benchmarks/benchmark.py`) to confirm that throughput, convergence, and quality targets are achieved.
+4. **Decision Node Transition**:
+   - Evaluate decision branches (e.g. variance thresholds, convergence checks) before advancing to subsequent phases.
+5. **Mandatory Documentation Sync**:
+   - Synchronize all files in [`agent_notes/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/README.md) (`historical_approaches.md`, `issues.md`, `roadmap.md`, `benchmarks/`, `guides/`).
+6. **Cross-Subversion Code Sync**:
+   - Propagate and test all general features across all active subversion branches of the version family (e.g., `version/v0.8.1`, `version/v0.9.1`, etc.).
+7. **Local Commit & User Push Approval**:
+   - Commit all changes locally; do not execute `git push` unless explicitly commanded by the user.
+

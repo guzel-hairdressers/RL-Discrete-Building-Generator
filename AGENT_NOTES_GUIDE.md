@@ -59,3 +59,7 @@ agent_notes/
 
 6. **Mandatory Documentation Update & Git Push Approval**:
    Verify that all code changes, bug resolutions, benchmark data, roadmap progress, or architectural modifications are fully documented and updated across `agent_notes/`. **Do NOT execute `git push` unless the user explicitly requests it in a prompt.**
+
+7. **Iterative Roadmap Execution Protocol**:
+   When requested to execute roadmaps or goals, follow the 7-step loop: (1) Implement target phase tasks; (2) Debug until unit tests pass; (3) Verify benchmarks; (4) Evaluate decision nodes; (5) Synchronize documentation; (6) Synchronize cross-subversion branches (`version/v0.8.1`, `version/v0.9.1`, etc.); (7) Commit locally and request push approval.
+
