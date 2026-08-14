@@ -117,6 +117,8 @@ window.onerror = function(message, source, lineno, colno, error) {
     perfTimingsDetails: document.getElementById('perfTimingsDetails'),
     modeTrainingBtn: document.getElementById('modeTrainingBtn'),
     modeInferenceBtn: document.getElementById('modeInferenceBtn'),
+    autoGenerateCheckbox: document.getElementById('autoGenerateCheckbox'),
+    inferenceOptions: document.getElementById('inferenceOptions'),
     panelConsoleKicker: document.getElementById('panelConsoleKicker'),
     developerToggle: document.getElementById('developerToggle'),
     developerPanel: document.getElementById('developerPanel'),
@@ -142,6 +144,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     manuallyClosed: false,
 
     mode: 'training',
+    autoGenerate: false,
     trainingWanted: false,
     phase: 'connecting',
     hasSite: false,
@@ -427,6 +430,12 @@ window.onerror = function(message, source, lineno, colno, error) {
     if (dom.modeInferenceBtn) {
       dom.modeInferenceBtn.addEventListener('click', () => setOptimizerMode('inference'));
     }
+    if (dom.autoGenerateCheckbox) {
+      dom.autoGenerateCheckbox.addEventListener('change', () => {
+        state.autoGenerate = dom.autoGenerateCheckbox.checked;
+        updatePauseButton();
+      });
+    }
     if (dom.toggleMergingBtn) {
       dom.toggleMergingBtn.addEventListener('click', toggleMerging);
     }
@@ -672,6 +681,7 @@ window.onerror = function(message, source, lineno, colno, error) {
         dom.modeInferenceBtn.classList.add('active');
         dom.modeInferenceBtn.setAttribute('aria-checked', 'true');
       }
+      if (dom.inferenceOptions) dom.inferenceOptions.style.display = 'block';
       requestNewSite();
       updatePauseButton();
       updateActionAvailability();
@@ -692,6 +702,7 @@ window.onerror = function(message, source, lineno, colno, error) {
         dom.modeInferenceBtn.classList.remove('active');
         dom.modeInferenceBtn.setAttribute('aria-checked', 'false');
       }
+      if (dom.inferenceOptions) dom.inferenceOptions.style.display = 'none';
       requestNewSite();
       updatePauseButton();
       updateActionAvailability();
@@ -742,17 +753,17 @@ window.onerror = function(message, source, lineno, colno, error) {
     if (state.mode === 'inference') {
       if (state.trainingWanted) {
         symbol.textContent = 'Ⅱ';
-        title.textContent = 'Pause (Space)';
+        title.textContent = state.autoGenerate ? 'Stop Auto-Gen (Space)' : 'Pause (Space)';
         detail.textContent = state.phase === 'pausing' ? 'Finishing step' : 'Hold generation';
       } else {
         symbol.textContent = '▶';
-        title.textContent = 'Generate (Space)';
-        detail.textContent = state.pendingNextEpisode !== null ? 'Generate next' : 'Run layout generator';
+        title.textContent = state.autoGenerate ? 'Auto Generate (Space)' : 'Generate (Space)';
+        detail.textContent = state.autoGenerate ? 'Auto-stream to dataset' : 'Evaluate & record history';
       }
     } else {
       if (state.trainingWanted) {
         symbol.textContent = 'Ⅱ';
-        title.textContent = 'Pause (P/Space)';
+        title.textContent = 'Pause Training (Space)';
         detail.textContent = state.phase === 'pausing' ? 'Finishing step' : 'Hold training';
       } else {
         symbol.textContent = '▶';
@@ -1283,13 +1294,23 @@ window.onerror = function(message, source, lineno, colno, error) {
 
     reloadPausedPlacements();
 
+    updateDictionaryUI();
+    updateMetricsUI();
+    drawHistory();
+
     if (state.mode === 'inference') {
-      state.trainingWanted = false;
-      state.phase = 'paused';
-      updatePauseButton();
-      setProtocolStatus(`Generation ${data.completedEpisode} complete · saved to history`);
-      showToast(`Generation complete (Score: ${Number(data.metrics?.score || 0).toFixed(1)}) · saved to dataset`);
-      enterPausedState();
+      if (!state.autoGenerate) {
+        state.trainingWanted = false;
+        state.phase = 'paused';
+        updatePauseButton();
+        setProtocolStatus(`Generation ${data.completedEpisode} complete · saved to dataset`);
+        showToast(`Generation complete (Score: ${Number(data.metrics?.score || 0).toFixed(1)}) · saved to data/dataset_v1.jsonl`);
+        enterPausedState();
+      } else {
+        updatePauseButton();
+        setProtocolStatus(`Auto-Gen ${data.completedEpisode} complete · streaming to dataset`);
+        showToast(`Auto-Gen complete (Score: ${Number(data.metrics?.score || 0).toFixed(1)}) · saved to data/dataset_v1.jsonl`);
+      }
     } else {
       updatePauseButton();
       setProtocolStatus(`Episode ${data.completedEpisode} complete · resolving vector walls`);
@@ -1297,11 +1318,11 @@ window.onerror = function(message, source, lineno, colno, error) {
     requestRender();
 
     scheduleWallCache(() => {
-      if (state.mode === 'inference') return;
+      if (state.mode === 'inference' && !state.autoGenerate) return;
       if (!state.trainingWanted || state.pendingNextEpisode === null || state.awaitingSite) return;
       state.transitionTimer = window.setTimeout(() => {
         if (!state.trainingWanted || state.awaitingSite) return;
-        if (state.autoChangeSites) {
+        if (state.autoChangeSites || (state.mode === 'inference' && state.autoGenerate)) {
           state.pendingNextEpisode = null;
           requestNewSite();
         } else if (state.pendingNextEpisode !== null) {
