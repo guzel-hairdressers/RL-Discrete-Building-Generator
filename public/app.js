@@ -735,12 +735,8 @@ window.onerror = function(message, source, lineno, colno, error) {
       beginNextEpisode();
     } else {
       state.phase = 'running';
-      const activeMsg = state.mode === 'inference' ? 'Inference active (recording history)' : 'Training active';
+      const activeMsg = state.mode === 'inference' ? (state.autoGenerate ? 'Auto-generating & streaming to dataset' : 'Inference active') : 'Training active';
       setProtocolStatus(activeMsg);
-      clearPlacementState();
-      if (Array.isArray(state.individualPlacementsList)) {
-        for (const placement of state.individualPlacementsList) upsertPlacement(placement);
-      }
       scheduleNextStep(0);
       requestRender();
     }
@@ -1514,10 +1510,10 @@ window.onerror = function(message, source, lineno, colno, error) {
   }
 
   function reloadPausedPlacements() {
-    clearPlacementState();
     const useMerged = !state.disableMerging;
     const list = useMerged ? state.currentMergedPlacements : state.individualPlacementsList;
-    if (Array.isArray(list)) {
+    if (Array.isArray(list) && list.length > 0) {
+      clearPlacementState();
       for (const placement of list) {
         upsertPlacement(placement);
       }
@@ -1527,10 +1523,13 @@ window.onerror = function(message, source, lineno, colno, error) {
   function enterPausedState() {
     clearTimeout(state.stepTimer);
     state.phase = 'paused';
-    setProtocolStatus('Training paused · resolving vector walls');
+    const pausedMsg = state.mode === 'inference' ? 'Inference paused' : 'Training paused · resolving vector walls';
+    setProtocolStatus(pausedMsg);
     updatePauseButton();
     updateMergingButton();
-    reloadPausedPlacements();
+    if (Array.isArray(state.individualPlacementsList) && state.individualPlacementsList.length > 0) {
+      reloadPausedPlacements();
+    }
     updateDictionaryUI();
     
     // Request a complete terminal-like evaluation of the paused state
@@ -1540,7 +1539,7 @@ window.onerror = function(message, source, lineno, colno, error) {
       episode: state.episode
     });
     
-    scheduleWallCache(() => setProtocolStatus('Training paused · vector walls ready'));
+    scheduleWallCache(() => setProtocolStatus(state.mode === 'inference' ? 'Inference paused' : 'Training paused · vector walls ready'));
   }
 
   function clearPlacementState() {
