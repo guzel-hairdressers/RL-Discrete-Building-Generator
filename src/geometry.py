@@ -112,6 +112,14 @@ def _configure_native_library(library: ctypes.CDLL) -> None:
         ctypes.c_int,
     ]
     library.point_to_segments_distance_c.restype = ctypes.c_double
+    if hasattr(library, "rasterize_polygon_c"):
+        library.rasterize_polygon_c.argtypes = [
+            ctypes.POINTER(_CPoint),
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_int,
+        ]
+        library.rasterize_polygon_c.restype = ctypes.c_int
 
 
 _native_candidate_paths = _native_library_candidates()
@@ -173,9 +181,10 @@ TAU = 2.0 * math.pi
 _NativePolygonSignature = tuple[tuple[float, float], ...]
 
 
-def _native_polygon_signature(poly: Sequence[dict]) -> _NativePolygonSignature:
+def _native_polygon_signature(poly: Sequence[dict] | _NativePolygonSignature) -> _NativePolygonSignature:
     """Return an immutable value key for safe native-buffer caching."""
-
+    if isinstance(poly, tuple) and poly and isinstance(poly[0], tuple):
+        return poly
     return tuple((float(point["x"]), float(point["y"])) for point in poly)
 
 
@@ -271,7 +280,7 @@ def _native_shared_overlap_pair(
     )
 
 
-@functools.lru_cache(maxsize=32768)
+@functools.lru_cache(maxsize=65536)
 def _native_symmetric_segment_overlap_values(
     first_x: float,
     first_y: float,
@@ -284,6 +293,19 @@ def _native_symmetric_segment_overlap_values(
     linear_tolerance: float,
     angular_tolerance: float,
 ) -> tuple[tuple[float, float], tuple[float, float], float] | None:
+    min1_x = first_x if first_x < second_x else second_x
+    max1_x = second_x if first_x < second_x else first_x
+    min2_x = third_x if third_x < fourth_x else fourth_x
+    max2_x = fourth_x if third_x < fourth_x else third_x
+    if max1_x < min2_x - linear_tolerance or max2_x < min1_x - linear_tolerance:
+        return None
+    min1_y = first_y if first_y < second_y else second_y
+    max1_y = second_y if first_y < second_y else first_y
+    min2_y = third_y if third_y < fourth_y else fourth_y
+    max2_y = fourth_y if third_y < fourth_y else third_y
+    if max1_y < min2_y - linear_tolerance or max2_y < min1_y - linear_tolerance:
+        return None
+
     first_start = ctypes.c_double(0.0)
     first_end = ctypes.c_double(0.0)
     second_start = ctypes.c_double(0.0)
@@ -900,9 +922,34 @@ def is_simple_polygon(poly: Sequence[dict]) -> bool:
     return True
 
 
+def is_convex_polygon_signature(sig: Sequence[tuple[float, float]]) -> bool:
+    n = len(sig)
+    if n < 3:
+        return False
+    first_sign = None
+    for index in range(n):
+        x0, y0 = sig[index]
+        x1, y1 = sig[(index + 1) % n]
+        x2, y2 = sig[(index + 2) % n]
+        dx1 = x1 - x0
+        dy1 = y1 - y0
+        dx2 = x2 - x1
+        dy2 = y2 - y1
+        cp = dx1 * dy2 - dy1 * dx2
+        if abs(cp) <= EPSILON:
+            return False
+        sign = cp > 0.0
+        if first_sign is None:
+            first_sign = sign
+        elif sign != first_sign:
+            return False
+    return True
+
+
 def is_convex_polygon(poly: Sequence[dict]) -> bool:
     """Return True if the polygon is strictly convex with consistent cross product signs."""
-
+    if isinstance(poly, tuple) and poly and isinstance(poly[0], tuple):
+        return is_convex_polygon_signature(poly)
     n = len(poly)
     if n < 3:
         return False
@@ -997,15 +1044,20 @@ def rotate_polygon(
     return translate_to_origin(rotated) if normalize else rotated
 
 
-def rasterize_polygon(poly: Sequence[dict]) -> list[dict[str, int]]:
-    """Return unit grid cells whose centers lie inside or on *poly*.
+@functools.lru_cache(maxsize=16384)
+def _cached_rasterize_polygon(poly_sig: tuple[tuple[float, float], ...]) -> tuple[dict[str, int], ...]:
+    poly = [{"x": x, "y": y} for x, y in poly_sig]
+    if NATIVE_GEOMETRY_ENABLED and len(poly) >= 3 and hasattr(_libfast_geo, "rasterize_polygon_c"):
+        points = _packed_polygon_from_signature(poly_sig)
+        max_cells = 4096
+        out_buf = (ctypes.c_int * (max_cells * 2))()
+        cell_count = _libfast_geo.rasterize_polygon_c(points, len(poly_sig), out_buf, max_cells)
+        if cell_count > 0:
+            cells = []
+            for i in range(cell_count):
+                cells.append({"x": int(out_buf[i * 2]), "y": int(out_buf[i * 2 + 1])})
+            return tuple(cells)
 
-    The result is an acceleration structure only.  Vector area, wall, contact,
-    and daylight calculations must continue to use the original polygon.
-    """
-
-    if not poly:
-        return []
     box = bounds_of(poly)
     cells = []
     for y in range(math.floor(box["minY"]), math.ceil(box["maxY"])):
@@ -1013,7 +1065,16 @@ def rasterize_polygon(poly: Sequence[dict]) -> list[dict[str, int]]:
             center = _point(x + 0.5, y + 0.5)
             if point_in_polygon(center, poly) or point_on_polygon(center, poly):
                 cells.append({"x": x, "y": y})
-    return cells
+    return tuple(cells)
+
+
+def rasterize_polygon(poly: Sequence[dict]) -> list[dict[str, int]]:
+    """Return unit grid cells whose centers lie inside or on *poly*."""
+    if not poly:
+        return []
+    sig = tuple((round(float(p["x"]), 6), round(float(p["y"]), 6)) for p in poly)
+    cached = _cached_rasterize_polygon(sig)
+    return [dict(c) for c in cached]
 
 
 def _polygon_signature(poly: Sequence[dict], digits: int = 8) -> tuple:
@@ -1037,19 +1098,14 @@ class _LazyRotationDict(dict):
         return super().get(key, default)
 
 
-def normalize_rotations(
-    poly: Sequence[dict],
+@functools.lru_cache(maxsize=2048)
+def _cached_normalize_rotations(
+    raw_poly_tuple: tuple[tuple[float, float], ...],
     angle_step: float,
     phase: int = 0,
     max_samples: int = 72,
-) -> list[dict]:
-    """Materialize deterministic placement rotations.
-
-    ``angle_step == 0`` means one generated orientation.  For very fine steps,
-    at most *max_samples* lattice angles are selected evenly around the circle;
-    *phase* offsets that deterministic sample between training episodes.
-    """
-
+) -> tuple[dict, ...]:
+    poly = [{"x": x, "y": y} for x, y in raw_poly_tuple]
     step = float(angle_step)
     sample_cap = max(1, int(max_samples))
     if not math.isfinite(step) or step <= EPSILON:
@@ -1080,17 +1136,27 @@ def normalize_rotations(
         signatures.add(signature)
         box = bounds_of(rotated)
         rotations.append(
-            _LazyRotationDict(
-                {
-                    "rotation": index,
-                    "angle": angle,
-                    "poly": rotated,
-                    "width": box["maxX"] - box["minX"],
-                    "height": box["maxY"] - box["minY"],
-                }
-            )
+            {
+                "rotation": index,
+                "angle": angle,
+                "poly": rotated,
+                "width": box["maxX"] - box["minX"],
+                "height": box["maxY"] - box["minY"],
+            }
         )
-    return rotations
+    return tuple(rotations)
+
+
+def normalize_rotations(
+    poly: Sequence[dict],
+    angle_step: float,
+    phase: int = 0,
+    max_samples: int = 72,
+) -> list[dict]:
+    """Materialize deterministic placement rotations."""
+    raw_poly_tuple = tuple((float(p["x"]), float(p["y"])) for p in poly)
+    cached = _cached_normalize_rotations(raw_poly_tuple, float(angle_step), int(phase), int(max_samples))
+    return [_LazyRotationDict(dict(item)) for item in cached]
 
 
 def _segment_parameters_against_polygon(first: dict, second: dict, poly: Sequence[dict]) -> list[float]:
@@ -1500,10 +1566,13 @@ def point_to_segments_dist(point: dict, segments: Iterable) -> float:
     """Return minimum Euclidean distance from a point to vector segments.
 
     Segment items may be exposed-wall dictionaries with ``a``/``b`` fields or
-    two-item sequences of endpoint mappings.
+    two-item sequences of endpoint mappings or pre-computed signature tuples.
     """
 
-    signature = _segment_signature(segments)
+    if isinstance(segments, tuple) and segments and isinstance(segments[0], tuple) and len(segments[0]) == 4:
+        signature = segments
+    else:
+        signature = _segment_signature(segments)
     if NATIVE_GEOMETRY_ENABLED and signature:
         packed = _packed_segments_from_signature(signature)
         return float(

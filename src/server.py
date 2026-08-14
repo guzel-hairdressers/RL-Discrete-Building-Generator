@@ -707,6 +707,20 @@ class FloorEnvironment:
         self.site = site
         self.offset = offset
         self.rng = rng
+        if G.NATIVE_GEOMETRY_ENABLED and self.site and "outer" in self.site:
+            outer_sig = G._native_polygon_signature(self.site["outer"])
+            self.site["_outer_points"] = G._packed_polygon_from_signature(outer_sig)
+            self.site["_outer_count"] = len(outer_sig)
+            hole_sigs = tuple(G._native_polygon_signature(h) for h in self.site.get("holes", ()))
+            if hole_sigs:
+                hp, hc = G._packed_holes_from_signatures(hole_sigs)
+                self.site["_hole_points"] = hp
+                self.site["_hole_counts"] = hc
+                self.site["_hole_count"] = len(hole_sigs)
+            else:
+                self.site["_hole_points"] = None
+                self.site["_hole_counts"] = None
+                self.site["_hole_count"] = 0
         self.dictionary: list[dict] = []
         self.placements: list[dict] = []
         self.placement_by_id: dict[str, dict] = {}
@@ -774,6 +788,11 @@ class FloorEnvironment:
         bounds = G.bounds_of(placement["poly"])
         identifier = placement["id"]
         self.placement_bounds[identifier] = bounds
+        if G.NATIVE_GEOMETRY_ENABLED:
+            sig = G._native_polygon_signature(placement["poly"])
+            placement["_sig"] = sig
+            placement["_points"] = G._packed_polygon_from_signature(sig)
+            placement["_count"] = len(sig)
         for bucket in self._bucket_keys(bounds):
             self.spatial_buckets.setdefault(bucket, set()).add(identifier)
 
@@ -1378,16 +1397,22 @@ class FloorEnvironment:
         candidate_poly = rotation["poly"]
         angle_period = int(round(math.pi * ATTACHMENT_ANGLE_SCALE))
         poly_len = len(candidate_poly)
-        for candidate_index in range(poly_len):
-            candidate_first = candidate_poly[candidate_index]
-            candidate_second = candidate_poly[(candidate_index + 1) % poly_len]
-            candidate_dx = candidate_second["x"] - candidate_first["x"]
-            candidate_dy = candidate_second["y"] - candidate_first["y"]
-            candidate_length = math.hypot(candidate_dx, candidate_dy)
-            if candidate_length < MIN_SHARED_EDGE:
-                continue
-            angle_key = self._attachment_angle_key(candidate_first, candidate_second)
-            
+        edges_meta = rotation.get("_edges_meta")
+        if edges_meta is None:
+            edges_meta = []
+            for candidate_index in range(poly_len):
+                candidate_first = candidate_poly[candidate_index]
+                candidate_second = candidate_poly[(candidate_index + 1) % poly_len]
+                candidate_dx = candidate_second["x"] - candidate_first["x"]
+                candidate_dy = candidate_second["y"] - candidate_first["y"]
+                candidate_length = math.hypot(candidate_dx, candidate_dy)
+                if candidate_length < MIN_SHARED_EDGE:
+                    continue
+                angle_key = self._attachment_angle_key(candidate_first, candidate_second)
+                edges_meta.append((candidate_index, candidate_first, candidate_second, candidate_dx, candidate_dy, candidate_length, angle_key))
+            rotation["_edges_meta"] = edges_meta
+
+        for candidate_index, candidate_first, candidate_second, candidate_dx, candidate_dy, candidate_length, angle_key in edges_meta:
             pref_ids: list[int] = []
             norm_ids: list[int] = []
             seen_eids: set[int] = set()
@@ -1708,6 +1733,15 @@ class FloorEnvironment:
             or bounds["maxY"] > site_bounds["maxY"] + SPATIAL_PADDING
         ):
             return None
+
+        base_sig = rotation.get("_base_sig")
+        if base_sig is None:
+            base_sig = tuple((float(p["x"]), float(p["y"])) for p in rotation_poly)
+            rotation["_base_sig"] = base_sig
+        cand_sig = tuple((round(x + anchor_x, 6), round(y + anchor_y, 6)) for x, y in base_sig)
+        cand_count = len(cand_sig)
+        cand_points = G._packed_polygon_from_signature(cand_sig) if G.NATIVE_GEOMETRY_ENABLED else None
+
         t_overlap = time.perf_counter()
         poly = G.translate_polygon(rotation_poly, anchor_x, anchor_y)
         if self.placements:
@@ -1724,13 +1758,16 @@ class FloorEnvironment:
         if cg_sub_totals is not None: cg_sub_totals["cgOverlapCollisions"] += time.perf_counter() - t_overlap
         if has_overlap:
             return None
+
         t_bounds = time.perf_counter()
         inside_site = G.polygon_inside_site(poly, self.site["outer"], self.site["holes"])
         if cg_sub_totals is not None: cg_sub_totals["cgSiteBoundary"] += time.perf_counter() - t_bounds
         if not inside_site:
             return None
+
         if len(poly) == 4 and not G.is_convex_polygon(poly):
             return None
+
         t_bounds2 = time.perf_counter()
         # Rasterization is deferred until every vector predicate succeeds.
         # Rejected proposals are the overwhelming majority of candidate work.
@@ -2207,6 +2244,8 @@ class FloorEnvironment:
         polygons = [placement["poly"] for placement in self.placements]
         segments = G.exposed_wall_segments(polygons)
         exposed_perimeter = math.fsum(float(segment["length"]) for segment in segments)
+        site_wall_signature = G._segment_signature(self.site["wallSegments"])
+        envelope_signature = G._segment_signature(segments) if segments else ()
         site_daylight_samples = 0
         envelope_daylight_samples = 0
         rentable_samples = 0
@@ -2216,9 +2255,9 @@ class FloorEnvironment:
             for cell in placement["cells"]:
                 point = {"x": cell["x"] + 0.5, "y": cell["y"] + 0.5}
                 rentable_samples += 1
-                if G.point_to_segments_dist(point, self.site["wallSegments"]) <= DAYLIGHT_DEPTH:
+                if G.point_to_segments_dist(point, site_wall_signature) <= DAYLIGHT_DEPTH:
                     site_daylight_samples += 1
-                if G.point_to_segments_dist(point, segments) <= DAYLIGHT_DEPTH:
+                if envelope_signature and G.point_to_segments_dist(point, envelope_signature) <= DAYLIGHT_DEPTH:
                     envelope_daylight_samples += 1
 
         corridor_perimeter = math.fsum(
@@ -2246,7 +2285,7 @@ class FloorEnvironment:
                 "x": 0.5 * (segment["a"]["x"] + segment["b"]["x"]),
                 "y": 0.5 * (segment["a"]["y"] + segment["b"]["y"])
             }
-            dist_to_outer = G.point_to_segments_dist(mid, self.site["wallSegments"])
+            dist_to_outer = G.point_to_segments_dist(mid, site_wall_signature)
             
             dist_to_atrium = float('inf')
             if self.atrium_choice and self.atrium_choice.get("holes"):
@@ -4459,10 +4498,7 @@ class ParallelTrainer:
             )
             return environment, candidates, time.perf_counter() - generation_started
 
-        if len(active_environments) > 1:
-            generated = list(self.executor.map(generate_for_environment, active_environments))
-        else:
-            generated = [generate_for_environment(environment) for environment in active_environments]
+        generated = [generate_for_environment(environment) for environment in active_environments]
 
         for environment, candidates, candidate_generation_duration in generated:
             self.step_profiler.record("candidateGeneration", candidate_generation_duration)

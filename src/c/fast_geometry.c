@@ -787,3 +787,32 @@ double get_shared_overlap_c(
     );
     return total;
 }
+
+int rasterize_polygon_c(
+    const Point* poly,
+    int count,
+    int* out_cells,
+    int max_cells
+) {
+    if (count < 3 || out_cells == NULL || max_cells <= 0) return 0;
+    BoundingBox box = get_bounds(poly, count);
+    int min_y = (int)floor(box.minY);
+    int max_y = (int)ceil(box.maxY);
+    int min_x = (int)floor(box.minX);
+    int max_x = (int)ceil(box.maxX);
+    int cell_count = 0;
+
+    for (int y = min_y; y < max_y; ++y) {
+        for (int x = min_x; x < max_x; ++x) {
+            Point center = {(double)x + 0.5, (double)y + 0.5};
+            if (point_in_polygon(center, poly, count) || point_on_polygon(center, poly, count)) {
+                if (cell_count < max_cells) {
+                    out_cells[cell_count * 2] = x;
+                    out_cells[cell_count * 2 + 1] = y;
+                    cell_count++;
+                }
+            }
+        }
+    }
+    return cell_count;
+}

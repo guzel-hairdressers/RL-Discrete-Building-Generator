@@ -287,7 +287,20 @@ def extract_layout_graph(placements: list[dict], playground_id: int = 0) -> Layo
             ports_b = all_ports[pid_b]
             
             for pa in ports_a:
+                min_pax = pa.start["x"] if pa.start["x"] < pa.end["x"] else pa.end["x"]
+                max_pax = pa.end["x"] if pa.start["x"] < pa.end["x"] else pa.start["x"]
+                min_pay = pa.start["y"] if pa.start["y"] < pa.end["y"] else pa.end["y"]
+                max_pay = pa.end["y"] if pa.start["y"] < pa.end["y"] else pa.start["y"]
                 for pb in ports_b:
+                    min_pbx = pb.start["x"] if pb.start["x"] < pb.end["x"] else pb.end["x"]
+                    max_pbx = pb.end["x"] if pb.start["x"] < pb.end["x"] else pb.start["x"]
+                    if max_pax < min_pbx - 0.1 or max_pbx < min_pax - 0.1:
+                        continue
+                    min_pby = pb.start["y"] if pb.start["y"] < pb.end["y"] else pb.end["y"]
+                    max_pby = pb.end["y"] if pb.start["y"] < pb.end["y"] else pb.start["y"]
+                    if max_pay < min_pby - 0.1 or max_pby < min_pay - 0.1:
+                        continue
+
                     # Check if port segments A and B are collinear and overlap
                     # Since ports are directed (start -> end), anti-parallel ports connect.
                     # We check if segment A (pa.start -> pa.end) overlaps with segment B (pb.end -> pb.start)
@@ -359,14 +372,26 @@ def find_edge_connections(graph: LayoutGraph) -> list[EdgeConnection]:
     pids = list(graph.nodes.keys())
     n = len(pids)
     
+    node_bounds = {pid: G.bounds_of(graph.nodes[pid]["poly"]) for pid in pids}
+    
     for i in range(n):
         pid_a = pids[i]
         node_a = graph.nodes[pid_a]
         poly_a = node_a["poly"]
         n_a = len(poly_a)
+        ba = node_bounds[pid_a]
         
         for j in range(i + 1, n):
             pid_b = pids[j]
+            bb = node_bounds[pid_b]
+            if (
+                ba["maxX"] < bb["minX"] - 0.1
+                or bb["maxX"] < ba["minX"] - 0.1
+                or ba["maxY"] < bb["minY"] - 0.1
+                or bb["maxY"] < ba["minY"] - 0.1
+            ):
+                continue
+
             node_b = graph.nodes[pid_b]
             poly_b = node_b["poly"]
             n_b = len(poly_b)
@@ -381,12 +406,24 @@ def find_edge_connections(graph: LayoutGraph) -> list[EdgeConnection]:
                 len_a = distance(a1, a2)
                 if len_a < 1e-5:
                     continue
+                min_ax = a1["x"] if a1["x"] < a2["x"] else a2["x"]
+                max_ax = a2["x"] if a1["x"] < a2["x"] else a1["x"]
+                min_ay = a1["y"] if a1["y"] < a2["y"] else a2["y"]
+                max_ay = a2["y"] if a1["y"] < a2["y"] else a1["y"]
                     
                 for eb in range(n_b):
                     b1 = poly_b[eb]
                     b2 = poly_b[(eb + 1) % n_b]
                     len_b = distance(b1, b2)
                     if len_b < 1e-5:
+                        continue
+                    min_bx = b1["x"] if b1["x"] < b2["x"] else b2["x"]
+                    max_bx = b2["x"] if b1["x"] < b2["x"] else b1["x"]
+                    if max_ax < min_bx - 0.1 or max_bx < min_ax - 0.1:
+                        continue
+                    min_by = b1["y"] if b1["y"] < b2["y"] else b2["y"]
+                    max_by = b2["y"] if b1["y"] < b2["y"] else b1["y"]
+                    if max_ay < min_by - 0.1 or max_by < min_ay - 0.1:
                         continue
                     
                     overlap_measure = _symmetric_overlap_measure(a1, a2, b1, b2)
@@ -760,6 +797,16 @@ def _bounded_snap_area_tolerance(poly_a: Sequence[dict], poly_b: Sequence[dict])
     tolerance.  Exact contacts retain that tight tolerance in both directions.
     """
 
+    ba = G.bounds_of(poly_a)
+    bb = G.bounds_of(poly_b)
+    if (
+        ba["maxX"] < bb["minX"] - 0.1
+        or bb["maxX"] < ba["minX"] - 0.1
+        or ba["maxY"] < bb["minY"] - 0.1
+        or bb["maxY"] < ba["minY"] - 0.1
+    ):
+        return allowance
+
     expected_area = G.polygon_area(poly_a) + G.polygon_area(poly_b)
     allowance = max(BPE_AREA_ABS_TOLERANCE, expected_area * BPE_AREA_REL_TOLERANCE)
     for first_index, first in enumerate(poly_a):
@@ -769,11 +816,25 @@ def _bounded_snap_area_tolerance(poly_a: Sequence[dict], poly_b: Sequence[dict])
             continue
         first_dx = second["x"] - first["x"]
         first_dy = second["y"] - first["y"]
+        min_1x = first["x"] if first["x"] < second["x"] else second["x"]
+        max_1x = second["x"] if first["x"] < second["x"] else first["x"]
+        min_1y = first["y"] if first["y"] < second["y"] else second["y"]
+        max_1y = second["y"] if first["y"] < second["y"] else first["y"]
+
         for third_index, third in enumerate(poly_b):
             fourth = poly_b[(third_index + 1) % len(poly_b)]
             second_length = distance(third, fourth)
             if second_length <= 1.0e-9:
                 continue
+            min_2x = third["x"] if third["x"] < fourth["x"] else fourth["x"]
+            max_2x = fourth["x"] if third["x"] < fourth["x"] else third["x"]
+            if max_1x < min_2x - 0.1 or max_2x < min_1x - 0.1:
+                continue
+            min_2y = third["y"] if third["y"] < fourth["y"] else fourth["y"]
+            max_2y = fourth["y"] if third["y"] < fourth["y"] else third["y"]
+            if max_1y < min_2y - 0.1 or max_2y < min_1y - 0.1:
+                continue
+
             measure = _symmetric_overlap_measure(first, second, third, fourth)
             if measure is None:
                 continue
