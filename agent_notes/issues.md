@@ -8,6 +8,25 @@ This document is the master tracking log for active bugs, regressive side effect
 
 ## 1. Active, Reopened & Unsolved Critical Issues (Top Priority)
 
+### 🚨 Premature Generation Termination & Site Under-Filling (<25% Site Fill)
+* **Status**: `Planned for v0.8.2 (Roadmap Phase 1D)` (Priority: Critical)
+* **Description**:
+  Floor generations stop prematurely across large site polygons (e.g. site ~3500 m², filled only ~700-800 m², fill ratio < 25%). Vast perimeter lobes and open boundary areas remain completely unoccupied, additional vertical core shafts are not stacked/spawned, and rooms terminate early instead of growing outward toward the boundaries.
+* **Observed Metrics**:
+  Total placed modules = 121 across 4 floors (~30 modules/floor), while site capacity could hold 200+ modules and multiple additional circulation cores.
+* **Diagnosed Root Causes**:
+  1. **Hardcoded 2-Room Hop Distance Limit (`crossings <= 2`)**: `_new_room_reaches_core()` in `src/server.py:1197` rejects any standard room $> 2$ hops from a core. Once a 2-layer ring forms around Core 1 & 2, all outer attachment edges fail (1,806 valid room positions rejected on a single step).
+  2. **Hardcoded Maximum of 2 Cores Per Floor (`core_count < 2`)**: `_shared_core_stack_candidates()` (`src/server.py:3607`), `generate_candidates()` (`src/server.py:1956`), and `generate_candidates_for_module()` (`src/server.py:1674`) strictly forbid proposing a 3rd or 4th core shaft regardless of site area.
+  3. **No Remote Core Proposals in Distant Lobes**: `_shared_core_stack_candidates()` only checks attachment edges of already placed rooms (`_edge_alignment_anchors`). Because of `coreSpacing = 20.0m`, any core touching existing 10m-radius room clusters is rejected for spacing, and the generator never probes distant unoccupied lobes $>20\text{m}$ away.
+  4. **Cascading Environment Death**: When one floor's room growth pauses for one step due to the hop limit, `ParallelTrainer.step()` sets `environment.done = True`, which immediately causes `_core_stack_at_transform()` to reject all future core stacks for the entire building.
+* **Approved Architecture Plan (v0.8.2)**:
+  1. **Parametric Room Hop Slider**: Add `#maxRoomHops` slider control (Range: 1–10, **Default: 3**), allowing user customization while preserving the hop-blocking mechanics.
+  2. **Area-Proportional & Procedural Cores**: Remove the hardcoded `core_count < 2` limit and allow cores to scale with site area / procedural model decisions.
+  3. **Remote Lobe Core Search**: Include unserved frontier cells $> \text{coreSpacing}$ from existing cores in multi-floor core proposals.
+  4. **Non-Fatal Floor Execution**: Ensure a floor is not marked `done = True` if core stacking fails, allowing room placement to continue locally.
+
+---
+
 ### BPE Merge Algorithm Collision & Failure to Merge Symmetric Shapes
 * **Status**: `Investigating / Reopened` (Priority: High)
 * **Description**:

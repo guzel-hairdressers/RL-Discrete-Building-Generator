@@ -72,7 +72,26 @@ This document defines the master development plan for the **RL-Discrete-Building
   2. **Primitive Purging & Vocab Penalty**: Purge fully-consumed primitive shapes (e.g. `s3`) from the final dictionary; penalize active vocabulary size breaches.
   3. **Module Area & Subshape Variance Penalty**: Reward uniform composite room areas ($15 – 35 \text{ m}^2$) and penalize high Coefficient of Variation ($\text{CV}$) across dictionary module sizes.
   4. **Uniform Module Utilization Reward**: Evaluate Shannon Entropy $H(f)$ over module placement frequencies to encourage equal utilization of active dictionary modules.
-* **Target Metric**: Maximize BPE vocabulary compactness while maintaining $> 85.0\,\text{pts}$ layout score.
+---
+
+### Phase 1D: Dynamic Site Capacity, Core Scaling & Parametric Room Hop Depth (v0.8.2) [ROADMAP]
+* **Target Objective**: *High Site Fill Ratio (>60%), Area-Proportional Circulation Cores & Parametric Hop Reachability*
+* **Status**: `[PLANNED / ROADMAP]` (Priority: Critical)
+* **Core Tasks**:
+  1. **Parametric Room Hop Slider (`#maxRoomHops`)**:
+     - Introduce a UI range slider (Min: `1`, Max: `10`, **Default: `3`**) in the control console.
+     - Preserves the hop-blocking mechanics to keep rooms tied to circulation cores while allowing user control over cluster depth.
+  2. **Area-Proportional Core Capacity**:
+     - Replace the hardcoded `core_count < 2` ceiling with dynamic site-area-based capacity (e.g. 1 core per ~650–800 m² of footprint area).
+     - Scale maximum cores dynamically from 2 (XS/S) up to 6–8 (L/XL) across complex lobed sites.
+  3. **Remote Lobe Core Proposals in Multi-Floor Stacking**:
+     - Extend `_shared_core_stack_candidates` to probe unserved frontier cells $> \text{coreSpacing}$ away from existing cores, seeding vertical circulation shafts directly into remote wings/lobes.
+  4. **Non-Fatal Multi-Floor Execution**:
+     - If a multi-floor core stack fails to align across peers on a given step, do not prematurely mark environments `done = True`.
+     - Allow individual floors to continue placing valid local room modules without cascading building death.
+  5. **Long-Term Procedural Cores**:
+     - Prepare foundation for fully procedural, model-driven core placement decisions as network policies mature.
+* **Target Metric**: Increase large-site fill ratio from $<25\%$ to $\ge 60\%$ with multi-core building connectivity.
 
 ---
 

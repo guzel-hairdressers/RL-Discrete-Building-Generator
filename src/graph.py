@@ -358,15 +358,25 @@ def find_edge_connections(graph: LayoutGraph) -> list[EdgeConnection]:
     connections = []
     pids = list(graph.nodes.keys())
     n = len(pids)
+    node_bounds = {pid: G.bounds_of(graph.nodes[pid]["poly"]) for pid in pids}
     
     for i in range(n):
         pid_a = pids[i]
         node_a = graph.nodes[pid_a]
         poly_a = node_a["poly"]
         n_a = len(poly_a)
+        bounds_a = node_bounds[pid_a]
         
         for j in range(i + 1, n):
             pid_b = pids[j]
+            bounds_b = node_bounds[pid_b]
+            if (
+                bounds_a["maxX"] < bounds_b["minX"] - 0.2
+                or bounds_b["maxX"] < bounds_a["minX"] - 0.2
+                or bounds_a["maxY"] < bounds_b["minY"] - 0.2
+                or bounds_b["maxY"] < bounds_a["minY"] - 0.2
+            ):
+                continue
             node_b = graph.nodes[pid_b]
             poly_b = node_b["poly"]
             n_b = len(poly_b)
@@ -762,6 +772,17 @@ def _bounded_snap_area_tolerance(poly_a: Sequence[dict], poly_b: Sequence[dict])
 
     expected_area = G.polygon_area(poly_a) + G.polygon_area(poly_b)
     allowance = max(BPE_AREA_ABS_TOLERANCE, expected_area * BPE_AREA_REL_TOLERANCE)
+    bounds_a = G.bounds_of(poly_a)
+    bounds_b = G.bounds_of(poly_b)
+    tol = BPE_SNAP_TOLERANCE + BPE_ENDPOINT_TOLERANCE
+    if (
+        bounds_a["maxX"] < bounds_b["minX"] - tol
+        or bounds_b["maxX"] < bounds_a["minX"] - tol
+        or bounds_a["maxY"] < bounds_b["minY"] - tol
+        or bounds_b["maxY"] < bounds_a["minY"] - tol
+    ):
+        return allowance * (1.0 + 1.0e-9)
+
     for first_index, first in enumerate(poly_a):
         second = poly_a[(first_index + 1) % len(poly_a)]
         first_length = distance(first, second)
