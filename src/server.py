@@ -1820,10 +1820,10 @@ class FloorEnvironment:
         neighbors: list[str] = []
         shared_overlap = 0.0
         for placement in nearby:
-            maximum_overlap = _max_shared_overlap(poly, placement["poly"])
-            if maximum_overlap + 1.0e-8 >= MIN_SHARED_EDGE:
+            pair_overlap = G.get_shared_overlap(poly, placement["poly"])
+            if pair_overlap + 1.0e-8 >= MIN_SHARED_EDGE:
                 neighbors.append(placement["id"])
-                shared_overlap += G.get_shared_overlap(poly, placement["poly"])
+                shared_overlap += pair_overlap
         if self.placements and not neighbors and category != "core":
             return None
         if category == "room" and self.placements:
