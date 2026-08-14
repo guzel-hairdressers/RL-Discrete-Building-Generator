@@ -77,6 +77,7 @@ _TORCH_RUNTIME_CONFIGURED = False
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     "boundaryType": "lobed",
+    "siteAreaTier": "ANY",
     "atriumPolicy": "agent",
     "singleFloor": False,
     "publicMode": False,
@@ -98,6 +99,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
 }
 
 BOUNDARY_TYPES = {"lobed", "lshape", "ushape", "tshape", "convex", "rect", "free"}
+SITE_AREA_TIERS = {"ANY", "XS", "S", "M", "L", "XL"}
 ATRIUM_POLICIES = {"agent", "central", "none"}
 
 
@@ -179,6 +181,10 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     boundary_type = merged["boundaryType"]
     if not isinstance(boundary_type, str) or boundary_type not in BOUNDARY_TYPES:
         raise SettingsError("boundaryType is not supported")
+    site_area_tier = str(merged.get("siteAreaTier", "ANY")).upper()
+    if site_area_tier not in SITE_AREA_TIERS:
+        raise SettingsError("siteAreaTier is not supported")
+    merged["siteAreaTier"] = site_area_tier
     atrium_policy = merged["atriumPolicy"]
     if not isinstance(atrium_policy, str) or atrium_policy not in ATRIUM_POLICIES:
         raise SettingsError("atriumPolicy is not supported")
