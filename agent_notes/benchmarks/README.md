@@ -27,10 +27,23 @@ agent_notes/benchmarks/
 ├── 26-08-11_v0.8.0-visual-grid-evaluations/           # Visual layout rendering grids & JSON floor plan layouts
 │   ├── v0.8.0_seed123_first3_grid.json
 │   └── v0.8.0_seed123_first3_grid.png
+├── 26-08-14_v0.8.0-phase1-3-eval/                  # Per-Phase (1, 1C, 2, 3) + PPO/GAE + BPE Regularizer benchmarks
+│   ├── README.md
+│   ├── phase1_ppo_gae_50ep.json
+│   ├── phase1c_bpe_reg_25ep.json
+│   ├── phase2_c_opt_50ep.json
+│   └── comparative_baseline_vs_contender_50ep.json
+├── 26-08-14_v0.8.0-optimization-30pct/                # 30% Latency & Speedup Optimization Evaluation (50ep)
+│   ├── README.md
+│   ├── baseline_clean_50ep.json
+│   ├── subphase_opt1_25ep.json
+│   ├── subphase_opt2_25ep.json
+│   └── comparative_50ep.json
 └── 26-08-14_v0.8.1-lobed-evaluations/                 # v0.8.1 Dynamic Parametric Shape generator evaluations (5.92x speedup)
-    ├── results_10ep_lobed_seed123_v081_release.csv
+    ├── README.md
+    ├── comparative_v081_baseline_vs_updated_50ep.json
+    ├── opt30_comparative_v081_50ep.json
     ├── results_10ep_lobed_seed123_v081_release.json
-    ├── v0.8.1_seed123_first3_grid.json
     └── v0.8.1_seed123_first3_grid.png
 ```
 

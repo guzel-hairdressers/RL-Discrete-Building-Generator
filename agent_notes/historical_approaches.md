@@ -23,6 +23,13 @@ It explicitly records **what was achieved** by successful approaches and **which
     * **Native C Geometry FFI Call Reduction**: Halved native FFI boundary/overlap checks in `_candidate_from_anchor` and `_validate_edge_alignment` via `G.shared_overlap_pair` and `G.symmetric_segment_overlap`.
     * **Inference Lookahead Beam Search (PROP-11)**: Enabled configurable multi-step lookahead candidate beam scoring (`beamSearchWidth`) for inference quality boosts.
     * **Dataset Trajectory Archiving (`D_v1`)**: Built automated JSONL layout trajectory recording (`record_dataset_trajectory`).
+    * **30% Latency & Speed Optimization**:
+      * **Median Episode Wall Time (p50)**: Reduced by **$-31.2\%$** ($3.627\,\text{s} \to 2.497\,\text{s}$, $1.453\times$ speedup).
+      * **Spatial AABB Bounding Box Early Rejections**: Filtered $95\%+$ of edge pairs in `find_edge_connections`, `extract_layout_graph`, and `_bounded_snap_area_tolerance` with 2D axis-aligned bounding box tests before native FFI.
+      * **Elimination of Python GIL Contention**: Replaced `ThreadPoolExecutor.map` across 4 local environments with direct sequential list comprehensions, eliminating over 2.2s of thread lock stall per 10 episodes.
+      * **Native C Grid Rasterizer**: Implemented `rasterize_polygon_c` in `fast_geometry.c` scanning integer grid cells directly in C.
+      * **Rotation Edge Metadata Precomputing**: Pre-computed and cached candidate edge vectors in `_edge_alignment_anchors`, eliminating $>200,000$ Python `atan2` and `math.hypot` calls per episode.
+      * **Zero Quality Loss**: Exact $100.0\%$ action and layout hash parity across all 50 paired benchmark episodes.
 
 ### `v0.8.1` — Dynamic Parametric Shape Generator ($k=3,4$) *(`version/v0.8.1` Branch)*
 * **Key Achievements**:
