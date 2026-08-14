@@ -70,3 +70,13 @@ It explicitly records **what was achieved** by successful approaches and **which
 * **Status**: **DISCARDED (Phasing out in v0.8.2)**
 * **What was tried**: Computed advantage as $A = R_{\text{terminal}} - V(s_0)$, applying the exact same scalar advantage to all steps $t=0 \dots T-1$ in an episode.
 * **Why it failed**: Caused massive score variance/dispersion ($\pm 28.4\,\text{pts}$ standard deviation), because early placement steps were unfairly penalized for late placement mistakes. Must be replaced with **GAE ($\gamma=0.99, \lambda=0.95$)**.
+
+---
+
+## 3. Low-Impact Optimizations & Reversion Candidates
+
+### ⚠️ Phase 2 FFI Overlap Consolidation in Candidate Generation
+* **Status**: `Active (Marginal Improvement / Reversion Candidate)`
+* **What was done**: Consolidated redundant double calls (`_max_shared_overlap` followed by `G.get_shared_overlap`) into a single-pass `G.get_shared_overlap` in `_candidate_from_anchor` (`src/server.py`).
+* **Observed Advantage**: Slight $-2.61\%$ wall time reduction ($-119.5\,\text{ms}$ per 50-episode run) with zero score/action divergence ($41.628 \to 41.628$).
+* **Reversion Note**: Because the performance gain is modest, if any edge-case boundary overlap or reachability regression emerges in complex multi-core scenarios, this optimization is flagged as a primary candidate to revert back to the legacy two-stage check.
