@@ -241,7 +241,7 @@ class DynamicPaletteTests(unittest.TestCase):
         self.assertEqual(event["type"], "episodeDone")
         self.assertNotEqual(event["metrics"]["policyLoss"], 0.0)
         self.assertEqual(
-            event["metrics"]["learningAlgorithm"], "monte_carlo_actor_critic"
+            event["metrics"]["learningAlgorithm"], "ppo_gae"
         )
         self.assertGreaterEqual(event["metrics"]["valueLoss"], 0.0)
         self.assertTrue(math.isfinite(event["metrics"]["gradientNorm"]))

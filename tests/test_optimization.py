@@ -63,7 +63,7 @@ class LearnerOptimizationTests(unittest.TestCase):
         trainer.settings["dictCap"] = 1
         event = trainer._finish_episode()
         metrics = event["metrics"]
-        self.assertEqual(metrics["learningAlgorithm"], "monte_carlo_actor_critic")
+        self.assertEqual(metrics["learningAlgorithm"], "ppo_gae")
         for key in ("policyLoss", "actorLoss", "valueLoss", "gradientNorm", "advantage"):
             self.assertTrue(math.isfinite(float(metrics[key])), key)
         self.assertGreaterEqual(metrics["valueLoss"], 0.0)

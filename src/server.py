@@ -620,6 +620,7 @@ class PlacementPolicyDecision:
     features: torch.Tensor
     action_index: int
     temperature: float
+    old_log_prob: float = 0.0
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -4291,14 +4292,54 @@ class ParallelTrainer:
                 features=torch.tensor(features, dtype=torch.float32),
                 action_index=int(action_index),
                 temperature=float(temperature),
+                old_log_prob=float(sampled_log_prob.detach().cpu().item()),
             )
         )
 
     def _learn_from_episode(self, score: float) -> None:
         normalized_score = score / 100.0
-        terms: list[torch.Tensor] = []
+        gamma = 0.99
+        gae_lambda = 0.95
+        clip_eps = 0.2
+
+        floor_descriptors = self._site_descriptor(self.environments, self.settings)
+        if not floor_descriptors:
+            floor_descriptors = [[0.0] * FLOOR_DESCRIPTOR_DIM]
+        floor_tensor = torch.tensor(floor_descriptors, dtype=torch.float32, device=self.device)
+        pooled_site = self.model.encode_sites(floor_tensor)
+        value_prediction = self.model.value(pooled_site)
+        v_pred_val = float(value_prediction.detach().cpu().item())
+        target = torch.tensor(normalized_score, dtype=torch.float32, device=self.device)
+
+        policy_loss_terms: list[torch.Tensor] = []
         entropy_terms: list[torch.Tensor] = []
+
         if self.placement_decisions:
+            # 1. Compute GAE advantages per trajectory / environment
+            grouped_decisions: dict[int, list[PlacementPolicyDecision]] = {}
+            for decision in self.placement_decisions:
+                grouped_decisions.setdefault(decision.environment_index, []).append(decision)
+
+            decision_advantages: list[float] = []
+            for env_idx, env_decisions in sorted(grouped_decisions.items()):
+                t_steps = len(env_decisions)
+                gae = 0.0
+                env_advs = [0.0] * t_steps
+                for t in reversed(range(t_steps)):
+                    step_reward = normalized_score if t == t_steps - 1 else 0.0
+                    v_next = 0.0 if t == t_steps - 1 else v_pred_val
+                    delta = step_reward + gamma * v_next - v_pred_val
+                    gae = delta + gamma * gae_lambda * gae
+                    env_advs[t] = gae
+                decision_advantages.extend(env_advs)
+
+            adv_tensor = torch.tensor(decision_advantages, dtype=torch.float32, device=self.device)
+            if len(adv_tensor) > 1 and float(adv_tensor.std().item()) > 1.0e-6:
+                norm_adv = (adv_tensor - adv_tensor.mean()) / (adv_tensor.std() + 1.0e-8)
+            else:
+                norm_adv = adv_tensor - adv_tensor.mean()
+
+            # 2. PPO Clipped Surrogate Loss
             feature_rows = torch.cat(
                 [decision.features for decision in self.placement_decisions], dim=0
             ).to(self.device)
@@ -4308,34 +4349,40 @@ class ParallelTrainer:
                 posinf=20.0,
                 neginf=-20.0,
             ).clamp(-30.0, 30.0)
+
             cursor = 0
-            recomputed: dict[int, list[torch.Tensor]] = {}
-            for decision in self.placement_decisions:
+            for idx, decision in enumerate(self.placement_decisions):
                 count = int(decision.features.shape[0])
                 group_logits = decision_logits[cursor : cursor + count] / decision.temperature
                 cursor += count
                 group_log_probs = F.log_softmax(group_logits, dim=0)
                 selected_log_prob = group_log_probs[decision.action_index]
-                recomputed.setdefault(decision.environment_index, []).append(selected_log_prob)
+                old_log_prob = torch.tensor(decision.old_log_prob, dtype=torch.float32, device=self.device)
+
+                # Probability ratio r_t(theta)
+                ratio = torch.exp(selected_log_prob - old_log_prob)
+                adv = norm_adv[idx]
+                surr1 = ratio * adv
+                surr2 = torch.clamp(ratio, 1.0 - clip_eps, 1.0 + clip_eps) * adv
+                policy_loss_terms.append(-torch.min(surr1, surr2))
+
                 if count > 1:
                     probabilities = group_log_probs.exp()
                     entropy_terms.append(
                         -(probabilities * group_log_probs).sum() / math.log(count)
                     )
-            trajectory_term = _mean_trajectory_log_probability(recomputed)
-            if trajectory_term is not None:
-                terms.append(trajectory_term)
+
+            actor_loss = torch.stack(policy_loss_terms).mean() if policy_loss_terms else torch.zeros((), dtype=torch.float32, device=self.device)
         elif self.placement_log_probs_by_environment:
-            # Sum within each policy-dependent trajectory, then average the
-            # independent floor trajectories. Averaging individual actions
-            # biases learning toward short/dead-ended layouts.
             trajectory_term = _mean_trajectory_log_probability(
                 self.placement_log_probs_by_environment
             )
-            if trajectory_term is not None:
-                terms.append(trajectory_term)
+            actor_loss = -((normalized_score - v_pred_val) * trajectory_term) if trajectory_term is not None else torch.zeros((), dtype=torch.float32, device=self.device)
         elif self.placement_log_probs:
-            terms.append(torch.stack(self.placement_log_probs).sum())
+            actor_loss = -((normalized_score - v_pred_val) * torch.stack(self.placement_log_probs).sum())
+        else:
+            actor_loss = torch.zeros((), dtype=torch.float32, device=self.device)
+
         building_shape_ids = {
             id(log_probability)
             for log_probability in self.building_shape_log_probs
@@ -4346,38 +4393,19 @@ class ParallelTrainer:
             if id(log_probability) not in building_shape_ids
         ]
         if floor_shape_log_probs:
-            # Atrium and dynamic-shape actions belong to floor rollouts. Keep
-            # their aggregate scale stable when moving between 4 and 8 floors.
-            terms.append(
+            actor_loss = actor_loss - (
                 0.8
+                * (normalized_score - v_pred_val)
                 * torch.stack(floor_shape_log_probs).sum()
                 / max(1, len(self.environments))
             )
         if self.building_shape_log_probs:
-            # The mandatory core geometry is sampled once for the entire
-            # building and therefore remains one unscaled policy action.
-            terms.append(0.8 * torch.stack(self.building_shape_log_probs).sum())
+            actor_loss = actor_loss - (
+                0.8
+                * (normalized_score - v_pred_val)
+                * torch.stack(self.building_shape_log_probs).sum()
+            )
 
-        floor_descriptors = self._site_descriptor(self.environments, self.settings)
-        if not floor_descriptors:
-            # Keep synthetic/empty terminal episodes useful for critic and
-            # reward tests without passing a malformed 1-D empty tensor into
-            # the site encoder.
-            floor_descriptors = [[0.0] * FLOOR_DESCRIPTOR_DIM]
-        floor_tensor = torch.tensor(floor_descriptors, dtype=torch.float32, device=self.device)
-        pooled_site = self.model.encode_sites(floor_tensor)
-        value_prediction = self.model.value(pooled_site)
-        target = torch.tensor(normalized_score, dtype=torch.float32, device=self.device)
-        advantage = _clamp(
-            normalized_score - float(value_prediction.detach().cpu().item()),
-            -1.0,
-            1.0,
-        )
-        actor_loss = (
-            -advantage * torch.stack(terms).sum()
-            if terms
-            else torch.zeros((), dtype=torch.float32, device=self.device)
-        )
         value_loss = F.smooth_l1_loss(value_prediction, target)
         entropy = (
             torch.stack(entropy_terms).mean()
@@ -4394,7 +4422,7 @@ class ParallelTrainer:
         self.last_value_loss = float(value_loss.detach().cpu().item())
         self.last_entropy = float(entropy.detach().cpu().item())
         self.last_gradient_norm = float(torch.as_tensor(gradient_norm).detach().cpu().item())
-        self.last_advantage = float(advantage)
+        self.last_advantage = float(normalized_score - v_pred_val)
         self.baseline = 0.90 * self.baseline + 0.10 * normalized_score
 
     def _finish_episode(self) -> dict[str, Any]:
@@ -4478,7 +4506,7 @@ class ParallelTrainer:
         metrics["gradientNorm"] = self.last_gradient_norm
         metrics["advantage"] = self.last_advantage
         metrics["learningRate"] = float(self.optimizer.param_groups[0]["lr"])
-        metrics["learningAlgorithm"] = "monte_carlo_actor_critic"
+        metrics["learningAlgorithm"] = "ppo_gae"
         metrics["baseline"] = self.baseline
         self.score_history.append(score)
         self.best_score = max(self.best_score, score)
