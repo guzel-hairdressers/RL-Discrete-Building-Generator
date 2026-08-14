@@ -59,3 +59,13 @@ agent_notes/
 
 6. **Mandatory Documentation Update on Every Push to `main`**:
    Before executing a git commit or pushing to `main` / `version/v0.8.1`, check all files in `agent_notes/` to verify that any code changes, bug resolutions, benchmark benchmarks, roadmap progress, or architectural modifications are fully documented and updated.
+
+---
+
+## 4. Mandatory Across-Phase Benchmark Table Format
+
+Whenever reporting progressive roadmap metrics or multi-phase benchmarks, agents **MUST present step-by-step isolated net deltas** rather than purely compounding totals, formatted according to [`agent_notes/guides/benchmarking_guide.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/benchmarking_guide.md):
+
+* **Columns**: `Metric` | `Clean Baseline` | `Phase X (Net vs Prev)` | ... | `Total Net Delta (vs Base)` | `Impact & Evaluation`
+* **Isolated Marginals**: Each phase column must show the exact delta $\Delta = \text{Phase}_X - \text{Phase}_{X-1}$ and percentage relative to the immediately preceding phase.
+* **Impact & Evaluation**: The final column must always provide the qualitative architectural/geometric explanation of the observed delta.
