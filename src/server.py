@@ -641,10 +641,12 @@ def record_dataset_trajectory(
     try:
         os.makedirs(data_dir, exist_ok=True)
         out_path = os.path.join(data_dir, filename)
+        metrics_dict = event.get("metrics", {})
+        score_raw = metrics_dict.get("score", metrics_dict.get("aggregateReward", 0.0))
         record = {
             "episode": event.get("completedEpisode", 0),
-            "score": float(event.get("metrics", {}).get("aggregateReward", 0.0)),
-            "metrics": event.get("metrics", {}),
+            "score": float(score_raw),
+            "metrics": metrics_dict,
             "dictionary": event.get("dictionary", []),
             "mergedDictionary": event.get("mergedDictionary", []),
             "placements": event.get("placements", []),
@@ -2534,6 +2536,7 @@ class ParallelTrainer:
         self.model = PolicyModel().to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=float(self.settings["learningRate"]))
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
+        self.mode: str = "training"
         self.generation_id = 0
         self.episode = 0
         self.step_number = 0
@@ -4030,6 +4033,20 @@ class ParallelTrainer:
         self._commit_generation(self.settings, generation, *prepared)
         return self.site_event()
 
+    def set_mode(self, mode: str) -> dict[str, Any]:
+        """Switch between training and inference modes."""
+        if mode not in ("training", "inference"):
+            raise ValueError(f"unsupported mode: {mode}")
+        self.mode = mode
+        return {
+            "type": "ack",
+            "command": "setMode",
+            "mode": self.mode,
+            "message": f"mode switched to {self.mode}",
+            "generationId": self.generation_id,
+            "episode": self.episode,
+        }
+
     def _aggregate_online(self) -> dict[str, Any]:
         per_site = [environment.online_metrics() for environment in self.environments]
         filled = math.fsum(float(item["filledArea"]) for item in per_site)
@@ -4560,18 +4577,29 @@ class ParallelTrainer:
         metrics["unmergedTrianglePenalty"] = unmerged_triangle_penalty
         metrics.update(frontier_metrics)
         
-        # 3. Learn from updated score
-        learning_start = time.perf_counter()
-        self._learn_from_episode(score)
-        self.step_profiler.record("learning", time.perf_counter() - learning_start)
-        metrics["policyLoss"] = self.last_loss
-        metrics["actorLoss"] = self.last_actor_loss
-        metrics["valueLoss"] = self.last_value_loss
-        metrics["policyEntropy"] = self.last_entropy
-        metrics["gradientNorm"] = self.last_gradient_norm
-        metrics["advantage"] = self.last_advantage
-        metrics["learningRate"] = float(self.optimizer.param_groups[0]["lr"])
-        metrics["learningAlgorithm"] = "ppo_gae"
+        # 3. Learn from updated score (only in training mode)
+        if getattr(self, "mode", "training") == "training":
+            learning_start = time.perf_counter()
+            self._learn_from_episode(score)
+            self.step_profiler.record("learning", time.perf_counter() - learning_start)
+            metrics["policyLoss"] = self.last_loss
+            metrics["actorLoss"] = self.last_actor_loss
+            metrics["valueLoss"] = self.last_value_loss
+            metrics["policyEntropy"] = self.last_entropy
+            metrics["gradientNorm"] = self.last_gradient_norm
+            metrics["advantage"] = self.last_advantage
+            metrics["learningRate"] = float(self.optimizer.param_groups[0]["lr"])
+            metrics["learningAlgorithm"] = "ppo_gae"
+        else:
+            metrics["policyLoss"] = 0.0
+            metrics["actorLoss"] = 0.0
+            metrics["valueLoss"] = 0.0
+            metrics["policyEntropy"] = 0.0
+            metrics["gradientNorm"] = 0.0
+            metrics["advantage"] = 0.0
+            metrics["learningRate"] = 0.0
+            metrics["learningAlgorithm"] = "inference_only"
+
         metrics["baseline"] = self.baseline
         self.score_history.append(score)
         self.best_score = max(self.best_score, score)
@@ -4773,7 +4801,7 @@ class ParallelTrainer:
             "diagnostics": diagnostics,
         }
 
-        if bool(self.settings.get("recordTrajectories", False)):
+        if getattr(self, "mode", "training") == "inference" or bool(self.settings.get("recordTrajectories", False)):
             record_dataset_trajectory(event)
 
         return event
@@ -4980,31 +5008,12 @@ class ParallelTrainer:
             )
 
             cursor = 0
-            beam_width = int(self.settings.get("beamSearchWidth", 1))
             for environment, candidates in candidate_groups:
                 group_logits = logits[cursor : cursor + len(candidates)] / temperature
                 cursor += len(candidates)
                 distribution = torch.distributions.Categorical(logits=group_logits)
-                if beam_width > 1 and len(candidates) > 1:
-                    k = min(beam_width, len(candidates))
-                    _top_logprobs, top_indices = torch.topk(distribution.logits, k=k)
-                    best_score = -float("inf")
-                    best_offset = int(top_indices[0].item())
-                    for cand_idx in top_indices:
-                        offset = int(cand_idx.item())
-                        cand = candidates[offset]
-                        geom_score = float(cand.shared_overlap) * 0.5 + float(cand.outer_exposure) * 0.2
-                        if cand.module["id"] == "stop":
-                            geom_score -= 1.0
-                        total_cand_score = float(distribution.logits[offset].item()) + geom_score
-                        if total_cand_score > best_score:
-                            best_score = total_cand_score
-                            best_offset = offset
-                    selected_offset = best_offset
-                    selected_index = torch.tensor(selected_offset, device=self.device)
-                else:
-                    selected_index = distribution.sample()
-                    selected_offset = int(selected_index.item())
+                selected_index = distribution.sample()
+                selected_offset = int(selected_index.item())
                 selected_candidate = candidates[selected_offset]
                 self._record_placement_decision(
                     environment.index,
@@ -5714,6 +5723,10 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                             "episode": trainer.episode,
                         },
                     )
+                elif command == "setMode":
+                    mode_str = str(message.get("mode", "training"))
+                    ack = await asyncio.to_thread(trainer.set_mode, mode_str)
+                    await _send_json(websocket, ack)
                 elif command == "loadCheckpoint":
                     import base64
                     file_data = message.get("fileData")

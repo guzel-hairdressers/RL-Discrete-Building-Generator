@@ -197,10 +197,23 @@
     <aside class="control-panel" id="controlsPanel" aria-label="Optimizer controls" data-open="false">
       <div class="panel-header">
         <div>
-          <span class="panel-kicker">Training console</span>
+          <span class="panel-kicker" id="panelConsoleKicker">Training console</span>
           <h2>Simulation controls</h2>
         </div>
         <button class="panel-close" id="panelClose" type="button" aria-label="Close controls">Close</button>
+      </div>
+
+      <div class="mode-switcher-container">
+        <div class="mode-segmented-control" role="radiogroup" aria-label="Optimizer Operating Mode">
+          <button type="button" class="mode-segment-btn active" id="modeTrainingBtn" role="radio" aria-checked="true">
+            <span class="mode-dot training"></span>
+            <span>Training</span>
+          </button>
+          <button type="button" class="mode-segment-btn" id="modeInferenceBtn" role="radio" aria-checked="false">
+            <span class="mode-dot inference"></span>
+            <span>Inference</span>
+          </button>
+        </div>
       </div>
 
       <div class="action-grid" aria-label="Simulation actions">

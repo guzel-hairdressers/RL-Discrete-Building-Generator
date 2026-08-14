@@ -581,6 +581,72 @@ button:disabled {
   font-weight: 700;
 }
 
+.mode-switcher-container {
+  padding: 14px 18px 0;
+}
+
+.mode-segmented-control {
+  display: flex;
+  background: rgba(14, 18, 14, 0.75);
+  border: 1px solid var(--panel-line);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.mode-segment-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #8c9b90;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mode-segment-btn:hover:not(.active) {
+  color: #dbe4dc;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mode-segment-btn.active {
+  background: #253327;
+  border-color: rgba(169, 192, 113, 0.3);
+  color: #f2f7ef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.mode-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transition: transform 0.18s ease;
+}
+
+.mode-dot.training {
+  background: #a9c071;
+  box-shadow: 0 0 6px rgba(169, 192, 113, 0.6);
+}
+
+.mode-dot.inference {
+  background: #5ea3e6;
+  box-shadow: 0 0 6px rgba(94, 163, 230, 0.6);
+}
+
+.mode-segment-btn.active .mode-dot {
+  transform: scale(1.2);
+}
+
 .action-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -60,3 +60,33 @@ Whenever code changes, bug fixes, benchmark runs, or architectural updates are p
 4. **Performance Data & Benchmarks**: Save categorized run data under [`agent_notes/benchmarks/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/benchmarks/).
 5. **Architectural Guides**: Update guide files in [`agent_notes/guides/`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/).
 6. **Central Directory Index**: Keep [`agent_notes/README.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/README.md) links up to date.
+
+---
+
+## 5. Strict Branch Verification & Version Governance Protocol
+
+To prevent branch confusion and cross-version contamination, all agents **MUST STRICTLY FOLLOW THIS VERIFICATION PROTOCOL**:
+
+### 1. Pre-Execution Branch & Version Check
+Before running code, benchmarks, or making edits:
+1. Run `git branch --show-current` to verify the active branch.
+2. Cross-reference the active branch with the official version definitions:
+   - **`main` (`v0.8.0`)**: Authoritative Multi-Floor 4–8 Story Core Shaft Stacking Optimizer.
+     - **Mandatory Files**: [`tests/test_core_stacking.py`](file:///Users/ruslan_faz/Desktop/Work/Thesis/tests/test_core_stacking.py), `FloorEnvironment._stack_commit_checkpoint` in `src/server.py`.
+     - **UI Branding**: `Module Lab v0.8.0` in `public/index.html` and `src/server.py`.
+     - **Test Suite**: Must run and pass all **162 tests** (`python3 -m unittest discover -s tests -p "test_*.py"`).
+   - **`version/v0.8.1` (`v0.8.1`)**: Dynamic Parametric Shape ($k=3,4$) Generator variant.
+     - **UI Branding**: `Module Lab v0.8.1` in `public/index.html` and `src/server.py`.
+     - **Debug Console**: Hidden developer console via `Ctrl+Shift+D` / `Cmd+Shift+D`.
+
+### 2. Pre-Commit / Pre-Push Diff Inspection
+Before staging, committing, or proposing a push:
+1. Compare local changes against the remote tracking branch:
+   ```bash
+   git diff origin/<current-branch> --stat
+   ```
+2. Verify that core version-defining files are **NOT deleted or replaced** (e.g. `test_core_stacking.py` must never be deleted on `main`).
+3. Run the branch-specific test suite to ensure 100% test passing.
+
+### 3. Explicit User Approval Rule
+- **NEVER execute `git push` autonomously**. Always present a concise summary of changes and ask for explicit user consent before pushing to remote branches.

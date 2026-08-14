@@ -115,6 +115,9 @@ window.onerror = function(message, source, lineno, colno, error) {
     scoreBreakdownDetails: document.getElementById('scoreBreakdownDetails'),
     perfTimingsCard: document.getElementById('perfTimingsCard'),
     perfTimingsDetails: document.getElementById('perfTimingsDetails'),
+    modeTrainingBtn: document.getElementById('modeTrainingBtn'),
+    modeInferenceBtn: document.getElementById('modeInferenceBtn'),
+    panelConsoleKicker: document.getElementById('panelConsoleKicker'),
     developerToggle: document.getElementById('developerToggle'),
     developerPanel: document.getElementById('developerPanel'),
     developerClose: document.getElementById('developerClose'),
@@ -138,7 +141,8 @@ window.onerror = function(message, source, lineno, colno, error) {
     reconnectTimer: null,
     manuallyClosed: false,
 
-    trainingWanted: true,
+    mode: 'training',
+    trainingWanted: false,
     phase: 'connecting',
     hasSite: false,
     awaitingSite: true,
@@ -417,6 +421,12 @@ window.onerror = function(message, source, lineno, colno, error) {
     dom.weightFileInput.addEventListener('change', handleWeightFileSelect);
     dom.cancelResetBtn.addEventListener('click', hideResetConfirmation);
     dom.confirmResetBtn.addEventListener('click', confirmResetPolicy);
+    if (dom.modeTrainingBtn) {
+      dom.modeTrainingBtn.addEventListener('click', () => setOptimizerMode('training'));
+    }
+    if (dom.modeInferenceBtn) {
+      dom.modeInferenceBtn.addEventListener('click', () => setOptimizerMode('inference'));
+    }
     if (dom.toggleMergingBtn) {
       dom.toggleMergingBtn.addEventListener('click', toggleMerging);
     }
@@ -642,6 +652,53 @@ window.onerror = function(message, source, lineno, colno, error) {
     }
   }
 
+  function setOptimizerMode(newMode) {
+    if (!state.connected || state.mode === newMode) return;
+    
+    if (newMode === 'inference') {
+      if (state.trainingWanted) {
+        state.trainingWanted = false;
+        clearTimeout(state.stepTimer);
+        clearTimeout(state.transitionTimer);
+      }
+      sendCommand({ cmd: 'saveCheckpoint' });
+      sendCommand({ cmd: 'setMode', mode: 'inference' });
+      state.mode = 'inference';
+      if (dom.modeTrainingBtn) {
+        dom.modeTrainingBtn.classList.remove('active');
+        dom.modeTrainingBtn.setAttribute('aria-checked', 'false');
+      }
+      if (dom.modeInferenceBtn) {
+        dom.modeInferenceBtn.classList.add('active');
+        dom.modeInferenceBtn.setAttribute('aria-checked', 'true');
+      }
+      requestNewSite();
+      updatePauseButton();
+      updateActionAvailability();
+      showToast('Switched to Inference Mode · weights saved & history recording active');
+    } else if (newMode === 'training') {
+      if (state.trainingWanted) {
+        state.trainingWanted = false;
+        clearTimeout(state.stepTimer);
+        clearTimeout(state.transitionTimer);
+      }
+      sendCommand({ cmd: 'setMode', mode: 'training' });
+      state.mode = 'training';
+      if (dom.modeTrainingBtn) {
+        dom.modeTrainingBtn.classList.add('active');
+        dom.modeTrainingBtn.setAttribute('aria-checked', 'true');
+      }
+      if (dom.modeInferenceBtn) {
+        dom.modeInferenceBtn.classList.remove('active');
+        dom.modeInferenceBtn.setAttribute('aria-checked', 'false');
+      }
+      requestNewSite();
+      updatePauseButton();
+      updateActionAvailability();
+      showToast('Switched to Training Mode');
+    }
+  }
+
   function toggleTraining() {
     if (!state.connected || !state.hasSite || state.awaitingSite) return;
 
@@ -652,7 +709,8 @@ window.onerror = function(message, source, lineno, colno, error) {
 
     if (!state.trainingWanted) {
       state.phase = state.stepInFlight ? 'pausing' : 'paused';
-      setProtocolStatus(state.stepInFlight ? 'Finishing current step' : 'Training paused');
+      const pauseMsg = state.mode === 'inference' ? 'Inference stopped' : 'Training paused';
+      setProtocolStatus(state.stepInFlight ? 'Finishing current step' : pauseMsg);
       if (!state.stepInFlight) enterPausedState();
       return;
     }
@@ -666,7 +724,8 @@ window.onerror = function(message, source, lineno, colno, error) {
       beginNextEpisode();
     } else {
       state.phase = 'running';
-      setProtocolStatus('Training active');
+      const activeMsg = state.mode === 'inference' ? 'Inference active (recording history)' : 'Training active';
+      setProtocolStatus(activeMsg);
       clearPlacementState();
       if (Array.isArray(state.individualPlacementsList)) {
         for (const placement of state.individualPlacementsList) upsertPlacement(placement);
@@ -680,14 +739,26 @@ window.onerror = function(message, source, lineno, colno, error) {
     const symbol = dom.pauseBtn.querySelector('.action-symbol');
     const title = dom.pauseBtn.querySelector('strong');
     const detail = dom.pauseBtn.querySelector('small');
-    if (state.trainingWanted) {
-      symbol.textContent = 'Ⅱ';
-      title.textContent = 'Pause (P/Space)';
-      detail.textContent = state.phase === 'pausing' ? 'Finishing step' : 'Hold training';
+    if (state.mode === 'inference') {
+      if (state.trainingWanted) {
+        symbol.textContent = 'Ⅱ';
+        title.textContent = 'Pause (Space)';
+        detail.textContent = state.phase === 'pausing' ? 'Finishing step' : 'Hold generation';
+      } else {
+        symbol.textContent = '▶';
+        title.textContent = 'Generate (Space)';
+        detail.textContent = state.pendingNextEpisode !== null ? 'Generate next' : 'Run layout generator';
+      }
     } else {
-      symbol.textContent = '▶';
-      title.textContent = 'Resume (P/Space)';
-      detail.textContent = state.pendingNextEpisode !== null ? 'Start next episode' : 'Continue training';
+      if (state.trainingWanted) {
+        symbol.textContent = 'Ⅱ';
+        title.textContent = 'Pause (P/Space)';
+        detail.textContent = state.phase === 'pausing' ? 'Finishing step' : 'Hold training';
+      } else {
+        symbol.textContent = '▶';
+        title.textContent = 'Start Training (Space)';
+        detail.textContent = state.pendingNextEpisode !== null ? 'Start next episode' : 'Run learning';
+      }
     }
     updateActionAvailability();
   }
@@ -696,11 +767,25 @@ window.onerror = function(message, source, lineno, colno, error) {
     const connected = state.connected;
     dom.pauseBtn.disabled = !connected || !state.hasSite || state.awaitingSite;
     dom.newSiteBtn.disabled = !connected || state.awaitingSite || state.settingsDirty;
-    dom.resetPolicyBtn.disabled = !connected || state.awaitingSite || state.settingsDirty;
-    dom.saveCheckpointBtn.disabled = !connected;
     dom.loadCheckpointBtn.disabled = !connected || state.awaitingSite || state.settingsDirty;
     if (dom.toggleMergingBtn) {
       dom.toggleMergingBtn.disabled = !connected || !state.hasSite || state.trainingWanted;
+    }
+
+    if (state.mode === 'inference') {
+      if (dom.saveCheckpointBtn) dom.saveCheckpointBtn.style.display = 'none';
+      if (dom.resetPolicyBtn) dom.resetPolicyBtn.style.display = 'none';
+      if (dom.panelConsoleKicker) dom.panelConsoleKicker.textContent = 'Inference console';
+    } else {
+      if (dom.saveCheckpointBtn) {
+        dom.saveCheckpointBtn.style.display = '';
+        dom.saveCheckpointBtn.disabled = !connected;
+      }
+      if (dom.resetPolicyBtn) {
+        dom.resetPolicyBtn.style.display = '';
+        dom.resetPolicyBtn.disabled = !connected || state.awaitingSite || state.settingsDirty;
+      }
+      if (dom.panelConsoleKicker) dom.panelConsoleKicker.textContent = 'Training console';
     }
   }
 
@@ -1198,14 +1283,21 @@ window.onerror = function(message, source, lineno, colno, error) {
 
     reloadPausedPlacements();
 
-    updateDictionaryUI();
-    updateMetricsUI();
-    drawHistory();
-    updatePauseButton();
-    setProtocolStatus(`Episode ${data.completedEpisode} complete · resolving vector walls`);
+    if (state.mode === 'inference') {
+      state.trainingWanted = false;
+      state.phase = 'paused';
+      updatePauseButton();
+      setProtocolStatus(`Generation ${data.completedEpisode} complete · saved to history`);
+      showToast(`Generation complete (Score: ${Number(data.metrics?.score || 0).toFixed(1)}) · saved to dataset`);
+      enterPausedState();
+    } else {
+      updatePauseButton();
+      setProtocolStatus(`Episode ${data.completedEpisode} complete · resolving vector walls`);
+    }
     requestRender();
 
     scheduleWallCache(() => {
+      if (state.mode === 'inference') return;
       if (!state.trainingWanted || state.pendingNextEpisode === null || state.awaitingSite) return;
       state.transitionTimer = window.setTimeout(() => {
         if (!state.trainingWanted || state.awaitingSite) return;
