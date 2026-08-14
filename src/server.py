@@ -16,7 +16,7 @@ selects a shared module, rotation, and local anchor for every floor.
 from __future__ import annotations
 
 import asyncio
-from collections import deque
+from collections import Counter, deque
 import copy
 import concurrent.futures
 import heapq
@@ -4466,18 +4466,47 @@ class ParallelTrainer:
         )
         self.step_profiler.record("episodeBpeMerge", time.perf_counter() - episode_bpe_merge_start)
 
+        # Phase 1C: Primitive Purging & Uniform Module Utilization Entropy Reward
+        active_shape_types = {
+            node.get("shapeType", "")
+            for layout_graph in layout_graphs
+            for node in layout_graph.nodes.values()
+        }
+        # Purge fully-consumed primitive shapes that have 0 unmerged placements
+        purged_dictionary = [
+            module for module in self.dictionary
+            if module["id"] in active_shape_types or module.get("category") == "core"
+        ]
+
+        # Calculate module utilization Shannon entropy across placed modules
+        placed_shape_counts = Counter(
+            node.get("shapeType", "")
+            for layout_graph in layout_graphs
+            for node in layout_graph.nodes.values()
+        )
+        total_placed = sum(placed_shape_counts.values())
+        if total_placed > 0 and len(placed_shape_counts) > 1:
+            usage_probs = [cnt / total_placed for cnt in placed_shape_counts.values() if cnt > 0]
+            shannon_h = -sum(p * math.log(p) for p in usage_probs)
+            max_h = math.log(len(placed_shape_counts))
+            utilization_entropy = shannon_h / max_h if max_h > 1.0e-6 else 0.0
+            utilization_entropy_bonus = 2.0 * utilization_entropy
+        else:
+            utilization_entropy_bonus = 0.0
+
         # Dictionary Limit Breach Squared Penalty (ramping penalty multiplier, capped at 80.0 points max)
         dict_limit = int(self.settings["dictCap"])
-        prelim_vocab_size = len(self.dictionary)
+        prelim_vocab_size = len(purged_dictionary) if purged_dictionary else len(self.dictionary)
         dict_limit_breach = max(0, prelim_vocab_size - dict_limit)
         breach_multiplier = 5.0 + 15.0 * min(1.0, float(self.episode) / 100.0)
         dict_breach_penalty = min(80.0, float(dict_limit_breach ** 2) * breach_multiplier)
 
-        # 2. Apply BPE bonus, unmerged triangle penalty, and dict breach penalty to score (allow negative values for RL advantage gradients)
+        # 2. Apply BPE bonus, utilization entropy, unmerged triangle penalty, and dict breach penalty to score
         frontier_metrics = self._relative_frontier_reward()
         score = (
             float(metrics["score"])
             + bpe_bonus
+            + utilization_entropy_bonus
             - unmerged_triangle_penalty
             + float(frontier_metrics["relativeTimeReward"])
             - dict_breach_penalty
@@ -4490,6 +4519,7 @@ class ParallelTrainer:
         metrics["bpeRounds"] = bpe_stats["merge_rounds"]
         metrics["reusedBpeModules"] = reused_bpe_modules
         metrics["bpeBonus"] = bpe_bonus
+        metrics["utilizationEntropyBonus"] = utilization_entropy_bonus
         metrics["unmergedTriangles"] = unmerged_triangles
         metrics["averageUnmergedTriangles"] = unmerged_triangles / max(1, len(layout_graphs))
         metrics["unmergedTrianglePenalty"] = unmerged_triangle_penalty

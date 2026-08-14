@@ -1085,6 +1085,31 @@ def _create_merged_module_from_edge(pair_key: MergePairKey, conn: EdgeConnection
     if union_poly is None:
         return None
     
+    # Anti-Sprawl Regularization Constraints
+    # 1. Component count limit: max 4 primitive units per merged composite
+    comp_count_a = len(node_a.get("components", [])) if node_a.get("components") else 1
+    comp_count_b = len(node_b.get("components", [])) if node_b.get("components") else 1
+    if comp_count_a + comp_count_b > 4:
+        return None
+
+    # 2. Compactness limit: Isoperimetric ratio >= 0.15
+    area = G.polygon_area(union_poly)
+    perimeter = G.polygon_perimeter(union_poly)
+    if perimeter > 1e-6:
+        compactness = (4.0 * math.pi * area) / (perimeter * perimeter)
+        if compactness < 0.15:
+            return None
+
+    # 3. Aspect ratio limit: Bounding box max/min dimension <= 8.5
+    xs = [p["x"] for p in union_poly]
+    ys = [p["y"] for p in union_poly]
+    width = max(xs) - min(xs)
+    height = max(ys) - min(ys)
+    min_dim = min(width, height)
+    max_dim = max(width, height)
+    if min_dim > 1e-6 and (max_dim / min_dim) > 8.5:
+        return None
+    
     identity_material = "|".join(
         (pair_key.type_a, pair_key.type_b, pair_key.geometry_signature)
     )
