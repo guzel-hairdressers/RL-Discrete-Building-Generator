@@ -101,6 +101,8 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "seed": 123,
     "allowCorridors": False,
     "allowStop": False,
+    "beamSearchWidth": 1,
+    "recordTrajectories": False,
 }
 
 BOUNDARY_TYPES = {"lobed", "lshape", "ushape", "tshape", "convex", "rect", "free"}
@@ -196,9 +198,14 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     atrium_policy = merged["atriumPolicy"]
     if not isinstance(atrium_policy, str) or atrium_policy not in ATRIUM_POLICIES:
         raise SettingsError("atriumPolicy is not supported")
-    for key in ("singleFloor", "publicMode", "allowCorridors", "allowStop"):
-        if type(merged[key]) is not bool:
+    for key in ("singleFloor", "publicMode", "allowCorridors", "allowStop", "recordTrajectories"):
+        if key in merged and type(merged[key]) is not bool:
             raise SettingsError(f"{key} must be a boolean")
+
+    if "beamSearchWidth" in merged:
+        merged["beamSearchWidth"] = int(
+            _in_range(_integer(merged["beamSearchWidth"], "beamSearchWidth"), 1, 16, "beamSearchWidth")
+        )
 
     merged["parallelEnvironments"] = int(
         _in_range(_integer(merged["parallelEnvironments"], "parallelEnvironments"), 1, 16, "parallelEnvironments")
@@ -621,6 +628,34 @@ class PlacementPolicyDecision:
     action_index: int
     temperature: float
     old_log_prob: float = 0.0
+
+
+def record_dataset_trajectory(
+    event: dict[str, Any],
+    data_dir: str = "data",
+    filename: str = "dataset_v1.jsonl",
+) -> str | None:
+    """Record completed multi-floor building episode to JSONL dataset."""
+    if not isinstance(event, dict) or event.get("type") != "episodeDone":
+        return None
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+        out_path = os.path.join(data_dir, filename)
+        record = {
+            "episode": event.get("completedEpisode", 0),
+            "score": float(event.get("metrics", {}).get("aggregateReward", 0.0)),
+            "metrics": event.get("metrics", {}),
+            "dictionary": event.get("dictionary", []),
+            "mergedDictionary": event.get("mergedDictionary", []),
+            "placements": event.get("placements", []),
+            "mergedPlacements": event.get("mergedPlacements", []),
+            "timestamp": time.time(),
+        }
+        with open(out_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record) + "\n")
+        return out_path
+    except Exception:
+        return None
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -4720,7 +4755,7 @@ class ParallelTrainer:
         if hasattr(self, "episode_start_time"):
             delattr(self, "episode_start_time")
 
-        return {
+        event = {
             "type": "episodeDone",
             "generationId": self.generation_id,
             "completedEpisode": completed_episode,
@@ -4737,6 +4772,11 @@ class ParallelTrainer:
             "nextCoreStacking": self._core_stacking_event(),
             "diagnostics": diagnostics,
         }
+
+        if bool(self.settings.get("recordTrajectories", False)):
+            record_dataset_trajectory(event)
+
+        return event
 
     def step(self, generation_id: Any, episode: Any) -> dict[str, Any]:
         """Advance active floors while keeping cores as one building action."""
@@ -4940,12 +4980,31 @@ class ParallelTrainer:
             )
 
             cursor = 0
+            beam_width = int(self.settings.get("beamSearchWidth", 1))
             for environment, candidates in candidate_groups:
                 group_logits = logits[cursor : cursor + len(candidates)] / temperature
                 cursor += len(candidates)
                 distribution = torch.distributions.Categorical(logits=group_logits)
-                selected_index = distribution.sample()
-                selected_offset = int(selected_index.item())
+                if beam_width > 1 and len(candidates) > 1:
+                    k = min(beam_width, len(candidates))
+                    _top_logprobs, top_indices = torch.topk(distribution.logits, k=k)
+                    best_score = -float("inf")
+                    best_offset = int(top_indices[0].item())
+                    for cand_idx in top_indices:
+                        offset = int(cand_idx.item())
+                        cand = candidates[offset]
+                        geom_score = float(cand.shared_overlap) * 0.5 + float(cand.outer_exposure) * 0.2
+                        if cand.module["id"] == "stop":
+                            geom_score -= 1.0
+                        total_cand_score = float(distribution.logits[offset].item()) + geom_score
+                        if total_cand_score > best_score:
+                            best_score = total_cand_score
+                            best_offset = offset
+                    selected_offset = best_offset
+                    selected_index = torch.tensor(selected_offset, device=self.device)
+                else:
+                    selected_index = distribution.sample()
+                    selected_offset = int(selected_index.item())
                 selected_candidate = candidates[selected_offset]
                 self._record_placement_decision(
                     environment.index,
