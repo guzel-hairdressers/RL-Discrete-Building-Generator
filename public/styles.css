@@ -1062,6 +1062,14 @@ input[type="range"]::-moz-range-thumb {
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.018);
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#historyCanvas:hover,
+.trend-section:hover #historyCanvas {
+  border-color: rgba(196, 219, 139, 0.25);
+  background: rgba(255, 255, 255, 0.024);
+  box-shadow: 0 0 16px rgba(196, 219, 139, 0.05);
 }
 
 .panel-footer {
@@ -1274,54 +1282,6 @@ kbd {
 
 .shortcuts-list span {
   color: #859288;
-}
-
-/* Score Breakdown Styling */
-.score-breakdown-card {
-  margin: 18px 22px 5px;
-  padding: 16px;
-  border-radius: 12px;
-  background: rgba(30, 38, 32, 0.6);
-  border: 1px solid var(--panel-line);
-}
-.score-breakdown-details {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 10px;
-}
-.score-breakdown-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-}
-.score-breakdown-label {
-  color: #adb9b0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.score-breakdown-explain {
-  font-size: 9px;
-  color: #6d7970;
-}
-.score-breakdown-value {
-  font-family: var(--font-mono);
-  font-weight: 600;
-}
-.score-breakdown-divider {
-  height: 1px;
-  background: var(--panel-line);
-  margin: 6px 0;
-}
-.score-breakdown-total {
-  font-size: 13px;
-  font-weight: bold;
-}
-.score-breakdown-total .score-breakdown-value {
-  color: #c4db8b;
-  font-size: 14px;
 }
 
 /* Bounded developer telemetry overlay. Hidden until explicitly opened. */

@@ -787,3 +787,63 @@ double get_shared_overlap_c(
     );
     return total;
 }
+
+int polygons_overlap_translated_c(
+    const Point* first_poly,
+    int first_count,
+    double dx,
+    double dy,
+    const Point* second_poly,
+    int second_count
+) {
+    if (first_count < 3 || second_count < 3) return 0;
+    if (first_count <= 64) {
+        Point local_first[64];
+        for (int i = 0; i < first_count; ++i) {
+            local_first[i].x = first_poly[i].x + dx;
+            local_first[i].y = first_poly[i].y + dy;
+        }
+        return polygons_overlap_c(local_first, first_count, second_poly, second_count);
+    }
+    Point* dynamic_first = (Point*)malloc((size_t)first_count * sizeof(Point));
+    if (!dynamic_first) return 0;
+    for (int i = 0; i < first_count; ++i) {
+        dynamic_first[i].x = first_poly[i].x + dx;
+        dynamic_first[i].y = first_poly[i].y + dy;
+    }
+    int result = polygons_overlap_c(dynamic_first, first_count, second_poly, second_count);
+    free(dynamic_first);
+    return result;
+}
+
+int polygon_inside_site_translated_c(
+    const Point* poly,
+    int count,
+    double dx,
+    double dy,
+    const Point* outer,
+    int outer_count,
+    const Point* holes_flat,
+    const int* hole_counts,
+    int hole_count
+) {
+    if (count < 3 || outer_count < 3) return 0;
+    if (count <= 64) {
+        Point local_poly[64];
+        for (int i = 0; i < count; ++i) {
+            local_poly[i].x = poly[i].x + dx;
+            local_poly[i].y = poly[i].y + dy;
+        }
+        return polygon_inside_site_c(local_poly, count, outer, outer_count, holes_flat, hole_counts, hole_count);
+    }
+    Point* dynamic_poly = (Point*)malloc((size_t)count * sizeof(Point));
+    if (!dynamic_poly) return 0;
+    for (int i = 0; i < count; ++i) {
+        dynamic_poly[i].x = poly[i].x + dx;
+        dynamic_poly[i].y = poly[i].y + dy;
+    }
+    int result = polygon_inside_site_c(dynamic_poly, count, outer, outer_count, holes_flat, hole_counts, hole_count);
+    free(dynamic_poly);
+    return result;
+}
+

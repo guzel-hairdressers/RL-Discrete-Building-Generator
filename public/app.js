@@ -25,7 +25,8 @@ window.onerror = function(message, source, lineno, colno, error) {
     'maxModules',
     'maxEdges',
     'dictCap',
-    'travelLimit'
+    'travelLimit',
+    'maxRoomHops'
   ]);
 
   const SETTING_KEYS = Object.freeze([
@@ -43,7 +44,8 @@ window.onerror = function(message, source, lineno, colno, error) {
     'dictCap',
     'angleStep',
     'coreSpacing',
-    'travelLimit'
+    'travelLimit',
+    'maxRoomHops'
   ]);
 
   const MAX_RETAINED_SCORE_HISTORY = 360;
@@ -101,6 +103,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     weightFileInput: document.getElementById('weightFileInput'),
     settingsForm: document.getElementById('settingsForm'),
     settingsError: document.getElementById('settingsError'),
+    legendSpecial: document.getElementById('legendSpecial'),
     dictionaryList: document.getElementById('dictionaryList'),
     dictionaryCount: document.getElementById('dictionaryCount'),
     historyCanvas: document.getElementById('historyCanvas'),
@@ -111,8 +114,6 @@ window.onerror = function(message, source, lineno, colno, error) {
     speed: document.getElementById('speed'),
     speedNum: document.getElementById('speedNum'),
     toggleMergingBtn: document.getElementById('toggleMergingBtn'),
-    scoreBreakdownCard: document.getElementById('scoreBreakdownCard'),
-    scoreBreakdownDetails: document.getElementById('scoreBreakdownDetails'),
     perfTimingsCard: document.getElementById('perfTimingsCard'),
     perfTimingsDetails: document.getElementById('perfTimingsDetails'),
     modeTrainingBtn: document.getElementById('modeTrainingBtn'),
@@ -192,6 +193,9 @@ window.onerror = function(message, source, lineno, colno, error) {
     serverMetrics: {},
     scoreHistory: [],
     showFullHistory: false,
+    historyHovered: false,
+    historyHoverFactor: 0.0,
+    historyHoverAnimFrame: null,
     bestScore: 0,
     developerOpen: false,
     developerUpdateFrame: null,
@@ -449,13 +453,64 @@ window.onerror = function(message, source, lineno, colno, error) {
       });
     }
     
-    dom.historyCanvas.addEventListener('click', () => {
-      if (state.scoreHistory.length > 30) {
-        state.showFullHistory = !state.showFullHistory;
-        drawHistory();
+    function setHistoryHover(hovered) {
+      if (state.historyHovered === hovered) return;
+      state.historyHovered = hovered;
+      animateHistoryHover();
+    }
+
+    function animateHistoryHover() {
+      if (state.historyHoverAnimFrame) {
+        cancelAnimationFrame(state.historyHoverAnimFrame);
+        state.historyHoverAnimFrame = null;
       }
-    });
-    dom.historyCanvas.style.cursor = 'default';
+      let lastTime = performance.now();
+      const duration = 200; // 0.2s transition
+
+      function frame(now) {
+        const dt = now - lastTime;
+        lastTime = now;
+        const target = state.historyHovered ? 1.0 : 0.0;
+        const diff = target - state.historyHoverFactor;
+        
+        if (Math.abs(diff) < 0.005) {
+          state.historyHoverFactor = target;
+          drawHistory();
+          state.historyHoverAnimFrame = null;
+          return;
+        }
+        
+        const step = (dt / duration) * (diff > 0 ? 1 : -1);
+        if (Math.abs(step) >= Math.abs(diff)) {
+          state.historyHoverFactor = target;
+          drawHistory();
+          state.historyHoverAnimFrame = null;
+        } else {
+          state.historyHoverFactor += step;
+          drawHistory();
+          state.historyHoverAnimFrame = requestAnimationFrame(frame);
+        }
+      }
+      state.historyHoverAnimFrame = requestAnimationFrame(frame);
+    }
+
+    if (dom.historyCanvas) {
+      dom.historyCanvas.addEventListener('click', () => {
+        if (state.scoreHistory.length > 30) {
+          state.showFullHistory = !state.showFullHistory;
+          drawHistory();
+        }
+      });
+      dom.historyCanvas.addEventListener('pointerenter', () => setHistoryHover(true));
+      dom.historyCanvas.addEventListener('pointerleave', () => setHistoryHover(false));
+      dom.historyCanvas.style.cursor = 'default';
+    }
+
+    const trendSection = document.querySelector('.trend-section');
+    if (trendSection) {
+      trendSection.addEventListener('pointerenter', () => setHistoryHover(true));
+      trendSection.addEventListener('pointerleave', () => setHistoryHover(false));
+    }
   }
 
   function setupPanelEvents() {
@@ -1708,7 +1763,6 @@ window.onerror = function(message, source, lineno, colno, error) {
     dom.environmentValue.textContent = `${environmentCount} ${environmentCount === 1 ? 'floor' : 'floors'}`;
     dom.stepValue.textContent = padMetric(state.step);
     dom.moduleCountValue.textContent = `${state.placements.size} ${state.placements.size === 1 ? 'module' : 'modules'}`;
-    updateScoreBreakdown();
     renderPerfTimings();
     scheduleDeveloperPanelUpdate();
   }
@@ -1844,131 +1898,6 @@ window.onerror = function(message, source, lineno, colno, error) {
     if (t['episodeTotal']) addRow('episodeTotal', t['episodeTotal'], true);
 
     dom.perfTimingsDetails.appendChild(table);
-  }
-
-  function updateScoreBreakdown() {
-    const metrics = metricRoot(state.serverMetrics);
-    
-    if (state.phase !== 'paused' || state.placements.size === 0) {
-      dom.scoreBreakdownCard.style.display = 'none';
-      return;
-    }
-    
-    dom.scoreBreakdownCard.style.display = 'block';
-    dom.scoreBreakdownDetails.replaceChildren();
-
-    function addRow(label, explain, valueStr, isTotal = false) {
-      const row = document.createElement('div');
-      row.className = isTotal ? 'score-breakdown-row score-breakdown-total' : 'score-breakdown-row';
-      
-      const labelDiv = document.createElement('div');
-      labelDiv.className = 'score-breakdown-label';
-      labelDiv.textContent = label;
-      
-      if (explain) {
-        const explainSpan = document.createElement('span');
-        explainSpan.className = 'score-breakdown-explain';
-        explainSpan.textContent = explain;
-        labelDiv.appendChild(explainSpan);
-      }
-      
-      const valueDiv = document.createElement('div');
-      valueDiv.className = 'score-breakdown-value';
-      valueDiv.textContent = valueStr;
-      
-      row.appendChild(labelDiv);
-      row.appendChild(valueDiv);
-      dom.scoreBreakdownDetails.appendChild(row);
-    }
-    
-    function addDivider() {
-      const div = document.createElement('div');
-      div.className = 'score-breakdown-divider';
-      dom.scoreBreakdownDetails.appendChild(div);
-    }
-
-    const fillRatio = Number(metrics.fillRatio) || 0;
-    const rentableRatio = Number(metrics.rentableRatio) || 0;
-    const daylightRatio = Number(metrics.daylightRatio) || 0;
-    const reuseRatio = Number(metrics.reuseRatio) || 0;
-    const constructibility = Number(metrics.constructibilityScore) || 0;
-    const envelopeEfficiency = Number(metrics.envelopeEfficiency) || 0;
-    
-    const rawScore = Number(metrics.rawScore) || 0;
-    const areaVariancePenalty = Number(metrics.areaVariancePenalty) || 0;
-    const internalExposedPenalty = Number(metrics.internalExposedPenalty) || 0;
-    const partialConnectionPenalty = Number(metrics.partialConnectionPenalty) || 0;
-    const topologyPenalty = Number(metrics.topologyPenalty) || 0;
-    const topologyMultiplier = Number(metrics.topologyMultiplier) || 0.08;
-    const bpeBonus = Number(metrics.bpeBonus) || 0;
-    const reusedBpeModules = Number(metrics.reusedBpeModules) || 0;
-    const unmergedTriangles = Number(metrics.unmergedTriangles) || 0;
-    const averageUnmergedTriangles = Number(metrics.averageUnmergedTriangles) || 0;
-    const unmergedTrianglePenalty = Number(metrics.unmergedTrianglePenalty) || 0;
-    const relativeTimeReward = Number(metrics.relativeTimeReward) || 0;
-    const generationTime = Number(metrics.sizeNormalizedGenerationTime) || 0;
-    const generationBaseline = Number(metrics.generationTimeReferenceUsed) || 0;
-    const meanModuleArea = Number(metrics.meanModuleArea) || 0;
-    const frontierGrowth = Number(metrics.frontierGrowthPotential) || 0;
-    const smallShapeRatio = Number(metrics.smallShapeRatio) || 0;
-    const totalScore = Number(metrics.score) || 0;
-
-    const scaledFill = fillRatio < 0.6 ? Math.max(0, 2.25 * fillRatio - 0.75) : fillRatio;
-    const fillContribution = scaledFill * 70.0;
-    
-    const scaledRentable = rentableRatio < 0.7 ? Math.max(0, (7.0 * rentableRatio - 2.8) / 3.0) : rentableRatio;
-    const rentableContribution = scaledRentable * 15.0;
-    
-    const daylightContribution = daylightRatio * 10.0;
-    const reuseContribution = reuseRatio * 2.0;
-    const constrContribution = constructibility * 2.0;
-    const envContribution = envelopeEfficiency * 1.0;
-
-    addRow('Space Fill Reward', `Ratio: ${(fillRatio * 100).toFixed(1)}% (target >=60%, weight: 70%)`, `+${fillContribution.toFixed(2)} pts`);
-    addRow('Rentable Area Reward', `Ratio: ${(rentableRatio * 100).toFixed(1)}% (target >=70%, weight: 15%)`, `+${rentableContribution.toFixed(2)} pts`);
-    addRow('Daylight Access Reward', `Ratio: ${(daylightRatio * 100).toFixed(1)}% (weight: 10%)`, `+${daylightContribution.toFixed(2)} pts`);
-    addRow('Module Type Reuse Reward', `Ratio: ${(reuseRatio * 100).toFixed(1)}% (weight: 2%)`, `+${reuseContribution.toFixed(2)} pts`);
-    addRow('Grid Snapping Reward', `Score: ${(constructibility * 100).toFixed(1)}% (weight: 2%)`, `+${constrContribution.toFixed(2)} pts`);
-    addRow('Envelope Efficiency Reward', `Score: ${(envelopeEfficiency * 100).toFixed(1)}% (weight: 1%)`, `+${envContribution.toFixed(2)} pts`);
-    
-    if (areaVariancePenalty > 0 || internalExposedPenalty > 0 || partialConnectionPenalty > 0) {
-      addRow('Shape Area Variance Penalty', 'Penalty for sizing discrepancy in shape vocabulary', `-${areaVariancePenalty.toFixed(2)} pts`);
-      addRow('Exposed Internal Walls Penalty', 'Penalty for unshared internal room boundaries', `-${internalExposedPenalty.toFixed(2)} pts`);
-      addRow('Partial Connection Penalty', 'Penalty for poorly snapped/misaligned connections', `-${partialConnectionPenalty.toFixed(2)} pts`);
-    }
-    
-    addDivider();
-    addRow('Raw Layout Score', 'Weighted sum of objectives minus internal penalties (clamped to 0)', `${rawScore.toFixed(2)} pts`);
-    addDivider();
-    
-    const violations = Array.isArray(metrics.topologyViolations) ? metrics.topologyViolations : [];
-    let violationText = 'No violations';
-    if (violations.length > 0) {
-      const grouped = {};
-      violations.forEach(v => {
-        const parts = v.split(':');
-        const floor = parts[0].replace('floor', 'Floor ');
-        const type = parts[1];
-        if (!grouped[floor]) grouped[floor] = [];
-        grouped[floor].push(type);
-      });
-      violationText = Object.entries(grouped).map(([floor, types]) => `${floor}: ${types.join(', ')}`).join('; ');
-    }
-    addRow('Topology Penalty', `Multiplier: ${topologyMultiplier.toFixed(2)}. ${violationText}`, `-${topologyPenalty.toFixed(2)} pts`);
-    addRow('BPE Merge Bonus', `${reusedBpeModules} globally reused module occurrences (+3.0 pts each)`, `+${bpeBonus.toFixed(2)} pts`);
-    addRow('Unmerged Triangles Penalty', `Total: ${unmergedTriangles}; average: ${averageUnmergedTriangles.toFixed(2)} per floor (-8.0 pts/average triangle)`, `-${unmergedTrianglePenalty.toFixed(2)} pts`);
-    addRow(
-      'Relative Frontier / Time Reward',
-      `Size-normalized time: ${generationTime.toFixed(4)}s (reference ${generationBaseline.toFixed(4)}s); frontier ${frontierGrowth.toFixed(3)}; mean area ${meanModuleArea.toFixed(1)}m²; small modules ${(smallShapeRatio * 100).toFixed(1)}%`,
-      `${relativeTimeReward >= 0 ? '+' : ''}${relativeTimeReward.toFixed(2)} pts`
-    );
-    const dictBreachPenalty = Number(metrics.dictBreachPenalty) || 0;
-    if (dictBreachPenalty > 0) {
-      addRow('Dictionary Capacity Penalty', `Vocabulary size exceeds dictCap limit`, `-${dictBreachPenalty.toFixed(2)} pts`);
-    }
-    
-    addDivider();
-    addRow('Total Score', 'Raw Score - Topology Penalty + BPE Bonus - Triangle Penalty + Relative Frontier/Time Reward - Dict Penalty', `${totalScore.toFixed(4)} pts`, true);
   }
 
   function scheduleDeveloperPanelUpdate() {
@@ -2505,10 +2434,24 @@ window.onerror = function(message, source, lineno, colno, error) {
       rawList = basicList;
     }
 
+    let hasSpecialPlaced = false;
+    for (const key of state.placementOrder) {
+      const placement = state.placements.get(key);
+      if (placement && (placement.category === 'special' || (placement.module && placement.module.category === 'special'))) {
+        hasSpecialPlaced = true;
+        break;
+      }
+    }
+    if (dom.legendSpecial) {
+      dom.legendSpecial.hidden = !hasSpecialPlaced;
+    }
+
     let dictionary = [];
     const seenSigs = new Set();
     for (const mod of rawList) {
       const cat = mod.category || 'room';
+      if (cat === 'corridor') continue;
+      if (cat === 'special' && (counts.get(mod.id) || 0) === 0) continue;
       const area = (mod.area || 0).toFixed(1);
       const vCount = mod.poly ? mod.poly.length : 0;
       const sig = `${cat}_a${area}_v${vCount}`;
@@ -2583,6 +2526,8 @@ window.onerror = function(message, source, lineno, colno, error) {
 
     const totalEpisodes = state.scoreHistory.length;
     const values = state.showFullHistory ? state.scoreHistory : state.scoreHistory.slice(-30);
+
+    const isHovered = Boolean(state.historyHovered);
 
     if (dom.historyCanvas) {
       dom.historyCanvas.style.cursor = totalEpisodes > 30 ? 'pointer' : 'default';
@@ -2660,29 +2605,12 @@ window.onerror = function(message, source, lineno, colno, error) {
       y: marginTop + gridHeight - ((value - min) / span) * gridHeight
     }));
 
-    const gradient = ctx.createLinearGradient(0, marginTop, 0, height - marginBottom);
-    gradient.addColorStop(0, 'rgba(196,219,139,0.22)');
-    gradient.addColorStop(1, 'rgba(196,219,139,0)');
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, height - marginBottom);
-    for (const point of points) ctx.lineTo(point.x, point.y);
-    ctx.lineTo(points[points.length - 1].x, height - marginBottom);
-    ctx.closePath();
-    ctx.fillStyle = gradient;
-    ctx.fill();
-
-    ctx.beginPath();
-    points.forEach((point, index) => {
-      if (index === 0) ctx.moveTo(point.x, point.y);
-      else ctx.lineTo(point.x, point.y);
-    });
-    ctx.strokeStyle = '#c4db8b';
-    ctx.lineWidth = 1.7;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.stroke();
+    // Transition factor with smooth cubic ease
+    const t = Math.max(0.0, Math.min(1.0, state.historyHoverFactor || 0.0));
+    const ease = t * t * (3 - 2 * t);
 
     // 2nd-degree polynomial (quadratic regression) global fit
+    let coef = null;
     if (totalEpisodes >= 3) {
       function solve3x3(A, B) {
         const det = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
@@ -2725,23 +2653,77 @@ window.onerror = function(message, source, lineno, colno, error) {
         [s2, s1, s0]
       ];
       const B = [p2, p1, p0];
-      const coef = solve3x3(A, B);
-      if (coef) {
-        ctx.beginPath();
-        for (let i = 0; i < values.length; i++) {
-          const xLocal = values.length > 1 ? i / (values.length - 1) : 0.0;
-          const yFit = coef[0] * xLocal * xLocal + coef[1] * xLocal + coef[2];
-          const cx = marginLeft + (values.length > 1 ? (i / (values.length - 1)) * gridWidth : 0.0);
-          const cy = marginTop + gridHeight - ((yFit - min) / span) * gridHeight;
-          if (i === 0) ctx.moveTo(cx, cy);
-          else ctx.lineTo(cx, cy);
-        }
-        ctx.strokeStyle = 'rgba(196, 219, 139, 0.45)'; // Semi-transparent sage
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]); // Dashed line
-        ctx.stroke();
-        ctx.setLineDash([]); // Reset line dash
+      coef = solve3x3(A, B);
+    }
+
+    // 1. Draw area fill gradient
+    const topAlpha = 0.22 - 0.10 * ease; // from 0.22 down to 0.12 (soft gentle fade)
+    const gradient = ctx.createLinearGradient(0, marginTop, 0, height - marginBottom);
+    gradient.addColorStop(0, `rgba(196,219,139,${topAlpha.toFixed(3)})`);
+    gradient.addColorStop(1, 'rgba(196,219,139,0)');
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, height - marginBottom);
+    for (const point of points) ctx.lineTo(point.x, point.y);
+    ctx.lineTo(points[points.length - 1].x, height - marginBottom);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    // Helper to draw raw score line
+    function drawScoreLine() {
+      const scoreAlpha = 1.0 - 0.50 * ease; // from 1.0 down to 0.50 (clean moderate fade)
+      const scoreWidth = 1.7 - 0.20 * ease; // from 1.7 down to 1.5
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.strokeStyle = `rgba(196, 219, 139, ${scoreAlpha.toFixed(3)})`;
+      ctx.lineWidth = scoreWidth;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // Helper to draw fitted regression line
+    function drawFittedLine() {
+      if (!coef) return;
+      const fitAlpha = 0.45 + 0.55 * ease; // from 0.45 up to 1.0 (crisp & solid)
+      const fitWidth = 1.5 + 0.20 * ease; // from 1.5 up to 1.7 (matches score line, not overly thick)
+      const steps = Math.max(values.length * 2, 60);
+
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const xLocal = i / steps;
+        const yFit = coef[0] * xLocal * xLocal + coef[1] * xLocal + coef[2];
+        const cx = marginLeft + xLocal * gridWidth;
+        const cy = marginTop + gridHeight - ((yFit - min) / span) * gridHeight;
+        if (i === 0) ctx.moveTo(cx, cy);
+        else ctx.lineTo(cx, cy);
       }
+      ctx.strokeStyle = `rgba(196, 219, 139, ${fitAlpha.toFixed(3)})`;
+      ctx.lineWidth = fitWidth;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      // Transition dash smoothly to solid
+      if (ease >= 0.75) {
+        ctx.setLineDash([]);
+      } else {
+        const dashLen = 4 * (1 - ease / 0.75);
+        ctx.setLineDash([Math.max(0.1, dashLen), Math.max(0.1, dashLen)]);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Layer ordering: when hovered (ease >= 0.5), fitted line is drawn in the foreground on top
+    if (ease >= 0.5) {
+      drawScoreLine();
+      drawFittedLine();
+    } else {
+      drawFittedLine();
+      drawScoreLine();
     }
   }
 

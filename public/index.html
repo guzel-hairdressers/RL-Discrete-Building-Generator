@@ -98,11 +98,10 @@
         <button class="icon-button" id="fitViewBtn" type="button" title="Fit all sites (0)">Fit view</button>
       </div>
 
-      <div class="canvas-legend" aria-label="Module color legend">
+      <div class="canvas-legend" id="canvasLegend" aria-label="Module color legend">
         <span><i data-category="core"></i>Core</span>
-        <span><i data-category="corridor"></i>Corridor</span>
         <span><i data-category="room"></i>Room</span>
-        <span><i data-category="special"></i>Special</span>
+        <span id="legendSpecial" hidden><i data-category="special"></i>Special</span>
       </div>
 
       <div class="canvas-help">Drag to pan · Wheel to zoom · 0 to fit</div>
@@ -249,11 +248,6 @@
           <span><strong>Disable Merging (M)</strong><small>Show original shapes</small></span>
         </button>
       </div>
-
-      <section class="score-breakdown-card" id="scoreBreakdownCard" style="display: none;">
-        <h3 class="panel-kicker" style="margin-top: 0; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #859288;">Active Score Breakdown</h3>
-        <div class="score-breakdown-details" id="scoreBreakdownDetails"></div>
-      </section>
 
       <section class="trend-section" aria-labelledby="trendTitle" style="margin-top: 16px; margin-bottom: 16px;">
         <div class="section-heading">
@@ -454,6 +448,17 @@
             <div class="range-controls">
               <input id="travelLimit" name="travelLimit" type="range" min="5" max="60" step="1" value="12" data-setting>
               <input id="travelLimitNum" type="number" min="5" max="60" step="1" value="12" inputmode="numeric" aria-label="Travel limit numeric value">
+            </div>
+          </div>
+
+          <div class="range-field" data-pair="maxRoomHops">
+            <div class="range-heading">
+              <label for="maxRoomHops">Max room hops</label>
+              <span>hops</span>
+            </div>
+            <div class="range-controls">
+              <input id="maxRoomHops" name="maxRoomHops" type="range" min="1" max="10" step="1" value="3" data-setting>
+              <input id="maxRoomHopsNum" type="number" min="1" max="10" step="1" value="3" inputmode="numeric" aria-label="Max room hops numeric value">
             </div>
           </div>
         </fieldset>

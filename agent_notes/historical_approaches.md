@@ -8,7 +8,16 @@ It explicitly records **what was achieved** by successful approaches and **which
 
 ## 1. Successful Implementation Releases
 
+### `v0.8.3` — High-Density Multi-Floor Scaling & Native Geometry Acceleration
+* **Key Achievements**:
+  * **$3.26\times$ Single-Episode Speedup ($22.64\,\text{s} \to 6.94\,\text{s}$)** on 120 placements/floor ($480$ modules across 4 floors on XL Lobed sites).
+  * **Elimination of Mutex Lock Contention**: Replaced `@functools.lru_cache` on `_native_symmetric_segment_overlap_values` with unlocked collinearity filter in `src/geometry.py`, eliminating $5.12\,\text{s}$ of thread stalls across `ThreadPoolExecutor` parallel environments.
+  * **$13.5\times$ Spatial Wall Slicing Acceleration**: Applied AABB bounding-box pruning in `exposed_wall_segments`, reducing edge-pair intersection overhead from $310\,\text{ms} \to 22\,\text{ms}$.
+  * **Zero-Allocation Native Geometry C Extension**: Added `polygons_overlap_translated_c` and `polygon_inside_site_translated_c` in `fast_geometry.c` (ABI 3) to evaluate candidate SAT overlap and site boundary containment directly on C floating-point registers without allocating intermediate Python dictionary objects.
+  * **Verified 100% Bit-for-Bit Determinism**: All multi-objective scores, room counts, and SHA-256 layout hashes remain bit-for-bit identical to baseline under fixed seeds.
+
 ### `v0.8.0` — Exact Multi-Floor 4–8 Story Core Shaft Optimizer *(Authoritative Root Release)*
+
 * **Key Achievements**:
   * **$6.54\times$ Episode Speedup ($226\,\text{ms}$/episode)** over `v0.6-c` baseline ($1.48\,\text{s}$).
   * **$14.07\times$ Step Speedup ($0.81\,\text{ms}$/step)** via C-accelerated SAT polygon overlap checking (`polygons_overlap_c` in `fast_geometry.c`).

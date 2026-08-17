@@ -73,7 +73,7 @@ BASELINE_TRANSITION_EPISODES = 5
 MAX_CHECKPOINT_BYTES = 64 * 1024 * 1024
 MAX_FRONTIER_REWARD = 4.0
 UNMERGED_TRIANGLE_PENALTY = 8.0
-BPE_REUSE_BONUS_PER_MODULE = 3.0
+BPE_REUSE_BONUS_PER_MODULE = 1.5
 CORE_STACK_CANDIDATE_LIMIT = 16
 CORE_STACK_PROPOSAL_LIMIT = 512
 CORE_SITE_TRANSACTION_ATTEMPTS = 24
@@ -98,6 +98,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "angleStep": 15.0,
     "coreSpacing": 8.0,
     "travelLimit": 12,
+    "maxRoomHops": 3,
     "seed": 123,
     "allowCorridors": False,
     "allowStop": False,
@@ -115,7 +116,7 @@ class SettingsError(ValueError):
 
 
 class StaleStepError(RuntimeError):
-    """Raised before mutation when a step targets an obsolete generation."""
+    """Raised when stepping an inactive generation or episode."""
 
 
 class CoreStackingError(RuntimeError):
@@ -155,6 +156,11 @@ def _average_unmerged_triangle_penalty(
     """Apply the canonical -8 points per average unmerged triangle."""
 
     return UNMERGED_TRIANGLE_PENALTY * max(0, int(triangle_count)) / max(1, int(floor_count))
+
+
+def _max_cores_for_site(site_area: float) -> int:
+    """Calculate dynamic core capacity scaling with site area (1 core per ~650-800 m²)."""
+    return max(2, min(8, int(math.ceil(site_area / 650.0))))
 
 
 def _reused_bpe_module_summary(
@@ -221,6 +227,9 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     )
     merged["travelLimit"] = int(
         _in_range(_integer(merged["travelLimit"], "travelLimit"), 5, 60, "travelLimit")
+    )
+    merged["maxRoomHops"] = int(
+        _in_range(_integer(merged.get("maxRoomHops", 3), "maxRoomHops"), 1, 10, "maxRoomHops")
     )
     merged["seed"] = int(_in_range(_integer(merged["seed"], "seed"), 0, 2**31 - 1, "seed"))
 
@@ -1184,6 +1193,7 @@ class FloorEnvironment:
         self,
         neighbors: Sequence[str],
         room_core_costs: dict[str, int] | None = None,
+        max_hops: int = 5,
     ) -> bool:
         """Check a new standard room without rebuilding a graph per candidate."""
 
@@ -1194,7 +1204,7 @@ class FloorEnvironment:
                 neighbor in room_core_costs
                 and room_core_costs[neighbor]
                 + (1 if self.placement_by_id[neighbor]["category"] == "room" else 0)
-                <= 2
+                <= max_hops
                 for neighbor in neighbors
             )
         adjacency = {identifier: set(items) for identifier, items in self.adjacency_map.items()}
@@ -1213,8 +1223,8 @@ class FloorEnvironment:
                 continue
             record = records[identifier]
             if record["category"] == "core":
-                return crossings <= 2
-            if crossings > 2:
+                return crossings <= max_hops
+            if crossings > max_hops:
                 continue
             for neighbor in adjacency.get(identifier, ()):
                 neighbor_record = records.get(neighbor)
@@ -1385,8 +1395,11 @@ class FloorEnvironment:
                 shared_overlap += G.get_shared_overlap(poly, placement["poly"])
         if self.placements and not neighbors and category != "core":
             return None
+        max_hops = int(settings.get("maxRoomHops", 5))
         if category == "room" and self.placements:
-            if self.core_ids and not self._new_room_reaches_core(neighbors, room_core_costs):
+            if self.core_ids and not self._new_room_reaches_core(
+                neighbors, room_core_costs, max_hops=max_hops
+            ):
                 return None
 
         outer_exposure = G.get_shared_overlap(poly, self.site["outer"])
@@ -1665,13 +1678,15 @@ class FloorEnvironment:
         single_floor = bool(settings["singleFloor"])
         core_count = sum(1 for p in self.placements if p.get("category") == "core")
         room_count = sum(1 for p in self.placements if p.get("category") == "room")
+        max_cores = _max_cores_for_site(float(self.site["exactArea"]))
         if placing_first:
             allowed_cats = ["room"] if single_floor else ["core"]
         else:
             allowed_cats = ["room"]
+            min_rooms_for_next_core = SECOND_CORE_MIN_ROOMS * core_count
             if not single_floor and (
                 core_count == 0
-                or (core_count < 2 and room_count >= SECOND_CORE_MIN_ROOMS)
+                or (core_count < max_cores and room_count >= min_rooms_for_next_core)
             ):
                 allowed_cats.append("core")
         if category_filter is not None:
@@ -1863,8 +1878,11 @@ class FloorEnvironment:
                 shared_overlap += pair_overlap
         if self.placements and not neighbors and category != "core":
             return None
+        max_hops = int(settings.get("maxRoomHops", 5))
         if category == "room" and self.placements:
-            if self.core_ids and not self._new_room_reaches_core(neighbors, room_core_costs):
+            if self.core_ids and not self._new_room_reaches_core(
+                neighbors, room_core_costs, max_hops=max_hops
+            ):
                 return None
 
         outer_exposure = G.get_shared_overlap(poly, self.site["outer"])
@@ -1947,13 +1965,15 @@ class FloorEnvironment:
 
         core_count = sum(1 for p in self.placements if p.get("category") == "core")
         room_count = sum(1 for p in self.placements if p.get("category") == "room")
+        max_cores = _max_cores_for_site(float(self.site["exactArea"]))
         if placing_first:
             allowed_cats = ["room"] if single_floor else ["core"]
         else:
             allowed_cats = ["room"]
+            min_rooms_for_next_core = SECOND_CORE_MIN_ROOMS * core_count
             if not single_floor and (
                 core_count == 0
-                or (core_count < 2 and room_count >= SECOND_CORE_MIN_ROOMS)
+                or (core_count < max_cores and room_count >= min_rooms_for_next_core)
             ):
                 allowed_cats.append("core")
         if not allow_core:
@@ -3583,11 +3603,12 @@ class ParallelTrainer:
             return []
 
         placing_first = all(not environment.placements for environment in floors)
+        primary_site_area = float(floors[0].site["exactArea"]) if floors else 1000.0
+        max_cores = _max_cores_for_site(primary_site_area)
         if not placing_first:
-            # A second core is also a building-level action. Offer it only
-            # after every floor has developed six rooms, matching the quality
-            # gate used by the independent-floor policy without allowing one
-            # advanced floor to force an early stack onto all peers.
+            # Multi-floor cores scale with building area. Offer subsequent
+            # cores after every floor has developed sufficient rooms, matching the quality
+            # gate used by the independent-floor policy.
             core_counts = [
                 sum(
                     1
@@ -3604,9 +3625,10 @@ class ParallelTrainer:
                 )
                 for environment in floors
             ]
-            if any(count == 0 or count >= 2 for count in core_counts):
+            if any(count == 0 or count >= max_cores for count in core_counts):
                 return []
-            if any(count < SECOND_CORE_MIN_ROOMS for count in room_counts):
+            min_current_cores = min(core_counts)
+            if any(count < SECOND_CORE_MIN_ROOMS * min_current_cores for count in room_counts):
                 return []
         proposal_by_signature: dict[
             tuple[str, float, float, float], tuple[dict, dict, float, float]
@@ -3657,6 +3679,51 @@ class ParallelTrainer:
                         break
                 if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
                     break
+
+            if len(proposal_by_signature) < CORE_STACK_PROPOSAL_LIMIT:
+                common_unoccupied = set(floors[0].site["cellSet"]) - set(floors[0].occupied)
+                for env in floors[1:]:
+                    common_unoccupied.intersection_update(set(env.site["cellSet"]) - set(env.occupied))
+
+                core_centers = []
+                for env in floors:
+                    for p in env.placements:
+                        if p.get("category") == "core":
+                            core_centers.append(p["center"])
+
+                valid_remote_cells = []
+                core_spacing = float(active_settings.get("coreSpacing", 8.0))
+                for cell_key in common_unoccupied:
+                    x_t, y_t = cell_key.split(",")
+                    cx, cy = float(x_t) + 0.5, float(y_t) + 0.5
+                    if all(math.hypot(cx - cc["x"], cy - cc["y"]) >= core_spacing for cc in core_centers):
+                        clearance = min(float(env.site.get("distance", {}).get(cell_key, 0.0)) for env in floors)
+                        valid_remote_cells.append((clearance, int(x_t), int(y_t)))
+
+                valid_remote_cells.sort(key=lambda t: -t[0])
+                for _, rx, ry in valid_remote_cells[:12]:
+                    for module in modules:
+                        for rotation in module.get("rotations", ()):
+                            for cell in rotation.get("cells", ())[:4]:
+                                anchor_x = float(rx - cell["x"])
+                                anchor_y = float(ry - cell["y"])
+                                signature = self._core_transform_signature(
+                                    module, rotation, anchor_x, anchor_y
+                                )
+                                if signature in proposal_by_signature:
+                                    continue
+                                proposal_by_signature[signature] = (
+                                    module,
+                                    rotation,
+                                    anchor_x,
+                                    anchor_y,
+                                )
+                                if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
+                                    break
+                            if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
+                                break
+                        if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
+                            break
 
         shared: list[CoreStackCandidate] = []
         for signature in sorted(proposal_by_signature):
@@ -4618,6 +4685,7 @@ class ParallelTrainer:
                     "poly": world_poly,
                     "instanceIdx": env_idx,
                     "center": G.polygon_centroid(world_poly),
+                    "category": placement.get("category", "room"),
                     "module": {
                         "id": placement.get("shapeType", placement.get("moduleId", placement["id"])),
                         "category": placement.get("category", "room"),
@@ -4918,8 +4986,6 @@ class ParallelTrainer:
             )
             self._record_frontier_sample(environment, candidate_generation_duration)
             if not candidates:
-                if not shared_stacks:
-                    environment.done = True
                 continue
             candidate_groups.append((environment, candidates))
             all_features.extend(candidate.features for candidate in candidates)

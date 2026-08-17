@@ -102,8 +102,8 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("scheduleWallCache", self.app)
         self.assertIn("requestIdleCallback", self.app)
         self.assertNotIn("ws://localhost", self.app)
-        self.assertIn("metrics.reusedBpeModules", self.app)
-        self.assertIn("globally reused module occurrences", self.app)
+        self.assertIn("bpeBonus", self.app)
+        self.assertIn("debugRewardBreakdown", self.app)
 
     def test_recoverable_transactions_keep_an_accepted_settings_snapshot(self) -> None:
         self.assertIn("acceptedSettings: null", self.app)

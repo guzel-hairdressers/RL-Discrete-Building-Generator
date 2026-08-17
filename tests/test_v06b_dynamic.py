@@ -436,10 +436,9 @@ class RelativeFrontierRewardTests(unittest.TestCase):
     def test_reward_metrics_are_exposed_in_score_breakdown(self) -> None:
         public_dir = (MODULE_DIR / "public") if (MODULE_DIR / "public" / "app.js").is_file() else MODULE_DIR
         app_source = (public_dir / "app.js").read_text(encoding="utf-8")
-        self.assertIn("metrics.relativeTimeReward", app_source)
-        self.assertIn("metrics.frontierGrowthPotential", app_source)
-        self.assertIn("metrics.generationTimeReferenceUsed", app_source)
-        self.assertIn("Relative Frontier / Time Reward", app_source)
+        self.assertIn("relativeTimeReward", app_source)
+        self.assertIn("sizeNormalizedGenerationTime", app_source)
+        self.assertIn("debugRewardBreakdown", app_source)
 
 
 if __name__ == "__main__":

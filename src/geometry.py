@@ -112,6 +112,30 @@ def _configure_native_library(library: ctypes.CDLL) -> None:
         ctypes.c_int,
     ]
     library.point_to_segments_distance_c.restype = ctypes.c_double
+    if hasattr(library, "polygons_overlap_translated_c"):
+        library.polygons_overlap_translated_c.argtypes = [
+            ctypes.POINTER(_CPoint),
+            ctypes.c_int,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.POINTER(_CPoint),
+            ctypes.c_int,
+        ]
+        library.polygons_overlap_translated_c.restype = ctypes.c_int
+    if hasattr(library, "polygon_inside_site_translated_c"):
+        library.polygon_inside_site_translated_c.argtypes = [
+            ctypes.POINTER(_CPoint),
+            ctypes.c_int,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.POINTER(_CPoint),
+            ctypes.c_int,
+            ctypes.POINTER(_CPoint),
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_int,
+        ]
+        library.polygon_inside_site_translated_c.restype = ctypes.c_int
+
 
 
 _native_candidate_paths = _native_library_candidates()
@@ -271,7 +295,6 @@ def _native_shared_overlap_pair(
     )
 
 
-@functools.lru_cache(maxsize=32768)
 def _native_symmetric_segment_overlap_values(
     first_x: float,
     first_y: float,
@@ -284,6 +307,17 @@ def _native_symmetric_segment_overlap_values(
     linear_tolerance: float,
     angular_tolerance: float,
 ) -> tuple[tuple[float, float], tuple[float, float], float] | None:
+    dx1 = second_x - first_x
+    dy1 = second_y - first_y
+    dx2 = fourth_x - third_x
+    dy2 = fourth_y - third_y
+    first_len_sq = dx1 * dx1 + dy1 * dy1
+    second_len_sq = dx2 * dx2 + dy2 * dy2
+    if first_len_sq <= 1.0e-10 or second_len_sq <= 1.0e-10:
+        return None
+    cross = abs(dx1 * dy2 - dy1 * dx2)
+    if cross * cross > angular_tolerance * angular_tolerance * first_len_sq * second_len_sq:
+        return None
     first_start = ctypes.c_double(0.0)
     first_end = ctypes.c_double(0.0)
     second_start = ctypes.c_double(0.0)
@@ -309,6 +343,11 @@ def _native_symmetric_segment_overlap_values(
         (float(second_start.value), float(second_end.value)),
         float(shared_length.value),
     )
+
+
+_native_symmetric_segment_overlap_values.cache_clear = lambda: None
+
+
 
 
 def _symmetric_segment_overlap_python(
@@ -1378,13 +1417,30 @@ def exposed_wall_segments(polygons: Sequence[Sequence[dict]]) -> list[dict]:
     """
 
     result = []
-    for polygon_index, poly in enumerate(polygons):
+    poly_bounds = [bounds_of(p) for p in polygons]
+    n = len(polygons)
+    for polygon_index in range(n):
+        poly = polygons[polygon_index]
+        pb = poly_bounds[polygon_index]
         for edge_index, first in enumerate(poly):
             second = poly[(edge_index + 1) % len(poly)]
+            eb_minX = min(first["x"], second["x"]) - COLLINEAR_EPSILON
+            eb_maxX = max(first["x"], second["x"]) + COLLINEAR_EPSILON
+            eb_minY = min(first["y"], second["y"]) - COLLINEAR_EPSILON
+            eb_maxY = max(first["y"], second["y"]) + COLLINEAR_EPSILON
             intervals = []
-            for other_index, other_poly in enumerate(polygons):
+            for other_index in range(n):
                 if other_index == polygon_index:
                     continue
+                ob = poly_bounds[other_index]
+                if (
+                    eb_maxX < ob["minX"] - 0.01
+                    or ob["maxX"] < eb_minX - 0.01
+                    or eb_maxY < ob["minY"] - 0.01
+                    or ob["maxY"] < eb_minY - 0.01
+                ):
+                    continue
+                other_poly = polygons[other_index]
                 for other_edge_index, third in enumerate(other_poly):
                     fourth = other_poly[(other_edge_index + 1) % len(other_poly)]
                     interval = _overlap_interval_on_first(first, second, third, fourth)
@@ -1428,6 +1484,7 @@ def exposed_wall_segments(polygons: Sequence[Sequence[dict]]) -> list[dict]:
                         }
                     )
     return result
+
 
 
 def _segment_signature(

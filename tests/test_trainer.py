@@ -33,7 +33,12 @@ class SettingsTests(unittest.TestCase):
             ),
             graph.LayoutGraph({"second": dict(shared)}, [], 1),
         ]
-        self.assertEqual(server._reused_bpe_module_summary(graphs), (2, 6.0))
+        self.assertEqual(server._reused_bpe_module_summary(graphs), (2, 3.0))
+
+        # Verify 30.0 bonus cap when many reused modules exist
+        many_nodes = {f"node_{i}": dict(shared) for i in range(25)}
+        large_graphs = [graph.LayoutGraph(many_nodes, [], 0)]
+        self.assertEqual(server._reused_bpe_module_summary(large_graphs), (25, 30.0))
 
     def test_zero_angle_and_documented_learning_rate_are_valid(self) -> None:
         settings = server.validate_settings_patch(
