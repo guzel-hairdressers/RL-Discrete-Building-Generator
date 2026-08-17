@@ -2753,7 +2753,10 @@ class ParallelTrainer:
         self.baseline_transition_anchor_reward = 0.0
         self.reward_settings_signature = (self._reward_signature(self.settings), None, None)
         self.last_frontier_reward = 0.0
+        self.diversity_archive: deque[tuple[list[float], float]] = deque(maxlen=8)
+        self.last_dpp_diversity = 0.0
         self._reset_episode_reward_telemetry()
+
 
     @staticmethod
     def _reward_signature(settings: dict[str, Any]) -> tuple[Any, ...]:
@@ -4572,8 +4575,46 @@ class ParallelTrainer:
             )
         )
 
+    def _extract_episode_diversity_embedding(self, metrics: dict[str, Any]) -> list[float]:
+        """Extract a continuous 5D geometric morphology embedding for DPP diversity."""
+        fill = float(metrics.get("fillRatio", 0.5))
+        rentable = float(metrics.get("rentableRatio", 0.5))
+        comp = float(metrics.get("compactness", 0.5))
+        vocab = float(metrics.get("vocabSize", 10)) / 30.0
+        entropy = float(metrics.get("utilizationEntropyBonus", 0.0)) / 2.0
+        return [fill, rentable, comp, vocab, entropy]
+
+    def _compute_dpp_diversity_bonus(self, current_embedding: list[float], current_score: float) -> float:
+        """Compute the calibrated log det(S) diversity volume bonus from the historical archive."""
+        if len(self.diversity_archive) < 2:
+            self.diversity_archive.append((current_embedding, current_score))
+            return 0.0
+
+        all_embeddings = [emb for emb, _ in self.diversity_archive] + [current_embedding]
+        self.diversity_archive.append((current_embedding, current_score))
+
+        N = len(all_embeddings)
+        feat_tensor = torch.tensor(all_embeddings, dtype=torch.float32)
+        diff = feat_tensor.unsqueeze(1) - feat_tensor.unsqueeze(0)
+        dist_sq = (diff ** 2).sum(dim=-1)
+        sigma = 0.5
+        eps = 1.0e-3
+        S = torch.exp(-dist_sq / (2.0 * (sigma ** 2)))
+        S_reg = S + torch.eye(N) * eps
+
+        sign, logdet = torch.linalg.slogdet(S_reg)
+        if sign.item() <= 0:
+            return 0.0
+
+        min_logdet = math.log(N + eps) + (N - 1) * math.log(eps)
+        raw_logdet = float(logdet.item())
+        diversity_nats = max(0.0, (raw_logdet - min_logdet) / N)
+        return float(diversity_nats)
+
+
     def _learn_from_episode(self, score: float) -> None:
         normalized_score = score / 100.0
+
         gamma = 0.99
         gae_lambda = 0.95
         clip_eps = 0.2
@@ -4800,9 +4841,16 @@ class ParallelTrainer:
         metrics["averageUnmergedTriangles"] = unmerged_triangles / max(1, len(layout_graphs))
         metrics["unmergedTrianglePenalty"] = unmerged_triangle_penalty
         metrics.update(frontier_metrics)
-        
+        # Phase 1G: DPP Determinantal Typological Diversity
+        embedding = self._extract_episode_diversity_embedding(metrics)
+        dpp_bonus = self._compute_dpp_diversity_bonus(embedding, score)
+        self.last_dpp_diversity = dpp_bonus
+        metrics["dppDiversityBonus"] = round(dpp_bonus, 4)
+
+
         # 3. Learn from updated score (only in training mode)
         if getattr(self, "mode", "training") == "training":
+
             learning_start = time.perf_counter()
             self._learn_from_episode(score)
             self.step_profiler.record("learning", time.perf_counter() - learning_start)

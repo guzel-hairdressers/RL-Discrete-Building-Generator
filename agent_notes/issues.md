@@ -219,15 +219,14 @@ This document is the master tracking log for active bugs, regressive side effect
 
 ---
 
-### Combinatorial Candidate Search Space Explosion & Slot Grammar Optimization
-* **Status**: `Solved (Phase 1E / v0.8.4)`
+### 25-Module Toy Benchmark Discrepancy & Mandatory 120-Module Workload Protocol
+* **Status**: `Solved (Protocol Formalization / 26-08-17)`
+* **Issue**: Prior master suite benchmarks evaluated 25-module toy configs ($1.30\,\text{s}$/ep), which did not reflect the true complexity of 4-floor 120-module high-density layouts ($480$ modules per episode, $\approx 9.9\text{--}10.6\,\text{s}$/ep). Furthermore, an early standalone prototype script spun on empty placement loops producing misleading timings.
 * **Resolution**:
-  1. Diagnosed that iterating `all shapes × all rotations × all edges` generated $48,000+$ candidate anchor checks per step, forcing artificial early-stopping (`cat_limit = 12`) that truncated $>99\%$ of the legal action space.
-  2. Implemented the **Inverted `(Normal, Length)` Shape Compatibility Index** in `src/server.py`, indexing the active module dictionary once on initialization and performing direct $O(1)$ discrete hash map lookups from each exterior building edge.
-  3. Reduced candidate generation time from **$124.11\,\text{s} \to 46.13\,\text{s}$** ($2.69\times$ speedup) across 10 deterministic seed episodes at 120 placements/floor ($480$ total modules).
-  4. Enabled **Full-Action Policy Coverage**, allowing the Neural Policy Network to evaluate $100\%$ of legal actions across all building wings without early truncation, approaching true global optimality.
-  5. Implemented $O(1)$ **Medial Spine Multi-Floor Core Facility Hubs** (Phase 1F) on $\Omega_{\text{shared}} = \bigcap_{k=1}^K \Omega^{(k)}$ for $100\%$ vertical core shaft alignment on Step 0.
-  6. Verified that all 165 unit tests pass 100%.
+  1. Formalized the **Mandatory High-Density Benchmark Standard** in [`AGENTS.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/AGENTS.md) and [`AGENT_NOTES_GUIDE.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/AGENT_NOTES_GUIDE.md): **NEVER benchmark on 25-module configs**; all authoritative benchmarks must run **120 maxModules per floor across 4–8 stories on XL Lobed/Complex sites** ($480$ total modules per episode).
+  2. Implemented automated verification of non-empty placement hashes, positive fill ratios ($>20\%$), and positive scores to guarantee benchmark validity.
+  3. Integrated direct head-to-head comparison harness (`benchmarks/benchmark_head_to_head_comparison.py`) running pre-change vs post-change on identical deterministic seeds (`seeds = [100 + i * 23 for i in range(10)]`).
+
 
 
 

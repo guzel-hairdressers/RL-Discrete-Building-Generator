@@ -43,10 +43,15 @@ Open `http://localhost:8000` in your web browser to view live training.
 python3 -m unittest discover -s tests -p "test_*.py"
 ```
 
-### Run Performance Benchmarks
+### Run Performance Benchmarks (Official Protocol)
+**MANDATORY BENCHMARK STANDARD**:
+* **NEVER benchmark on 25-module toy configurations.**
+* All authoritative benchmarks **MUST** evaluate high-density **`120 maxModules` per floor across 4–8 parallel stories on XL Lobed/Complex sites** ($480$ total modules per episode).
+* Must compare Pre-Change vs Post-Change on the exact same 10 deterministic seed episodes (`seeds = [100 + i * 23 for i in range(10)]`), validating positive fill ratio, layout scores, and non-empty module placement:
 ```bash
-python3 benchmarks/benchmark.py
+PYTHONPATH=src python3 benchmarks/benchmark_head_to_head_comparison.py
 ```
+
 
 ---
 

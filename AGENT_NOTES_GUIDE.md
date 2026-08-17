@@ -62,10 +62,15 @@ agent_notes/
 
 ---
 
-## 4. Mandatory Across-Phase Benchmark Table Format
+## 4. Mandatory Across-Phase Benchmark Table Format & Official Protocol
 
 Whenever reporting progressive roadmap metrics or multi-phase benchmarks, agents **MUST present step-by-step isolated net deltas** rather than purely compounding totals, formatted according to [`agent_notes/guides/benchmarking_guide.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/benchmarking_guide.md):
 
+* **MANDATORY WORKLOAD STANDARD**:
+  * **NEVER benchmark on 25-module toy configurations.**
+  * All authoritative benchmarks **MUST** evaluate high-density **`120 maxModules` per floor across 4–8 parallel stories on XL Lobed/Complex sites** ($480$ total modules per episode).
+  * Always verify non-empty placement hashes, positive fill ratios ($>20\%$), and positive scores to avoid empty-loop benchmarking bugs.
 * **Columns**: `Metric` | `Clean Baseline` | `Phase X (Net vs Prev)` | ... | `Total Net Delta (vs Base)` | `Impact & Evaluation`
 * **Isolated Marginals**: Each phase column must show the exact delta $\Delta = \text{Phase}_X - \text{Phase}_{X-1}$ and percentage relative to the immediately preceding phase.
 * **Impact & Evaluation**: The final column must always provide the qualitative architectural/geometric explanation of the observed delta.
+
