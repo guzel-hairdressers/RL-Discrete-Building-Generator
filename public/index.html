@@ -270,13 +270,13 @@
           <div class="select-field">
             <label for="boundaryType" title="Shortcut: B to cycle">Boundary type (B)</label>
             <select id="boundaryType" name="boundaryType" data-setting>
+              <option value="free" selected>Mixed random</option>
               <option value="lobed">Deep-lobed star</option>
               <option value="lshape">L-shape</option>
               <option value="ushape">U-shape</option>
               <option value="tshape">Randomized T</option>
               <option value="convex">Convex hull</option>
               <option value="rect">Rectangle</option>
-              <option value="free">Mixed random</option>
             </select>
           </div>
 
@@ -295,9 +295,8 @@
           <div class="select-field">
             <label for="atriumPolicy">Atrium strategy</label>
             <select id="atriumPolicy" name="atriumPolicy" data-setting>
-              <option value="agent">Agent decision</option>
+              <option value="none" selected>No atrium</option>
               <option value="central">Central atrium</option>
-              <option value="none">No atrium</option>
             </select>
           </div>
 
@@ -390,17 +389,6 @@
             <div class="range-controls">
               <input id="maxEdge" name="maxEdge" type="range" min="1" max="9" step="0.5" value="9" data-setting>
               <input id="maxEdgeNum" type="number" min="1" max="9" step="0.5" value="9" inputmode="decimal" aria-label="Maximum edge numeric value">
-            </div>
-          </div>
-
-          <div class="range-field" data-pair="maxEdges">
-            <div class="range-heading">
-              <label for="maxEdges">Maximum edges</label>
-              <span>sides</span>
-            </div>
-            <div class="range-controls">
-              <input id="maxEdges" name="maxEdges" type="range" min="3" max="8" step="1" value="8" data-setting>
-              <input id="maxEdgesNum" type="number" min="3" max="8" step="1" value="8" inputmode="numeric" aria-label="Maximum edges numeric value">
             </div>
           </div>
 

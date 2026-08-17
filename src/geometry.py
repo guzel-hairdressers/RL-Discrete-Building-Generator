@@ -1486,6 +1486,40 @@ def exposed_wall_segments(polygons: Sequence[Sequence[dict]]) -> list[dict]:
     return result
 
 
+def ray_intersect_segments(
+    origin: dict,
+    direction: tuple[float, float],
+    segments: Sequence[dict],
+    min_dist: float = 0.05,
+    max_dist: float = 3.0,
+) -> float | None:
+    """Find the nearest intersection distance of a ray with a set of 2D line segments."""
+    ox, oy = float(origin["x"]), float(origin["y"])
+    dx, dy = float(direction[0]), float(direction[1])
+    
+    closest_t: float | None = None
+    
+    for seg in segments:
+        p1 = seg["a"]
+        p2 = seg["b"]
+        vx = float(p2["x"]) - float(p1["x"])
+        vy = float(p2["y"]) - float(p1["y"])
+        
+        denom = dx * vy - dy * vx
+        if abs(denom) < 1.0e-9:
+            continue
+            
+        t = ((float(p1["x"]) - ox) * vy - (float(p1["y"]) - oy) * vx) / denom
+        u = ((float(p1["x"]) - ox) * dy - (float(p1["y"]) - oy) * dx) / denom
+        
+        if 0.0 <= u <= 1.0 and min_dist <= t <= max_dist:
+            if closest_t is None or t < closest_t:
+                closest_t = t
+                
+    return closest_t
+
+
+
 
 def _segment_signature(
     segments: Iterable,

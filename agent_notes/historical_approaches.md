@@ -8,6 +8,14 @@ It explicitly records **what was achieved** by successful approaches and **which
 
 ## 1. Successful Implementation Releases
 
+### `v0.8.6` — Minimum $45^\circ$ Exterior Clearance, Deep Daylight & Facade Chasm Penalties
+* **Key Achievements**:
+  * **Minimum $45^\circ$ Exterior Crevice Filter**: Added vector dot-product crevice gating in `_validate_edge_alignment`. Rejects any candidate placement where unshared exterior facade walls meeting at a junction vertex have an opening angle $\theta \in (0.5^\circ, 45.0^\circ)$, eliminating acute needle slits and razor-edge crevices while allowing flush walls and clean setbacks.
+  * **Deep Interior Daylight Penalty (Depth $\ge 2$)**: Implemented multi-source BFS room-distance-to-facade metric and reward penalty (up to $-12.0\,\text{pts}$) targeting windowless landlocked rooms.
+  * **Narrow Facade Chasm Penalty (< 3.0m Clearance)**: Added ray-segment normal intersection kernel (`ray_intersect_segments`) to penalize opposing building facades closer than $3.0\,\text{m}$ (up to $-8.0\,\text{pts}$) and hard-reject placements creating impassable cracks $< 1.2\,\text{m}$.
+  * **UI/UX & Controls Cleanup**: Set default boundary type to `"free"` (Mixed random), removed the redundant `maxEdges` parameter, and added live penalty breakdowns in the HUD and Developer Diagnostics (`Ctrl+Shift+D`).
+  * **168 Unit Tests Passing ($100\%$)**.
+
 ### `v0.8.5` — $SE(2)$-Equivariant Relational Set Transformer & Cross-Candidate Attention
 * **Key Achievements**:
   * **$SE(2)$-Equivariant Relational Set Transformer (Phase 1H)**: Upgraded `PolicyModel` from isolated single-candidate MLP evaluation to a 2-layer Multi-Head Self-Attention Transformer over all legal candidate placements $\{c_1, \dots, c_K\}$, enabling cross-wing spatial coordination across the entire building.

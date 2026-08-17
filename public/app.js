@@ -23,7 +23,6 @@ window.onerror = function(message, source, lineno, colno, error) {
   const INTEGER_SETTINGS = new Set([
     'parallelEnvironments',
     'maxModules',
-    'maxEdges',
     'dictCap',
     'travelLimit',
     'maxRoomHops'
@@ -40,7 +39,6 @@ window.onerror = function(message, source, lineno, colno, error) {
     'learningRate',
     'minEdge',
     'maxEdge',
-    'maxEdges',
     'dictCap',
     'angleStep',
     'coreSpacing',
@@ -1751,6 +1749,14 @@ window.onerror = function(message, source, lineno, colno, error) {
     const best = state.bestScore;
 
     dom.scoreValue.textContent = formatDecimal(score, 1);
+    const deepPen = Number(metricValue(metrics, ['deepInteriorPenalty'], 0)) || 0;
+    const chasmPen = Number(metricValue(metrics, ['facadeChasmPenalty'], 0)) || 0;
+    const topoPen = Number(metricValue(metrics, ['topologyPenalty'], 0)) || 0;
+    if (deepPen > 0.05 || chasmPen > 0.05 || topoPen > 0.05) {
+      dom.scoreValue.title = `Penalties: Deep Rooms: -${deepPen.toFixed(1)} pts | Facade Chasm (<3m): -${chasmPen.toFixed(1)} pts | Topology: -${topoPen.toFixed(1)} pts`;
+    } else {
+      dom.scoreValue.title = 'Score: No active penalties';
+    }
     if (best !== 0 && !isNaN(parseFloat(best))) {
       dom.bestScoreValue.textContent = `Best ${formatDecimal(best, 1)}`;
     } else {
@@ -2035,7 +2041,8 @@ window.onerror = function(message, source, lineno, colno, error) {
       'fillRatio', 'rentableRatio', 'daylightRatio', 'reuseRatio',
       'constructibilityScore', 'envelopeEfficiency', 'rawScore',
       'topologyPenalty', 'bpeBonus', 'unmergedTrianglePenalty',
-      'relativeTimeReward', 'dictBreachPenalty'
+      'relativeTimeReward', 'dictBreachPenalty', 'deepInteriorPenalty',
+      'facadeChasmPenalty'
     ];
     if (!rewardKeys.some((key) => Object.prototype.hasOwnProperty.call(metrics, key))) {
       target.replaceChildren(debugEmptyMessage('Reward components have not been reported yet.'));
@@ -2059,6 +2066,8 @@ window.onerror = function(message, source, lineno, colno, error) {
       ['Envelope', debugNumber('envelopeEfficiency')],
       ['BPE reuse', debugNumber('bpeBonus')],
       ['Frontier shaping', debugNumber('relativeTimeReward')],
+      ['Deep room penalty', -debugNumber('deepInteriorPenalty')],
+      ['Facade chasm penalty', -debugNumber('facadeChasmPenalty')],
       ['Shape penalties', -shapePenalty],
       ['Topology penalty', -debugNumber('topologyPenalty')],
       ['Triangle penalty', -debugNumber('unmergedTrianglePenalty')],

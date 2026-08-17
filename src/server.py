@@ -87,9 +87,9 @@ _TORCH_RUNTIME_CONFIGURED = False
 
 
 DEFAULT_SETTINGS: dict[str, Any] = {
-    "boundaryType": "lobed",
+    "boundaryType": "free",
     "siteAreaTier": "ANY",
-    "atriumPolicy": "agent",
+    "atriumPolicy": "none",
     "singleFloor": False,
     "publicMode": False,
     "parallelEnvironments": 4,
@@ -97,7 +97,6 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "learningRate": 0.001,
     "minEdge": 3.0,
     "maxEdge": 9.0,
-    "maxEdges": 8,
     "dictCap": 10,
     "angleStep": 15.0,
     "coreSpacing": 8.0,
@@ -112,7 +111,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
 
 BOUNDARY_TYPES = {"lobed", "lshape", "ushape", "tshape", "convex", "rect", "free"}
 SITE_AREA_TIERS = {"ANY", "XS", "S", "M", "L", "XL"}
-ATRIUM_POLICIES = {"agent", "central", "none"}
+ATRIUM_POLICIES = {"central", "none"}
 
 
 class SettingsError(ValueError):
@@ -192,12 +191,14 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
 
     if not isinstance(patch, dict):
         raise SettingsError("settings must be an object")
-    unknown = sorted(set(patch) - set(DEFAULT_SETTINGS))
+    unknown = sorted(set(patch) - set(DEFAULT_SETTINGS) - {"maxEdges"})
     if unknown:
         raise SettingsError(f"unknown setting: {unknown[0]}")
 
     merged = dict(current)
     merged.update(patch)
+    if "maxEdges" in merged:
+        del merged["maxEdges"]
 
     boundary_type = merged["boundaryType"]
     if not isinstance(boundary_type, str) or boundary_type not in BOUNDARY_TYPES:
@@ -222,9 +223,6 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     )
     merged["maxModules"] = int(
         _in_range(_integer(merged["maxModules"], "maxModules"), 10, 300, "maxModules")
-    )
-    merged["maxEdges"] = int(
-        _in_range(_integer(merged["maxEdges"], "maxEdges"), 3, 8, "maxEdges")
     )
     merged["dictCap"] = int(
         _in_range(_integer(merged["dictCap"], "dictCap"), 3, 20, "dictCap")
@@ -255,14 +253,14 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
         _finite_number(merged["learningRate"], "learningRate"), 0.0001, 0.05, "learningRate"
     )
     if not merged.get("singleFloor", False):
-        basic_edge_count = min(int(merged["maxEdges"]), 4)
+        basic_edge_count = 4
         maximum_core_area = (
             basic_edge_count
             * merged["maxEdge"] ** 2
             / (4.0 * math.tan(math.pi / basic_edge_count))
         )
         if maximum_core_area + 1.0e-8 < 24.0:
-            raise SettingsError("maxEdge/maxEdges cannot form the required 24m² minimum core")
+            raise SettingsError("maxEdge cannot form the required 24m² minimum core")
     return merged
 
 
@@ -1362,8 +1360,8 @@ class FloorEnvironment:
             crossings, identifier = heapq.heappop(queue)
             if crossings != best.get(identifier):
                 continue
-            increment = 1 if self.placement_by_id[identifier]["category"] == "room" else 0
             for neighbor in self.adjacency_map.get(identifier, ()):
+                increment = 1 if self.placement_by_id[neighbor]["category"] == "room" else 0
                 new_cost = crossings + increment
                 if new_cost < best.get(neighbor, 10**9):
                     best[neighbor] = new_cost
@@ -1374,7 +1372,7 @@ class FloorEnvironment:
         self,
         neighbors: Sequence[str],
         room_core_costs: dict[str, int] | None = None,
-        max_hops: int = 5,
+        max_hops: int = 3,
     ) -> bool:
         """Check a new standard room without rebuilding a graph per candidate."""
 
@@ -1383,9 +1381,7 @@ class FloorEnvironment:
         if room_core_costs is not None:
             return any(
                 neighbor in room_core_costs
-                and room_core_costs[neighbor]
-                + (1 if self.placement_by_id[neighbor]["category"] == "room" else 0)
-                <= max_hops
+                and room_core_costs[neighbor] + 1 <= max_hops
                 for neighbor in neighbors
             )
         adjacency = {identifier: set(items) for identifier, items in self.adjacency_map.items()}
@@ -1576,7 +1572,7 @@ class FloorEnvironment:
                 shared_overlap += G.get_shared_overlap(poly, placement["poly"])
         if self.placements and not neighbors and category != "core":
             return None
-        max_hops = int(settings.get("maxRoomHops", 5))
+        max_hops = int(settings.get("maxRoomHops", 3))
         if category == "room" and self.placements:
             if self.core_ids and not self._new_room_reaches_core(
                 neighbors, room_core_costs, max_hops=max_hops
@@ -1835,6 +1831,80 @@ class FloorEnvironment:
                             if not (start_other < 0.01 or end_other > 0.99):
                                 return False
                                 
+        # 3. Enforce Minimum 45° Facade Crevice Clearance (Zero Needle Slits)
+        min_cos = 0.70710678  # cos(45 degrees)
+        for p_idx, p in enumerate(candidate_poly):
+            p_prev = candidate_poly[(p_idx - 1) % len(candidate_poly)]
+            p_next = candidate_poly[(p_idx + 1) % len(candidate_poly)]
+            
+            dx_prev = p_prev["x"] - p["x"]
+            dy_prev = p_prev["y"] - p["y"]
+            len_prev = math.hypot(dx_prev, dy_prev)
+            
+            dx_next = p_next["x"] - p["x"]
+            dy_next = p_next["y"] - p["y"]
+            len_next = math.hypot(dx_next, dy_next)
+            
+            if len_prev < 1e-4 or len_next < 1e-4:
+                continue
+            u_prev = (dx_prev / len_prev, dy_prev / len_prev)
+            u_next = (dx_next / len_next, dy_next / len_next)
+            
+            for placement in nearby_placements:
+                other_poly = placement["poly"]
+                for q_idx, q in enumerate(other_poly):
+                    dist_sq = (p["x"] - q["x"])**2 + (p["y"] - q["y"])**2
+                    if dist_sq < 1e-4:
+                        q_prev = other_poly[(q_idx - 1) % len(other_poly)]
+                        q_next = other_poly[(q_idx + 1) % len(other_poly)]
+                        
+                        dqx_prev = q_prev["x"] - q["x"]
+                        dqy_prev = q_prev["y"] - q["y"]
+                        len_q_prev = math.hypot(dqx_prev, dqy_prev)
+                        
+                        dqx_next = q_next["x"] - q["x"]
+                        dqy_next = q_next["y"] - q["y"]
+                        len_q_next = math.hypot(dqx_next, dqy_next)
+                        
+                        if len_q_prev < 1e-4 or len_q_next < 1e-4:
+                            continue
+                        uq_prev = (dqx_prev / len_q_prev, dqy_prev / len_q_prev)
+                        uq_next = (dqx_next / len_q_next, dqy_next / len_q_next)
+                        
+                        for uc in (u_prev, u_next):
+                            for uo in (uq_prev, uq_next):
+                                dot = uc[0] * uo[0] + uc[1] * uo[1]
+                                # Reject acute diverging/converging facade slits strictly between ~0.5° and 44.5°
+                                if dot > min_cos and dot < 0.9999:
+                                    return False
+
+        # 4. Enforce Minimum 1.2m Opposing Facade Clearance (Zero Impassable Cracks)
+        for i in range(len(candidate_poly)):
+            p1 = candidate_poly[i]
+            p2 = candidate_poly[(i + 1) % len(candidate_poly)]
+            dx = p2["x"] - p1["x"]
+            dy = p2["y"] - p1["y"]
+            edge_len = math.hypot(dx, dy)
+            if edge_len < 0.8:
+                continue
+            ux = dx / edge_len
+            uy = dy / edge_len
+            nx = uy
+            ny = -ux
+            mid = {"x": 0.5 * (p1["x"] + p2["x"]), "y": 0.5 * (p1["y"] + p2["y"])}
+            
+            existing_segs = []
+            for placement in nearby_placements:
+                other_poly = placement["poly"]
+                for j in range(len(other_poly)):
+                    q1 = other_poly[j]
+                    q2 = other_poly[(j + 1) % len(other_poly)]
+                    existing_segs.append({"a": q1, "b": q2})
+            
+            t = G.ray_intersect_segments(mid, (nx, ny), existing_segs, min_dist=0.05, max_dist=1.2)
+            if t is not None and t < 1.2:
+                return False
+
         return True
 
     def generate_candidates_for_module(
@@ -2063,7 +2133,7 @@ class FloorEnvironment:
                 shared_overlap += pair_overlap
         if self.placements and not neighbors and category != "core":
             return None
-        max_hops = int(settings.get("maxRoomHops", 5))
+        max_hops = int(settings.get("maxRoomHops", 3))
         if category == "room" and self.placements:
             if self.core_ids and not self._new_room_reaches_core(
                 neighbors, room_core_costs, max_hops=max_hops
@@ -2240,7 +2310,7 @@ class FloorEnvironment:
                 self.slot_index = self._build_slot_index(self.dictionary)
                 
             angle_period = int(round(math.pi * ATTACHMENT_ANGLE_SCALE))
-            max_hops = int(settings.get("maxRoomHops", 5))
+            max_hops = int(settings.get("maxRoomHops", 3))
             
             # Prioritized edge list
             pref_ids = []
@@ -2714,6 +2784,87 @@ class FloorEnvironment:
                     violations.append("travelLimitCap")
         return not violations, sorted(set(violations))
 
+    def _deep_interior_room_metrics(self) -> tuple[int, float, float]:
+        """Compute count, area, and ratio of habitable rooms that are >= 2 hops away from all exterior facade walls."""
+        habitable_rooms = [p for p in self.placements if p.get("category") in ("room", "special")]
+        if not habitable_rooms:
+            return 0, 0.0, 0.0
+            
+        facade_room_ids = set()
+        for p in habitable_rooms:
+            if float(p.get("outerExposure", 0.0)) >= 0.5:
+                facade_room_ids.add(p["id"])
+                
+        if not facade_room_ids:
+            polys = [p["poly"] for p in self.placements]
+            segs = G.exposed_wall_segments(polys)
+            for seg in segs:
+                poly_idx = seg.get("polygonIndex")
+                if poly_idx is not None and poly_idx < len(self.placements):
+                    p = self.placements[poly_idx]
+                    if p.get("category") in ("room", "special"):
+                        facade_room_ids.add(p["id"])
+                        
+        if not facade_room_ids:
+            total_area = sum(float(p.get("area", 0.0)) for p in habitable_rooms)
+            return len(habitable_rooms), total_area, 1.0
+
+        depth: dict[str, int] = {rid: 0 for rid in facade_room_ids}
+        queue = list(facade_room_ids)
+        while queue:
+            curr_id = queue.pop(0)
+            curr_depth = depth[curr_id]
+            for neighbor_id in self.adjacency_map.get(curr_id, ()):
+                if neighbor_id in self.placement_by_id:
+                    neighbor = self.placement_by_id[neighbor_id]
+                    if neighbor.get("category") in ("room", "special") and neighbor_id not in depth:
+                        depth[neighbor_id] = curr_depth + 1
+                        queue.append(neighbor_id)
+                        
+        deep_rooms = [p for p in habitable_rooms if depth.get(p["id"], 999) >= 2]
+        deep_count = len(deep_rooms)
+        deep_area = sum(float(p.get("area", 0.0)) for p in deep_rooms)
+        total_rentable = sum(float(p.get("area", 0.0)) for p in habitable_rooms)
+        deep_ratio = _safe_ratio(deep_area, total_rentable)
+        return deep_count, deep_area, deep_ratio
+
+    def _narrow_facade_chasm_metrics(self, exposed_segments: Sequence[dict], exposed_perimeter: float) -> tuple[float, float]:
+        """Cast outward normal rays from exposed facade wall midpoints to detect opposing walls closer than 3.0m."""
+        if not exposed_segments or exposed_perimeter <= 1e-4:
+            return 0.0, 0.0
+            
+        occluded_length = 0.0
+        for i, seg in enumerate(exposed_segments):
+            length = float(seg["length"])
+            if length < 0.8:
+                continue
+            p1 = seg["a"]
+            p2 = seg["b"]
+            dx = float(p2["x"]) - float(p1["x"])
+            dy = float(p2["y"]) - float(p1["y"])
+            if length <= 1e-4:
+                continue
+            ux = dx / length
+            uy = dy / length
+            
+            # Outward normal
+            nx = uy
+            ny = -ux
+            
+            mid = {
+                "x": 0.5 * (float(p1["x"]) + float(p2["x"])),
+                "y": 0.5 * (float(p1["y"]) + float(p2["y"]))
+            }
+            
+            other_segs = [s for j, s in enumerate(exposed_segments) if j != i]
+            t = G.ray_intersect_segments(mid, (nx, ny), other_segs, min_dist=0.05, max_dist=3.0)
+            if t is not None and t < 3.0:
+                severity = (3.0 - t) / 3.0
+                occluded_length += length * severity
+                
+        chasm_ratio = _safe_ratio(occluded_length, exposed_perimeter)
+        return occluded_length, chasm_ratio
+
     def terminal_metrics(self, single_floor: bool, core_spacing: float) -> dict[str, Any]:
         """Compute exact vector walls, perimeter, and daylight once terminal."""
 
@@ -2805,6 +2956,9 @@ class FloorEnvironment:
                 if 0.05 < total_overlap < edge_len - 0.05:
                     total_partial_length += edge_len
 
+        deep_count, deep_area, deep_ratio = self._deep_interior_room_metrics()
+        chasm_occluded_len, chasm_ratio = self._narrow_facade_chasm_metrics(segments, exposed_perimeter)
+
         return {
             **online,
             "daylightRatio": _safe_ratio(site_daylight_samples, rentable_samples),
@@ -2820,6 +2974,11 @@ class FloorEnvironment:
             "topologyViolations": violations,
             "internalExposedPerimeter": internal_exposed_perimeter,
             "totalPartialLength": total_partial_length,
+            "deepRoomCount": deep_count,
+            "deepRoomArea": deep_area,
+            "deepRoomRatio": deep_ratio,
+            "facadeChasmOccludedLength": chasm_occluded_len,
+            "facadeChasmRatio": chasm_ratio,
         }
 
 
@@ -2915,7 +3074,6 @@ class ParallelTrainer:
             int(settings["maxModules"]),
             float(settings["minEdge"]),
             float(settings["maxEdge"]),
-            int(settings["maxEdges"]),
             int(settings["dictCap"]),
             float(settings["angleStep"]),
             float(settings["coreSpacing"]),
@@ -3312,30 +3470,15 @@ class ParallelTrainer:
         boundary: dict,
         candidates: Sequence[dict],
     ) -> tuple[dict, torch.Tensor | None]:
-        policy = settings["atriumPolicy"]
+        policy = settings.get("atriumPolicy", "none")
         none_choice = next((item for item in candidates if item["id"] == "none"), candidates[0])
         nonempty = [item for item in candidates if item.get("holes")]
-        if policy == "none" or not nonempty:
-            return none_choice, None
-        if policy == "central":
+        if policy == "central" and nonempty:
             return min(
                 nonempty,
                 key=lambda item: (self._central_atrium_distance(boundary, item), str(item["id"])),
             ), None
-        features = torch.tensor(
-            [
-                self._vector_site_descriptor(boundary["outer"], candidate.get("holes", []), settings)
-                for candidate in candidates
-            ],
-            dtype=torch.float32,
-            device=self.device,
-        )
-        logits = torch.nan_to_num(
-            self.model.atrium_logits(features), nan=0.0, posinf=20.0, neginf=-20.0
-        ).clamp(-30.0, 30.0)
-        distribution = torch.distributions.Categorical(logits=logits)
-        action = distribution.sample()
-        return candidates[int(action.item())], distribution.log_prob(action)
+        return none_choice, None
 
     @staticmethod
     def _layout_offsets(site_records: Sequence[tuple[dict, dict, dict, G.RNG]]) -> list[tuple[float, float]]:
@@ -3474,7 +3617,7 @@ class ParallelTrainer:
         edge_count_mask = torch.tensor(
             [
                 1.0 if not is_step0 or triangle_core_feasible else 0.0,
-                1.0 if int(settings["maxEdges"]) >= 4 else 0.0,
+                1.0,
             ],
             device=self.device,
         )
@@ -4574,16 +4717,35 @@ class ParallelTrainer:
         total_partial_len = math.fsum(float(item.get("totalPartialLength", 0.0)) for item in per_site)
         partial_connection_penalty = 0.04 * _safe_ratio(total_partial_len, perimeter)
 
+        # Deep interior daylight penalty (habitable rooms >= 2 hops away from all exterior walls)
+        deep_room_ratio = _safe_ratio(
+            math.fsum(float(item.get("deepRoomArea", 0.0)) for item in per_site),
+            rentable,
+        )
+        deep_interior_penalty = 12.0 * deep_room_ratio
+
+        # Narrow facade chasm penalty (opposing exterior walls < 3.0m apart)
+        facade_chasm_ratio = _safe_ratio(
+            math.fsum(float(item.get("facadeChasmOccludedLength", 0.0)) for item in per_site),
+            perimeter,
+        )
+        facade_chasm_penalty = 8.0 * facade_chasm_ratio
+
         raw_score = 100.0 * min(
             1.0,
-            0.70 * scaled_fill
-            + 0.15 * scaled_rentable
-            + 0.10 * daylight
-            + 0.02 * reuse
-            + 0.02 * constructibility
-            + 0.01 * envelope_efficiency
-            - area_variance_penalty
-            - partial_connection_penalty,
+            max(
+                0.0,
+                0.70 * scaled_fill
+                + 0.15 * scaled_rentable
+                + 0.10 * daylight
+                + 0.02 * reuse
+                + 0.02 * constructibility
+                + 0.01 * envelope_efficiency
+                - area_variance_penalty
+                - partial_connection_penalty
+                - (deep_interior_penalty / 100.0)
+                - (facade_chasm_penalty / 100.0),
+            ),
         )
         multiplier_used = self.topology_multiplier
         topology_penalty = min(50.0, 100.0 * multiplier_used * violation_rate)
@@ -4627,6 +4789,10 @@ class ParallelTrainer:
             "nextTopologyMultiplier": next_topology_multiplier,
             "rawScore": raw_score,
             "areaVariancePenalty": area_variance_penalty * 100.0,
+            "deepRoomRatio": deep_room_ratio,
+            "deepInteriorPenalty": deep_interior_penalty,
+            "facadeChasmRatio": facade_chasm_ratio,
+            "facadeChasmPenalty": facade_chasm_penalty,
             "internalExposedPenalty": internal_exposed_penalty * 100.0,
             "partialConnectionPenalty": partial_connection_penalty * 100.0,
             "score": score,

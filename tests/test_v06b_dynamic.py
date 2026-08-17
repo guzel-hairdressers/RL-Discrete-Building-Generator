@@ -261,8 +261,7 @@ class DynamicPaletteTests(unittest.TestCase):
         for patch in (
             {"minEdge": 0.5},
             {"maxEdge": 9.5},
-            {"maxEdges": 9},
-            {"maxEdge": 3.0, "maxEdges": 8},
+            {"minEdge": 5.0, "maxEdge": 4.0},
         ):
             with self.subTest(patch=patch), self.assertRaises(server.SettingsError):
                 server.validate_settings_patch(server.DEFAULT_SETTINGS, patch)
@@ -270,7 +269,6 @@ class DynamicPaletteTests(unittest.TestCase):
         html = (public_dir / "index.html").read_text(encoding="utf-8")
         self.assertIn('id="minEdge" name="minEdge" type="range" min="1" max="9"', html)
         self.assertIn('id="maxEdge" name="maxEdge" type="range" min="1" max="9"', html)
-        self.assertIn('id="maxEdges" name="maxEdges" type="range" min="3" max="8"', html)
 
     def test_single_floor_is_room_only_and_triangle_penalty_is_canonical(self) -> None:
         trainer = server.ParallelTrainer()

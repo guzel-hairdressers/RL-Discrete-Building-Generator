@@ -8,7 +8,12 @@ This document is the master tracking log for active bugs, regressive side effect
 
 ## 1. Active, Reopened & Unsolved Critical Issues (Top Priority)
 
-
+### [USER AUDIT REMINDER] Verification & Fine-Tuning of Deep Daylight & Facade Chasm Penalties
+* **Status**: `Active / Audit Requested by User` (Priority: High)
+* **Description**:
+  The user requested a follow-up audit to verify and fine-tune the implementations of:
+  1. **Deep Interior Daylight Penalty**: Computes graph depth of habitable rooms from exterior facade ($d_{\text{facade}} \ge 2$) and penalizes up to $-12.0\,\text{pts}$. Need to verify BFS edge-contact semantics across multi-floor environments.
+  2. **Narrow Facade Chasm Penalty (< 3.0m clearance)**: Midpoint outward normal raycast with hard reject $< 1.2\,\text{m}$ and $-8.0\,\text{pts}$ terminal penalty. Need to verify corner self-occlusions, concave angles, and boundary ray-segment filtering.
 
 ### BPE Merge Algorithm Collision & Failure to Merge Symmetric Shapes
 * **Status**: `Investigating / Reopened` (Priority: High)
