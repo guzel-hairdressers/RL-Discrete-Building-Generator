@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 /* Keep these values in lock-step with geometry.py. */
@@ -846,4 +847,144 @@ int polygon_inside_site_translated_c(
     free(dynamic_poly);
     return result;
 }
+
+typedef struct {
+    double min_x;
+    double min_y;
+    double max_x;
+    double max_y;
+    int shape_type;
+    int cell_count;
+} WFCRoomResult;
+
+int tessellate_bay_wfc_c(
+    const uint8_t* grid,
+    int rows,
+    int cols,
+    double min_x,
+    double min_y,
+    double grid_pitch,
+    WFCRoomResult* out_results,
+    int max_results
+) {
+    if (!grid || rows <= 0 || cols <= 0 || !out_results || max_results <= 0) return 0;
+    
+    int total_cells = rows * cols;
+    uint8_t* occupied = (uint8_t*)calloc((size_t)total_cells, sizeof(uint8_t));
+    if (!occupied) return 0;
+    
+    int result_count = 0;
+    
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            int idx = r * cols + c;
+            if (grid[idx] && !occupied[idx]) {
+                if (result_count >= max_results) break;
+                
+                // 1. Try 2x2 large quad
+                if (r + 1 < rows && c + 1 < cols &&
+                    grid[idx + 1] && !occupied[idx + 1] &&
+                    grid[idx + cols] && !occupied[idx + cols] &&
+                    grid[idx + cols + 1] && !occupied[idx + cols + 1]) {
+                    
+                    occupied[idx] = 1;
+                    occupied[idx + 1] = 1;
+                    occupied[idx + cols] = 1;
+                    occupied[idx + cols + 1] = 1;
+                    
+                    out_results[result_count].min_x = min_x + c * grid_pitch;
+                    out_results[result_count].min_y = min_y + r * grid_pitch;
+                    out_results[result_count].max_x = min_x + (c + 2) * grid_pitch;
+                    out_results[result_count].max_y = min_y + (r + 2) * grid_pitch;
+                    out_results[result_count].shape_type = 3;
+                    out_results[result_count].cell_count = 4;
+                    result_count++;
+                    continue;
+                }
+                
+                // 2. Try 1x3 horizontal
+                if (c + 2 < cols &&
+                    grid[idx + 1] && !occupied[idx + 1] &&
+                    grid[idx + 2] && !occupied[idx + 2]) {
+                    
+                    occupied[idx] = 1;
+                    occupied[idx + 1] = 1;
+                    occupied[idx + 2] = 1;
+                    
+                    out_results[result_count].min_x = min_x + c * grid_pitch;
+                    out_results[result_count].min_y = min_y + r * grid_pitch;
+                    out_results[result_count].max_x = min_x + (c + 3) * grid_pitch;
+                    out_results[result_count].max_y = min_y + (r + 1) * grid_pitch;
+                    out_results[result_count].shape_type = 4;
+                    out_results[result_count].cell_count = 3;
+                    result_count++;
+                    continue;
+                }
+                
+                // 3. Try 3x1 vertical
+                if (r + 2 < rows &&
+                    grid[idx + cols] && !occupied[idx + cols] &&
+                    grid[idx + 2 * cols] && !occupied[idx + 2 * cols]) {
+                    
+                    occupied[idx] = 1;
+                    occupied[idx + cols] = 1;
+                    occupied[idx + 2 * cols] = 1;
+                    
+                    out_results[result_count].min_x = min_x + c * grid_pitch;
+                    out_results[result_count].min_y = min_y + r * grid_pitch;
+                    out_results[result_count].max_x = min_x + (c + 1) * grid_pitch;
+                    out_results[result_count].max_y = min_y + (r + 3) * grid_pitch;
+                    out_results[result_count].shape_type = 5;
+                    out_results[result_count].cell_count = 3;
+                    result_count++;
+                    continue;
+                }
+                
+                // 4. Try 1x2 horizontal
+                if (c + 1 < cols && grid[idx + 1] && !occupied[idx + 1]) {
+                    occupied[idx] = 1;
+                    occupied[idx + 1] = 1;
+                    
+                    out_results[result_count].min_x = min_x + c * grid_pitch;
+                    out_results[result_count].min_y = min_y + r * grid_pitch;
+                    out_results[result_count].max_x = min_x + (c + 2) * grid_pitch;
+                    out_results[result_count].max_y = min_y + (r + 1) * grid_pitch;
+                    out_results[result_count].shape_type = 1;
+                    out_results[result_count].cell_count = 2;
+                    result_count++;
+                    continue;
+                }
+                
+                // 5. Try 2x1 vertical
+                if (r + 1 < rows && grid[idx + cols] && !occupied[idx + cols]) {
+                    occupied[idx] = 1;
+                    occupied[idx + cols] = 1;
+                    
+                    out_results[result_count].min_x = min_x + c * grid_pitch;
+                    out_results[result_count].min_y = min_y + r * grid_pitch;
+                    out_results[result_count].max_x = min_x + (c + 1) * grid_pitch;
+                    out_results[result_count].max_y = min_y + (r + 2) * grid_pitch;
+                    out_results[result_count].shape_type = 2;
+                    out_results[result_count].cell_count = 2;
+                    result_count++;
+                    continue;
+                }
+                
+                // 6. Fallback 1x1 cell
+                occupied[idx] = 1;
+                out_results[result_count].min_x = min_x + c * grid_pitch;
+                out_results[result_count].min_y = min_y + r * grid_pitch;
+                out_results[result_count].max_x = min_x + (c + 1) * grid_pitch;
+                out_results[result_count].max_y = min_y + (r + 1) * grid_pitch;
+                out_results[result_count].shape_type = 0;
+                out_results[result_count].cell_count = 1;
+                result_count++;
+            }
+        }
+    }
+    
+    free(occupied);
+    return result_count;
+}
+
 

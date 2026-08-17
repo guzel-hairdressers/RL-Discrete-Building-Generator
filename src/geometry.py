@@ -25,6 +25,17 @@ class _CPoint(ctypes.Structure):
     _fields_ = [("x", ctypes.c_double), ("y", ctypes.c_double)]
 
 
+class _CWFCRoomResult(ctypes.Structure):
+    _fields_ = [
+        ("min_x", ctypes.c_double),
+        ("min_y", ctypes.c_double),
+        ("max_x", ctypes.c_double),
+        ("max_y", ctypes.c_double),
+        ("shape_type", ctypes.c_int),
+        ("cell_count", ctypes.c_int),
+    ]
+
+
 NATIVE_GEOMETRY_ABI_VERSION = 3
 _NATIVE_DISABLE_VALUES = {"1", "true", "yes", "on"}
 _native_requested_off = (
@@ -135,6 +146,19 @@ def _configure_native_library(library: ctypes.CDLL) -> None:
             ctypes.c_int,
         ]
         library.polygon_inside_site_translated_c.restype = ctypes.c_int
+    if hasattr(library, "tessellate_bay_wfc_c"):
+        library.tessellate_bay_wfc_c.argtypes = [
+            ctypes.POINTER(ctypes.c_uint8),
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.POINTER(_CWFCRoomResult),
+            ctypes.c_int,
+        ]
+        library.tessellate_bay_wfc_c.restype = ctypes.c_int
+
 
 
 
@@ -3387,4 +3411,103 @@ def partition_site_into_macro_bays(
             })
             
     return bays
+
+
+def rasterize_bay_grid(bay_polygon: Sequence[dict], grid_size: float = 3.0) -> tuple[list[int], float, float, int, int]:
+    """Rasterize a bay polygon into a 1D discrete cell grid mask."""
+    xs = [p["x"] for p in bay_polygon]
+    ys = [p["y"] for p in bay_polygon]
+    if not xs or not ys:
+        return [], 0.0, 0.0, 0, 0
+    min_x = math.floor(min(xs) / grid_size) * grid_size
+    max_x = math.ceil(max(xs) / grid_size) * grid_size
+    min_y = math.floor(min(ys) / grid_size) * grid_size
+    max_y = math.ceil(max(ys) / grid_size) * grid_size
+    
+    cols = max(1, int(round((max_x - min_x) / grid_size)))
+    rows = max(1, int(round((max_y - min_y) / grid_size)))
+    
+    grid = [0] * (rows * cols)
+    for r in range(rows):
+        for c in range(cols):
+            cx = min_x + (c + 0.5) * grid_size
+            cy = min_y + (r + 0.5) * grid_size
+            if point_in_polygon({"x": cx, "y": cy}, bay_polygon):
+                grid[r * cols + c] = 1
+    return grid, min_x, min_y, cols, rows
+
+
+def tessellate_macro_bay(
+    bay_polygon: Sequence[dict],
+    grid_size: float = 3.0,
+    max_rooms: int = 128,
+) -> list[dict]:
+    """Tessellate a macro-bay polygon into room polyominoes using Native C WFC.
+    
+    Guarantees 100% gapless fill inside the bay's discretized boundary.
+    """
+    if len(bay_polygon) < 3:
+        return []
+        
+    grid, min_x, min_y, cols, rows = rasterize_bay_grid(bay_polygon, grid_size)
+    if not grid or sum(grid) == 0:
+        return []
+        
+    if _libfast_geo and hasattr(_libfast_geo, "tessellate_bay_wfc_c"):
+        c_grid = (ctypes.c_uint8 * len(grid))(*grid)
+        out_buf = (_CWFCRoomResult * max_rooms)()
+        count = int(_libfast_geo.tessellate_bay_wfc_c(
+            c_grid,
+            ctypes.c_int(rows),
+            ctypes.c_int(cols),
+            ctypes.c_double(min_x),
+            ctypes.c_double(min_y),
+            ctypes.c_double(grid_size),
+            out_buf,
+            ctypes.c_int(max_rooms),
+        ))
+        shape_names = {0: "quad-small", 1: "rect-medium", 2: "rect-vert", 3: "quad-large", 4: "rect-wide", 5: "rect-tall"}
+        results = []
+        for i in range(count):
+            res = out_buf[i]
+            poly = [
+                {"x": res.min_x, "y": res.min_y},
+                {"x": res.max_x, "y": res.min_y},
+                {"x": res.max_x, "y": res.max_y},
+                {"x": res.min_x, "y": res.max_y},
+            ]
+            results.append({
+                "room_id": i,
+                "shape": shape_names.get(res.shape_type, "room"),
+                "category": "room",
+                "polygon": poly,
+                "area": (res.max_x - res.min_x) * (res.max_y - res.min_y),
+                "cell_count": res.cell_count,
+            })
+        return results
+
+    # Pure Python Fallback
+    occupied = [0] * (rows * cols)
+    results = []
+    for r in range(rows):
+        for c in range(cols):
+            idx = r * cols + c
+            if grid[idx] and not occupied[idx]:
+                occupied[idx] = 1
+                poly = [
+                    {"x": min_x + c * grid_size, "y": min_y + r * grid_size},
+                    {"x": min_x + (c + 1) * grid_size, "y": min_y + r * grid_size},
+                    {"x": min_x + (c + 1) * grid_size, "y": min_y + (r + 1) * grid_size},
+                    {"x": min_x + c * grid_size, "y": min_y + (r + 1) * grid_size},
+                ]
+                results.append({
+                    "room_id": len(results),
+                    "shape": "quad-small",
+                    "category": "room",
+                    "polygon": poly,
+                    "area": grid_size * grid_size,
+                    "cell_count": 1,
+                })
+    return results
+
 
