@@ -121,28 +121,27 @@ This document defines the master development plan for the **RL-Discrete-Building
 
 ---
 
-### Phase 1H: SE(2)-Equivariant Graph Reinforcement Learning & Cross-Candidate Self-Attention [IMMEDIATE ROADMAP]
+### Phase 1H: SE(2)-Equivariant Graph Reinforcement Learning & Cross-Candidate Self-Attention
 * **Target Objective**: *Global Spatial Coordination & Euclidean Rotation/Translation Invariance*
-* **Status**: `[IN PROGRESS / IMMEDIATE ROADMAP]` (Priority: Highest)
+* **Status**: `[COMPLETED & INTEGRATED]` (Integrated `EquivariantRelationalSetTransformer` into `PolicyModel` with verified rotational/translational invariance)
 * **Core Tasks**:
   1. **Phase 1H.1: Cross-Candidate Relational Self-Attention (Set Transformer)**:
      * *Current State*: The network scores each candidate independently via MLP based on local 22 geometric features.
-     * *The Upgrade*: Implement a 2-layer Self-Attention Transformer over the candidate set $\{a_1, \dots, a_K\}$, enabling Candidate A (on the north wing) to be evaluated in relation to Candidate B (on the south wing) for long-range global building coordination.
+     * *The Upgrade*: Implement a 2-layer Self-Attention Transformer over the candidate set $\{a_1, \dots, a_K\}$, enabling Candidate A (on the north wing) to be evaluated in relation to Candidate B (on the south wing) for long-range global building coordination. `[IMPLEMENTED]`
   2. **Phase 1H.2: Planar Graph Representation & Geometric Invariance**:
-     * Represent floorplan states and candidate sets as planar graphs $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ with relative position vectors $\vec{r}_{uv} = \vec{x}_u - \vec{x}_v$ and normal dot products $\langle \vec{n}_u, \vec{n}_v \rangle$.
+     * Represent floorplan states and candidate sets as planar graphs $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ with relative position vectors $\vec{r}_{uv} = \vec{x}_u - \vec{x}_v$ and normal dot products $\langle \vec{n}_u, \vec{n}_v \rangle$. `[IMPLEMENTED]`
   3. **Phase 1H.3: $SE(2)$-Equivariant Attention Constrained Formulation**:
-     * Constrain the Self-Attention query-key products to relative Euclidean invariants, making the policy strictly invariant under rigid rotations and translations ($SE(2)$ group).
-
-
+     * Constrain the Self-Attention query-key products to relative Euclidean invariants, making the policy strictly invariant under rigid rotations and translations ($SE(2)$ group). `[IMPLEMENTED]`
 
 ---
 
-### Phase 1I: Hierarchical Dual Macro-Zoning & Micro-Tessellation Grammars
+### Phase 1I: Hierarchical Dual Macro-Zoning & Micro-Tessellation Grammars [NEXT IN QUEUE]
 * **Target Objective**: *Top-Down Structural Bays + Bottom-Up Polyomino Assembly*
-* **Status**: `[PLANNED]` (Priority: Medium)
+* **Status**: `[PLANNED / NEXT IN QUEUE]` (Priority: Medium-High)
 * **Core Tasks**:
   1. **Macro-Zoning Level 1**: Allocate structural bays, corridor spines, and vertical core hubs along the Medial Axis.
   2. **Micro-Tessellation Level 2**: Subdivide bays into individual functional rooms via WFC tile grammars.
+
 
 
 ---
@@ -153,6 +152,17 @@ This document defines the master development plan for the **RL-Discrete-Building
   1. **Native C SAT Integration**: Migrate remaining Python SAT geometry routines and spatial hash lookups to `fast_geometry.c`.
   2. **Parallel Environment Vectorization**: Implement multi-threaded environment stepping (`ParallelTrainer` C extension workers).
 * **Target Metric**: Achieve sub-150ms total episode time across 4–8 story layouts (10x+ speedup over v0.6 baseline).
+
+---
+
+### Long-Term Architectural Proposal: End-to-End GPU Physics & Geometry Kernel
+* **Target Objective**: *Massively Parallel Environment Scaling (64–256 Parallel Environments) & Elimination of CPU-GPU Synchronization Wall*
+* **Status**: `[DEFERRED PROPOSAL / FUTURE EXPLORATION]`
+* **Key Architecture & Design**:
+  1. **GPU Tensor-Native Geometry Buffers**: Store all building polygon vertices, site boundary rings, and candidate slot arrays directly in unified GPU VRAM tensors (e.g., PyTorch / CUDA Unified Memory / Metal Shading Language Buffers).
+  2. **Massively Parallel CUDA/Metal SAT Collision Shader**: Implement native Separating Axis Theorem (SAT) polygon overlap, raycast clearance, and point-in-polygon containment as custom GPU compute shaders (similar to NVIDIA Warp / Isaac Gym / Brax), eliminating Python GIL and CPU memory serialization bottlenecks.
+  3. **Fused Multi-Environment Policy Batches**: Step 64–256 building layouts simultaneously in a single batched tensor contraction (`torch.compile(mode="reduce-overhead")` with CUDA Graphs / Metal Graph capture), enabling multi-million parameter transformers to run at high throughput without sequential kernel launch overhead.
+
 
 ---
 

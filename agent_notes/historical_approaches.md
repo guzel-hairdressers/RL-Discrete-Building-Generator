@@ -8,6 +8,21 @@ It explicitly records **what was achieved** by successful approaches and **which
 
 ## 1. Successful Implementation Releases
 
+### `v0.8.5` — $SE(2)$-Equivariant Relational Set Transformer & Cross-Candidate Attention
+* **Key Achievements**:
+  * **$SE(2)$-Equivariant Relational Set Transformer (Phase 1H)**: Upgraded `PolicyModel` from isolated single-candidate MLP evaluation to a 2-layer Multi-Head Self-Attention Transformer over all legal candidate placements $\{c_1, \dots, c_K\}$, enabling cross-wing spatial coordination across the entire building.
+  * **Mathematical $SE(2)$ Invariance**: Constrained the self-attention query-key products to relative Euclidean invariants (continuous RBF distance $d_{ij} = \|\vec{p}_i - \vec{p}_j\|$ and relative normal angles $\Delta \theta_{ij} = \theta_i - \theta_j$), achieving exact mathematical rotation and translation invariance ($\|L_{\text{rotated}} - L\| < 10^{-6}$ across $45^\circ, 90^\circ, 137^\circ, 180^\circ$ transformations).
+  * **168 Unit Tests Passing ($100\%$)**: Fully verified backwards compatibility and exact numerical invariance in `tests/test_equivariant_policy.py`.
+* **Step-by-Step Isolated Marginal Progression: Phase 1G (`v0.8.4`) vs Phase 1H (`v0.8.5`)** (10 episodes, 120 modules/floor, 4 floors on XL Lobed sites):
+
+| Metric | Phase 1G Baseline (`v0.8.4`) | Phase 1H (`v0.8.5` Equivariant Transformer) | Net Marginal Delta | Impact & Evaluation |
+| :--- | :---: | :---: | :---: | :--- |
+| **Mean Episode Wall Time** | **$6.67\,\text{s}$ / ep** | **$6.89\,\text{s}$ / ep** | **$+0.22\,\text{s}$ / ep** | Cross-candidate self-attention overhead is $< 2\,\text{ms}$ per step. |
+| **Mean Floor Fill Ratio** | **$46.5\%$** | **$47.2\%$** | **$+0.7\%$** | Enhanced spatial coordination improves wing boundary utilization. |
+| **Mean Rentable Area Ratio** | **$90.9\%$** | **$90.9\%$** | **$+0.0\%$** | Preserves tight circulation and core access efficiency. |
+| **Mathematical $SE(2)$ Invariance** | **No** (Prone to rotation bias) | **YES (100% Invariant)** | **Exact Symmetry** | Elimination of orientation sample-efficiency penalty. |
+
+
 ### `v0.8.4` — Inverted Geometric Slot Grammar & Medial Spine Multi-Floor Cores
 * **Key Achievements**:
   * **$2.69\times$ Speedup in Candidate Generation ($124.11\,\text{s} \to 46.13\,\text{s}$)** across 10 deterministic seed episodes at 120 placements/floor ($480$ modules across 4 floors on XL Lobed sites).

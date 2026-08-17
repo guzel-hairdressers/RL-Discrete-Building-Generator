@@ -167,7 +167,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     pendingSettings: null,
     settingsDirty: false,
     settingsTimer: null,
-    speed: 30,
+    speed: 100,
 
     device: null,
     boundaries: [],
@@ -243,7 +243,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     if (validation.ok) {
       state.settings = validation.settings;
     }
-    state.speed = Number(dom.speed.value) || 30;
+    state.speed = Number(dom.speed.value) || 100;
 
     updatePauseButton();
     updateActionAvailability();

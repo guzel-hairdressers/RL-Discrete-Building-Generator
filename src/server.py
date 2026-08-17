@@ -482,6 +482,144 @@ def _configure_torch_runtime(device: torch.device) -> None:
         _TORCH_RUNTIME_CONFIGURED = True
 
 
+class EquivariantRelationalSetTransformer(nn.Module):
+    """SE(2)-Equivariant Relational Set Attention Transformer (Phase 1H).
+    
+    Computes pairwise relative invariant edge features (RBF Euclidean distance
+    d_ij and relative normal orientation Δθ_ij = (cos Δθ, sin Δθ)) to enable cross-candidate
+    spatial coordination across all building wings with exact mathematical invariance
+    under 2D Euclidean rotations and translations.
+    """
+
+    def __init__(
+        self,
+        node_dim: int = PLACEMENT_FEATURE_DIM,
+        hidden_dim: int = 64,
+        num_heads: int = 4,
+        num_layers: int = 2,
+        num_rbf: int = 8,
+        rbf_max_dist: float = 80.0,
+    ) -> None:
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.num_heads = num_heads
+        self.num_layers = num_layers
+        self.num_rbf = num_rbf
+        self.rbf_max_dist = rbf_max_dist
+
+        self.node_proj = nn.Sequential(
+            nn.Linear(node_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.SiLU(),
+        )
+
+        rbf_centers = torch.linspace(0.0, rbf_max_dist, num_rbf)
+        self.register_buffer("rbf_centers", rbf_centers)
+        self.rbf_sigma = rbf_max_dist / max(1, num_rbf - 1)
+
+        edge_dim = num_rbf + 2
+        self.edge_mlp = nn.Sequential(
+            nn.Linear(edge_dim, hidden_dim // 2),
+            nn.SiLU(),
+            nn.Linear(hidden_dim // 2, num_heads),
+        )
+
+        self.q_proj = nn.ModuleList(
+            [nn.Linear(hidden_dim, hidden_dim) for _ in range(num_layers)]
+        )
+        self.k_proj = nn.ModuleList(
+            [nn.Linear(hidden_dim, hidden_dim) for _ in range(num_layers)]
+        )
+        self.v_proj = nn.ModuleList(
+            [nn.Linear(hidden_dim, hidden_dim) for _ in range(num_layers)]
+        )
+        self.out_proj = nn.ModuleList(
+            [nn.Linear(hidden_dim, hidden_dim) for _ in range(num_layers)]
+        )
+        self.norm1 = nn.ModuleList(
+            [nn.LayerNorm(hidden_dim) for _ in range(num_layers)]
+        )
+
+        self.ffn = nn.ModuleList(
+            [
+                nn.Sequential(
+                    nn.Linear(hidden_dim, hidden_dim * 2),
+                    nn.SiLU(),
+                    nn.Linear(hidden_dim * 2, hidden_dim),
+                )
+                for _ in range(num_layers)
+            ]
+        )
+        self.norm2 = nn.ModuleList(
+            [nn.LayerNorm(hidden_dim) for _ in range(num_layers)]
+        )
+
+        self.score_head = nn.Sequential(
+            nn.Linear(hidden_dim, 32),
+            nn.SiLU(),
+            nn.Linear(32, 1),
+        )
+
+    def _compute_edge_features(
+        self,
+        positions: torch.Tensor,
+        angles: torch.Tensor,
+    ) -> torch.Tensor:
+        diff_pos = positions.unsqueeze(1) - positions.unsqueeze(0)
+        dist = torch.norm(diff_pos, dim=-1)
+        rbf = torch.exp(
+            -((dist.unsqueeze(-1) - self.rbf_centers) ** 2)
+            / (2.0 * (self.rbf_sigma**2))
+        )
+
+        diff_angle = angles.unsqueeze(1) - angles.unsqueeze(0)
+        cos_diff = torch.cos(diff_angle)
+        sin_diff = torch.sin(diff_angle)
+        angle_feats = torch.stack([cos_diff, sin_diff], dim=-1)
+
+        return torch.cat([rbf, angle_feats], dim=-1)
+
+    def forward(
+        self,
+        features: torch.Tensor,
+        positions: torch.Tensor | None = None,
+        angles: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        K = features.shape[0]
+        h = self.node_proj(features)
+
+        if K <= 1 or positions is None or angles is None:
+            return self.score_head(h).squeeze(-1)
+
+        edge_feats = self._compute_edge_features(positions, angles)
+        edge_bias = self.edge_mlp(edge_feats).permute(2, 0, 1)
+
+        head_dim = self.hidden_dim // self.num_heads
+        scale = 1.0 / math.sqrt(head_dim)
+
+        for l in range(self.num_layers):
+            q = self.q_proj[l](h).view(K, self.num_heads, head_dim).permute(1, 0, 2)
+            k = self.k_proj[l](h).view(K, self.num_heads, head_dim).permute(1, 0, 2)
+            v = self.v_proj[l](h).view(K, self.num_heads, head_dim).permute(1, 0, 2)
+
+            attn_scores = torch.bmm(q, k.transpose(1, 2)) * scale + edge_bias
+            attn_weights = F.softmax(attn_scores, dim=-1)
+
+            attn_out = (
+                torch.bmm(attn_weights, v)
+                .permute(1, 0, 2)
+                .contiguous()
+                .view(K, self.hidden_dim)
+            )
+            attn_out = self.out_proj[l](attn_out)
+            h = self.norm1[l](h + attn_out)
+
+            ffn_out = self.ffn[l](h)
+            h = self.norm2[l](h + ffn_out)
+
+        return self.score_head(h).squeeze(-1)
+
+
 class PolicyModel(nn.Module):
     """Shared placement, vector-geometry, category, and atrium policy."""
 
@@ -495,14 +633,13 @@ class PolicyModel(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.placement_head = nn.Sequential(
-            nn.Linear(PLACEMENT_FEATURE_DIM, 96),
-            nn.LayerNorm(96),
-            nn.SiLU(),
-            nn.Linear(96, 48),
-            nn.SiLU(),
-            nn.Linear(48, 1),
+        self.transformer = EquivariantRelationalSetTransformer(
+            node_dim=PLACEMENT_FEATURE_DIM,
+            hidden_dim=64,
+            num_heads=4,
+            num_layers=2,
         )
+        self.placement_head = self.transformer
         self.site_encoder = nn.Sequential(
             nn.Linear(FLOOR_DESCRIPTOR_DIM, 64),
             nn.SiLU(),
@@ -545,10 +682,15 @@ class PolicyModel(nn.Module):
             torch.random.set_rng_state(rng_state)
         self.value_head.load_state_dict(fresh_state)
 
-    def placement_logits(self, features: torch.Tensor) -> torch.Tensor:
-        """Score every active environment's candidates in one tensor call."""
+    def placement_logits(
+        self,
+        features: torch.Tensor,
+        positions: torch.Tensor | None = None,
+        angles: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Score candidate set using SE(2)-equivariant relational self-attention."""
 
-        return self.placement_head(features).squeeze(-1)
+        return self.transformer(features, positions, angles)
 
     def encode_sites(self, floor_descriptors: torch.Tensor) -> torch.Tensor:
         """Encode floors independently, then preserve mean and extreme geometry."""
@@ -641,6 +783,9 @@ class PlacementPolicyDecision:
     action_index: int
     temperature: float
     old_log_prob: float = 0.0
+    positions: torch.Tensor | None = None
+    angles: torch.Tensor | None = None
+
 
 
 def record_dataset_trajectory(
@@ -4563,8 +4708,12 @@ class ParallelTrainer:
         action_index: int,
         temperature: float,
         sampled_log_prob: torch.Tensor,
+        positions: Sequence[Sequence[float]] | None = None,
+        angles: Sequence[float] | None = None,
     ) -> None:
         self._record_placement_log_prob(environment_index, sampled_log_prob.detach().cpu())
+        pos_t = torch.tensor(positions, dtype=torch.float32) if positions is not None else None
+        ang_t = torch.tensor(angles, dtype=torch.float32) if angles is not None else None
         self.placement_decisions.append(
             PlacementPolicyDecision(
                 environment_index=environment_index,
@@ -4572,6 +4721,8 @@ class ParallelTrainer:
                 action_index=int(action_index),
                 temperature=float(temperature),
                 old_log_prob=float(sampled_log_prob.detach().cpu().item()),
+                positions=pos_t,
+                angles=ang_t,
             )
         )
 
@@ -4657,24 +4808,35 @@ class ParallelTrainer:
                 norm_adv = adv_tensor - adv_tensor.mean()
 
             # 2. PPO Clipped Surrogate Loss
-            feature_rows = torch.cat(
-                [decision.features for decision in self.placement_decisions], dim=0
-            ).to(self.device)
-            decision_logits = torch.nan_to_num(
-                self.model.placement_logits(feature_rows),
-                nan=0.0,
-                posinf=20.0,
-                neginf=-20.0,
-            ).clamp(-30.0, 30.0)
-
-            cursor = 0
             for idx, decision in enumerate(self.placement_decisions):
-                count = int(decision.features.shape[0])
-                group_logits = decision_logits[cursor : cursor + count] / decision.temperature
-                cursor += count
+                features = decision.features.to(self.device)
+                positions = (
+                    decision.positions.to(self.device)
+                    if decision.positions is not None
+                    else None
+                )
+                angles = (
+                    decision.angles.to(self.device)
+                    if decision.angles is not None
+                    else None
+                )
+
+                group_logits = (
+                    torch.nan_to_num(
+                        self.model.placement_logits(features, positions, angles),
+                        nan=0.0,
+                        posinf=20.0,
+                        neginf=-20.0,
+                    ).clamp(-30.0, 30.0)
+                    / decision.temperature
+                )
+
+                count = int(features.shape[0])
                 group_log_probs = F.log_softmax(group_logits, dim=0)
                 selected_log_prob = group_log_probs[decision.action_index]
-                old_log_prob = torch.tensor(decision.old_log_prob, dtype=torch.float32, device=self.device)
+                old_log_prob = torch.tensor(
+                    decision.old_log_prob, dtype=torch.float32, device=self.device
+                )
 
                 # Probability ratio r_t(theta)
                 ratio = torch.exp(selected_log_prob - old_log_prob)
@@ -5263,35 +5425,48 @@ class ParallelTrainer:
         if not stack_selected:
             if not candidate_groups:
                 return self._finish_episode()
-            feature_tensor = torch.tensor(
-                all_features, dtype=torch.float32, device=self.device
-            )
-            inference_started = time.perf_counter()
-            with torch.no_grad():
-                logits = torch.nan_to_num(
-                    self.model.placement_logits(feature_tensor),
-                    nan=0.0,
-                    posinf=20.0,
-                    neginf=-20.0,
-                ).clamp(-30.0, 30.0)
-            self.step_profiler.record(
-                "policyInference", time.perf_counter() - inference_started
-            )
 
-            cursor = 0
+            inference_started = time.perf_counter()
             for environment, candidates in candidate_groups:
-                group_logits = logits[cursor : cursor + len(candidates)] / temperature
-                cursor += len(candidates)
+                c_feats = torch.tensor(
+                    [c.features for c in candidates],
+                    dtype=torch.float32,
+                    device=self.device,
+                )
+                c_pos = torch.tensor(
+                    [(c.anchor_x, c.anchor_y) for c in candidates],
+                    dtype=torch.float32,
+                    device=self.device,
+                )
+                c_ang = torch.tensor(
+                    [float(c.rotation.get("angle", 0.0)) for c in candidates],
+                    dtype=torch.float32,
+                    device=self.device,
+                )
+
+                with torch.no_grad():
+                    group_logits = (
+                        torch.nan_to_num(
+                            self.model.placement_logits(c_feats, c_pos, c_ang),
+                            nan=0.0,
+                            posinf=20.0,
+                            neginf=-20.0,
+                        ).clamp(-30.0, 30.0)
+                        / temperature
+                    )
+
                 distribution = torch.distributions.Categorical(logits=group_logits)
                 selected_index = distribution.sample()
                 selected_offset = int(selected_index.item())
                 selected_candidate = candidates[selected_offset]
                 self._record_placement_decision(
                     environment.index,
-                    [candidate.features for candidate in candidates],
+                    [c.features for c in candidates],
                     selected_offset,
                     temperature,
                     distribution.log_prob(selected_index),
+                    positions=[(c.anchor_x, c.anchor_y) for c in candidates],
+                    angles=[float(c.rotation.get("angle", 0.0)) for c in candidates],
                 )
 
                 if selected_candidate.module["id"] == "stop":
@@ -5334,18 +5509,40 @@ class ParallelTrainer:
                                 candidate.features
                                 for candidate in fallback_candidates
                             ]
+                            fallback_pos = [
+                                (c.anchor_x, c.anchor_y) for c in fallback_candidates
+                            ]
+                            fallback_ang = [
+                                float(c.rotation.get("angle", 0.0))
+                                for c in fallback_candidates
+                            ]
                             fallback_tensor = torch.tensor(
                                 fallback_features,
                                 dtype=torch.float32,
                                 device=self.device,
                             )
+                            pos_tensor = torch.tensor(
+                                fallback_pos,
+                                dtype=torch.float32,
+                                device=self.device,
+                            )
+                            ang_tensor = torch.tensor(
+                                fallback_ang,
+                                dtype=torch.float32,
+                                device=self.device,
+                            )
                             with torch.no_grad():
-                                fallback_logits = torch.nan_to_num(
-                                    self.model.placement_logits(fallback_tensor),
-                                    nan=0.0,
-                                    posinf=20.0,
-                                    neginf=-20.0,
-                                ).clamp(-30.0, 30.0) / temperature
+                                fallback_logits = (
+                                    torch.nan_to_num(
+                                        self.model.placement_logits(
+                                            fallback_tensor, pos_tensor, ang_tensor
+                                        ),
+                                        nan=0.0,
+                                        posinf=20.0,
+                                        neginf=-20.0,
+                                    ).clamp(-30.0, 30.0)
+                                    / temperature
+                                )
                             fallback_distribution = torch.distributions.Categorical(
                                 logits=fallback_logits
                             )
@@ -5357,6 +5554,8 @@ class ParallelTrainer:
                                 fallback_offset,
                                 temperature,
                                 fallback_distribution.log_prob(fallback_index),
+                                positions=fallback_pos,
+                                angles=fallback_ang,
                             )
                             placements.append(
                                 environment.place(

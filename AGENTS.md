@@ -44,13 +44,16 @@ python3 -m unittest discover -s tests -p "test_*.py"
 ```
 
 ### Run Performance Benchmarks (Official Protocol)
-**MANDATORY BENCHMARK STANDARD**:
+**MANDATORY DUAL BENCHMARK STANDARD**:
 * **NEVER benchmark on 25-module toy configurations.**
-* All authoritative benchmarks **MUST** evaluate high-density **`120 maxModules` per floor across 4–8 parallel stories on XL Lobed/Complex sites** ($480$ total modules per episode).
-* Must compare Pre-Change vs Post-Change on the exact same 10 deterministic seed episodes (`seeds = [100 + i * 23 for i in range(10)]`), validating positive fill ratio, layout scores, and non-empty module placement:
-```bash
-PYTHONPATH=src python3 benchmarks/benchmark_head_to_head_comparison.py
-```
+* **1. Speed & Throughput Benchmarks**: Must evaluate high-density **`L` and `XL` sites** ($120$ max modules per floor across 4–8 parallel stories, $480$ total modules per episode) to measure candidate search latency, thread scaling, and peak engine throughput under maximum stress:
+  ```bash
+  PYTHONPATH=src python3 benchmarks/benchmark_head_to_head_comparison.py
+  ```
+* **2. Quality Improvement & RL Convergence Benchmarks**: Must evaluate on **the standard user settings (`Site Area Tier: "ANY"`, `Boundary: "FREE"`, Auto-Changing Sites)** so metrics accurately reflect the user experience, natural topological variety, and multi-scale generalization:
+  ```bash
+  PYTHONPATH=src python3 benchmarks/benchmark_750_episodes_convergence_any.py
+  ```
 
 
 ---
