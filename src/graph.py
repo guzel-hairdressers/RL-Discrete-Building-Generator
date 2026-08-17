@@ -269,54 +269,79 @@ def extract_layout_graph(placements: list[dict], playground_id: int = 0) -> Layo
         
     # 2. Check for port overlaps between every pair of placements
     pids = list(nodes.keys())
-    n_placements = len(pids)
-    for i in range(n_placements):
-        pid_a = pids[i]
-        ports_a = all_ports[pid_a]
-        bounds_a = G.bounds_of(nodes[pid_a]["poly"])
-        for j in range(i + 1, n_placements):
-            pid_b = pids[j]
-            bounds_b = G.bounds_of(nodes[pid_b]["poly"])
-            if (
-                bounds_a["maxX"] < bounds_b["minX"] - 0.5
-                or bounds_b["maxX"] < bounds_a["minX"] - 0.5
-                or bounds_a["maxY"] < bounds_b["minY"] - 0.5
-                or bounds_b["maxY"] < bounds_a["minY"] - 0.5
-            ):
-                continue
-            ports_b = all_ports[pid_b]
-            
-            for pa in ports_a:
-                for pb in ports_b:
-                    # Check if port segments A and B are collinear and overlap
-                    # Since ports are directed (start -> end), anti-parallel ports connect.
-                    # We check if segment A (pa.start -> pa.end) overlaps with segment B (pb.end -> pb.start)
-                    overlap_measure = _symmetric_overlap_measure(
-                        pa.start, pa.end, pb.end, pb.start
-                    )
-                    if overlap_measure is not None:
-                        (start, end), _, shared_length = overlap_measure
-                        port_a_length = distance(pa.start, pa.end)
-                        port_b_length = distance(pb.start, pb.end)
-                        shorter_length = min(port_a_length, port_b_length)
-                        # Adjacency is defined symmetrically against the shorter
-                        # port, making the result independent of placement order.
-                        if shared_length + 1.0e-12 >= BPE_MIN_OVERLAP_FRACTION * shorter_length:
-                            dx = pa.end["x"] - pa.start["x"]
-                            dy = pa.end["y"] - pa.start["y"]
-                            overlap_start = {
-                                "x": pa.start["x"] + start * dx,
-                                "y": pa.start["y"] + start * dy
-                            }
-                            overlap_end = {
-                                "x": pa.start["x"] + end * dx,
-                                "y": pa.start["y"] + end * dy
-                            }
-                            connections.append(PortConnection(
-                                port_a=pa,
-                                port_b=pb,
-                                overlap_segment=(overlap_start, overlap_end)
-                            ))
+    node_bounds = {pid: G.bounds_of(nodes[pid]["poly"]) for pid in pids}
+    
+    # Spatial hashing grid (10m bucket size) to prune non-adjacent shape pairs
+    grid_size = 10.0
+    grid: dict[tuple[int, int], list[str]] = {}
+    for pid in pids:
+        b = node_bounds[pid]
+        min_gx = int(math.floor(b["minX"] / grid_size))
+        max_gx = int(math.floor(b["maxX"] / grid_size))
+        min_gy = int(math.floor(b["minY"] / grid_size))
+        max_gy = int(math.floor(b["maxY"] / grid_size))
+        for gx in range(min_gx, max_gx + 1):
+            for gy in range(min_gy, max_gy + 1):
+                grid.setdefault((gx, gy), []).append(pid)
+                
+    tested_pairs: set[tuple[str, str]] = set()
+    for cell_pids in grid.values():
+        n_cell = len(cell_pids)
+        if n_cell < 2:
+            continue
+        for i in range(n_cell):
+            pid_a = cell_pids[i]
+            for j in range(i + 1, n_cell):
+                pid_b = cell_pids[j]
+                pair_key = (pid_a, pid_b) if pid_a < pid_b else (pid_b, pid_a)
+                if pair_key in tested_pairs:
+                    continue
+                tested_pairs.add(pair_key)
+                
+                bounds_a = node_bounds[pid_a]
+                bounds_b = node_bounds[pid_b]
+                if (
+                    bounds_a["maxX"] < bounds_b["minX"] - 0.5
+                    or bounds_b["maxX"] < bounds_a["minX"] - 0.5
+                    or bounds_a["maxY"] < bounds_b["minY"] - 0.5
+                    or bounds_b["maxY"] < bounds_a["minY"] - 0.5
+                ):
+                    continue
+                ports_a = all_ports[pid_a]
+                ports_b = all_ports[pid_b]
+                
+                for pa in ports_a:
+                    for pb in ports_b:
+                        # Check if port segments A and B are collinear and overlap
+                        # Since ports are directed (start -> end), anti-parallel ports connect.
+                        # We check if segment A (pa.start -> pa.end) overlaps with segment B (pb.end -> pb.start)
+                        overlap_measure = _symmetric_overlap_measure(
+                            pa.start, pa.end, pb.end, pb.start
+                        )
+                        if overlap_measure is not None:
+                            (start, end), _, shared_length = overlap_measure
+                            port_a_length = distance(pa.start, pa.end)
+                            port_b_length = distance(pb.start, pb.end)
+                            shorter_length = min(port_a_length, port_b_length)
+                            # Adjacency is defined symmetrically against the shorter
+                            # port, making the result independent of placement order.
+                            if shared_length + 1.0e-12 >= BPE_MIN_OVERLAP_FRACTION * shorter_length:
+                                dx = pa.end["x"] - pa.start["x"]
+                                dy = pa.end["y"] - pa.start["y"]
+                                overlap_start = {
+                                    "x": pa.start["x"] + start * dx,
+                                    "y": pa.start["y"] + start * dy
+                                }
+                                overlap_end = {
+                                    "x": pa.start["x"] + end * dx,
+                                    "y": pa.start["y"] + end * dy
+                                }
+                                connections.append(PortConnection(
+                                    port_a=pa,
+                                    port_b=pb,
+                                    overlap_segment=(overlap_start, overlap_end)
+                                ))
+
                             
     return LayoutGraph(nodes=nodes, connections=connections, playground_id=playground_id)
 

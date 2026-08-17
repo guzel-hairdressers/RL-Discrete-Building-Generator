@@ -16,10 +16,14 @@ selects a shared module, rotation, and local anchor for every floor.
 from __future__ import annotations
 
 import asyncio
-from collections import Counter, deque
+import collections
+from collections import Counter, defaultdict, deque
 import copy
 import concurrent.futures
+import ctypes
 import heapq
+
+
 import json
 import math
 import os
@@ -808,7 +812,9 @@ class FloorEnvironment:
         """Reset episode state while retaining the exact same local site."""
 
         self.dictionary = list(dictionary)
+        self.slot_index = self._build_slot_index(self.dictionary)
         self.placements = []
+
         self.placement_by_id = {}
         self.adjacency_map = {}
         self.occupied = {}
@@ -830,7 +836,37 @@ class FloorEnvironment:
         self.consecutive_proposal_failures = 0
         self.attachment_query_cursor = 0
 
+    @classmethod
+    def _build_slot_index(cls, dictionary: list[dict]) -> dict[int, list[dict]]:
+        slot_index = collections.defaultdict(list)
+        for module in dictionary:
+            for rotation in module["rotations"]:
+                poly = rotation["poly"]
+                p_len = len(poly)
+                for e_idx in range(p_len):
+                    p1 = poly[e_idx]
+                    p2 = poly[(e_idx + 1) % p_len]
+                    dx = p2["x"] - p1["x"]
+                    dy = p2["y"] - p1["y"]
+                    e_len = math.hypot(dx, dy)
+                    if e_len < MIN_SHARED_EDGE:
+                        continue
+                    angle_key = cls._attachment_angle_key(p1, p2)
+                    slot_index[angle_key].append({
+                        "module": module,
+                        "rotation": rotation,
+                        "edgeIndex": e_idx,
+                        "p1": p1,
+                        "p2": p2,
+                        "dx": dx,
+                        "dy": dy,
+                        "length": e_len,
+                    })
+        return dict(slot_index)
+
+
     @staticmethod
+
     def _bucket_keys(bounds: dict[str, float], padding: float = SPATIAL_PADDING) -> Iterable[tuple[int, int]]:
         """Yield every spatial bucket touched by a padded axis-aligned bbox."""
 
@@ -1807,6 +1843,8 @@ class FloorEnvironment:
         ):
             return None
         t_overlap = time.perf_counter()
+        has_overlap = False
+        nearby = []
         poly = G.translate_polygon(rotation_poly, anchor_x, anchor_y)
         if self.placements:
             nearby_ids = {
@@ -1814,14 +1852,16 @@ class FloorEnvironment:
                 for identifier in self._nearby_placement_ids(bounds)
                 if self._bounds_intersect(bounds, self.placement_bounds[identifier])
             }
-            nearby = [self.placement_by_id[identifier] for identifier in nearby_ids]
-            has_overlap = any(G.polygons_overlap(poly, placement["poly"]) for placement in nearby)
-        else:
-            nearby = []
-            has_overlap = False
+            if nearby_ids:
+                nearby = [self.placement_by_id[identifier] for identifier in nearby_ids]
+                has_overlap = any(G.polygons_overlap(poly, placement["poly"]) for placement in nearby)
         if cg_sub_totals is not None: cg_sub_totals["cgOverlapCollisions"] += time.perf_counter() - t_overlap
         if has_overlap:
             return None
+
+
+        poly = G.translate_polygon(rotation_poly, anchor_x, anchor_y)
+
         t_bounds = time.perf_counter()
         inside_site = G.polygon_inside_site(poly, self.site["outer"], self.site["holes"])
         if cg_sub_totals is not None: cg_sub_totals["cgSiteBoundary"] += time.perf_counter() - t_bounds
@@ -1993,75 +2033,192 @@ class FloorEnvironment:
         early_break = False
 
         # Pass 1: Generate candidates for allowed categories
-        for module in modules:
-            rotations = self.rng.shuffle(module["rotations"])
-            for category in allowed_cats:
-                if category == "core" and float(module["area"]) + 1.0e-8 < 24.0:
-                    continue
-                for rotation in rotations:
-                    anchors: Iterable[tuple[float, float, Any]]
-                    t_anchor = time.perf_counter()
-                    if placing_first:
+        if placing_first:
+            for module in modules:
+                rotations = self.rng.shuffle(module["rotations"])
+                for category in allowed_cats:
+                    if category == "core" and float(module["area"]) + 1.0e-8 < 24.0:
+                        continue
+                    for rotation in rotations:
                         rotation_cells = rotation["cells"][:8]
                         anchors = [
                             (target["x"] - cell["x"], target["y"] - cell["y"], None)
                             for target in frontier
                             for cell in rotation_cells
                         ]
-                    else:
-                        anchors = list(self._edge_alignment_anchors(module, rotation, include_edge_id=True))
-                    cg_sub_totals["cgAnchorSearch"] += time.perf_counter() - t_anchor
-                    for anchor_x, anchor_y, edge_id in anchors:
-                        if edge_id is not None:
-                            checked_edges.add(edge_id)
-                        signature = (
-                            module["id"],
-                            category,
-                            round(float(rotation.get("angle", 0.0)), 6),
-                            round(anchor_x, 6),
-                            round(anchor_y, 6),
-                        )
-                        if signature in seen:
-                            continue
-                        seen.add(signature)
-                        self.last_candidate_evaluations += 1
-                        candidate = self._candidate_from_anchor(
-                            module,
-                            rotation,
-                            anchor_x,
-                            anchor_y,
-                            settings,
-                            orientation_basis,
-                            room_core_costs,
-                            placement_category=category,
-                            cg_sub_totals=cg_sub_totals,
-                        )
-                        if candidate is not None:
+                        for anchor_x, anchor_y, edge_id in anchors:
+                            signature = (
+                                module["id"],
+                                category,
+                                round(float(rotation.get("angle", 0.0)), 6),
+                                round(anchor_x, 6),
+                                round(anchor_y, 6),
+                            )
+                            if signature in seen:
+                                continue
+                            seen.add(signature)
+                            self.last_candidate_evaluations += 1
+                            candidate = self._candidate_from_anchor(
+                                module,
+                                rotation,
+                                anchor_x,
+                                anchor_y,
+                                settings,
+                                orientation_basis,
+                                room_core_costs,
+                                placement_category=category,
+                                cg_sub_totals=cg_sub_totals,
+                            )
+                            if candidate is not None:
+                                t_align = time.perf_counter()
+                                valid_alignment = self._validate_edge_alignment(candidate.poly)
+                                cg_sub_totals["cgEdgeAlignment"] += time.perf_counter() - t_align
+                                if not valid_alignment or not self._materialize_candidate(
+                                    candidate, settings, orientation_basis
+                                ):
+                                    continue
+                                if category == "core":
+                                    core_candidates.append(candidate)
+                                else:
+                                    room_candidates.append(candidate)
+                                core_quota_met = "core" not in allowed_cats or len(core_candidates) >= cat_limit
+                                room_quota_met = "room" not in allowed_cats or len(room_candidates) >= cat_limit
+                                if core_quota_met and room_quota_met:
+                                    early_break = True
+                                    break
+                        if early_break:
+                            break
+                    if early_break:
+                        break
+        else:
+            if not hasattr(self, "slot_index") or self.slot_index is None:
+                self.slot_index = self._build_slot_index(self.dictionary)
+                
+            angle_period = int(round(math.pi * ATTACHMENT_ANGLE_SCALE))
+            max_hops = int(settings.get("maxRoomHops", 5))
+            
+            # Prioritized edge list
+            pref_ids = []
+            norm_ids = []
+            for eid, edge in self.attachment_edges.items():
+                if edge.get("preferred"):
+                    pref_ids.append(eid)
+                else:
+                    norm_ids.append(eid)
+            all_edge_ids = self._sample_attachment_ids(pref_ids + norm_ids)
+            
+            for edge_id in all_edge_ids:
+                edge = self.attachment_edges.get(edge_id)
+                if edge is None:
+                    continue
+                parent_id = edge["placementId"]
+                parent_cost = room_core_costs.get(parent_id, 0)
+                
+                # Hop Horizon Gating
+                if self.core_ids and parent_cost >= max_hops:
+                    edge_allowed_cats = [c for c in allowed_cats if c == "core"]
+                else:
+                    edge_allowed_cats = allowed_cats
+                if not edge_allowed_cats:
+                    continue
+                    
+                p1 = edge["a"]
+                p2 = edge["b"]
+                dx = p2["x"] - p1["x"]
+                dy = p2["y"] - p1["y"]
+                placed_length = edge["length"]
+                edge_angle_key = edge["angleKey"]
+                
+                placed_poly = self.placement_by_id[edge["placementId"]]["poly"]
+                full_first = placed_poly[edge["edgeIndex"]]
+                full_second = placed_poly[(edge["edgeIndex"] + 1) % len(placed_poly)]
+                full_placed_length = math.hypot(full_second["x"] - full_first["x"], full_second["y"] - full_first["y"])
+                
+                checked_edges.add(edge_id)
+                
+                matched_tiles = []
+                for delta in (-2, -1, 0, 1, 2):
+                    lookup = (edge_angle_key + delta) % angle_period
+                    matched_tiles.extend(self.slot_index.get(lookup, ()))
+                    
+                for tile in matched_tiles:
+                    candidate_length = tile["length"]
+                    length_ratio = candidate_length / max(full_placed_length, G.EPSILON)
+                    if not any(abs(length_ratio - valid_ratio) < 5.0e-3 for valid_ratio in (0.5, 1.0, 2.0)):
+                        continue
+                    cross = dx * tile["dy"] - dy * tile["dx"]
+                    if abs(cross) > 1.0e-7 * placed_length * candidate_length:
+                        continue
+                    dot = dx * tile["dx"] + dy * tile["dy"]
+                    if dot >= 0.0:
+                        continue
+                        
+                    module = tile["module"]
+                    rotation = tile["rotation"]
+                    mod_id = module["id"]
+                    candidate_first = tile["p1"]
+                    candidate_second = tile["p2"]
+                    
+                    for anchor_x, anchor_y in (
+                        (p2["x"] - candidate_first["x"], p2["y"] - candidate_first["y"]),
+                        (p1["x"] - candidate_second["x"], p1["y"] - candidate_second["y"]),
+                    ):
+                        for category in edge_allowed_cats:
+                            if category == "core" and float(module["area"]) + 1.0e-8 < 24.0:
+                                continue
+                            signature = (
+                                mod_id,
+                                category,
+                                round(float(rotation.get("angle", 0.0)), 6),
+                                round(anchor_x, 6),
+                                round(anchor_y, 6),
+                            )
+                            if signature in seen:
+                                continue
+                            seen.add(signature)
+                            self.last_candidate_evaluations += 1
+                            
+                            candidate = self._candidate_from_anchor(
+                                module,
+                                rotation,
+                                anchor_x,
+                                anchor_y,
+                                settings,
+                                orientation_basis,
+                                room_core_costs,
+                                placement_category=category,
+                                cg_sub_totals=cg_sub_totals,
+                            )
+                            if candidate is None:
+                                continue
+                                
                             t_align = time.perf_counter()
-                            valid_alignment = placing_first or self._validate_edge_alignment(candidate.poly)
+                            valid_alignment = self._validate_edge_alignment(candidate.poly)
                             cg_sub_totals["cgEdgeAlignment"] += time.perf_counter() - t_align
                             if not valid_alignment or not self._materialize_candidate(
                                 candidate, settings, orientation_basis
                             ):
                                 continue
-                            
+                                
                             if category == "core":
                                 core_candidates.append(candidate)
                             else:
                                 room_candidates.append(candidate)
-                                
-                            if edge_id is not None:
-                                successful_edges.add(edge_id)
-                                
+                            successful_edges.add(edge_id)
+                            
                             core_quota_met = "core" not in allowed_cats or len(core_candidates) >= cat_limit
                             room_quota_met = "room" not in allowed_cats or len(room_candidates) >= cat_limit
                             if core_quota_met and room_quota_met:
                                 early_break = True
                                 break
+                        if early_break:
+                            break
                     if early_break:
                         break
                 if early_break:
                     break
+
+
 
         if (
             not placing_first
