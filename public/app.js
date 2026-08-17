@@ -1276,6 +1276,7 @@ window.onerror = function(message, source, lineno, colno, error) {
         instanceIdx: boundary && boundary.instanceIdx !== undefined ? boundary.instanceIdx : index,
         outer,
         holes,
+        macroBays: Array.isArray(boundary && boundary.macroBays) ? boundary.macroBays : [],
         siteArea: finiteOr(boundary && boundary.siteArea, calculatedArea),
         bounds: polygonBounds(outer)
       };
@@ -3078,6 +3079,33 @@ window.onerror = function(message, source, lineno, colno, error) {
       for (const hole of boundary.holes) appendPolygonPath(path, hole);
       ctx.fillStyle = '#f8f6ef';
       ctx.fill(path, 'evenodd');
+
+      // Draw Macro-Bays (Subphase 1I.1)
+      if (boundary.macroBays && boundary.macroBays.length) {
+        const bayPalette = [
+          'rgba(169, 192, 113, 0.08)',
+          'rgba(113, 169, 192, 0.08)',
+          'rgba(192, 150, 113, 0.08)',
+          'rgba(170, 113, 192, 0.08)',
+          'rgba(192, 180, 113, 0.08)',
+          'rgba(113, 192, 160, 0.08)'
+        ];
+        ctx.save();
+        boundary.macroBays.forEach((bay, bIdx) => {
+          if (bay.polygon && bay.polygon.length >= 3) {
+            const bPath = new Path2D();
+            appendPolygonPath(bPath, bay.polygon);
+            ctx.fillStyle = bayPalette[bIdx % bayPalette.length];
+            ctx.fill(bPath);
+
+            ctx.strokeStyle = 'rgba(17, 23, 18, 0.15)';
+            ctx.lineWidth = 1.0;
+            ctx.setLineDash([4, 4]);
+            strokePolygon(ctx, bay.polygon);
+          }
+        });
+        ctx.restore();
+      }
 
       ctx.strokeStyle = '#111712';
       ctx.lineWidth = 2.5;

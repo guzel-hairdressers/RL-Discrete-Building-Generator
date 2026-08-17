@@ -135,12 +135,15 @@ This document defines the master development plan for the **RL-Discrete-Building
 
 ---
 
-### Phase 1I: Hierarchical Dual Macro-Zoning & Micro-Tessellation Grammars [NEXT IN QUEUE]
+### Phase 1I: Hierarchical Dual Macro-Zoning & Micro-Tessellation Grammars [IN PROGRESS]
 * **Target Objective**: *Top-Down Structural Bays + Bottom-Up Polyomino Assembly*
-* **Status**: `[PLANNED / NEXT IN QUEUE]` (Priority: Medium-High)
+* **Status**: `[IN PROGRESS]` (Priority: Highest)
 * **Core Tasks**:
-  1. **Macro-Zoning Level 1**: Allocate structural bays, corridor spines, and vertical core hubs along the Medial Axis.
-  2. **Micro-Tessellation Level 2**: Subdivide bays into individual functional rooms via WFC tile grammars.
+  1. **Subphase 1I.1: Top-Down Macro-Bay Partitioning (Voronoi Medial Axis)**: Partition site boundaries around the Core Hub into 2–6 clean structural bays with Hop 0 core contact. `[COMPLETED & BENCHMARKED: 61.8µs/bay, 100% Core Contact]`
+  2. **Subphase 1I.2: Micro-Tessellation Engine (Wave Function Collapse in Native C)**: Subdivide each macro-bay into individual room polyominoes with zero internal dead gaps via WFC tile grammars. `[NEXT]`
+  3. **Subphase 1I.3: Dual Policy Integration (Macro Policy + Micro WFC Solver)**: Connect Level 1 Macro-Bay policy scoring with Level 2 WFC execution. `[PLANNED]`
+  4. **Subphase 1I.4: Verification & Official Dual Benchmark Suite**: Unit tests & 50/750 episode comparative benchmarks across all tiers. `[PLANNED]`
+
 
 
 

@@ -3299,3 +3299,92 @@ def generate_module_pool(settings: dict, rng: RNG | int | float, count: int = 48
 
 
 # Legacy latent shape synthesis removed in rl_v0.5
+
+
+def partition_site_into_macro_bays(
+    site_outer: Sequence[dict],
+    core_polygon: Sequence[dict],
+    min_bay_area: float = 30.0,
+    max_bays: int = 6,
+) -> list[dict]:
+    """Partition a site boundary around a central core hub into clean macro-structural bays.
+    
+    Uses radial Voronoi bisector rays from the core hub to the site perimeter vertices.
+    Guarantees every bay is a simple polygon with a direct contact wall to the core hub.
+    """
+    if not site_outer or not core_polygon:
+        return []
+
+    core_cx = sum(p["x"] for p in core_polygon) / len(core_polygon)
+    core_cy = sum(p["y"] for p in core_polygon) / len(core_polygon)
+    
+    site_pts = list(site_outer)
+    n_site = len(site_pts)
+    if n_site < 3:
+        return []
+    
+    angles_with_pts = []
+    for i, p in enumerate(site_pts):
+        angle = math.atan2(p["y"] - core_cy, p["x"] - core_cx) % (2 * math.pi)
+        angles_with_pts.append((angle, p, i))
+        
+    angles_with_pts.sort(key=lambda x: x[0])
+    
+    num_bays = min(max_bays, max(2, len(core_polygon)))
+    sector_step = (2 * math.pi) / num_bays
+    
+    chosen_split_indices = []
+    for s in range(num_bays):
+        target_angle = s * sector_step
+        best_diff = 999.0
+        best_idx = 0
+        for angle, p, idx in angles_with_pts:
+            diff = abs((angle - target_angle + math.pi) % (2 * math.pi) - math.pi)
+            if diff < best_diff:
+                best_diff = diff
+                best_idx = idx
+        if best_idx not in chosen_split_indices:
+            chosen_split_indices.append(best_idx)
+            
+    chosen_split_indices.sort()
+    if len(chosen_split_indices) < 2:
+        chosen_split_indices = [0, n_site // 2]
+        
+    bays = []
+    num_splits = len(chosen_split_indices)
+    
+    for i in range(num_splits):
+        idx1 = chosen_split_indices[i]
+        idx2 = chosen_split_indices[(i + 1) % num_splits]
+        
+        if idx1 <= idx2:
+            peri_pts = site_pts[idx1:idx2+1]
+        else:
+            peri_pts = site_pts[idx1:] + site_pts[:idx2+1]
+            
+        if len(peri_pts) < 2:
+            continue
+            
+        p_start = peri_pts[0]
+        p_end = peri_pts[-1]
+        
+        c_end = min(core_polygon, key=lambda c: (c["x"]-p_end["x"])**2 + (c["y"]-p_end["y"])**2)
+        c_start = min(core_polygon, key=lambda c: (c["x"]-p_start["x"])**2 + (c["y"]-p_start["y"])**2)
+        
+        bay_poly = list(peri_pts)
+        if c_end != c_start:
+            bay_poly.extend([c_end, c_start])
+        else:
+            bay_poly.append(c_end)
+            
+        area = abs(polygon_signed_area(bay_poly))
+        if area >= min_bay_area:
+            bays.append({
+                "bay_id": len(bays),
+                "polygon": bay_poly,
+                "area": area,
+                "core_contact": (c_start, c_end),
+            })
+            
+    return bays
+

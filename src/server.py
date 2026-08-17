@@ -1264,10 +1264,27 @@ class FloorEnvironment:
 
     def world_boundary(self) -> dict:
         dx, dy = self.offset
+        cores = [p for p in self.placements if p.get("category") == "core" or p.get("module", {}).get("category") == "core"]
+        if cores:
+            core_poly = cores[0]["polygon"]
+        else:
+            cx = sum(p["x"] for p in self.site["outer"]) / max(1, len(self.site["outer"]))
+            cy = sum(p["y"] for p in self.site["outer"]) / max(1, len(self.site["outer"]))
+            core_poly = [{"x": cx - 2.0, "y": cy - 2.0}, {"x": cx + 2.0, "y": cy - 2.0}, {"x": cx + 2.0, "y": cy + 2.0}, {"x": cx - 2.0, "y": cy + 2.0}]
+        bays = G.partition_site_into_macro_bays(self.site["outer"], core_poly, min_bay_area=15.0, max_bays=6)
+        world_bays = [
+            {
+                "bayId": b["bay_id"],
+                "area": round(b["area"], 1),
+                "polygon": G.translate_polygon(b["polygon"], dx, dy),
+            }
+            for b in bays
+        ]
         return {
             "instanceIdx": self.index,
             "outer": G.translate_polygon(self.site["outer"], dx, dy),
             "holes": [G.translate_polygon(hole, dx, dy) for hole in self.site["holes"]],
+            "macroBays": world_bays,
             "exactArea": float(self.site["exactArea"]),
             "siteArea": float(self.site["exactArea"]),
             "family": self.boundary.get("family", self.boundary.get("type", "procedural")),
