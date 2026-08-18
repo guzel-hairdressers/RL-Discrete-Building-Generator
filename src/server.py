@@ -3640,11 +3640,7 @@ class ParallelTrainer:
         )
         
         num_edges_logits = parameter_logits[0] / max(0.32, 0.90 * math.exp(-self.episode / 45.0))
-        num_edges_logits = num_edges_logits + torch.tensor([0.0, 0.8], device=self.device)
-        is_step0 = force_core or (
-            any(not env.placements for env in environments)
-            and not bool(settings.get("singleFloor"))
-        )
+        is_step0 = force_core or (any(not env.placements for env in environments) and not bool(settings.get("singleFloor"))) or (slot_index == 0 and not bool(settings.get("singleFloor")))
         triangle_feasible = (
             float(settings.get("maxEdge", 9.0)) ** 2 * math.sqrt(3.0) * 0.25 + 1.0e-8 >= 24.0
         )
