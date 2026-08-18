@@ -4672,11 +4672,9 @@ class ParallelTrainer:
             + 0.08 * _safe_ratio(violation_count, max(1, len(per_site)))
         )
 
-        # Piecewise linear scaling for fill ratio (< 60% penalized heavily)
-        scaled_fill = max(0.0, 2.25 * fill_ratio - 0.75) if fill_ratio < 0.6 else fill_ratio
-
-        # Piecewise linear scaling for rentable ratio (< 70% penalized heavily)
-        scaled_rentable = max(0.0, (7.0 * rentable_ratio - 2.8) / 3.0) if rentable_ratio < 0.7 else rentable_ratio
+        # Strictly monotonic fill & rentable scaling (continuous positive gradients from 0% to 100%)
+        scaled_fill = fill_ratio
+        scaled_rentable = rentable_ratio
 
         # Normalized area variance penalty of dictionary shapes (Coefficient of Variation CV = std / mean, max 0.15)
         dict_areas = [G.polygon_area(m["poly"]) for m in self.dictionary]
@@ -4731,12 +4729,11 @@ class ParallelTrainer:
             - area_variance_penalty
             - partial_connection_penalty
             - (deep_interior_penalty / 100.0)
-            - (facade_chasm_penalty / 100.0)
-            - (underfill_penalty / 100.0),
+            - (facade_chasm_penalty / 100.0),
         )
         multiplier_used = self.topology_multiplier
         topology_penalty = min(50.0, 100.0 * multiplier_used * violation_rate)
-        score = raw_score - topology_penalty
+        score = raw_score - topology_penalty - underfill_penalty
         next_topology_multiplier = _clamp(
             self.topology_multiplier + 0.004 * (violation_rate - 0.02), 0.05, 0.15
         )
@@ -4806,8 +4803,8 @@ class ParallelTrainer:
         constructibility = float(item.get("constructibilityScore", 0.0))
         envelope_efficiency = float(item.get("envelopeEfficiency", 0.0))
 
-        scaled_fill = max(0.0, 2.25 * fill_ratio - 0.75) if fill_ratio < 0.6 else fill_ratio
-        scaled_rentable = max(0.0, (7.0 * rentable_ratio - 2.8) / 3.0) if rentable_ratio < 0.7 else rentable_ratio
+        scaled_fill = fill_ratio
+        scaled_rentable = rentable_ratio
 
         total_partial_len = float(item.get("totalPartialLength", 0.0))
         partial_connection_penalty = 0.04 * _safe_ratio(total_partial_len, perimeter)
@@ -4829,13 +4826,12 @@ class ParallelTrainer:
             - area_variance_penalty
             - partial_connection_penalty
             - (deep_interior_penalty / 100.0)
-            - (facade_chasm_penalty / 100.0)
-            - (underfill_penalty / 100.0),
+            - (facade_chasm_penalty / 100.0),
         )
 
         violation_rate = 0.0 if item.get("topologyValid", False) else (1.0 + 0.08 * len(item.get("topologyViolations", [])))
         topology_penalty = min(50.0, 100.0 * self.topology_multiplier * violation_rate)
-        return raw_score - topology_penalty + shared_bonus
+        return raw_score - topology_penalty - underfill_penalty + shared_bonus
 
     def _try_place_new_module(
         self,
