@@ -2829,7 +2829,7 @@ class FloorEnvironment:
         return deep_count, deep_area, deep_ratio
 
     def _narrow_facade_chasm_metrics(self, exposed_segments: Sequence[dict], exposed_perimeter: float) -> tuple[float, float]:
-        """Cast outward normal rays from exposed facade wall segments to detect opposing walls closer than 3.0m."""
+        """Cast outward normal ray from each exposed facade wall midpoint and multiply by edge length."""
         if not exposed_segments or exposed_perimeter <= 1e-4:
             return 0.0, 0.0
             
@@ -2851,22 +2851,16 @@ class FloorEnvironment:
             nx = uy
             ny = -ux
             
-            # Multi-point sampling every <= 1.5m
-            num_samples = max(1, int(math.ceil(length / 1.5)))
-            sub_len = length / num_samples
+            mid = {
+                "x": 0.5 * (float(p1["x"]) + float(p2["x"])),
+                "y": 0.5 * (float(p1["y"]) + float(p2["y"]))
+            }
             
             other_segs = [s for j, s in enumerate(exposed_segments) if j != i]
-            
-            for s_idx in range(num_samples):
-                fraction = (s_idx + 0.5) / num_samples
-                sample_pt = {
-                    "x": float(p1["x"]) + dx * fraction,
-                    "y": float(p1["y"]) + dy * fraction,
-                }
-                t = G.ray_intersect_segments(sample_pt, (nx, ny), other_segs, min_dist=0.05, max_dist=3.0)
-                if t is not None and t < 3.0:
-                    severity = (3.0 - t) / 3.0
-                    occluded_length += sub_len * severity
+            t = G.ray_intersect_segments(mid, (nx, ny), other_segs, min_dist=0.05, max_dist=3.0)
+            if t is not None and t < 3.0:
+                severity = (3.0 - t) / 3.0
+                occluded_length += length * severity
                 
         chasm_ratio = _safe_ratio(occluded_length, exposed_perimeter)
         return occluded_length, chasm_ratio
