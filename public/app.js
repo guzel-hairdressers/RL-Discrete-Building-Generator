@@ -52,6 +52,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     'score', 'fillRatio', 'rentableRatio', 'daylightRatio', 'reuseRatio',
     'constructibilityScore', 'envelopeEfficiency', 'rawScore',
     'areaVariancePenalty', 'internalExposedPenalty', 'partialConnectionPenalty',
+    'deepInteriorPenalty', 'facadeChasmPenalty', 'deepRoomRatio', 'facadeChasmRatio',
     'topologyPenalty', 'bpeBonus', 'unmergedTrianglePenalty',
     'relativeTimeReward', 'dictBreachPenalty', 'candidateEvaluations',
     'generationTimeSeconds', 'sizeNormalizedGenerationTime', 'policyLoss',
