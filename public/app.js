@@ -46,7 +46,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     'maxRoomHops'
   ]);
 
-  const MAX_RETAINED_SCORE_HISTORY = 360;
+  const MAX_RETAINED_SCORE_HISTORY = 10000;
   const DEBUG_SCORE_POINT_LIMIT = 120;
   const DEBUG_METRIC_KEYS = Object.freeze([
     'score', 'fillRatio', 'rentableRatio', 'daylightRatio', 'reuseRatio',
@@ -495,7 +495,7 @@ window.onerror = function(message, source, lineno, colno, error) {
 
     if (dom.historyCanvas) {
       dom.historyCanvas.addEventListener('click', () => {
-        if (state.scoreHistory.length > 30) {
+        if (state.scoreHistory.length > 100) {
           state.showFullHistory = !state.showFullHistory;
           drawHistory();
         }
@@ -2535,16 +2535,18 @@ window.onerror = function(message, source, lineno, colno, error) {
     ctx.clearRect(0, 0, width, height);
 
     const totalEpisodes = state.scoreHistory.length;
-    const values = state.showFullHistory ? state.scoreHistory : state.scoreHistory.slice(-30);
+    const values = (state.showFullHistory || totalEpisodes <= 100) 
+      ? state.scoreHistory 
+      : state.scoreHistory.slice(-100);
 
     const isHovered = Boolean(state.historyHovered);
 
     if (dom.historyCanvas) {
-      dom.historyCanvas.style.cursor = totalEpisodes > 30 ? 'pointer' : 'default';
+      dom.historyCanvas.style.cursor = totalEpisodes > 100 ? 'pointer' : 'default';
     }
 
     if (dom.trendKicker && dom.trendTitle) {
-      if (totalEpisodes <= 30) {
+      if (totalEpisodes <= 100) {
         dom.trendKicker.textContent = 'All episodes';
         dom.trendTitle.textContent = totalEpisodes > 0 
           ? `Score trend (Ep 1-${totalEpisodes})`
@@ -2553,8 +2555,8 @@ window.onerror = function(message, source, lineno, colno, error) {
         dom.trendKicker.textContent = 'All episodes (click to crop)';
         dom.trendTitle.textContent = `Score trend (Ep 1-${totalEpisodes})`;
       } else {
-        dom.trendKicker.textContent = 'Recent episodes (click to expand)';
-        const startEp = Math.max(1, totalEpisodes - 29);
+        dom.trendKicker.textContent = 'Recent 100 episodes (click to expand)';
+        const startEp = Math.max(1, totalEpisodes - 99);
         dom.trendTitle.textContent = `Score trend (Ep ${startEp}-${totalEpisodes})`;
       }
     }
@@ -2603,7 +2605,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     ctx.fillStyle = '#77837a';
     ctx.font = '9px ui-sans-serif, system-ui, sans-serif';
 
-    const startEp = state.showFullHistory ? 1 : Math.max(1, totalEpisodes - 29);
+    const startEp = (state.showFullHistory || totalEpisodes <= 100) ? 1 : Math.max(1, totalEpisodes - 99);
     ctx.textAlign = 'left';
     ctx.fillText(`Ep ${startEp}`, marginLeft, height - 4);
 
@@ -2619,51 +2621,27 @@ window.onerror = function(message, source, lineno, colno, error) {
     const t = Math.max(0.0, Math.min(1.0, state.historyHoverFactor || 0.0));
     const ease = t * t * (3 - 2 * t);
 
-    // 2nd-degree polynomial (quadratic regression) global fit
-    let coef = null;
-    if (totalEpisodes >= 3) {
-      function solve3x3(A, B) {
-        const det = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
-                    A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) +
-                    A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
-        if (Math.abs(det) < 1e-8) return null;
-        function getDet(colIdx) {
-          const M = [
-            [...A[0]],
-            [...A[1]],
-            [...A[2]]
-          ];
-          M[0][colIdx] = B[0];
-          M[1][colIdx] = B[1];
-          M[2][colIdx] = B[2];
-          return M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) -
-                 M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) +
-                 M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
-        }
-        return [getDet(0) / det, getDet(1) / det, getDet(2) / det];
-      }
+    // Window Smoothing Function (Adaptive Gaussian-Weighted Moving Window)
+    function computeWindowSmoothedPoints(rawValues, basePoints) {
+      if (rawValues.length < 2) return basePoints;
+      const n = rawValues.length;
+      // Adaptive radius based on total points: k=1 for n<6, k=2 for n<15, up to k=8 for n>=60
+      const k = Math.max(1, Math.min(8, Math.floor(n / 7)));
+      const sigma = Math.max(0.8, k * 0.55);
 
-      let s0 = values.length, s1 = 0, s2 = 0, s3 = 0, s4 = 0;
-      let p0 = 0, p1 = 0, p2 = 0;
-      for (let i = 0; i < values.length; i++) {
-        const x = values.length > 1 ? i / (values.length - 1) : 0.0;
-        const x2 = x * x;
-        const y = values[i];
-        s1 += x;
-        s2 += x2;
-        s3 += x2 * x;
-        s4 += x2 * x2;
-        p0 += y;
-        p1 += x * y;
-        p2 += x2 * y;
-      }
-      const A = [
-        [s4, s3, s2],
-        [s3, s2, s1],
-        [s2, s1, s0]
-      ];
-      const B = [p2, p1, p0];
-      coef = solve3x3(A, B);
+      return basePoints.map((pt, i) => {
+        let sumY = 0;
+        let sumW = 0;
+        const start = Math.max(0, i - k);
+        const end = Math.min(n - 1, i + k);
+        for (let j = start; j <= end; j++) {
+          const dist = Math.abs(j - i);
+          const w = Math.exp(-(dist * dist) / (2 * sigma * sigma));
+          sumY += basePoints[j].y * w;
+          sumW += w;
+        }
+        return { x: pt.x, y: sumY / sumW };
+      });
     }
 
     // 1. Draw area fill gradient
@@ -2695,22 +2673,18 @@ window.onerror = function(message, source, lineno, colno, error) {
       ctx.stroke();
     }
 
-    // Helper to draw fitted regression line
-    function drawFittedLine() {
-      if (!coef) return;
+    // Helper to draw smoothed trend line
+    function drawSmoothedLine() {
+      if (points.length < 2) return;
+      const smoothed = computeWindowSmoothedPoints(values, points);
       const fitAlpha = 0.45 + 0.55 * ease; // from 0.45 up to 1.0 (crisp & solid)
-      const fitWidth = 1.5 + 0.20 * ease; // from 1.5 up to 1.7 (matches score line, not overly thick)
-      const steps = Math.max(values.length * 2, 60);
+      const fitWidth = 1.5 + 0.25 * ease; // from 1.5 up to 1.75
 
       ctx.beginPath();
-      for (let i = 0; i <= steps; i++) {
-        const xLocal = i / steps;
-        const yFit = coef[0] * xLocal * xLocal + coef[1] * xLocal + coef[2];
-        const cx = marginLeft + xLocal * gridWidth;
-        const cy = marginTop + gridHeight - ((yFit - min) / span) * gridHeight;
-        if (i === 0) ctx.moveTo(cx, cy);
-        else ctx.lineTo(cx, cy);
-      }
+      smoothed.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
       ctx.strokeStyle = `rgba(196, 219, 139, ${fitAlpha.toFixed(3)})`;
       ctx.lineWidth = fitWidth;
       ctx.lineJoin = 'round';
@@ -2727,12 +2701,12 @@ window.onerror = function(message, source, lineno, colno, error) {
       ctx.setLineDash([]);
     }
 
-    // Layer ordering: when hovered (ease >= 0.5), fitted line is drawn in the foreground on top
+    // Layer ordering: when hovered (ease >= 0.5), smoothed line is drawn in the foreground on top
     if (ease >= 0.5) {
       drawScoreLine();
-      drawFittedLine();
+      drawSmoothedLine();
     } else {
-      drawFittedLine();
+      drawSmoothedLine();
       drawScoreLine();
     }
   }

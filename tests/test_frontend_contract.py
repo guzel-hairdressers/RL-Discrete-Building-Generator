@@ -258,7 +258,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("Not reported", self.app)
 
     def test_developer_history_and_dynamic_rows_are_strictly_bounded(self) -> None:
-        self.assertIn("const MAX_RETAINED_SCORE_HISTORY = 360", self.app)
+        self.assertIn("const MAX_RETAINED_SCORE_HISTORY = 10000", self.app)
         self.assertIn("const DEBUG_SCORE_POINT_LIMIT = 120", self.app)
         self.assertIn(".slice(-MAX_RETAINED_SCORE_HISTORY)", self.app)
         self.assertIn("state.scoreHistory.slice(-DEBUG_SCORE_POINT_LIMIT)", self.app)
