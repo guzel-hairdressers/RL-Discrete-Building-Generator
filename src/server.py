@@ -4788,6 +4788,55 @@ class ParallelTrainer:
             "coreStacking": self._core_stacking_event(),
         }
 
+    def _score_single_floor(
+        self,
+        item: dict[str, Any],
+        area_variance_penalty: float = 0.0,
+        shared_bonus: float = 0.0,
+    ) -> float:
+        """Compute the standalone reward score for a single floor rollout."""
+        filled = float(item["filledArea"])
+        site_area = float(item["siteArea"])
+        rentable = float(item["rentableArea"])
+        perimeter = float(item["exposedPerimeter"])
+        fill_ratio = _safe_ratio(filled, site_area)
+        rentable_ratio = _safe_ratio(rentable, filled)
+        daylight = float(item.get("daylightRatio", 0.0))
+        reuse = float(item.get("reuseRatio", 0.0))
+        constructibility = float(item.get("constructibilityScore", 0.0))
+        envelope_efficiency = float(item.get("envelopeEfficiency", 0.0))
+
+        scaled_fill = max(0.0, 2.25 * fill_ratio - 0.75) if fill_ratio < 0.6 else fill_ratio
+        scaled_rentable = max(0.0, (7.0 * rentable_ratio - 2.8) / 3.0) if rentable_ratio < 0.7 else rentable_ratio
+
+        total_partial_len = float(item.get("totalPartialLength", 0.0))
+        partial_connection_penalty = 0.04 * _safe_ratio(total_partial_len, perimeter)
+
+        deep_interior_penalty = min(50.0, float(item.get("depthPenaltyScore", 0.0)))
+        facade_chasm_penalty = min(30.0, 3.0 * float(item.get("facadeChasmOccludedLength", 0.0)))
+
+        underfill_deficit = max(0.0, 1.0 - (fill_ratio / 0.40))
+        underfill_penalty = 35.0 * (underfill_deficit ** 2)
+
+        raw_score = 100.0 * max(
+            0.0,
+            1.05 * scaled_fill
+            + 0.15 * scaled_rentable
+            + 0.10 * daylight
+            + 0.02 * reuse
+            + 0.02 * constructibility
+            + 0.01 * envelope_efficiency
+            - area_variance_penalty
+            - partial_connection_penalty
+            - (deep_interior_penalty / 100.0)
+            - (facade_chasm_penalty / 100.0)
+            - (underfill_penalty / 100.0),
+        )
+
+        violation_rate = 0.0 if item.get("topologyValid", False) else (1.0 + 0.08 * len(item.get("topologyViolations", [])))
+        topology_penalty = min(50.0, 100.0 * self.topology_multiplier * violation_rate)
+        return raw_score - topology_penalty + shared_bonus
+
     def _try_place_new_module(
         self,
         environment: FloorEnvironment,
@@ -4917,8 +4966,16 @@ class ParallelTrainer:
         return float(diversity_nats)
 
 
-    def _learn_from_episode(self, score: float) -> None:
+    def _learn_from_episode(
+        self,
+        score: float,
+        per_floor_scores: Sequence[float] | None = None,
+    ) -> None:
         normalized_score = score / 100.0
+        if per_floor_scores is not None and len(per_floor_scores) == len(self.environments):
+            floor_targets = [s / 100.0 for s in per_floor_scores]
+        else:
+            floor_targets = [normalized_score] * max(1, len(self.environments))
 
         gamma = 0.99
         gae_lambda = 0.95
@@ -4937,7 +4994,7 @@ class ParallelTrainer:
         entropy_terms: list[torch.Tensor] = []
 
         if self.placement_decisions:
-            # 1. Compute GAE advantages per trajectory / environment
+            # 1. Compute GAE advantages per trajectory / environment using individual floor scores
             grouped_decisions: dict[int, list[PlacementPolicyDecision]] = {}
             for decision in self.placement_decisions:
                 grouped_decisions.setdefault(decision.environment_index, []).append(decision)
@@ -4945,10 +5002,11 @@ class ParallelTrainer:
             decision_advantages: list[float] = []
             for env_idx, env_decisions in sorted(grouped_decisions.items()):
                 t_steps = len(env_decisions)
+                floor_target = floor_targets[env_idx] if env_idx < len(floor_targets) else normalized_score
                 gae = 0.0
                 env_advs = [0.0] * t_steps
                 for t in reversed(range(t_steps)):
-                    step_reward = normalized_score if t == t_steps - 1 else 0.0
+                    step_reward = floor_target if t == t_steps - 1 else 0.0
                     v_next = 0.0 if t == t_steps - 1 else v_pred_val
                     delta = step_reward + gamma * v_next - v_pred_val
                     gae = delta + gamma * gae_lambda * gae
@@ -4956,9 +5014,12 @@ class ParallelTrainer:
                 decision_advantages.extend(env_advs)
 
             adv_tensor = torch.tensor(decision_advantages, dtype=torch.float32, device=self.device)
-            # Preserve cross-episode advantage sign & magnitude (R - V(s)) rather than
-            # zero-centering within a single episode, which destroys inter-episode learning.
-            norm_adv = adv_tensor
+            # Batch advantage normalization across the parallel floor rollouts:
+            # Rewards actions from high-scoring floors and penalizes actions from low-scoring floors
+            if len(adv_tensor) > 1 and float(adv_tensor.std().item()) > 1.0e-6:
+                norm_adv = (adv_tensor - adv_tensor.mean()) / (adv_tensor.std() + 1.0e-8)
+            else:
+                norm_adv = adv_tensor
 
             # 2. PPO Clipped Surrogate Loss
             for idx, decision in enumerate(self.placement_decisions):
@@ -5163,11 +5224,30 @@ class ParallelTrainer:
         metrics["dppDiversityBonus"] = round(dpp_bonus, 4)
 
 
+        # Compute standalone scores per individual floor rollout
+        shared_bonus = (
+            bpe_bonus
+            + utilization_entropy_bonus
+            - unmerged_triangle_penalty
+            + float(frontier_metrics["relativeTimeReward"])
+            - dict_breach_penalty
+        )
+        dict_areas = [G.polygon_area(m["poly"]) for m in self.dictionary]
+        mean_dict_area = _mean(dict_areas) if dict_areas else 1.0
+        cv = _safe_ratio(_std(dict_areas), max(1.0, mean_dict_area)) if dict_areas else 0.0
+        area_variance_penalty = _clamp(0.05 * cv, 0.0, 0.15)
+
+        per_floor_scores = [
+            self._score_single_floor(ps, area_variance_penalty=area_variance_penalty, shared_bonus=shared_bonus)
+            for ps in per_site
+        ]
+        metrics["perFloorScores"] = [round(s, 2) for s in per_floor_scores]
+
         # 3. Learn from updated score (only in training mode)
         if getattr(self, "mode", "training") == "training":
 
             learning_start = time.perf_counter()
-            self._learn_from_episode(score)
+            self._learn_from_episode(score, per_floor_scores=per_floor_scores)
             self.step_profiler.record("learning", time.perf_counter() - learning_start)
             metrics["policyLoss"] = self.last_loss
             metrics["actorLoss"] = self.last_actor_loss
