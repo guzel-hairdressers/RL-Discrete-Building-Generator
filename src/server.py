@@ -2829,7 +2829,7 @@ class FloorEnvironment:
         return deep_count, deep_area, deep_ratio
 
     def _narrow_facade_chasm_metrics(self, exposed_segments: Sequence[dict], exposed_perimeter: float) -> tuple[float, float]:
-        """Cast outward normal rays from exposed facade wall midpoints to detect opposing walls closer than 3.0m."""
+        """Cast outward normal rays from exposed facade wall segments to detect opposing walls closer than 3.0m."""
         if not exposed_segments or exposed_perimeter <= 1e-4:
             return 0.0, 0.0
             
@@ -2851,16 +2851,22 @@ class FloorEnvironment:
             nx = uy
             ny = -ux
             
-            mid = {
-                "x": 0.5 * (float(p1["x"]) + float(p2["x"])),
-                "y": 0.5 * (float(p1["y"]) + float(p2["y"]))
-            }
+            # Multi-point sampling every <= 1.5m
+            num_samples = max(1, int(math.ceil(length / 1.5)))
+            sub_len = length / num_samples
             
             other_segs = [s for j, s in enumerate(exposed_segments) if j != i]
-            t = G.ray_intersect_segments(mid, (nx, ny), other_segs, min_dist=0.05, max_dist=3.0)
-            if t is not None and t < 3.0:
-                severity = (3.0 - t) / 3.0
-                occluded_length += length * severity
+            
+            for s_idx in range(num_samples):
+                fraction = (s_idx + 0.5) / num_samples
+                sample_pt = {
+                    "x": float(p1["x"]) + dx * fraction,
+                    "y": float(p1["y"]) + dy * fraction,
+                }
+                t = G.ray_intersect_segments(sample_pt, (nx, ny), other_segs, min_dist=0.05, max_dist=3.0)
+                if t is not None and t < 3.0:
+                    severity = (3.0 - t) / 3.0
+                    occluded_length += sub_len * severity
                 
         chasm_ratio = _safe_ratio(occluded_length, exposed_perimeter)
         return occluded_length, chasm_ratio
@@ -4718,18 +4724,19 @@ class ParallelTrainer:
         partial_connection_penalty = 0.04 * _safe_ratio(total_partial_len, perimeter)
 
         # Deep interior daylight penalty (habitable rooms >= 2 hops away from all exterior walls)
+        total_deep_rooms = sum(int(item.get("deepRoomCount", 0)) for item in per_site)
+        avg_deep_rooms = total_deep_rooms / max(1, len(per_site))
         deep_room_ratio = _safe_ratio(
             math.fsum(float(item.get("deepRoomArea", 0.0)) for item in per_site),
             rentable,
         )
-        deep_interior_penalty = 12.0 * deep_room_ratio
+        deep_interior_penalty = min(25.0, 18.0 * deep_room_ratio + 3.0 * avg_deep_rooms)
 
         # Narrow facade chasm penalty (opposing exterior walls < 3.0m apart)
-        facade_chasm_ratio = _safe_ratio(
-            math.fsum(float(item.get("facadeChasmOccludedLength", 0.0)) for item in per_site),
-            perimeter,
-        )
-        facade_chasm_penalty = 8.0 * facade_chasm_ratio
+        total_chasm_len = math.fsum(float(item.get("facadeChasmOccludedLength", 0.0)) for item in per_site)
+        avg_chasm_len = total_chasm_len / max(1, len(per_site))
+        facade_chasm_ratio = _safe_ratio(total_chasm_len, perimeter)
+        facade_chasm_penalty = min(25.0, 3.0 * avg_chasm_len)
 
         raw_score = 100.0 * min(
             1.0,
