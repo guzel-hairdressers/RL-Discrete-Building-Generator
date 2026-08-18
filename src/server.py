@@ -1,4 +1,4 @@
-"""Module Lab v0.8.0 PyTorch training and WebSocket server.
+"""Module Lab v0.8.6-a PyTorch training and WebSocket server.
 
 Each WebSocket owns a completely independent :class:`ParallelTrainer`.  Within
 that trainer all floor environments share one policy and one optimizer.  Shape
@@ -620,16 +620,62 @@ class EquivariantRelationalSetTransformer(nn.Module):
         return self.score_head(h).squeeze(-1)
 
 
+class DynamicValueCritic(nn.Module):
+    """Permutation-invariant Set Transformer value head for dynamic partial floorplan states."""
+
+    def __init__(self, pooled_site_dim: int = POOLED_SITE_DIM, mod_token_dim: int = 10, hidden_dim: int = 48):
+        super().__init__()
+        self.mod_proj = nn.Linear(mod_token_dim, hidden_dim)
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=hidden_dim, nhead=4, dim_feedforward=64, batch_first=True, dropout=0.0
+        )
+        self.mod_transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
+        self.empty_token = nn.Parameter(torch.zeros(1, 1, hidden_dim))
+        self.site_macro_proj = nn.Sequential(
+            nn.Linear(pooled_site_dim + 3, hidden_dim),
+            nn.SiLU(),
+        )
+        self.head = nn.Sequential(
+            nn.Linear(hidden_dim * 2, 32),
+            nn.SiLU(),
+            nn.Linear(32, 1),
+        )
+
+    def forward(
+        self,
+        pooled_site: torch.Tensor,
+        placed_tokens: torch.Tensor | None = None,
+        macro_state: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        B = pooled_site.shape[0] if pooled_site.ndim > 1 else 1
+        if pooled_site.ndim == 1:
+            pooled_site = pooled_site.unsqueeze(0)
+        if macro_state is None:
+            macro_state = torch.zeros(B, 3, device=pooled_site.device)
+        elif macro_state.ndim == 1:
+            macro_state = macro_state.unsqueeze(0)
+
+        site_feat = self.site_macro_proj(torch.cat([pooled_site, macro_state], dim=-1))
+
+        if placed_tokens is None or (placed_tokens.ndim >= 2 and placed_tokens.shape[1] == 0):
+            mod_h = self.empty_token.expand(B, -1, -1).squeeze(1)
+        else:
+            if placed_tokens.ndim == 2:
+                placed_tokens = placed_tokens.unsqueeze(0)
+            H = self.mod_proj(placed_tokens)
+            H_trans = self.mod_transformer(H)
+            mod_h = H_trans.mean(dim=1)
+
+        combined = torch.cat([site_feat, mod_h], dim=-1)
+        return self.head(combined).squeeze(-1)
+
+
 class PolicyModel(nn.Module):
     """Shared placement, vector-geometry, category, and atrium policy."""
 
     @staticmethod
-    def _new_value_head() -> nn.Sequential:
-        return nn.Sequential(
-            nn.Linear(POOLED_SITE_DIM, 32),
-            nn.SiLU(),
-            nn.Linear(32, 1),
-        )
+    def _new_value_head() -> nn.Module:
+        return DynamicValueCritic()
 
     def __init__(self) -> None:
         super().__init__()
@@ -665,16 +711,12 @@ class PolicyModel(nn.Module):
         self.num_edges_head = nn.Linear(64, 2) # Edges 3 or 4 (triangles or quads)
         self.edge_length_heads = nn.ModuleList([nn.Linear(64, len(G.EDGE_PALETTE)) for _ in range(3)])
         self.angle_heads = nn.ModuleList([nn.Linear(64, len(G.ANGLE_PALETTE)) for _ in range(2)])
-        # Preserve the baseline actor's initialization and subsequent sampling
-        # stream: the critic is additive state, not an accidental RNG shift in
-        # the policy experiment.
         rng_state = torch.random.get_rng_state()
         self.value_head = self._new_value_head()
         torch.random.set_rng_state(rng_state)
 
     def reset_value_head(self) -> None:
         """Replace critic parameters without perturbing the actor RNG stream."""
-
         rng_state = torch.random.get_rng_state()
         try:
             fresh_state = self._new_value_head().state_dict()
@@ -689,12 +731,10 @@ class PolicyModel(nn.Module):
         angles: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Score candidate set using SE(2)-equivariant relational self-attention."""
-
         return self.transformer(features, positions, angles)
 
     def encode_sites(self, floor_descriptors: torch.Tensor) -> torch.Tensor:
         """Encode floors independently, then preserve mean and extreme geometry."""
-
         if floor_descriptors.ndim == 1:
             floor_descriptors = floor_descriptors.reshape(1, -1)
         encoded = self.site_encoder(floor_descriptors)
@@ -702,27 +742,27 @@ class PolicyModel(nn.Module):
 
     def category_logits(self, pooled_site: torch.Tensor) -> torch.Tensor:
         """Score the category action for non-mandatory dictionary slots."""
-
         return self.category_head(pooled_site.reshape(1, -1)).squeeze(0)
 
     def atrium_logits(self, candidate_features: torch.Tensor) -> torch.Tensor:
         """Score valid atrium candidates, including the no-atrium action."""
-
         return self.atrium_head(candidate_features).squeeze(-1)
 
     def shape_logits(self, pooled_site: torch.Tensor) -> torch.Tensor:
         """Return flattened parameter logits for compatibility/introspection."""
-
         return torch.cat(self.shape_parameter_logits(pooled_site), dim=0)
 
-    def value(self, pooled_site: torch.Tensor) -> torch.Tensor:
-        """Predict the normalized terminal return for Monte Carlo baselining."""
-
-        return self.value_head(pooled_site.reshape(1, -1)).squeeze()
+    def value(
+        self,
+        pooled_site: torch.Tensor,
+        placed_tokens: torch.Tensor | None = None,
+        macro_state: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Predict dynamic normalized state return using Set Transformer."""
+        return self.value_head(pooled_site, placed_tokens, macro_state)
 
     def shape_parameter_logits(self, pooled_site: torch.Tensor) -> tuple[torch.Tensor, ...]:
         """Score num_edges, edge lengths, and internal angles."""
-
         features = self.shape_head(pooled_site.reshape(1, -1)).squeeze(0)
         return (
             self.num_edges_head(features),
@@ -785,6 +825,8 @@ class PlacementPolicyDecision:
     old_log_prob: float = 0.0
     positions: torch.Tensor | None = None
     angles: torch.Tensor | None = None
+    placed_tokens: torch.Tensor | None = None
+    macro_state: torch.Tensor | None = None
 
 
 
@@ -4900,6 +4942,51 @@ class ParallelTrainer:
         self.placement_log_probs.append(log_prob)
         self.placement_log_probs_by_environment.setdefault(environment_index, []).append(log_prob)
 
+    def _extract_placed_tokens(self, environment: FloorEnvironment) -> list[list[float]]:
+        tokens = []
+        site_bounds = environment.site["bounds"]
+        width = max(1.0, site_bounds["maxX"] - site_bounds["minX"])
+        height = max(1.0, site_bounds["maxY"] - site_bounds["minY"])
+        site_area = max(1.0, float(environment.site["exactArea"]))
+        cores = [environment.placement_by_id[cid] for cid in environment.core_ids]
+
+        for p in environment.placements:
+            cx = float(p["center"]["x"])
+            cy = float(p["center"]["y"])
+            rel_x = (cx - site_bounds["minX"]) / width
+            rel_y = (cy - site_bounds["minY"]) / height
+            rot_val = p.get("rotation")
+            if isinstance(rot_val, dict):
+                ang_deg = float(rot_val.get("angle", 0.0))
+            elif isinstance(rot_val, (int, float)):
+                ang_deg = float(rot_val)
+            else:
+                ang_deg = float(p.get("angle", 0.0))
+            ang = math.radians(ang_deg)
+            cos_a = math.cos(ang)
+            sin_a = math.sin(ang)
+            area_ratio = float(p.get("area", 0.0)) / site_area
+            cat = p.get("category", "room")
+            is_core = 1.0 if cat == "core" else 0.0
+            is_room = 1.0 if cat == "room" else 0.0
+            is_special = 1.0 if cat == "special" else 0.0
+
+            if cores:
+                min_core_d = min(math.hypot(cx - c["center"]["x"], cy - c["center"]["y"]) for c in cores)
+                dist_core_norm = min_core_d / 12.0
+            else:
+                dist_core_norm = 0.0
+
+            poly = p.get("poly", [])
+            pw = float(p.get("minWidth", G.min_polygon_width(poly))) if poly else 3.0
+            pl = float(p.get("maxLength", math.sqrt(max(1.0, float(p.get("area", 9.0)))))) if poly else 3.0
+            aspect_ratio = min(5.0, pl / max(0.5, pw))
+
+            tokens.append([
+                rel_x, rel_y, cos_a, sin_a, area_ratio, is_core, is_room, is_special, dist_core_norm, aspect_ratio
+            ])
+        return tokens
+
     def _record_placement_decision(
         self,
         environment_index: int,
@@ -4913,6 +5000,22 @@ class ParallelTrainer:
         self._record_placement_log_prob(environment_index, sampled_log_prob.detach().cpu())
         pos_t = torch.tensor(positions, dtype=torch.float32) if positions is not None else None
         ang_t = torch.tensor(angles, dtype=torch.float32) if angles is not None else None
+
+        placed_tokens_tensor = None
+        macro_state_tensor = None
+        if 0 <= environment_index < len(self.environments):
+            env = self.environments[environment_index]
+            raw_tokens = self._extract_placed_tokens(env)
+            if raw_tokens:
+                placed_tokens_tensor = torch.tensor(raw_tokens, dtype=torch.float32)
+            site_area = max(1.0, float(env.site["exactArea"]))
+            raw_macro = [
+                env.filled_area / site_area,
+                len(env.placements) / 100.0,
+                len(self.dictionary) / 30.0,
+            ]
+            macro_state_tensor = torch.tensor(raw_macro, dtype=torch.float32)
+
         self.placement_decisions.append(
             PlacementPolicyDecision(
                 environment_index=environment_index,
@@ -4922,6 +5025,8 @@ class ParallelTrainer:
                 old_log_prob=float(sampled_log_prob.detach().cpu().item()),
                 positions=pos_t,
                 angles=ang_t,
+                placed_tokens=placed_tokens_tensor,
+                macro_state=macro_state_tensor,
             )
         )
 
@@ -4982,36 +5087,51 @@ class ParallelTrainer:
             floor_descriptors = [[0.0] * FLOOR_DESCRIPTOR_DIM]
         floor_tensor = torch.tensor(floor_descriptors, dtype=torch.float32, device=self.device)
         pooled_site = self.model.encode_sites(floor_tensor)
-        value_prediction = self.model.value(pooled_site)
-        v_pred_val = float(value_prediction.detach().cpu().item())
         target = torch.tensor(normalized_score, dtype=torch.float32, device=self.device)
 
         policy_loss_terms: list[torch.Tensor] = []
         entropy_terms: list[torch.Tensor] = []
+        value_preds: list[torch.Tensor] = []
+        decision_targets: list[float] = []
 
         if self.placement_decisions:
-            # 1. Compute GAE advantages per trajectory / environment using individual floor scores
+            # 1. Compute dynamic per-step GAE advantages and dynamic value predictions
             grouped_decisions: dict[int, list[PlacementPolicyDecision]] = {}
             for decision in self.placement_decisions:
                 grouped_decisions.setdefault(decision.environment_index, []).append(decision)
 
             decision_advantages: list[float] = []
+
             for env_idx, env_decisions in sorted(grouped_decisions.items()):
                 t_steps = len(env_decisions)
                 floor_target = floor_targets[env_idx] if env_idx < len(floor_targets) else normalized_score
+                env_v_preds: list[torch.Tensor] = []
+                env_v_vals: list[float] = []
+
+                for d in env_decisions:
+                    tok = d.placed_tokens.to(self.device) if d.placed_tokens is not None else None
+                    mac = d.macro_state.to(self.device) if d.macro_state is not None else None
+                    vp = self.model.value(pooled_site, tok, mac)
+                    env_v_preds.append(vp)
+                    env_v_vals.append(float(vp.detach().cpu().item()))
+
+                value_preds.extend(env_v_preds)
+
                 gae = 0.0
                 env_advs = [0.0] * t_steps
+                env_tgts = [0.0] * t_steps
                 for t in reversed(range(t_steps)):
                     step_reward = floor_target if t == t_steps - 1 else 0.0
-                    v_next = 0.0 if t == t_steps - 1 else v_pred_val
-                    delta = step_reward + gamma * v_next - v_pred_val
+                    v_next = 0.0 if t == t_steps - 1 else env_v_vals[t + 1]
+                    delta = step_reward + gamma * v_next - env_v_vals[t]
                     gae = delta + gamma * gae_lambda * gae
                     env_advs[t] = gae
+                    env_tgts[t] = env_v_vals[t] + gae
                 decision_advantages.extend(env_advs)
+                decision_targets.extend(env_tgts)
 
             adv_tensor = torch.tensor(decision_advantages, dtype=torch.float32, device=self.device)
-            # Batch advantage normalization across the parallel floor rollouts:
-            # Rewards actions from high-scoring floors and penalizes actions from low-scoring floors
+            # Batch advantage normalization across the parallel floor rollouts
             if len(adv_tensor) > 1 and float(adv_tensor.std().item()) > 1.0e-6:
                 norm_adv = (adv_tensor - adv_tensor.mean()) / (adv_tensor.std() + 1.0e-8)
             else:
@@ -5063,15 +5183,18 @@ class ParallelTrainer:
 
             actor_loss = torch.stack(policy_loss_terms).mean() if policy_loss_terms else torch.zeros((), dtype=torch.float32, device=self.device)
         elif self.placement_log_probs_by_environment:
+            v_pred_init = float(self.model.value(pooled_site).detach().cpu().item())
             trajectory_term = _mean_trajectory_log_probability(
                 self.placement_log_probs_by_environment
             )
-            actor_loss = -((normalized_score - v_pred_val) * trajectory_term) if trajectory_term is not None else torch.zeros((), dtype=torch.float32, device=self.device)
+            actor_loss = -((normalized_score - v_pred_init) * trajectory_term) if trajectory_term is not None else torch.zeros((), dtype=torch.float32, device=self.device)
         elif self.placement_log_probs:
-            actor_loss = -((normalized_score - v_pred_val) * torch.stack(self.placement_log_probs).sum())
+            v_pred_init = float(self.model.value(pooled_site).detach().cpu().item())
+            actor_loss = -((normalized_score - v_pred_init) * torch.stack(self.placement_log_probs).sum())
         else:
             actor_loss = torch.zeros((), dtype=torch.float32, device=self.device)
 
+        v_pred_init = float(self.model.value(pooled_site).detach().cpu().item())
         building_shape_ids = {
             id(log_probability)
             for log_probability in self.building_shape_log_probs
@@ -5084,18 +5207,25 @@ class ParallelTrainer:
         if floor_shape_log_probs:
             actor_loss = actor_loss - (
                 0.8
-                * (normalized_score - v_pred_val)
+                * (normalized_score - v_pred_init)
                 * torch.stack(floor_shape_log_probs).sum()
                 / max(1, len(self.environments))
             )
         if self.building_shape_log_probs:
             actor_loss = actor_loss - (
                 0.8
-                * (normalized_score - v_pred_val)
+                * (normalized_score - v_pred_init)
                 * torch.stack(self.building_shape_log_probs).sum()
             )
 
-        value_loss = F.smooth_l1_loss(value_prediction, target)
+        if value_preds and decision_targets:
+            v_pred_tensor = torch.stack(value_preds).reshape(-1)
+            v_target_tensor = torch.tensor(decision_targets, dtype=torch.float32, device=self.device).reshape(-1)
+            value_loss = F.smooth_l1_loss(v_pred_tensor, v_target_tensor)
+        else:
+            value_prediction = self.model.value(pooled_site).reshape(-1)
+            value_loss = F.smooth_l1_loss(value_prediction, target.reshape(-1))
+
         entropy = (
             torch.stack(entropy_terms).mean()
             if entropy_terms
@@ -5111,7 +5241,7 @@ class ParallelTrainer:
         self.last_value_loss = float(value_loss.detach().cpu().item())
         self.last_entropy = float(entropy.detach().cpu().item())
         self.last_gradient_norm = float(torch.as_tensor(gradient_norm).detach().cpu().item())
-        self.last_advantage = float(normalized_score - v_pred_val)
+        self.last_advantage = float(normalized_score - v_pred_init)
         self.baseline = 0.90 * self.baseline + 0.10 * normalized_score
 
     def _finish_episode(self) -> dict[str, Any]:
@@ -6290,7 +6420,7 @@ class ParallelTrainer:
 
 
 
-app = FastAPI(title="Module Lab v0.8.0")
+app = FastAPI(title="Module Lab v0.8.6-a")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -6508,6 +6638,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
 
 if __name__ == "__main__":
-    print(f"Module Lab v0.8.0 policy device: {select_device().type}")
+    print(f"Module Lab v0.8.6-a policy device: {select_device().type}")
     port = int(os.environ.get("PORT", "8000"))
     uvicorn.run(app, host="127.0.0.1", port=port)
