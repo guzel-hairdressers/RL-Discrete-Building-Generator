@@ -110,6 +110,56 @@ class ExactEnvelopeTests(unittest.TestCase):
             places=7,
         )
 
+    def test_needle_notch_removal_multi_edge_deep(self) -> None:
+        # 1-edge deep needle spike poking into (5, 0) -> (5, 5) -> (5.001, 0)
+        poly1 = [
+            {"x": 0.0, "y": 0.0},
+            {"x": 5.0, "y": 0.0},
+            {"x": 5.0, "y": 5.0},
+            {"x": 5.001, "y": 0.0},
+            {"x": 10.0, "y": 0.0},
+            {"x": 10.0, "y": 10.0},
+            {"x": 0.0, "y": 10.0},
+        ]
+        cleaned1 = G.remove_needle_notches(poly1, angle_tolerance_deg=1.0)
+        self.assertEqual(len(cleaned1), 4)
+
+        # 2-edge deep needle notch (5,0) -> (5,3) -> (5,6) -> (5.001,3) -> (5.001,0)
+        poly2 = [
+            {"x": 0.0, "y": 0.0},
+            {"x": 5.0, "y": 0.0},
+            {"x": 5.0, "y": 3.0},
+            {"x": 5.0, "y": 6.0},
+            {"x": 5.001, "y": 3.0},
+            {"x": 5.001, "y": 0.0},
+            {"x": 10.0, "y": 0.0},
+            {"x": 10.0, "y": 10.0},
+            {"x": 0.0, "y": 10.0},
+        ]
+        cleaned2 = G.remove_needle_notches(poly2, angle_tolerance_deg=1.0)
+        self.assertEqual(len(cleaned2), 4)
+
+    def test_opposing_slit_segments_reclassified_as_interior(self) -> None:
+        poly_left = [
+            {"x": 0.0, "y": 0.0},
+            {"x": 5.0, "y": 0.0},
+            {"x": 5.0, "y": 10.0},
+            {"x": 0.0, "y": 10.0},
+        ]
+        poly_right = [
+            {"x": 5.01, "y": 0.0},
+            {"x": 10.0, "y": 0.0},
+            {"x": 10.0, "y": 10.0},
+            {"x": 5.01, "y": 10.0},
+        ]
+        segs = G.exposed_wall_segments([poly_left, poly_right])
+        self.assertEqual(len(segs), 6)
+        # Verify the 10m slit segments are filtered out
+        for s in segs:
+            self.assertFalse(
+                abs(s["a"]["x"] - 5.0) < 0.05 and abs(s["b"]["x"] - 5.0) < 0.05 and s["length"] > 5.0
+            )
+
 
 class ProceduralGeometryTests(unittest.TestCase):
     def test_zero_degree_increment_is_a_supported_single_orientation(self) -> None:

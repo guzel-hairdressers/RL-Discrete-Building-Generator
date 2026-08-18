@@ -1483,7 +1483,147 @@ def exposed_wall_segments(polygons: Sequence[Sequence[dict]]) -> list[dict]:
                             "edgeIndex": edge_index,
                         }
                     )
+
+    # Filter out opposing segments in narrow slits/notches (< 0.06m apart, angle <= 1.0 deg)
+    # These represent internal sealed seams rather than exterior facade
+    if len(result) >= 2:
+        filtered = []
+        skip_indices = set()
+        cos_thresh = math.cos(math.radians(1.0))
+        for i in range(len(result)):
+            if i in skip_indices:
+                continue
+            s1 = result[i]
+            p1a, p1b = s1["a"], s1["b"]
+            dx1 = p1b["x"] - p1a["x"]
+            dy1 = p1b["y"] - p1a["y"]
+            l1 = s1["length"]
+            if l1 <= 1e-6:
+                continue
+            u1x = dx1 / l1
+            u1y = dy1 / l1
+
+            is_slit = False
+            for j in range(i + 1, len(result)):
+                if j in skip_indices:
+                    continue
+                s2 = result[j]
+                p2a, p2b = s2["a"], s2["b"]
+                dx2 = p2b["x"] - p2a["x"]
+                dy2 = p2b["y"] - p2a["y"]
+                l2 = s2["length"]
+                if l2 <= 1e-6:
+                    continue
+                u2x = dx2 / l2
+                u2y = dy2 / l2
+
+                dot = u1x * u2x + u1y * u2y
+                if dot <= -cos_thresh:
+                    dist_a = abs((p2a["x"] - p1a["x"]) * u1y - (p2a["y"] - p1a["y"]) * u1x)
+                    dist_b = abs((p2b["x"] - p1a["x"]) * u1y - (p2b["y"] - p1a["y"]) * u1x)
+                    if dist_a < 0.06 and dist_b < 0.06:
+                        proj_a = (p2a["x"] - p1a["x"]) * u1x + (p2a["y"] - p1a["y"]) * u1y
+                        proj_b = (p2b["x"] - p1a["x"]) * u1x + (p2b["y"] - p1a["y"]) * u1y
+                        min_proj = min(proj_a, proj_b)
+                        max_proj = max(proj_a, proj_b)
+                        overlap_len = min(l1, max_proj) - max(0.0, min_proj)
+                        if overlap_len > 0.05:
+                            skip_indices.add(i)
+                            skip_indices.add(j)
+                            is_slit = True
+                            break
+            if not is_slit:
+                filtered.append(s1)
+        result = filtered
+
     return result
+
+
+def remove_needle_notches(poly: list[dict], angle_tolerance_deg: float = 1.0) -> list[dict]:
+    """Iteratively remove 0/360-degree needle notches (spikes/slits folding back <= angle_tolerance_deg).
+
+    Re-evaluates remaining vertices after each notch point removal until all
+    multi-edge deep slits (1-3 edges deep) are completely collapsed.
+    """
+    if len(poly) <= 3:
+        return poly
+    cos_threshold = math.cos(math.radians(angle_tolerance_deg))
+    current = [dict(p) for p in poly]
+    changed = True
+    while changed and len(current) > 3:
+        changed = False
+        n = len(current)
+        for i in range(n):
+            p_prev = current[(i - 1) % n]
+            p_curr = current[i]
+            p_next = current[(i + 1) % n]
+
+            # Vector 1: p_curr -> p_prev
+            v1x = p_prev["x"] - p_curr["x"]
+            v1y = p_prev["y"] - p_curr["y"]
+            len1 = math.hypot(v1x, v1y)
+
+            # Vector 2: p_curr -> p_next
+            v2x = p_next["x"] - p_curr["x"]
+            v2y = p_next["y"] - p_curr["y"]
+            len2 = math.hypot(v2x, v2y)
+
+            if len1 < 1e-5 or len2 < 1e-5:
+                del current[i]
+                changed = True
+                break
+
+            dot = (v1x * v2x + v1y * v2y) / (len1 * len2)
+            if dot >= cos_threshold:
+                del current[i]
+                changed = True
+                break
+
+            # Check pair notch loop (p_curr and p_next form a hairpin turn)
+            if len(current) > 4 and len2 < 0.05:
+                p_next2 = current[(i + 2) % n]
+                vin_x = p_curr["x"] - p_prev["x"]
+                vin_y = p_curr["y"] - p_prev["y"]
+                vout_x = p_next2["x"] - p_next["x"]
+                vout_y = p_next2["y"] - p_next["y"]
+                len_in = math.hypot(vin_x, vin_y)
+                len_out = math.hypot(vout_x, vout_y)
+                if len_in > 1e-5 and len_out > 1e-5:
+                    dot_in_out = (vin_x * vout_x + vin_y * vout_y) / (len_in * len_out)
+                    if dot_in_out <= -cos_threshold:
+                        if (i + 1) % n > i:
+                            del current[(i + 1) % n]
+                            del current[i]
+                        else:
+                            del current[i]
+                            del current[0]
+                        changed = True
+                        break
+
+    # Collinear clean-up after notch removal
+    if len(current) > 3:
+        simplified = []
+        n = len(current)
+        for i in range(n):
+            p_prev = current[(i - 1) % n]
+            p_curr = current[i]
+            p_next = current[(i + 1) % n]
+            dx1 = p_curr["x"] - p_prev["x"]
+            dy1 = p_curr["y"] - p_prev["y"]
+            dx2 = p_next["x"] - p_curr["x"]
+            dy2 = p_next["y"] - p_curr["y"]
+            cross = dx1 * dy2 - dy1 * dx2
+            l1 = math.hypot(dx1, dy1)
+            l2 = math.hypot(dx2, dy2)
+            if l1 < 1e-4 or l2 < 1e-4:
+                continue
+            if abs(cross) / (l1 * l2) < 1e-3 and (dx1 * dx2 + dy1 * dy2) > 0:
+                continue
+            simplified.append(p_curr)
+        if len(simplified) >= 3:
+            current = simplified
+
+    return current
 
 
 def ray_intersect_segments(

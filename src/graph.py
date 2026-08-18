@@ -687,15 +687,18 @@ def _canonicalize_edge_for_node(node: dict, edge_idx: int) -> int:
 # ─────────────────────────────────────────────────────────
 
 def simplify_polygon(poly: list[dict]) -> list[dict]:
-    """Remove collinear or duplicate vertices from a polygon."""
+    """Remove 0/360-degree needle notches, collinear edges, and duplicate vertices from a polygon."""
     if len(poly) <= 3:
         return poly
+    cleaned = G.remove_needle_notches(poly, angle_tolerance_deg=1.0)
+    if len(cleaned) <= 3:
+        return cleaned
     simplified = []
-    n = len(poly)
+    n = len(cleaned)
     for i in range(n):
-        p_prev = poly[(i - 1) % n]
-        p_curr = poly[i]
-        p_next = poly[(i + 1) % n]
+        p_prev = cleaned[(i - 1) % n]
+        p_curr = cleaned[i]
+        p_next = cleaned[(i + 1) % n]
         
         # Calculate cross product to check for collinearity
         dx1 = p_curr["x"] - p_prev["x"]
@@ -708,15 +711,13 @@ def simplify_polygon(poly: list[dict]) -> list[dict]:
         len2 = math.hypot(dx2, dy2)
         
         if len1 < 1e-5 or len2 < 1e-5:
-            # Duplicate point, skip
             continue
             
-        # If cross product is near zero, points are collinear
-        if abs(cross) / (len1 * len2) < 1e-4:
+        if abs(cross) / (len1 * len2) < 1e-4 and (dx1 * dx2 + dy1 * dy2) > 0:
             continue
             
         simplified.append(p_curr)
-    return simplified
+    return simplified if len(simplified) >= 3 else cleaned
 
 def find_full_overlap_segment(poly_a: list[dict], poly_b: list[dict], pt: dict) -> tuple[tuple[dict, dict], tuple[dict, dict]] | None:
     """Find the full overlapping boundary segment between two polygons containing a contact point."""

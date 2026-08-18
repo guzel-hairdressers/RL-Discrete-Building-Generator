@@ -3653,7 +3653,56 @@ window.onerror = function(message, source, lineno, colno, error) {
       if (edge.length - cursor > 0.001) exposed.push(fragmentOnEdge(edge, cursor, edge.length));
     });
 
-    return { exposed, shared: [...sharedMap.values()] };
+    // Reclassify narrow opposing slit/notch fragments (< 0.06m, <= 1 deg) as interior shared walls
+    const filteredExposed = [];
+    const skipIndices = new Set();
+    const cosThreshold = Math.cos(1.0 * Math.PI / 180.0);
+    for (let i = 0; i < exposed.length; i += 1) {
+      if (skipIndices.has(i)) continue;
+      const s1 = exposed[i];
+      const dx1 = s1.b.x - s1.a.x;
+      const dy1 = s1.b.y - s1.a.y;
+      const l1 = Math.hypot(dx1, dy1);
+      if (l1 <= 1e-5) continue;
+      const u1x = dx1 / l1;
+      const u1y = dy1 / l1;
+
+      let isSlit = false;
+      for (let j = i + 1; j < exposed.length; j += 1) {
+        if (skipIndices.has(j)) continue;
+        const s2 = exposed[j];
+        const dx2 = s2.b.x - s2.a.x;
+        const dy2 = s2.b.y - s2.a.y;
+        const l2 = Math.hypot(dx2, dy2);
+        if (l2 <= 1e-5) continue;
+        const u2x = dx2 / l2;
+        const u2y = dy2 / l2;
+
+        const dot = u1x * u2x + u1y * u2y;
+        if (dot <= -cosThreshold) {
+          const distA = Math.abs((s2.a.x - s1.a.x) * u1y - (s2.a.y - s1.a.y) * u1x);
+          const distB = Math.abs((s2.b.x - s1.a.x) * u1y - (s2.b.y - s1.a.y) * u1x);
+          if (distA < 0.06 && distB < 0.06) {
+            const projA = (s2.a.x - s1.a.x) * u1x + (s2.a.y - s1.a.y) * u1y;
+            const projB = (s2.b.x - s1.a.x) * u1x + (s2.b.y - s1.a.y) * u1y;
+            const minProj = Math.min(projA, projB);
+            const maxProj = Math.max(projA, projB);
+            const overlapLen = Math.min(l1, maxProj) - Math.max(0, minProj);
+            if (overlapLen > 0.05) {
+              skipIndices.add(i);
+              skipIndices.add(j);
+              sharedMap.set(fragmentIdentity(s1), s1);
+              sharedMap.set(fragmentIdentity(s2), s2);
+              isSlit = true;
+              break;
+            }
+          }
+        }
+      }
+      if (!isSlit) filteredExposed.push(s1);
+    }
+
+    return { exposed: filteredExposed, shared: [...sharedMap.values()] };
   }
 
   function edgeOverlapInterval(edge, candidate) {
