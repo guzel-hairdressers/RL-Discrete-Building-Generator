@@ -2785,20 +2785,22 @@ class FloorEnvironment:
         return not violations, sorted(set(violations))
 
     def _deep_interior_room_metrics(self) -> tuple[int, float, float, float]:
-        """Compute count, area, ratio, and quadratic depth penalty score of habitable rooms based on hop distance from facade."""
+        """Compute count, area, ratio, and un-diluted depth penalty score of habitable rooms based on hop distance from facade."""
         habitable_rooms = [p for p in self.placements if p.get("category") in ("room", "special")]
         if not habitable_rooms:
             return 0, 0.0, 0.0, 0.0
             
+        polys = [p["poly"] for p in self.placements]
+        segs = G.exposed_wall_segments(polys)
+        
+        # A room is a Facade Room (Depth 0) if it has exposed exterior wall segments or touches site boundary
         facade_room_ids = set()
         for p in habitable_rooms:
             if float(p.get("outerExposure", 0.0)) >= 0.5:
                 facade_room_ids.add(p["id"])
                 
-        if not facade_room_ids:
-            polys = [p["poly"] for p in self.placements]
-            segs = G.exposed_wall_segments(polys)
-            for seg in segs:
+        for seg in segs:
+            if float(seg.get("length", 0.0)) >= 0.4:
                 poly_idx = seg.get("polygonIndex")
                 if poly_idx is not None and poly_idx < len(self.placements):
                     p = self.placements[poly_idx]
@@ -2807,7 +2809,8 @@ class FloorEnvironment:
                         
         if not facade_room_ids:
             total_area = sum(float(p.get("area", 0.0)) for p in habitable_rooms)
-            depth_score = sum(float(p.get("area", 0.0)) * 25.0 for p in habitable_rooms)
+            # All rooms are completely buried with no facade contact: assign max penalty to all
+            depth_score = sum(45.0 * max(0.5, float(p.get("area", 15.0)) / 15.0) for p in habitable_rooms)
             return len(habitable_rooms), total_area, 1.0, depth_score
 
         depth: dict[str, int] = {rid: 0 for rid in facade_room_ids}
@@ -2828,18 +2831,32 @@ class FloorEnvironment:
         total_rentable = sum(float(p.get("area", 0.0)) for p in habitable_rooms)
         deep_ratio = _safe_ratio(deep_area, total_rentable)
         
+        # Direct per-room progressive depth penalty:
+        # d=0 -> 0.0 (facade room, direct daylight)
+        # d=1 -> 1.5 (mild penalty for borrowed daylight)
+        # d=2 -> 8.0 (windowless room, clear defect)
+        # d=3 -> 18.0 (severely buried room)
+        # d=4 -> 30.0 (deep tomb)
+        # d>=5 -> 45.0 + 10.0*(d-5) (catastrophic interior void)
         depth_penalty_score = 0.0
         for p in habitable_rooms:
             d = depth.get(p["id"], 999)
-            if d >= 1:
-                # Quadratic progressive hop penalty:
-                # d=1 -> 1.0 (mild penalty for borrowed light)
-                # d=2 -> 4.0 (windowless room)
-                # d=3 -> 9.0 (heavily buried)
-                # d=4 -> 16.0 (deep tomb)
-                # d>=5 -> d^2 (disaster)
-                weight = float(min(d * d, 64))
-                depth_penalty_score += float(p.get("area", 0.0)) * weight
+            if d == 1:
+                base_rate = 1.5
+            elif d == 2:
+                base_rate = 8.0
+            elif d == 3:
+                base_rate = 18.0
+            elif d == 4:
+                base_rate = 30.0
+            elif d >= 5:
+                base_rate = 45.0 + 10.0 * min(d - 5, 5)
+            else:
+                base_rate = 0.0
+                
+            if base_rate > 0.0:
+                area_factor = max(0.5, float(p.get("area", 15.0)) / 15.0)
+                depth_penalty_score += base_rate * area_factor
                 
         return deep_count, deep_area, deep_ratio, depth_penalty_score
 
@@ -4733,20 +4750,22 @@ class ParallelTrainer:
         total_partial_len = math.fsum(float(item.get("totalPartialLength", 0.0)) for item in per_site)
         partial_connection_penalty = 0.04 * _safe_ratio(total_partial_len, perimeter)
 
-        # Deep interior daylight penalty with quadratic hop progression (worse for deeper cells):
-        # d=1 (mild borrowed light ~1-3 pts), d=2 (moderate ~10-20 pts), d>=3,4,5 (severe/catastrophic up to 50 pts)
+        # Deep interior daylight penalty (per-floor averaged, un-diluted by site area, capped at 50.0 pts):
+        # 1-hop room -> ~1.5 pts
+        # 2-hop room -> ~8.0 pts
+        # 3-hop room -> ~18.0 pts
+        # 4-hop room -> ~30.0 pts
+        # 5-hop room -> ~45.0 pts
         total_deep_rooms = sum(int(item.get("deepRoomCount", 0)) for item in per_site)
         avg_deep_rooms = total_deep_rooms / max(1, len(per_site))
         total_depth_score = math.fsum(float(item.get("depthPenaltyScore", 0.0)) for item in per_site)
-        avg_depth_score = total_depth_score / max(1, len(per_site))
+        avg_depth_score_per_floor = total_depth_score / max(1, len(per_site))
         
         deep_room_ratio = _safe_ratio(
             math.fsum(float(item.get("deepRoomArea", 0.0)) for item in per_site),
             rentable,
         )
-        rentable_per_floor = rentable / max(1, len(per_site))
-        normalized_depth_density = _safe_ratio(avg_depth_score, max(10.0, rentable_per_floor))
-        deep_interior_penalty = min(50.0, 15.0 * normalized_depth_density + 3.0 * avg_deep_rooms)
+        deep_interior_penalty = min(50.0, avg_depth_score_per_floor)
 
         # Narrow facade chasm penalty (opposing exterior walls < 3.0m apart)
         total_chasm_len = math.fsum(float(item.get("facadeChasmOccludedLength", 0.0)) for item in per_site)
