@@ -4732,25 +4732,22 @@ class ParallelTrainer:
         facade_chasm_ratio = _safe_ratio(total_chasm_len, perimeter)
         facade_chasm_penalty = min(30.0, 3.0 * avg_chasm_len)
 
-        raw_score = 100.0 * min(
-            1.0,
-            max(
-                0.0,
-                0.70 * scaled_fill
-                + 0.15 * scaled_rentable
-                + 0.10 * daylight
-                + 0.02 * reuse
-                + 0.02 * constructibility
-                + 0.01 * envelope_efficiency
-                - area_variance_penalty
-                - partial_connection_penalty
-                - (deep_interior_penalty / 100.0)
-                - (facade_chasm_penalty / 100.0),
-            ),
+        raw_score = 100.0 * max(
+            0.0,
+            1.05 * scaled_fill
+            + 0.15 * scaled_rentable
+            + 0.10 * daylight
+            + 0.02 * reuse
+            + 0.02 * constructibility
+            + 0.01 * envelope_efficiency
+            - area_variance_penalty
+            - partial_connection_penalty
+            - (deep_interior_penalty / 100.0)
+            - (facade_chasm_penalty / 100.0),
         )
         multiplier_used = self.topology_multiplier
         topology_penalty = min(50.0, 100.0 * multiplier_used * violation_rate)
-        score = min(raw_score - topology_penalty, 100.0)
+        score = raw_score - topology_penalty
         next_topology_multiplier = _clamp(
             self.topology_multiplier + 0.004 * (violation_rate - 0.02), 0.05, 0.15
         )
