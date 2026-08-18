@@ -4730,13 +4730,13 @@ class ParallelTrainer:
             math.fsum(float(item.get("deepRoomArea", 0.0)) for item in per_site),
             rentable,
         )
-        deep_interior_penalty = min(25.0, 18.0 * deep_room_ratio + 3.0 * avg_deep_rooms)
+        deep_interior_penalty = min(30.0, 20.0 * deep_room_ratio + 4.0 * avg_deep_rooms)
 
         # Narrow facade chasm penalty (opposing exterior walls < 3.0m apart)
         total_chasm_len = math.fsum(float(item.get("facadeChasmOccludedLength", 0.0)) for item in per_site)
         avg_chasm_len = total_chasm_len / max(1, len(per_site))
         facade_chasm_ratio = _safe_ratio(total_chasm_len, perimeter)
-        facade_chasm_penalty = min(25.0, 3.0 * avg_chasm_len)
+        facade_chasm_penalty = min(30.0, 3.0 * avg_chasm_len)
 
         raw_score = 100.0 * min(
             1.0,
