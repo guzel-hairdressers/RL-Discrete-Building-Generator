@@ -1,4 +1,4 @@
-"""Module Lab v0.8.6-a PyTorch training and WebSocket server.
+"""Module Lab v0.8.6-b PyTorch training and WebSocket server.
 
 Each WebSocket owns a completely independent :class:`ParallelTrainer`.  Within
 that trainer all floor environments share one policy and one optimizer.  Shape
@@ -107,6 +107,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "allowStop": True,
     "beamSearchWidth": 1,
     "recordTrajectories": False,
+    "bufferEpisodes": 1,
 }
 
 BOUNDARY_TYPES = {"lobed", "lshape", "ushape", "tshape", "convex", "rect", "free"}
@@ -3135,6 +3136,9 @@ class ParallelTrainer:
         self.last_frontier_reward = 0.0
         self.diversity_archive: deque[tuple[list[float], float]] = deque(maxlen=8)
         self.last_dpp_diversity = 0.0
+        self.rollout_buffer: list[dict[str, Any]] = []
+        self.rollout_buffer_episodes = 0
+        self.rollout_buffer_target_episodes = int(self.settings.get("bufferEpisodes", 2))
         self._reset_episode_reward_telemetry()
 
 
@@ -5094,155 +5098,150 @@ class ParallelTrainer:
         value_preds: list[torch.Tensor] = []
         decision_targets: list[float] = []
 
+        # 1. Compute dynamic GAE advantages and store transitions in rollout buffer
         if self.placement_decisions:
-            # 1. Compute dynamic per-step GAE advantages and dynamic value predictions
             grouped_decisions: dict[int, list[PlacementPolicyDecision]] = {}
             for decision in self.placement_decisions:
                 grouped_decisions.setdefault(decision.environment_index, []).append(decision)
 
-            decision_advantages: list[float] = []
-
             for env_idx, env_decisions in sorted(grouped_decisions.items()):
                 t_steps = len(env_decisions)
                 floor_target = floor_targets[env_idx] if env_idx < len(floor_targets) else normalized_score
-                env_v_preds: list[torch.Tensor] = []
                 env_v_vals: list[float] = []
 
                 for d in env_decisions:
                     tok = d.placed_tokens.to(self.device) if d.placed_tokens is not None else None
                     mac = d.macro_state.to(self.device) if d.macro_state is not None else None
                     vp = self.model.value(pooled_site, tok, mac)
-                    env_v_preds.append(vp)
                     env_v_vals.append(float(vp.detach().cpu().item()))
 
-                value_preds.extend(env_v_preds)
-
                 gae = 0.0
-                env_advs = [0.0] * t_steps
-                env_tgts = [0.0] * t_steps
                 for t in reversed(range(t_steps)):
                     step_reward = floor_target if t == t_steps - 1 else 0.0
                     v_next = 0.0 if t == t_steps - 1 else env_v_vals[t + 1]
                     delta = step_reward + gamma * v_next - env_v_vals[t]
                     gae = delta + gamma * gae_lambda * gae
-                    env_advs[t] = gae
-                    env_tgts[t] = env_v_vals[t] + gae
-                decision_advantages.extend(env_advs)
-                decision_targets.extend(env_tgts)
+                    d = env_decisions[t]
+                    self.rollout_buffer.append({
+                        "features": d.features,
+                        "positions": d.positions,
+                        "angles": d.angles,
+                        "action_index": d.action_index,
+                        "temperature": d.temperature,
+                        "old_log_prob": d.old_log_prob,
+                        "placed_tokens": d.placed_tokens,
+                        "macro_state": d.macro_state,
+                        "pooled_site": pooled_site.detach().cpu(),
+                        "advantage": gae,
+                        "target_value": env_v_vals[t] + gae,
+                    })
 
-            adv_tensor = torch.tensor(decision_advantages, dtype=torch.float32, device=self.device)
-            # Batch advantage normalization across the parallel floor rollouts
-            if len(adv_tensor) > 1 and float(adv_tensor.std().item()) > 1.0e-6:
-                norm_adv = (adv_tensor - adv_tensor.mean()) / (adv_tensor.std() + 1.0e-8)
-            else:
-                norm_adv = adv_tensor
-
-            # 2. PPO Clipped Surrogate Loss
-            for idx, decision in enumerate(self.placement_decisions):
-                features = decision.features.to(self.device)
-                positions = (
-                    decision.positions.to(self.device)
-                    if decision.positions is not None
-                    else None
-                )
-                angles = (
-                    decision.angles.to(self.device)
-                    if decision.angles is not None
-                    else None
-                )
-
-                group_logits = (
-                    torch.nan_to_num(
-                        self.model.placement_logits(features, positions, angles),
-                        nan=0.0,
-                        posinf=20.0,
-                        neginf=-20.0,
-                    ).clamp(-30.0, 30.0)
-                    / decision.temperature
-                )
-
-                count = int(features.shape[0])
-                group_log_probs = F.log_softmax(group_logits, dim=0)
-                selected_log_prob = group_log_probs[decision.action_index]
-                old_log_prob = torch.tensor(
-                    decision.old_log_prob, dtype=torch.float32, device=self.device
-                )
-
-                # Probability ratio r_t(theta)
-                ratio = torch.exp(selected_log_prob - old_log_prob)
-                adv = norm_adv[idx]
-                surr1 = ratio * adv
-                surr2 = torch.clamp(ratio, 1.0 - clip_eps, 1.0 + clip_eps) * adv
-                policy_loss_terms.append(-torch.min(surr1, surr2))
-
-                if count > 1:
-                    probabilities = group_log_probs.exp()
-                    entropy_terms.append(
-                        -(probabilities * group_log_probs).sum() / math.log(count)
-                    )
-
-            actor_loss = torch.stack(policy_loss_terms).mean() if policy_loss_terms else torch.zeros((), dtype=torch.float32, device=self.device)
-        elif self.placement_log_probs_by_environment:
-            v_pred_init = float(self.model.value(pooled_site).detach().cpu().item())
-            trajectory_term = _mean_trajectory_log_probability(
-                self.placement_log_probs_by_environment
-            )
-            actor_loss = -((normalized_score - v_pred_init) * trajectory_term) if trajectory_term is not None else torch.zeros((), dtype=torch.float32, device=self.device)
-        elif self.placement_log_probs:
-            v_pred_init = float(self.model.value(pooled_site).detach().cpu().item())
-            actor_loss = -((normalized_score - v_pred_init) * torch.stack(self.placement_log_probs).sum())
-        else:
-            actor_loss = torch.zeros((), dtype=torch.float32, device=self.device)
+        self.rollout_buffer_episodes += 1
 
         v_pred_init = float(self.model.value(pooled_site).detach().cpu().item())
-        building_shape_ids = {
-            id(log_probability)
-            for log_probability in self.building_shape_log_probs
-        }
-        floor_shape_log_probs = [
-            log_probability
-            for log_probability in self.shape_log_probs
-            if id(log_probability) not in building_shape_ids
-        ]
-        if floor_shape_log_probs:
-            actor_loss = actor_loss - (
-                0.8
-                * (normalized_score - v_pred_init)
-                * torch.stack(floor_shape_log_probs).sum()
-                / max(1, len(self.environments))
-            )
-        if self.building_shape_log_probs:
-            actor_loss = actor_loss - (
-                0.8
-                * (normalized_score - v_pred_init)
-                * torch.stack(self.building_shape_log_probs).sum()
-            )
-
-        if value_preds and decision_targets:
-            v_pred_tensor = torch.stack(value_preds).reshape(-1)
-            v_target_tensor = torch.tensor(decision_targets, dtype=torch.float32, device=self.device).reshape(-1)
-            value_loss = F.smooth_l1_loss(v_pred_tensor, v_target_tensor)
-        else:
-            value_prediction = self.model.value(pooled_site).reshape(-1)
-            value_loss = F.smooth_l1_loss(value_prediction, target.reshape(-1))
-
-        entropy = (
-            torch.stack(entropy_terms).mean()
-            if entropy_terms
-            else torch.zeros((), dtype=torch.float32, device=self.device)
-        )
-        loss = actor_loss + 0.5 * value_loss - 0.01 * entropy
-        self.optimizer.zero_grad(set_to_none=True)
-        loss.backward()
-        gradient_norm = nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
-        self.optimizer.step()
-        self.last_loss = float(loss.detach().cpu().item())
-        self.last_actor_loss = float(actor_loss.detach().cpu().item())
-        self.last_value_loss = float(value_loss.detach().cpu().item())
-        self.last_entropy = float(entropy.detach().cpu().item())
-        self.last_gradient_norm = float(torch.as_tensor(gradient_norm).detach().cpu().item())
         self.last_advantage = float(normalized_score - v_pred_init)
         self.baseline = 0.90 * self.baseline + 0.10 * normalized_score
+
+        # 2. Mini-Batch PPO optimization when buffer is ready
+        if self.rollout_buffer_episodes >= self.rollout_buffer_target_episodes and self.rollout_buffer:
+            all_advs = torch.tensor([item["advantage"] for item in self.rollout_buffer], dtype=torch.float32, device=self.device)
+            if len(all_advs) > 1 and float(all_advs.std().item()) > 1.0e-6:
+                norm_advs = (all_advs - all_advs.mean()) / (all_advs.std() + 1.0e-8)
+            else:
+                norm_advs = all_advs
+
+            batch_size = 64
+            for _epoch in range(2):
+                indices = torch.randperm(len(self.rollout_buffer)).tolist()
+                for start_idx in range(0, len(indices), batch_size):
+                    batch_idx = indices[start_idx : start_idx + batch_size]
+                    policy_loss_terms: list[torch.Tensor] = []
+                    entropy_terms: list[torch.Tensor] = []
+                    val_preds: list[torch.Tensor] = []
+                    val_targets: list[float] = []
+
+                    for idx in batch_idx:
+                        item = self.rollout_buffer[idx]
+                        features = item["features"].to(self.device)
+                        positions = item["positions"].to(self.device) if item["positions"] is not None else None
+                        angles = item["angles"].to(self.device) if item["angles"] is not None else None
+                        pooled = item["pooled_site"].to(self.device)
+                        tok = item["placed_tokens"].to(self.device) if item["placed_tokens"] is not None else None
+                        mac = item["macro_state"].to(self.device) if item["macro_state"] is not None else None
+
+                        group_logits = (
+                            torch.nan_to_num(
+                                self.model.placement_logits(features, positions, angles),
+                                nan=0.0,
+                                posinf=20.0,
+                                neginf=-20.0,
+                            ).clamp(-30.0, 30.0)
+                            / item["temperature"]
+                        )
+                        count = int(features.shape[0])
+                        group_log_probs = F.log_softmax(group_logits, dim=0)
+                        selected_log_prob = group_log_probs[item["action_index"]]
+                        old_log_prob = torch.tensor(item["old_log_prob"], dtype=torch.float32, device=self.device)
+
+                        ratio = torch.exp(selected_log_prob - old_log_prob)
+                        adv = norm_advs[idx]
+                        surr1 = ratio * adv
+                        surr2 = torch.clamp(ratio, 1.0 - clip_eps, 1.0 + clip_eps) * adv
+                        policy_loss_terms.append(-torch.min(surr1, surr2))
+
+                        if count > 1:
+                            probs = group_log_probs.exp()
+                            entropy_terms.append(-(probs * group_log_probs).sum() / math.log(count))
+
+                        vp = self.model.value(pooled, tok, mac)
+                        val_preds.append(vp.reshape(-1))
+                        val_targets.append(item["target_value"])
+
+                    actor_loss = torch.stack(policy_loss_terms).mean() if policy_loss_terms else torch.zeros((), dtype=torch.float32, device=self.device)
+
+                    if _epoch == 0 and start_idx == 0:
+                        building_shape_ids = {
+                            id(log_probability)
+                            for log_probability in self.building_shape_log_probs
+                        }
+                        floor_shape_log_probs = [
+                            log_probability
+                            for log_probability in self.shape_log_probs
+                            if id(log_probability) not in building_shape_ids
+                        ]
+                        if floor_shape_log_probs:
+                            actor_loss = actor_loss - (
+                                0.8
+                                * (normalized_score - v_pred_init)
+                                * torch.stack(floor_shape_log_probs).sum()
+                                / max(1, len(self.environments))
+                            )
+                        if self.building_shape_log_probs:
+                            actor_loss = actor_loss - (
+                                0.8
+                                * (normalized_score - v_pred_init)
+                                * torch.stack(self.building_shape_log_probs).sum()
+                            )
+
+                    v_pred_tensor = torch.cat(val_preds) if val_preds else torch.zeros(1, device=self.device)
+                    v_target_tensor = torch.tensor(val_targets, dtype=torch.float32, device=self.device)
+                    value_loss = F.smooth_l1_loss(v_pred_tensor, v_target_tensor)
+                    entropy = torch.stack(entropy_terms).mean() if entropy_terms else torch.zeros((), dtype=torch.float32, device=self.device)
+
+                    loss = actor_loss + 0.5 * value_loss - 0.01 * entropy
+                    self.optimizer.zero_grad(set_to_none=True)
+                    loss.backward()
+                    gradient_norm = nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
+                    self.optimizer.step()
+
+                    self.last_loss = float(loss.detach().cpu().item())
+                    self.last_actor_loss = float(actor_loss.detach().cpu().item())
+                    self.last_value_loss = float(value_loss.detach().cpu().item())
+                    self.last_entropy = float(entropy.detach().cpu().item())
+                    self.last_gradient_norm = float(torch.as_tensor(gradient_norm).detach().cpu().item())
+
+            self.rollout_buffer.clear()
+            self.rollout_buffer_episodes = 0
 
     def _finish_episode(self) -> dict[str, Any]:
         episode_start_time = getattr(self, "episode_start_time", time.perf_counter())
@@ -6420,7 +6419,7 @@ class ParallelTrainer:
 
 
 
-app = FastAPI(title="Module Lab v0.8.6-a")
+app = FastAPI(title="Module Lab v0.8.6-b")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -6638,6 +6637,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
 
 if __name__ == "__main__":
-    print(f"Module Lab v0.8.6-a policy device: {select_device().type}")
+    print(f"Module Lab v0.8.6-b policy device: {select_device().type}")
     port = int(os.environ.get("PORT", "8000"))
     uvicorn.run(app, host="127.0.0.1", port=port)
