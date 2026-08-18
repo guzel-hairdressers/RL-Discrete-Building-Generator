@@ -198,7 +198,9 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     merged = dict(current)
     merged.update(patch)
     if "maxEdges" in merged:
-        del merged["maxEdges"]
+        merged["maxEdges"] = int(
+            _in_range(_integer(merged["maxEdges"], "maxEdges"), 3, 8, "maxEdges")
+        )
 
     boundary_type = merged["boundaryType"]
     if not isinstance(boundary_type, str) or boundary_type not in BOUNDARY_TYPES:
@@ -2507,7 +2509,11 @@ class FloorEnvironment:
             len(frontier) if placing_first else len(successful_edges)
         )
         special_candidates = []
-        if len(self.placements) > 0 and bool(settings.get("allowStop", False)):
+        if (
+            not placing_first
+            and len(self.placements) >= 2
+            and bool(settings.get("allowStop", False))
+        ):
             special_candidates.append(
                 PlacementCandidate(
                     module={"id": "stop", "category": "special", "area": 0.0},
@@ -2520,12 +2526,7 @@ class FloorEnvironment:
                     features=[0.0] * 20 + [1.0, 0.0],
                 )
             )
-        geometric_candidate_count = len(core_candidates) + len(room_candidates)
-        create_threshold = max(4, int(limit) // 2)
-        if (
-            len(self.dictionary) < int(settings.get("dictCap", 10))
-            and geometric_candidate_count < create_threshold
-        ):
+        if (not placing_first or len(self.dictionary) == 0) and len(self.dictionary) < int(settings.get("dictCap", 10)):
             special_candidates.append(
                 PlacementCandidate(
                     module={"id": "create_new", "category": "special", "area": 0.0},
@@ -3644,16 +3645,16 @@ class ParallelTrainer:
             any(not env.placements for env in environments)
             and not bool(settings.get("singleFloor"))
         )
-        triangle_core_feasible = (
-            float(settings["maxEdge"]) ** 2 * math.sqrt(3.0) * 0.25 + 1.0e-8 >= 24.0
+        triangle_feasible = (
+            float(settings.get("maxEdge", 9.0)) ** 2 * math.sqrt(3.0) * 0.25 + 1.0e-8 >= 24.0
         )
-        edge_count_mask = torch.tensor(
-            [
-                1.0 if not is_step0 or triangle_core_feasible else 0.0,
-                1.0,
-            ],
-            device=self.device,
-        )
+        max_edges = int(settings.get("maxEdges", 8))
+        if max_edges <= 3:
+            edge_count_mask = torch.tensor([1.0, 0.0], device=self.device)
+        elif is_step0 and not triangle_feasible:
+            edge_count_mask = torch.tensor([0.0, 1.0], device=self.device)
+        else:
+            edge_count_mask = torch.tensor([1.0, 1.0], device=self.device)
         masked_num_edges_logits = torch.where(
             edge_count_mask > 0,
             num_edges_logits,
@@ -3665,11 +3666,7 @@ class ParallelTrainer:
             + epsilon * (edge_count_mask / edge_count_mask.sum())
         )
         num_edges_dist = torch.distributions.Categorical(probs=num_edges_behavior)
-        num_edges_action = num_edges_dist.sample()
-        k = int(num_edges_action.item()) + 3  # 3 (triangle) or 4 (quad)
-        num_edges_log_prob = num_edges_dist.log_prob(num_edges_action)
-        trace_log_probs = [num_edges_log_prob]
-        
+
         min_edge = float(settings.get("minEdge", 1.0))
         max_edge = float(settings.get("maxEdge", 9.0))
 
@@ -3691,39 +3688,39 @@ class ParallelTrainer:
             )
         if edge_valid_mask.sum() == 0:
             edge_valid_mask[0] = 1.0
-        
-        edge_length_logits = parameter_logits[1:k]
-        edge_length_indices = []
-        edge_length_log_probs = []
-
-        for logit in edge_length_logits:
-            masked_logits = torch.where(edge_valid_mask > 0, logit, torch.tensor(-1.0e9, device=self.device))
-            probs = torch.softmax(masked_logits, dim=0)
-            behavior_probs = (1.0 - epsilon) * probs + epsilon * (edge_valid_mask / edge_valid_mask.sum())
-            dist = torch.distributions.Categorical(probs=behavior_probs)
-            action = dist.sample()
-            edge_length_indices.append(int(action.item()))
-            action_log_prob = dist.log_prob(action)
-            edge_length_log_probs.append(action_log_prob)
-            trace_log_probs.append(action_log_prob)
-
-        angle_logits = parameter_logits[4 : 4 + (k - 2)]
-        angle_indices = []
-        angle_log_probs = []
-
-        for logit in angle_logits:
-            probs = torch.softmax(logit, dim=0)
-            behavior_probs = (1.0 - epsilon) * probs + epsilon * torch.full_like(probs, 1.0 / len(G.ANGLE_PALETTE))
-            dist = torch.distributions.Categorical(probs=behavior_probs)
-            action = dist.sample()
-            angle_indices.append(int(action.item()))
-            action_log_prob = dist.log_prob(action)
-            angle_log_probs.append(action_log_prob)
-            trace_log_probs.append(action_log_prob)
 
         module = None
         total_log_prob = torch.tensor(0.0, device=self.device)
+        k = 4 if max_edges >= 4 else 3
+
         for attempt in range(8):
+            # Resample k on each attempt
+            num_edges_action = num_edges_dist.sample()
+            k = int(num_edges_action.item()) + 3  # 3 (triangle) or 4 (quad)
+            num_edges_log_prob = torch.log_softmax(num_edges_logits, dim=0)[num_edges_action]
+            trace_log_probs = [num_edges_log_prob]
+
+            edge_length_logits = parameter_logits[1:k]
+            edge_length_indices = []
+            for logit in edge_length_logits:
+                masked_logits = torch.where(edge_valid_mask > 0, logit, torch.tensor(-1.0e9, device=self.device))
+                probs = torch.softmax(masked_logits, dim=0)
+                behavior_probs = (1.0 - epsilon) * probs + epsilon * (edge_valid_mask / edge_valid_mask.sum())
+                dist = torch.distributions.Categorical(probs=behavior_probs)
+                action = dist.sample()
+                edge_length_indices.append(int(action.item()))
+                trace_log_probs.append(dist.log_prob(action))
+
+            angle_logits = parameter_logits[4 : 4 + (k - 2)]
+            angle_indices = []
+            for logit in angle_logits:
+                probs = torch.softmax(logit, dim=0)
+                behavior_probs = (1.0 - epsilon) * probs + epsilon * torch.full_like(probs, 1.0 / len(G.ANGLE_PALETTE))
+                dist = torch.distributions.Categorical(probs=behavior_probs)
+                action = dist.sample()
+                angle_indices.append(int(action.item()))
+                trace_log_probs.append(dist.log_prob(action))
+
             try:
                 candidate_module = G.synthesize_custom_module(
                     settings,
@@ -3733,63 +3730,13 @@ class ParallelTrainer:
                     angle_indices,
                     f"s{slot_index}",
                 )
-                if is_step0 and float(candidate_module["area"]) + 1.0e-8 < 24.0 and attempt < 7:
-                    # Resample edge lengths and angles to guarantee area >= 24m2 for step 0 core
-                    edge_length_indices = []
-                    edge_length_log_probs = []
-                    for logit in edge_length_logits:
-                        masked_logits = torch.where(edge_valid_mask > 0, logit, torch.tensor(-1.0e9, device=self.device))
-                        probs = torch.softmax(masked_logits, dim=0)
-                        behavior_probs = (1.0 - epsilon) * probs + epsilon * (edge_valid_mask / edge_valid_mask.sum())
-                        dist = torch.distributions.Categorical(probs=behavior_probs)
-                        action = dist.sample()
-                        edge_length_indices.append(int(action.item()))
-                        action_log_prob = dist.log_prob(action)
-                        edge_length_log_probs.append(action_log_prob)
-                        trace_log_probs.append(action_log_prob)
-                    angle_indices = []
-                    angle_log_probs = []
-                    for logit in angle_logits:
-                        probs = torch.softmax(logit, dim=0)
-                        behavior_probs = (1.0 - epsilon) * probs + epsilon * torch.full_like(probs, 1.0 / len(G.ANGLE_PALETTE))
-                        dist = torch.distributions.Categorical(probs=behavior_probs)
-                        action = dist.sample()
-                        angle_indices.append(int(action.item()))
-                        action_log_prob = dist.log_prob(action)
-                        angle_log_probs.append(action_log_prob)
-                        trace_log_probs.append(action_log_prob)
+                if is_step0 and float(candidate_module["area"]) + 1.0e-8 < 24.0:
                     continue
 
                 module = candidate_module
                 total_log_prob = torch.stack(trace_log_probs).sum()
                 break
             except ValueError:
-                # Resample edge lengths and angles if combination is geometrically invalid
-                if attempt >= 7:
-                    break
-                edge_length_indices = []
-                edge_length_log_probs = []
-                for logit in edge_length_logits:
-                    masked_logits = torch.where(edge_valid_mask > 0, logit, torch.tensor(-1.0e9, device=self.device))
-                    probs = torch.softmax(masked_logits, dim=0)
-                    behavior_probs = (1.0 - epsilon) * probs + epsilon * (edge_valid_mask / edge_valid_mask.sum())
-                    dist = torch.distributions.Categorical(probs=behavior_probs)
-                    action = dist.sample()
-                    edge_length_indices.append(int(action.item()))
-                    action_log_prob = dist.log_prob(action)
-                    edge_length_log_probs.append(action_log_prob)
-                    trace_log_probs.append(action_log_prob)
-                angle_indices = []
-                angle_log_probs = []
-                for logit in angle_logits:
-                    probs = torch.softmax(logit, dim=0)
-                    behavior_probs = (1.0 - epsilon) * probs + epsilon * torch.full_like(probs, 1.0 / len(G.ANGLE_PALETTE))
-                    dist = torch.distributions.Categorical(probs=behavior_probs)
-                    action = dist.sample()
-                    angle_indices.append(int(action.item()))
-                    action_log_prob = dist.log_prob(action)
-                    angle_log_probs.append(action_log_prob)
-                    trace_log_probs.append(action_log_prob)
                 continue
 
         if module is None or (is_step0 and float(module["area"]) + 1.0e-8 < 24.0):
@@ -3797,7 +3744,7 @@ class ParallelTrainer:
             if not large_edge_indices:
                 large_edge_indices = [0]
             e0 = large_edge_indices[-1] if is_step0 else large_edge_indices[0]
-            fallback_k = k
+            fallback_k = 3 if max_edges <= 3 else k
             fallback_angle = 60.0 if fallback_k == 3 else 90.0
             ang0 = G.ANGLE_PALETTE.index(fallback_angle) if fallback_angle in G.ANGLE_PALETTE else 0
             try:
@@ -3830,13 +3777,13 @@ class ParallelTrainer:
                     poly=poly,
                     family="custom-policy",
                     edge_range_compatible=True,
-                    source_parameters={"generator": "custom-fallback"},
+                    source_parameters={"generator": "custom-fallback", "numEdges": fallback_k},
                 )
             total_log_prob = torch.stack(trace_log_probs).sum()
 
         if is_step0 and float(module["area"]) + 1.0e-8 < 24.0:
-            maximum_edge = float(settings["maxEdge"])
-            if k == 3:
+            maximum_edge = float(settings.get("maxEdge", 9.0))
+            if max_edges <= 3 or k == 3:
                 height = maximum_edge * math.sqrt(3.0) * 0.5
                 poly = [
                     {"x": 0.0, "y": 0.0},
@@ -3844,7 +3791,7 @@ class ParallelTrainer:
                     {"x": maximum_edge * 0.5, "y": height},
                 ]
             else:
-                minimum_edge = float(settings["minEdge"])
+                minimum_edge = float(settings.get("minEdge", 3.0))
                 height = max(minimum_edge, 24.0 / maximum_edge)
                 poly = [
                     {"x": 0.0, "y": 0.0},
@@ -3859,7 +3806,7 @@ class ParallelTrainer:
                 poly=poly,
                 family="custom-policy",
                 edge_range_compatible=True,
-                source_parameters={"generator": "guaranteed-core-fallback"},
+                source_parameters={"generator": "guaranteed-core-fallback", "numEdges": 3 if (max_edges <= 3 or k == 3) else 4},
             )
             
         if force_core:
@@ -4772,6 +4719,10 @@ class ParallelTrainer:
         avg_chasm_len = total_chasm_len / max(1, len(per_site))
         facade_chasm_ratio = _safe_ratio(total_chasm_len, perimeter)
         facade_chasm_penalty = min(30.0, 3.0 * avg_chasm_len)
+        # Smooth continuous underfill penalty for premature stopping with too few shapes:
+        # (35.0 pts max deduction for near-empty floors, smoothly ramping to 0.0 pts at fillRatio >= 0.40)
+        underfill_deficit = max(0.0, 1.0 - (fill_ratio / 0.40))
+        underfill_penalty = 35.0 * (underfill_deficit ** 2)
 
         raw_score = 100.0 * max(
             0.0,
@@ -4784,7 +4735,8 @@ class ParallelTrainer:
             - area_variance_penalty
             - partial_connection_penalty
             - (deep_interior_penalty / 100.0)
-            - (facade_chasm_penalty / 100.0),
+            - (facade_chasm_penalty / 100.0)
+            - (underfill_penalty / 100.0),
         )
         multiplier_used = self.topology_multiplier
         topology_penalty = min(50.0, 100.0 * multiplier_used * violation_rate)
@@ -4832,6 +4784,7 @@ class ParallelTrainer:
             "deepInteriorPenalty": deep_interior_penalty,
             "facadeChasmRatio": facade_chasm_ratio,
             "facadeChasmPenalty": facade_chasm_penalty,
+            "underfillPenalty": underfill_penalty,
             "internalExposedPenalty": internal_exposed_penalty * 100.0,
             "partialConnectionPenalty": partial_connection_penalty * 100.0,
             "score": score,

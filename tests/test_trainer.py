@@ -350,6 +350,7 @@ class ParallelTrainerTests(unittest.TestCase):
         self.assertEqual(second["metrics"]["moduleCount"], 2)
 
     def test_three_edge_cap_and_zero_increment_remain_connectable(self) -> None:
+        torch.manual_seed(1881)
         trainer = server.ParallelTrainer()
         trainer.update_settings(
             {
