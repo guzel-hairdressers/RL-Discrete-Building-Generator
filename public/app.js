@@ -43,7 +43,8 @@ window.onerror = function(message, source, lineno, colno, error) {
     'angleStep',
     'coreSpacing',
     'travelLimit',
-    'maxRoomHops'
+    'maxRoomHops',
+    'allowStop'
   ]);
 
   const MAX_RETAINED_SCORE_HISTORY = 10000;

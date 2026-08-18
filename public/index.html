@@ -312,6 +312,12 @@
             <span class="switch-track" aria-hidden="true"></span>
           </label>
 
+          <label class="switch-field" for="allowStop">
+            <span><strong>Allow early stop</strong><small>Let policy finish when floorplan is optimal</small></span>
+            <input id="allowStop" name="allowStop" type="checkbox" data-setting checked>
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+
           <label class="switch-field" for="autoChangeSites">
             <span><strong>Auto-change sites</strong><small>Regenerate new site boundary on episode end</small></span>
             <input id="autoChangeSites" name="autoChangeSites" type="checkbox" checked>
@@ -490,6 +496,6 @@
 
   <input type="file" id="weightFileInput" accept=".pt" style="display: none;">
 
-  <script src="app.js?v=1.0.4"></script>
+  <script src="app.js?v=1.0.5"></script>
 </body>
 </html>

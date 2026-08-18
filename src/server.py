@@ -104,7 +104,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "maxRoomHops": 3,
     "seed": 123,
     "allowCorridors": False,
-    "allowStop": False,
+    "allowStop": True,
     "beamSearchWidth": 1,
     "recordTrajectories": False,
 }

@@ -59,6 +59,7 @@ class TestDynamicCoresAndHops(unittest.TestCase):
         settings["parallelEnvironments"] = 4
         settings["maxModules"] = 180
         settings["maxRoomHops"] = 5
+        settings["allowStop"] = False
 
         trainer = ParallelTrainer(settings)
         trainer.new_site()
