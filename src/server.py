@@ -4956,10 +4956,9 @@ class ParallelTrainer:
                 decision_advantages.extend(env_advs)
 
             adv_tensor = torch.tensor(decision_advantages, dtype=torch.float32, device=self.device)
-            if len(adv_tensor) > 1 and float(adv_tensor.std().item()) > 1.0e-6:
-                norm_adv = (adv_tensor - adv_tensor.mean()) / (adv_tensor.std() + 1.0e-8)
-            else:
-                norm_adv = adv_tensor - adv_tensor.mean()
+            # Preserve cross-episode advantage sign & magnitude (R - V(s)) rather than
+            # zero-centering within a single episode, which destroys inter-episode learning.
+            norm_adv = adv_tensor
 
             # 2. PPO Clipped Surrogate Loss
             for idx, decision in enumerate(self.placement_decisions):
