@@ -126,6 +126,77 @@ const DATA = {"buildings":[{"vertices":[[-37.3595694394046,99.27087512524466,0.0
 
 // --- Scene Setup ---
 const scene = new THREE.Scene();
+window.scene = scene;
+window.THREE = THREE;
+
+// Global Optimizer Placements Group
+const optimizerGroup = new THREE.Group();
+optimizerGroup.name = 'optimizerGroup';
+scene.add(optimizerGroup);
+window.optimizerGroup = optimizerGroup;
+
+window.addEventListener('message', (event) => {
+  if (!event.data || event.data.type !== 'optimizer_placements') return;
+  const { placements, boundaries } = event.data;
+  while (optimizerGroup.children.length > 0) {
+    const child = optimizerGroup.children.pop();
+    if (child.geometry) child.geometry.dispose();
+  }
+  if (!Array.isArray(placements) || placements.length === 0) return;
+
+  const floorHeight = 3.5;
+  const matCore = new THREE.MeshStandardMaterial({ color: 0xdc745d, roughness: 0.45, metalness: 0.1 });
+  const matRoom = new THREE.MeshStandardMaterial({ color: 0xa9c5ae, roughness: 0.45, metalness: 0.1 });
+  const matSpecial = new THREE.MeshStandardMaterial({ color: 0x6e9c89, roughness: 0.45, metalness: 0.1 });
+  const matCorridor = new THREE.MeshStandardMaterial({ color: 0xe1ba57, roughness: 0.45, metalness: 0.1 });
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 1.5 });
+
+  placements.forEach((placement) => {
+    const floorIdx = Number(placement.instanceIdx ?? placement.floorIndex ?? 0);
+    const poly = placement.poly || placement.polygon || placement.mergedPolygon || placement.coords;
+    if (!Array.isArray(poly) || poly.length < 3) return;
+
+    const floorBoundary = (Array.isArray(boundaries) && (boundaries.find((b) => Number(b.instanceIdx) === floorIdx) || boundaries[floorIdx])) || { offset: { x: 0, y: 0 }, originOffset: { x: 0, y: 0 } };
+    const dx = Number(floorBoundary?.offset?.x || 0);
+    const dy = Number(floorBoundary?.offset?.y || 0);
+    const ox = Number(floorBoundary?.originOffset?.x || 0);
+    const oy = Number(floorBoundary?.originOffset?.y || 0);
+
+    const shape = new THREE.Shape();
+    poly.forEach((p, idx) => {
+      const px = Number(p.x || p[0] || 0);
+      const py = Number(p.y || p[1] || 0);
+      const localX = px - dx;
+      const localY = py - dy;
+      const x3d = localX + ox;
+      const z3d = -(localY + oy);
+      if (idx === 0) shape.moveTo(x3d, z3d);
+      else shape.lineTo(x3d, z3d);
+    });
+
+    const geom = new THREE.ExtrudeGeometry(shape, {
+      depth: floorHeight - 0.15,
+      bevelEnabled: true,
+      bevelSize: 0.05,
+      bevelThickness: 0.05,
+    });
+    geom.rotateX(-Math.PI / 2);
+    geom.translate(0, floorIdx * floorHeight + 0.2, 0);
+
+    const cat = placement.category || (placement.module ? placement.module.category : 'room');
+    const mat = cat === 'core' ? matCore : cat === 'special' ? matSpecial : cat === 'corridor' ? matCorridor : matRoom;
+
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    const edges = new THREE.EdgesGeometry(geom, 25);
+    const line = new THREE.LineSegments(edges, edgeMat);
+    mesh.add(line);
+
+    optimizerGroup.add(mesh);
+  });
+});
 scene.background = new THREE.Color(0xffffff); // Pure 100% white background
 
 const aspect = window.innerWidth / window.innerHeight;

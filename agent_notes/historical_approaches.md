@@ -8,6 +8,14 @@ It explicitly records **what was achieved** by successful approaches and **which
 
 ## 1. Successful Implementation Releases
 
+### `v0.9.0-alpha` — Real Urban OSM Context Integration & Policy-Based Core Placements
+* **Key Achievements**:
+  * **Real Urban OSM Context Integration**: Harvested 1,547 real-world OpenStreetMap urban parcels across 8 global cities (NYC, London, Tokyo, Singapore, Barcelona, Chicago, Paris, and Hong Kong) with neighbor building heights and road meshes from Context Generator.
+  * **Split-Screen 3D Urban Context Viewer**: 50/50 stage split featuring Three.js WebGL rendering of real urban context buildings with soft shadows, axonometric/perspective cameras, glassmorphic site cards, and real-time rising 3D module extrusions.
+  * **Policy-Based Core Placements**: Unified multi-floor vertical circulation core placement into the spatial PyTorch Actor–Critic policy. The policy network directly evaluates candidate core stack spatial positions \((x, y)\), angles \(\theta\), and composite features, backpropagating building-level GAE returns into the neural policy.
+  * **Batch Multi-Floor Training (`batchSize = 9`)**: Default 9 parallel stories with 100% exact vertical shaft alignment and 2-episode rollout buffer for stable PPO convergence.
+  * **170 Unit Tests Passing ($100\%$)**.
+
 ### `v0.8.6` — Minimum $45^\circ$ Exterior Clearance, Deep Daylight & Facade Chasm Penalties
 * **Key Achievements**:
   * **Minimum $45^\circ$ Exterior Crevice Filter**: Added vector dot-product crevice gating in `_validate_edge_alignment`. Rejects any candidate placement where unshared exterior facade walls meeting at a junction vertex have an opening angle $\theta \in (0.5^\circ, 45.0^\circ)$, eliminating acute needle slits and razor-edge crevices while allowing flush walls and clean setbacks.

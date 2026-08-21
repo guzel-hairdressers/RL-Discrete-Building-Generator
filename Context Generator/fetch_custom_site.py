@@ -173,16 +173,18 @@ def fetch_custom_site(lat: float, lon: float, custom_name: str = "Custom Site", 
         custom_name = "Custom Location"
 
     OVERPASS_SERVERS = [
+        "https://z.overpass-api.de/api/interpreter",
+        "https://lz4.overpass-api.de/api/interpreter",
         "https://overpass-api.de/api/interpreter",
         "https://overpass.kumi.systems/api/interpreter",
-        "https://overpass.nchc.org.tw/api/interpreter",
         "https://overpass.private.coffee/api/interpreter",
+        "https://overpass.nchc.org.tw/api/interpreter",
         "https://overpass.osm.ch/api/interpreter",
         "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
     ]
 
     query = f"""
-    [out:json][timeout:15];
+    [out:json][timeout:25];
     (
       way["building"](around:140, {lat}, {lon});
       relation["building"](around:140, {lat}, {lon});
@@ -203,7 +205,7 @@ def fetch_custom_site(lat: float, lon: float, custom_name: str = "Custom Site", 
 
     def _query_mirror(server_url):
         try:
-            resp = requests.post(server_url, data={'data': query}, headers={'User-Agent': 'BuildingContextGenerator/1.0', 'Accept-Language': 'en-US,en;q=0.9'}, timeout=(3, 10))
+            resp = requests.post(server_url, data={'data': query}, headers={'User-Agent': 'BuildingContextGenerator/1.0', 'Accept-Language': 'en-US,en;q=0.9'}, timeout=(4, 15))
             if resp.status_code == 200:
                 data = resp.json()
                 if "elements" in data and len(data["elements"]) > 0:
@@ -211,7 +213,7 @@ def fetch_custom_site(lat: float, lon: float, custom_name: str = "Custom Site", 
         except Exception:
             pass
         try:
-            resp = requests.get(server_url, params={'data': query}, headers={'User-Agent': 'BuildingContextGenerator/1.0', 'Accept-Language': 'en-US,en;q=0.9'}, timeout=(3, 10))
+            resp = requests.get(server_url, params={'data': query}, headers={'User-Agent': 'BuildingContextGenerator/1.0', 'Accept-Language': 'en-US,en;q=0.9'}, timeout=(4, 15))
             if resp.status_code == 200:
                 data = resp.json()
                 if "elements" in data and len(data["elements"]) > 0:

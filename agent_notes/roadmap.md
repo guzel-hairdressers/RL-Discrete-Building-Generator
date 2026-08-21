@@ -208,3 +208,51 @@ This document defines the master development plan for the **RL-Discrete-Building
 > 🔀 **Decision Node 3**: Check 2D Spatial Softmax step time and memory footprint.
 > * **Primary Branch**: If step time $< 2.0\,\text{ms}$ and VRAM $< 2.0\,\text{GB}$, deploy Spatial Action Maps as the primary continuous placement generator.
 > * **Contingency Branch 6A (Anchor Offset Sub-Pixel Heads)**: If 2D Spatial Softmax grid resolution is too memory-intensive for large sites, switch to continuous offset prediction heads $(\Delta x, \Delta y, \Delta \theta)$ anchored to discrete candidate placements.
+
+---
+
+### Phase 7: Release `version/v0.9.0-alpha` — Real Urban Context Integration & Policy-Based Core Placements
+* **Target Objective**: *Harvest 1,547 Real OSM Parcels, Split-Screen Real-Time 3D Extrusion Sync, Policy-Based Core Placements, `batchSize` 9 Floors & 3-Step Lookahead*
+* **Status**: `[IMPLEMENTED & TESTED / BRANCH: version/v0.9.0-alpha]`
+* **Key Deliverables**:
+  1. **1,547 Real OSM Parcels**: Index real site polygons, setbacks, and surrounding 3D building meshes from Context Generator across NYC, London, Tokyo, Singapore, Barcelona, Chicago, Paris, and Hong Kong.
+  2. **Policy-Based Core Placements**:
+     - Upgraded core stack selection from heuristic gating to end-to-end spatial PyTorch Actor–Critic policy decisions.
+     - Policy evaluates joint spatial coordinates \((x, y)\), orientation angles \(\theta\), and multi-floor composite feature vectors across candidate core stacks.
+     - Backpropagates whole-building GAE advantage signals directly into policy network weights.
+  3. **Boundary Modes**:
+     - `"Mixed Random with Real Sites"` (**Default**): Procedurally interleaves synthetic and real OSM parcels during training.
+     - `"Real Site"`: Direct real-parcel training/inference filtered by Area Tier (`XS`, `S`, `M`, `L`, `XL`).
+  4. **`batchSize` 9 Floors**: Default 9 parallel floors with 100% exact multi-floor vertical core alignment.
+  5. **Split-Screen Inference (50/50)**:
+     - Left: 3D Urban Context Viewer (Three.js WebGL) with real-time 3D room extrusions ($Y = \text{floor} \times 3.5\text{m}$) growing story-by-story live.
+     - Right: 2D Multi-Floor Generator canvas.
+     - Maximize buttons on both panes (`#btnMaximizeLeft`, `#btnMaximizeRight`).
+     - 3-Step Lookahead Beam Search for zero-shot inference optimization.
+
+---
+
+### Phase 8: Release `version/v0.9.1-alpha` — Dynamic Parametric Shape Generator Merge & Co-Evolving Policy Cores
+* **Target Objective**: *Merge v0.9.0-alpha Real Context Engine with Dynamic Parametric Shapes ($k=3,4$) & Policy-Guided Vertical Circulation*
+* **Status**: `[PLANNED ROADMAP / BRANCH: version/v0.9.1-alpha]`
+* **Key Deliverables**:
+  1. **Parametric Custom Shape Synthesis ($k=3, 4$)**: Port dynamic parametric shape generation from `v0.8.1` into the `v0.9.0-alpha` real-site engine to synthesize bespoke trapezoids, triangles, and angled quads fitting irregular OSM parcel boundaries.
+  2. **Co-Evolution with Policy-Based Cores**: Neural Actor–Critic policy jointly learns optimal custom room synthesis and strategic multi-floor core placements on complex real-world parcel setbacks.
+  3. **C-Accelerated Vector Geometry**: Native C SAT overlap kernel (`fast_geometry.c`) extended to evaluate arbitrary convex $k$-gons in $<0.8\,\mu\text{s}$.
+  4. **Developer Diagnostics (`Ctrl+Shift+D`)**: Hidden console exposing live parametric proposal telemetry, cubic polynomial trendline, and kernel step latency.
+  5. **Asynchronous Incremental Terminal Reward Collection**:
+     - When an individual floor reaches max modules or exhausts valid placements before other floors (`environment.done = True`), immediately compute and cache its floor-level terminal metrics (`environment.terminal_metrics()`) and layout adjacency graph (`graph.extract_layout_graph()`) during subsequent idle steps.
+     - Eliminates the burst of multi-floor metric evaluation and graph extraction at episode conclusion, reducing episode-completion latency by up to $60\%$.
+  6. **Triangle Ratio Threshold Penalty (Replacing Flat Linear Penalty)**:
+     - **Deprecation**: Completely remove the flat linear unmerged triangle penalty ($-8.0\,\text{pts}$ per triangle).
+     - **Metric Choice (Count Ratio Justification)**: Adopt the unmerged module count ratio $r_f = \frac{N_{\triangle, f}}{\max(1, N_{\text{modules}, f})}$ rather than area ratio. Count ratio directly reflects topological composition and visual clutter (avoiding over-penalizing single large triangles or ignoring clusters of tiny slivers).
+     - **Quadratic Soft-Hinge Formula ($\tau = 20\%$ Threshold, Capped at $-50\,\text{pts}$)**:
+       $$P(r_f) = \min\left(50.0, \, 750.0 \cdot \max(0, r_f - 0.20)^2\right)$$
+       Averaged across floors: $P_{\text{total}} = -\frac{1}{F} \sum_{f=1}^F P(r_f)$.
+     - **Calibrated Penalty Profile**:
+       - $r_f \le 20\% \implies 0.0\,\text{pts}$ (Zero penalty for legitimate infill/corner triangular modules).
+       - $r_f = 25\% \implies -1.88\,\text{pts}$ (Smooth $C^1$ transition).
+       - $r_f = 30\% \implies -7.50\,\text{pts}$ (Mild regularization).
+       - $r_f = 35\% \implies -16.88\,\text{pts}$ (Steeper barrier).
+       - $r_f = 40\% \implies -30.00\,\text{pts}$ (Target penalty matching design spec).
+       - $r_f \ge 45.82\% \implies -50.00\,\text{pts}$ (Capped maximum penalty).

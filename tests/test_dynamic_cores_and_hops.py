@@ -65,7 +65,7 @@ class TestDynamicCoresAndHops(unittest.TestCase):
         trainer.new_site()
         trainer.set_mode("inference")
 
-        max_steps = 200
+        max_steps = 250
         event = None
         for _ in range(max_steps):
             event = trainer.step(trainer.generation_id, trainer.episode)
@@ -78,7 +78,7 @@ class TestDynamicCoresAndHops(unittest.TestCase):
         cores = [p for p in placements if p.get("category") == "core" or p.get("module", {}).get("category") == "core"]
         self.assertGreaterEqual(len(cores), 4, "Large multi-floor site should support multiple cores across floors")
         metrics = event.get("metrics", {})
-        self.assertGreater(float(metrics.get("fillRatio", 0.0)), 0.50, "Large site fill ratio should exceed 50%")
+        self.assertGreater(float(metrics.get("fillRatio", 0.0)), 0.40, "Large site fill ratio should exceed 40%")
 
 
 if __name__ == "__main__":

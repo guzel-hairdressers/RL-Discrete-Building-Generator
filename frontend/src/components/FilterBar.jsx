@@ -1,0 +1,141 @@
+import React from 'react';
+import { useStore, percentToArea, areaToPercent } from '../store/useStore';
+
+export const FilterBar = () => {
+  const filters = useStore((s) => s.filters);
+  const setFilter = useStore((s) => s.setFilter);
+  const selectTier = useStore((s) => s.selectTier);
+  const resetFilters = useStore((s) => s.resetFilters);
+  const setCustomModalOpen = useStore((s) => s.setCustomModalOpen);
+
+  const minPercent = areaToPercent(filters.minArea);
+  const maxPercent = areaToPercent(filters.maxArea);
+
+  return (
+    <div id="filter-bar" className="glass-bar wide-bar">
+      
+      {/* 1. City Section (Far Left, ALL preselected by default) */}
+      <div className="filter-group compact">
+        <span className="group-title baseline-title">City</span>
+        <select
+          id="select-city"
+          className="custom-select"
+          value={filters.city}
+          onChange={(e) => setFilter('city', e.target.value)}
+        >
+          <option value="ALL">Any</option>
+          <option value="prs">Paris</option>
+          <option value="nyc">NYC</option>
+          <option value="tokyo">Tokyo</option>
+          <option value="bcn">Barcelona</option>
+          <option value="ldn">London</option>
+          <option value="chi">Chicago</option>
+          <option value="hk">Hong Kong</option>
+          <option value="sgp">Singapore</option>
+        </select>
+      </div>
+
+      {/* 2. Site Area Section (Center, 5 Equal Tier Segments + ANY option) */}
+      <div className="filter-group flex-grow">
+        <div className="group-header">
+          <span className="group-title baseline-title">Site Area</span>
+          <div className="tier-buttons right-aligned">
+            {['ANY', 'XS', 'S', 'M', 'L', 'XL'].map((t) => (
+              <button
+                key={t}
+                className={`tier-btn ${filters.activeTier === t ? 'active' : ''}`}
+                onClick={() => selectTier(t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="dual-range-container">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="0.2"
+            value={minPercent}
+            onChange={(e) => {
+              const valPercent = parseFloat(e.target.value);
+              const newMin = percentToArea(valPercent);
+              setFilter('minArea', Math.min(newMin, filters.maxArea));
+            }}
+          />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="0.2"
+            value={maxPercent}
+            onChange={(e) => {
+              const valPercent = parseFloat(e.target.value);
+              const newMax = percentToArea(valPercent);
+              setFilter('maxArea', Math.max(newMax, filters.minArea));
+            }}
+          />
+          <div className="range-track"></div>
+        </div>
+
+        {/* Numerical Range Readout BELOW Slider */}
+        <div className="range-values-below">
+          {filters.minArea} m² - {filters.maxArea} m²
+        </div>
+      </div>
+
+      {/* 3. Context Height Section (Right, Numbers Below Slider) */}
+      <div className="filter-group flex-grow">
+        <div className="group-header">
+          <span className="group-title baseline-title">Context Height</span>
+        </div>
+
+        <div className="dual-range-container">
+          <input
+            type="range"
+            min="10"
+            max="300"
+            step="5"
+            value={filters.minHeight}
+            onChange={(e) => setFilter('minHeight', Math.min(parseInt(e.target.value), filters.maxHeight))}
+          />
+          <input
+            type="range"
+            min="10"
+            max="300"
+            step="5"
+            value={filters.maxHeight}
+            onChange={(e) => setFilter('maxHeight', Math.max(parseInt(e.target.value), filters.minHeight))}
+          />
+          <div className="range-track"></div>
+        </div>
+
+        {/* Numerical Height Readout BELOW Slider */}
+        <div className="range-values-below">
+          {filters.minHeight}m - {filters.maxHeight}m
+        </div>
+      </div>
+
+      {/* 4. Action Buttons Stack (Custom Site on top of Reset, same width) */}
+      <div className="filter-action-stack">
+        <button
+          className="btn-action-stacked"
+          onClick={() => setCustomModalOpen(true)}
+          title="Fetch & Choose Custom Global Site Location"
+        >
+          Custom Site
+        </button>
+        <button
+          className="btn-action-stacked btn-reset"
+          onClick={resetFilters}
+          title="Reset All Filters"
+        >
+          Reset
+        </button>
+      </div>
+
+    </div>
+  );
+};

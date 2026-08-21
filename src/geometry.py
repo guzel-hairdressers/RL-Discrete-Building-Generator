@@ -1908,6 +1908,51 @@ def _apply_site_area_scaling(
     return outer
 
 
+_REAL_SITES_CACHE: dict | None = None
+
+
+def load_real_sites_dataset() -> dict:
+    global _REAL_SITES_CACHE
+    if _REAL_SITES_CACHE is not None:
+        return _REAL_SITES_CACHE
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_path = os.path.join(base_dir, "data", "real_sites_dataset.json")
+    if os.path.exists(data_path):
+        try:
+            with open(data_path, "r", encoding="utf-8") as f:
+                _REAL_SITES_CACHE = json.load(f)
+                return _REAL_SITES_CACHE
+        except Exception:
+            pass
+    _REAL_SITES_CACHE = {"total_sites": 0, "by_tier": {}, "tier_index": {}, "sites": {}}
+    return _REAL_SITES_CACHE
+
+
+def _sanitize_real_site_polygon(raw_poly: list[dict] | list[list[float]]) -> list[dict]:
+    """Ensure a real-site polygon is simple, counter-clockwise, and non-degenerate."""
+    clean: list[dict] = []
+    for p in raw_poly:
+        if isinstance(p, dict) and "x" in p and "y" in p:
+            pt = _point(float(p["x"]), float(p["y"]))
+        elif isinstance(p, (list, tuple)) and len(p) >= 2:
+            pt = _point(float(p[0]), float(p[1]))
+        else:
+            continue
+        if not clean or (abs(clean[-1]["x"] - pt["x"]) > 0.05 or abs(clean[-1]["y"] - pt["y"]) > 0.05):
+            clean.append(pt)
+    if len(clean) > 1 and abs(clean[-1]["x"] - clean[0]["x"]) < 0.05 and abs(clean[-1]["y"] - clean[0]["y"]) < 0.05:
+        clean.pop()
+    if len(clean) < 3:
+        return []
+    if polygon_area(clean) < 0:
+        clean.reverse()
+    if not is_simple_polygon(clean):
+        clean = convex_hull(clean)
+        if polygon_area(clean) < 0:
+            clean.reverse()
+    return clean
+
+
 def make_boundary(
     boundary_type: str = "free",
     seed: RNG | int | float = 0,
@@ -1928,6 +1973,61 @@ def make_boundary(
     family = requested
     if family in ("free", "random", "arbitrary"):
         family = rng.pick(("convex", "concave", "lobed", "notched"))
+    elif family in ("mixed", "mixed_random", "mixed random with real sites", "mixed_real", "mixed_random_with_real_sites"):
+        family = rng.pick(("convex", "lobed", "rect", "real", "real"))
+
+    if family in ("real", "realsite", "real_site", "real site"):
+        dataset = load_real_sites_dataset()
+        sites_dict = dataset.get("sites", {})
+        tier = str(options.get("siteAreaTier", "ANY")).upper()
+        tier_index = dataset.get("tier_index", {})
+
+        target_site_id = options.get("realSiteId") or options.get("siteId")
+        city_filter = str(options.get("city", "ALL")).lower().strip()
+        if target_site_id and target_site_id in sites_dict:
+            site_rec = sites_dict[target_site_id]
+        else:
+            candidates = tier_index.get(tier, []) if tier in tier_index and tier_index[tier] else list(sites_dict.keys())
+            if city_filter not in ("all", "any", ""):
+                filtered_cands = [sid for sid in candidates if sites_dict[sid].get("city_code", "").lower() == city_filter or city_filter in sites_dict[sid].get("city", "").lower()]
+                if filtered_cands:
+                    candidates = filtered_cands
+            if candidates:
+                chosen_id = rng.pick(candidates)
+                site_rec = sites_dict[chosen_id]
+            else:
+                site_rec = None
+
+        if site_rec and site_rec.get("polygon"):
+            raw_poly = site_rec["polygon"]
+            sanitized = _sanitize_real_site_polygon(raw_poly)
+            if len(sanitized) >= 3:
+                min_x = min(p["x"] for p in sanitized)
+                min_y = min(p["y"] for p in sanitized)
+                outer = [_point(round(p["x"] - min_x, 2), round(p["y"] - min_y, 2)) for p in sanitized]
+
+                return {
+                    "outer": outer,
+                    "seed": seed_label,
+                    "type": "real",
+                    "family": "real-osm-parcel",
+                    "originOffset": {"x": min_x, "y": min_y},
+                    "parameters": {
+                        "siteId": site_rec.get("site_id", ""),
+                        "city": site_rec.get("city", ""),
+                        "cityCode": site_rec.get("city_code", ""),
+                        "areaTier": site_rec.get("area_tier", tier),
+                        "siteArea": site_rec.get("site_area_m2", 0.0),
+                        "targetFar": site_rec.get("target_far", 2.5),
+                        "originOffset": {"x": min_x, "y": min_y},
+                        "sitePolygon": raw_poly,
+                        "buildings": site_rec.get("buildings", []),
+                        "roads": site_rec.get("roads", []),
+                        "greenSpaces": site_rec.get("green_spaces", []),
+                        "metrics": site_rec.get("metrics", {}),
+                        "radius": site_rec.get("radius", 100.0),
+                    },
+                }
 
     width = float(options.get("boundaryWidth", rng.uniform(32.0, 42.0)))
     height = float(options.get("boundaryHeight", rng.uniform(23.0, 32.0)))

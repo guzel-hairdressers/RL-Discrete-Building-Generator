@@ -1,3 +1,6 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
 window.onerror = function(message, source, lineno, colno, error) {
   const errText = `JS Error: ${message} at ${source}:${lineno}:${colno}`;
   console.error(errText);
@@ -22,6 +25,7 @@ window.onerror = function(message, source, lineno, colno, error) {
 
   const INTEGER_SETTINGS = new Set([
     'parallelEnvironments',
+    'bufferEpisodes',
     'maxModules',
     'dictCap',
     'travelLimit',
@@ -35,6 +39,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     'singleFloor',
     'publicMode',
     'parallelEnvironments',
+    'bufferEpisodes',
     'maxModules',
     'learningRate',
     'minEdge',
@@ -69,6 +74,24 @@ window.onerror = function(message, source, lineno, colno, error) {
 
   const dom = {
     stage: document.getElementById('stage'),
+    stageSplitContainer: document.getElementById('stageSplitContainer'),
+    left3DPane: document.getElementById('left3DPane'),
+    right2DPane: document.getElementById('right2DPane'),
+    threeContainer: document.getElementById('threeContainer'),
+    siteInfoCard: document.getElementById('siteInfoCard'),
+    siteCityBadge: document.getElementById('siteCityBadge'),
+    siteIdLabel: document.getElementById('siteIdLabel'),
+    siteAreaVal: document.getElementById('siteAreaVal'),
+    siteTierVal: document.getElementById('siteTierVal'),
+    siteFarVal: document.getElementById('siteFarVal'),
+    siteNeighborsVal: document.getElementById('siteNeighborsVal'),
+    btnAxonometric: document.getElementById('btnAxonometric'),
+    btnPerspective: document.getElementById('btnPerspective'),
+    btnMaximizeLeft: document.getElementById('btnMaximizeLeft'),
+    btnMaximizeRight: document.getElementById('btnMaximizeRight'),
+    btnCarouselPrev: document.getElementById('btnCarouselPrev'),
+    btnCarouselNext: document.getElementById('btnCarouselNext'),
+    lookaheadSelect: document.getElementById('lookaheadSelect'),
     canvas: document.getElementById('planCanvas'),
     connectionBadge: document.getElementById('connectionBadge'),
     connectionText: document.getElementById('connectionText'),
@@ -131,6 +154,22 @@ window.onerror = function(message, source, lineno, colno, error) {
     debugRuntimeMetrics: document.getElementById('debugRuntimeMetrics'),
     debugTrainingMetrics: document.getElementById('debugTrainingMetrics'),
     debugTimingRows: document.getElementById('debugTimingRows')
+  };
+
+  const threeState = {
+    renderer: null,
+    scene: null,
+    camera: null,
+    perspCamera: null,
+    orthoCamera: null,
+    controls: null,
+    urbanGroup: null,
+    buildingGroup: null,
+    groundMesh: null,
+    animFrameId: null,
+    isAxo: true,
+    contextData: null,
+    siteCenter: { x: 0, z: 0 }
   };
 
   const context = dom.canvas.getContext('2d', { alpha: false });
@@ -231,29 +270,35 @@ window.onerror = function(message, source, lineno, colno, error) {
   };
 
   function init() {
-    setupControlPairs();
-    setupSettingsEvents();
-    setupActionEvents();
-    setupPanelEvents();
-    setupDeveloperEvents();
-    setupCanvasEvents();
-    setupResizeHandling();
+    window.state = state;
+    window.dom = dom;
+    window.threeState = threeState;
+    try { setupControlPairs(); } catch(e) { console.error('setupControlPairs failed:', e); window._initError = 'setupControlPairs: ' + e.stack; }
+    try { setupSettingsEvents(); } catch(e) { console.error('setupSettingsEvents failed:', e); window._initError = 'setupSettingsEvents: ' + e.stack; }
+    try { setupActionEvents(); } catch(e) { console.error('setupActionEvents failed:', e); window._initError = 'setupActionEvents: ' + e.stack; }
+    try { setupPanelEvents(); } catch(e) { console.error('setupPanelEvents failed:', e); window._initError = 'setupPanelEvents: ' + e.stack; }
+    try { setupDeveloperEvents(); } catch(e) { console.error('setupDeveloperEvents failed:', e); window._initError = 'setupDeveloperEvents: ' + e.stack; }
+    try { setupCanvasEvents(); } catch(e) { console.error('setupCanvasEvents failed:', e); window._initError = 'setupCanvasEvents: ' + e.stack; }
+    try { setupResizeHandling(); } catch(e) { console.error('setupResizeHandling failed:', e); window._initError = 'setupResizeHandling: ' + e.stack; }
+    try { initThree(); } catch(e) { console.error('initThree failed:', e); window._initError = 'initThree: ' + e.stack; }
 
-    const validation = readAndValidateSettings();
-    if (validation.ok) {
-      state.settings = validation.settings;
-    }
-    state.speed = Number(dom.speed.value) || 100;
+    try {
+      const validation = readAndValidateSettings();
+      if (validation.ok) {
+        state.settings = validation.settings;
+      }
+      state.speed = Number(dom.speed?.value) || 100;
+    } catch(e) { console.error('settings read failed:', e); window._initError = 'settings: ' + e.stack; }
 
-    updatePauseButton();
-    updateActionAvailability();
-    updateMetricsUI();
-    updateAccessibleSiteMetrics();
-    updateDictionaryUI();
-    drawHistory();
-    resizeCanvas();
-    requestRender();
-    connectWebSocket();
+    try { updatePauseButton(); } catch(e) { console.error('updatePauseButton failed:', e); window._initError = 'updatePauseButton: ' + e.stack; }
+    try { updateActionAvailability(); } catch(e) { console.error('updateActionAvailability failed:', e); window._initError = 'updateActionAvailability: ' + e.stack; }
+    try { updateMetricsUI(); } catch(e) { console.error('updateMetricsUI failed:', e); window._initError = 'updateMetricsUI: ' + e.stack; }
+    try { updateAccessibleSiteMetrics(); } catch(e) { console.error('updateAccessibleSiteMetrics failed:', e); window._initError = 'updateAccessibleSiteMetrics: ' + e.stack; }
+    try { updateDictionaryUI(); } catch(e) { console.error('updateDictionaryUI failed:', e); window._initError = 'updateDictionaryUI: ' + e.stack; }
+    try { drawHistory(); } catch(e) { console.error('drawHistory failed:', e); window._initError = 'drawHistory: ' + e.stack; }
+    try { resizeCanvas(); } catch(e) { console.error('resizeCanvas failed:', e); window._initError = 'resizeCanvas: ' + e.stack; }
+    try { requestRender(); } catch(e) { console.error('requestRender failed:', e); window._initError = 'requestRender: ' + e.stack; }
+    try { connectWebSocket(); } catch(e) { console.error('connectWebSocket failed:', e); window._initError = 'connectWebSocket: ' + e.stack; }
   }
 
   function setupControlPairs() {
@@ -355,6 +400,11 @@ window.onerror = function(message, source, lineno, colno, error) {
       }
     }
 
+    const citySelect = document.getElementById('urbanCitySelect');
+    if (citySelect) {
+      settings.city = citySelect.value;
+    }
+
     if (Number.isFinite(settings.minEdge) && Number.isFinite(settings.maxEdge) && settings.minEdge > settings.maxEdge) {
       document.getElementById('minEdge').setAttribute('aria-invalid', 'true');
       document.getElementById('maxEdge').setAttribute('aria-invalid', 'true');
@@ -443,6 +493,59 @@ window.onerror = function(message, source, lineno, colno, error) {
     if (dom.toggleMergingBtn) {
       dom.toggleMergingBtn.addEventListener('click', toggleMerging);
     }
+    if (dom.btnAxonometric) {
+      dom.btnAxonometric.addEventListener('click', () => setCameraMode(true));
+    }
+    if (dom.btnPerspective) {
+      dom.btnPerspective.addEventListener('click', () => setCameraMode(false));
+    }
+    if (dom.btnMaximizeLeft) {
+      dom.btnMaximizeLeft.addEventListener('click', () => toggleMaximize('left'));
+    }
+    const citySelect = document.getElementById('urbanCitySelect');
+    if (citySelect) {
+      citySelect.addEventListener('change', () => {
+        const city = citySelect.value;
+        const boundarySelect = document.getElementById('boundaryType');
+        if (boundarySelect && boundarySelect.value !== 'real') {
+          boundarySelect.value = 'real';
+        }
+        applySettingsTransaction(`Filtering sites for city: ${city}`);
+      });
+    }
+
+    const tierBtns = document.querySelectorAll('#urbanTierButtons .tier-btn');
+    tierBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tierBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tier = btn.dataset.tier;
+        const tierSelect = document.getElementById('siteAreaTier');
+        if (tierSelect) tierSelect.value = tier;
+        const boundarySelect = document.getElementById('boundaryType');
+        if (boundarySelect && boundarySelect.value !== 'real') {
+          boundarySelect.value = 'real';
+        }
+        applySettingsTransaction(`Filtering sites for tier: ${tier}`);
+      });
+    });
+
+    if (dom.btnCarouselPrev) {
+      dom.btnCarouselPrev.addEventListener('click', () => {
+        requestNewSite();
+      });
+    }
+    if (dom.btnCarouselNext) {
+      dom.btnCarouselNext.addEventListener('click', () => {
+        requestNewSite();
+      });
+    }
+    if (dom.lookaheadSelect) {
+      dom.lookaheadSelect.addEventListener('change', () => {
+        state.lookaheadSteps = Number(dom.lookaheadSelect.value) || 3;
+        sendCommand({ type: 'settings', settings: { lookaheadSteps: state.lookaheadSteps } });
+      });
+    }
     dom.fitViewBtn.addEventListener('click', fitAllSites);
 
     const autoChangeCb = document.getElementById('autoChangeSites');
@@ -514,17 +617,16 @@ window.onerror = function(message, source, lineno, colno, error) {
   }
 
   function setupPanelEvents() {
-    dom.panelToggle.addEventListener('click', () => setPanelOpen(true));
-    dom.panelClose.addEventListener('click', () => setPanelOpen(false));
-    dom.panelScrim.addEventListener('click', () => setPanelOpen(false));
+    if (dom.panelToggle) {
+      dom.panelToggle.addEventListener('click', () => {
+        const isOpen = dom.controlsPanel.dataset.open === 'true';
+        setPanelOpen(!isOpen);
+      });
+    }
+    if (dom.panelClose) dom.panelClose.addEventListener('click', () => setPanelOpen(false));
+    if (dom.panelScrim) dom.panelScrim.addEventListener('click', () => setPanelOpen(false));
     document.addEventListener('keydown', handlePanelKeydown);
     document.addEventListener('keydown', handleGlobalKeydown);
-    const handlePanelModeChange = () => setPanelOpen(false);
-    if (typeof panelMediaQuery.addEventListener === 'function') {
-      panelMediaQuery.addEventListener('change', handlePanelModeChange);
-    } else {
-      panelMediaQuery.addListener(handlePanelModeChange);
-    }
     syncPanelAccessibility();
   }
 
@@ -573,24 +675,23 @@ window.onerror = function(message, source, lineno, colno, error) {
   }
 
   function setPanelOpen(open) {
-    const overlayMode = panelMediaQuery.matches;
-    const nextOpen = overlayMode && Boolean(open);
+    const nextOpen = Boolean(open);
     const activeElement = document.activeElement;
     const focusWasInside = dom.controlsPanel.contains(activeElement);
     if (nextOpen && activeElement instanceof HTMLElement) panelReturnFocus = activeElement;
 
     let returnTarget = null;
-    if (!nextOpen && overlayMode && (focusWasInside || panelReturnFocus)) {
+    if (!nextOpen && (focusWasInside || panelReturnFocus)) {
       returnTarget = panelReturnFocus instanceof HTMLElement && document.contains(panelReturnFocus)
         ? panelReturnFocus
         : dom.panelToggle;
       panelReturnFocus = null;
-      returnTarget.focus({ preventScroll: true });
+      if (returnTarget) returnTarget.focus({ preventScroll: true });
     }
 
     dom.controlsPanel.dataset.open = String(nextOpen);
+    if (dom.panelScrim) dom.panelScrim.dataset.open = String(nextOpen);
     syncPanelAccessibility();
-    if (!overlayMode) panelReturnFocus = null;
 
     if (nextOpen) {
       dom.panelClose.focus({ preventScroll: true });
@@ -717,7 +818,12 @@ window.onerror = function(message, source, lineno, colno, error) {
   }
 
   function setOptimizerMode(newMode) {
-    if (!state.connected || state.mode === newMode) return;
+    if (state.mode === newMode) return;
+    
+    state.mode = newMode;
+    document.body.dataset.mode = newMode;
+    if (dom.stageSplitContainer) dom.stageSplitContainer.dataset.mode = newMode;
+    if (dom.bottomDockBar) dom.bottomDockBar.dataset.mode = newMode;
     
     if (newMode === 'inference') {
       if (state.trainingWanted) {
@@ -725,9 +831,11 @@ window.onerror = function(message, source, lineno, colno, error) {
         clearTimeout(state.stepTimer);
         clearTimeout(state.transitionTimer);
       }
-      sendCommand({ cmd: 'saveCheckpoint' });
-      sendCommand({ cmd: 'setMode', mode: 'inference' });
-      state.mode = 'inference';
+      if (!threeState.renderer) initThree();
+      if (state.connected) {
+        sendCommand({ cmd: 'saveCheckpoint' });
+        sendCommand({ cmd: 'setMode', mode: 'inference' });
+      }
       if (dom.modeTrainingBtn) {
         dom.modeTrainingBtn.classList.remove('active');
         dom.modeTrainingBtn.setAttribute('aria-checked', 'false');
@@ -737,18 +845,31 @@ window.onerror = function(message, source, lineno, colno, error) {
         dom.modeInferenceBtn.setAttribute('aria-checked', 'true');
       }
       if (dom.inferenceOptions) dom.inferenceOptions.style.display = 'block';
-      requestNewSite();
+      if (dom.panelConsoleKicker) dom.panelConsoleKicker.textContent = 'Inference console';
+      
+      const pTitle = document.getElementById('pauseBtnTitle');
+      if (pTitle) pTitle.textContent = 'Generate Building (Space)';
+      
+      // Default to real site in inference mode
+      const boundarySelect = document.getElementById('boundaryType');
+      if (boundarySelect && boundarySelect.value !== 'real' && boundarySelect.value !== 'mixed') {
+        boundarySelect.value = 'real';
+        handleControlChange(boundarySelect);
+      }
+      
+      if (state.connected) requestNewSite();
       updatePauseButton();
       updateActionAvailability();
-      showToast('Switched to Inference Mode · weights saved & history recording active');
+      showToast('Switched to Inference Mode');
     } else if (newMode === 'training') {
       if (state.trainingWanted) {
         state.trainingWanted = false;
         clearTimeout(state.stepTimer);
         clearTimeout(state.transitionTimer);
       }
-      sendCommand({ cmd: 'setMode', mode: 'training' });
-      state.mode = 'training';
+      if (state.connected) {
+        sendCommand({ cmd: 'setMode', mode: 'training' });
+      }
       if (dom.modeTrainingBtn) {
         dom.modeTrainingBtn.classList.add('active');
         dom.modeTrainingBtn.setAttribute('aria-checked', 'true');
@@ -758,11 +879,22 @@ window.onerror = function(message, source, lineno, colno, error) {
         dom.modeInferenceBtn.setAttribute('aria-checked', 'false');
       }
       if (dom.inferenceOptions) dom.inferenceOptions.style.display = 'none';
-      requestNewSite();
+      if (dom.panelConsoleKicker) dom.panelConsoleKicker.textContent = 'Training console';
+      
+      const pTitle = document.getElementById('pauseBtnTitle');
+      if (pTitle) pTitle.textContent = 'Start Training (Space)';
+      
+      if (state.connected) requestNewSite();
       updatePauseButton();
       updateActionAvailability();
       showToast('Switched to Training Mode');
     }
+    
+    setTimeout(() => {
+      onThreeResize();
+      resizeCanvas();
+      requestRender();
+    }, 100);
   }
 
   function toggleTraining() {
@@ -798,28 +930,29 @@ window.onerror = function(message, source, lineno, colno, error) {
   }
 
   function updatePauseButton() {
-    const symbol = dom.pauseBtn.querySelector('.action-symbol');
-    const title = dom.pauseBtn.querySelector('strong');
+    if (!dom.pauseBtn) return;
+    const symbol = dom.pauseBtn.querySelector('.dock-btn-icon') || dom.pauseBtn.querySelector('.action-symbol');
+    const title = document.getElementById('pauseBtnTitle') || dom.pauseBtn.querySelector('strong') || dom.pauseBtn.querySelector('span:last-child');
     const detail = dom.pauseBtn.querySelector('small');
     if (state.mode === 'inference') {
       if (state.trainingWanted) {
-        symbol.textContent = 'Ⅱ';
-        title.textContent = state.autoGenerate ? 'Stop Auto-Gen (Space)' : 'Pause (Space)';
-        detail.textContent = state.phase === 'pausing' ? 'Finishing step' : 'Hold generation';
+        if (symbol) symbol.textContent = '⏸';
+        if (title) title.textContent = state.autoGenerate ? 'Stop Auto-Gen (Space)' : 'Pause (Space)';
+        if (detail) detail.textContent = state.phase === 'pausing' ? 'Finishing step' : 'Hold generation';
       } else {
-        symbol.textContent = '▶';
-        title.textContent = state.autoGenerate ? 'Auto Generate (Space)' : 'Generate (Space)';
-        detail.textContent = state.autoGenerate ? 'Auto-stream to dataset' : 'Evaluate & record history';
+        if (symbol) symbol.textContent = '▶';
+        if (title) title.textContent = state.autoGenerate ? 'Auto Generate (Space)' : 'Generate (Space)';
+        if (detail) detail.textContent = state.autoGenerate ? 'Auto-stream to dataset' : 'Evaluate & record history';
       }
     } else {
       if (state.trainingWanted) {
-        symbol.textContent = 'Ⅱ';
-        title.textContent = 'Pause Training (Space)';
-        detail.textContent = state.phase === 'pausing' ? 'Finishing step' : 'Hold training';
+        if (symbol) symbol.textContent = '⏸';
+        if (title) title.textContent = 'Pause Training (Space)';
+        if (detail) detail.textContent = state.phase === 'pausing' ? 'Finishing step' : 'Hold training';
       } else {
-        symbol.textContent = '▶';
-        title.textContent = 'Start Training (Space)';
-        detail.textContent = state.pendingNextEpisode !== null ? 'Start next episode' : 'Run learning';
+        if (symbol) symbol.textContent = '▶';
+        if (title) title.textContent = 'Start Training (Space)';
+        if (detail) detail.textContent = state.pendingNextEpisode !== null ? 'Start next episode' : 'Run learning';
       }
     }
     updateActionAvailability();
@@ -1246,6 +1379,18 @@ window.onerror = function(message, source, lineno, colno, error) {
     clearPlacementState();
     state.individualPlacementsList = [];
     state.currentMergedPlacements = [];
+    state.contextData = data.contextData || (state.boundaries.length > 0 ? {
+      city: 'SYNTHETIC SITE',
+      site_id: (state.acceptedSettings?.boundaryType || 'PROCEDURAL').toUpperCase(),
+      site_area: state.totalSiteArea / Math.max(1, state.boundaries.length),
+      area_tier: state.acceptedSettings?.siteAreaTier || 'ANY',
+      target_far: 2.5,
+      site_polygon: state.boundaries[0]?.outer || []
+    } : null);
+
+    if (state.contextData) {
+      renderUrbanContext3D(state.contextData);
+    }
 
     dom.deviceBadge.textContent = state.device ? `Device ${state.device.toUpperCase()}` : 'Device —';
     hideCanvasMessage();
@@ -1305,6 +1450,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     state.serverMetrics = data.metrics || state.serverMetrics;
     updateMetricsUI();
     scheduleAccessibleSiteMetrics();
+    syncBuildingExtrusions3D(state.individualPlacementsList);
 
     if (state.trainingWanted) {
       state.phase = 'running';
@@ -1344,6 +1490,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     state.bestScore = finiteOr(data.bestScore, state.bestScore);
 
     reloadPausedPlacements();
+    syncBuildingExtrusions3D(state.individualPlacementsList);
 
     updateDictionaryUI();
     updateMetricsUI();
@@ -2573,7 +2720,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     const gridWidth = width - marginLeft - marginRight;
     const gridHeight = height - marginTop - marginBottom;
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.055)';
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.06)';
     ctx.lineWidth = 1;
     for (const ratio of [0.0, 0.25, 0.5, 0.75, 1.0]) {
       const y = Math.round(marginTop + gridHeight * ratio) + 0.5;
@@ -2584,8 +2731,8 @@ window.onerror = function(message, source, lineno, colno, error) {
     }
 
     if (values.length < 2) {
-      ctx.fillStyle = '#77837a';
-      ctx.font = '9px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '9px Inter, system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('Episode scores will appear here', width / 2, height / 2 + 3);
       return;
@@ -2595,16 +2742,16 @@ window.onerror = function(message, source, lineno, colno, error) {
     const max = Math.max(...values);
     const span = Math.max(8, max - min);
 
-    ctx.fillStyle = '#adb9b0';
-    ctx.font = '9px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.font = '9px Inter, system-ui, sans-serif';
     ctx.textAlign = 'right';
 
     ctx.fillText(formatDecimal(max, 1), marginLeft - 6, marginTop + 3);
     ctx.fillText(formatDecimal(min, 1), marginLeft - 6, height - marginBottom + 3);
     ctx.fillText(formatDecimal(min + span / 2, 1), marginLeft - 6, marginTop + gridHeight / 2 + 3);
 
-    ctx.fillStyle = '#77837a';
-    ctx.font = '9px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '9px Inter, system-ui, sans-serif';
 
     const startEp = (state.showFullHistory || totalEpisodes <= 100) ? 1 : Math.max(1, totalEpisodes - 99);
     ctx.textAlign = 'left';
@@ -2626,7 +2773,6 @@ window.onerror = function(message, source, lineno, colno, error) {
     function computeWindowSmoothedPoints(rawValues, basePoints) {
       if (rawValues.length < 2) return basePoints;
       const n = rawValues.length;
-      // Adaptive radius based on total points: k=1 for n<6, k=2 for n<15, up to k=8 for n>=60
       const k = Math.max(1, Math.min(8, Math.floor(n / 7)));
       const sigma = Math.max(0.8, k * 0.55);
 
@@ -2645,11 +2791,73 @@ window.onerror = function(message, source, lineno, colno, error) {
       });
     }
 
+    // Fit Function (3rd Degree Polynomial Regression Curve y = c3*u^3 + c2*u^2 + c1*u + c0)
+    function computeFittedRegressionPoints(rawValues, basePoints) {
+      const n = rawValues.length;
+      if (n < 4) return basePoints;
+
+      const m = 4;
+      const A = Array.from({ length: m }, () => new Float64Array(m + 1));
+      const sumsU = new Float64Array(7);
+      const sumsUY = new Float64Array(4);
+
+      for (let i = 0; i < n; i++) {
+        const u = n > 1 ? i / (n - 1) : 0;
+        const y = basePoints[i].y;
+        let uPow = 1;
+        for (let p = 0; p < 7; p++) {
+          sumsU[p] += uPow;
+          if (p < 4) sumsUY[p] += uPow * y;
+          uPow *= u;
+        }
+      }
+
+      for (let r = 0; r < m; r++) {
+        for (let c = 0; c < m; c++) {
+          A[r][c] = sumsU[r + c];
+        }
+        A[r][m] = sumsUY[r];
+      }
+
+      for (let col = 0; col < m; col++) {
+        let maxRow = col;
+        for (let row = col + 1; row < m; row++) {
+          if (Math.abs(A[row][col]) > Math.abs(A[maxRow][col])) {
+            maxRow = row;
+          }
+        }
+        if (maxRow !== col) {
+          const tmp = A[col];
+          A[col] = A[maxRow];
+          A[maxRow] = tmp;
+        }
+        if (Math.abs(A[col][col]) < 1e-12) continue;
+
+        for (let row = 0; row < m; row++) {
+          if (row === col) continue;
+          const factor = A[row][col] / A[col][col];
+          for (let k = col; k <= m; k++) {
+            A[row][k] -= factor * A[col][k];
+          }
+        }
+      }
+
+      const c0 = A[0][m] / A[0][0];
+      const c1 = A[1][m] / A[1][1];
+      const c2 = A[2][m] / A[2][2];
+      const c3 = A[3][m] / A[3][3];
+
+      return basePoints.map((pt, i) => {
+        const u = n > 1 ? i / (n - 1) : 0;
+        const fitY = c0 + c1 * u + c2 * (u * u) + c3 * (u * u * u);
+        return { x: pt.x, y: fitY };
+      });
+    }
+
     // 1. Draw area fill gradient
-    const topAlpha = 0.22 - 0.10 * ease; // from 0.22 down to 0.12 (soft gentle fade)
     const gradient = ctx.createLinearGradient(0, marginTop, 0, height - marginBottom);
-    gradient.addColorStop(0, `rgba(196,219,139,${topAlpha.toFixed(3)})`);
-    gradient.addColorStop(1, 'rgba(196,219,139,0)');
+    gradient.addColorStop(0, 'rgba(37, 99, 235, 0.12)');
+    gradient.addColorStop(1, 'rgba(37, 99, 235, 0)');
     ctx.beginPath();
     ctx.moveTo(points[0].x, height - marginBottom);
     for (const point of points) ctx.lineTo(point.x, point.y);
@@ -2658,58 +2866,541 @@ window.onerror = function(message, source, lineno, colno, error) {
     ctx.fillStyle = gradient;
     ctx.fill();
 
-    // Helper to draw raw score line
+    // 2. Draw raw score line
     function drawScoreLine() {
-      const scoreAlpha = 1.0 - 0.50 * ease; // from 1.0 down to 0.50 (clean moderate fade)
-      const scoreWidth = 1.7 - 0.20 * ease; // from 1.7 down to 1.5
       ctx.beginPath();
       points.forEach((point, index) => {
         if (index === 0) ctx.moveTo(point.x, point.y);
         else ctx.lineTo(point.x, point.y);
       });
-      ctx.strokeStyle = `rgba(196, 219, 139, ${scoreAlpha.toFixed(3)})`;
-      ctx.lineWidth = scoreWidth;
+      ctx.strokeStyle = 'rgba(37, 99, 235, 0.35)';
+      ctx.lineWidth = 1.2;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.stroke();
     }
 
-    // Helper to draw smoothed trend line
-    function drawSmoothedLine() {
+    // 3. Draw smoothed trend line
+    function drawSmoothedLine(alpha) {
       if (points.length < 2) return;
       const smoothed = computeWindowSmoothedPoints(values, points);
-      const fitAlpha = 0.45 + 0.55 * ease; // from 0.45 up to 1.0 (crisp & solid)
-      const fitWidth = 1.5 + 0.25 * ease; // from 1.5 up to 1.75
-
       ctx.beginPath();
       smoothed.forEach((point, index) => {
         if (index === 0) ctx.moveTo(point.x, point.y);
         else ctx.lineTo(point.x, point.y);
       });
-      ctx.strokeStyle = `rgba(196, 219, 139, ${fitAlpha.toFixed(3)})`;
-      ctx.lineWidth = fitWidth;
+      ctx.strokeStyle = `rgba(37, 99, 235, ${alpha.toFixed(3)})`;
+      ctx.lineWidth = 2.0;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-
-      // Transition dash smoothly to solid
-      if (ease >= 0.75) {
-        ctx.setLineDash([]);
-      } else {
-        const dashLen = 4 * (1 - ease / 0.75);
-        ctx.setLineDash([Math.max(0.1, dashLen), Math.max(0.1, dashLen)]);
-      }
       ctx.stroke();
-      ctx.setLineDash([]);
     }
 
-    // Layer ordering: when hovered (ease >= 0.5), smoothed line is drawn in the foreground on top
-    if (ease >= 0.5) {
-      drawScoreLine();
-      drawSmoothedLine();
-    } else {
-      drawSmoothedLine();
-      drawScoreLine();
+    // 4. Draw fitted regression line (active when hovered / clicked)
+    function drawFittedLine(alpha) {
+      if (points.length < 2) return;
+      const fitted = computeFittedRegressionPoints(values, points);
+      ctx.beginPath();
+      fitted.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.strokeStyle = `rgba(196, 219, 139, ${alpha.toFixed(3)})`;
+      ctx.lineWidth = 2.2;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
     }
+
+    // Draw background raw trace first
+    drawScoreLine();
+
+    // On hover / click, crossfade between smoothed moving window and fitted regression curve
+    if (ease < 0.05) {
+      drawSmoothedLine(1.0);
+    } else if (ease > 0.95) {
+      drawFittedLine(1.0);
+    } else {
+      drawSmoothedLine(1.0 - ease);
+      drawFittedLine(ease);
+    }
+  }
+
+  /* =========================================================================
+     3D URBAN CONTEXT & REAL-TIME MODULE EXTRUSION SYSTEM (Three.js)
+     ========================================================================= */
+
+  const SUN_VECTOR = new THREE.Vector3(130, 220, 90).normalize();
+  let sharedShadowMat = null;
+
+  function initThree() {
+    if (!dom.threeContainer) return;
+
+    try {
+      const width = dom.threeContainer.clientWidth || 600;
+      const height = dom.threeContainer.clientHeight || 600;
+      const aspect = Math.max(0.1, width / height);
+
+      threeState.scene = new THREE.Scene();
+      threeState.scene.background = new THREE.Color(0xffffff); // 100% Pure Paper White
+
+      // Renderer matching Bauhaus architectural standard
+      threeState.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      threeState.renderer.setSize(width, height);
+      threeState.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      threeState.renderer.toneMapping = THREE.NoToneMapping;
+      threeState.renderer.shadowMap.enabled = true;
+      threeState.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      dom.threeContainer.appendChild(threeState.renderer.domElement);
+
+      // Shared Soft Shadow Material Overlay (depthWrite=false)
+      sharedShadowMat = new THREE.ShadowMaterial({
+        color: 0x000000,
+        opacity: 0.12,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -1.0,
+        polygonOffsetUnits: -1.0,
+      });
+
+      // Cameras
+      const R = 100;
+      const orthoSize = R * 1.4;
+      threeState.orthoCamera = new THREE.OrthographicCamera(
+        -orthoSize * aspect, orthoSize * aspect,
+        orthoSize, -orthoSize,
+        1, 3000
+      );
+      const camDist = R * 2.8;
+      threeState.orthoCamera.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
+
+      threeState.perspCamera = new THREE.PerspectiveCamera(38, aspect, 1, 3000);
+      threeState.perspCamera.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
+
+      threeState.camera = threeState.isAxo ? threeState.orthoCamera : threeState.perspCamera;
+
+      // OrbitControls with smooth damping
+      threeState.controls = new OrbitControls(threeState.camera, threeState.renderer.domElement);
+      threeState.controls.enableDamping = true;
+      threeState.controls.dampingFactor = 0.15;
+      threeState.controls.maxPolarAngle = Math.PI / 2.0;
+      threeState.controls.target.set(0, 8, 0);
+      threeState.controls.update();
+
+      // Lighting matching Context Generator
+      const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+      sunLight.position.set(130, 220, 90);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 2048;
+      sunLight.shadow.mapSize.height = 2048;
+      const shadowDim = R * 1.6;
+      sunLight.shadow.camera.left = -shadowDim;
+      sunLight.shadow.camera.right = shadowDim;
+      sunLight.shadow.camera.top = shadowDim;
+      sunLight.shadow.camera.bottom = -shadowDim;
+      sunLight.shadow.camera.near = 10;
+      sunLight.shadow.camera.far = 600;
+      sunLight.shadow.bias = -0.0005;
+      sunLight.shadow.normalBias = 0.05;
+      threeState.scene.add(sunLight);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+      threeState.scene.add(ambientLight);
+
+      // Pure White Ground Plane
+      const groundGeom = new THREE.PlaneGeometry(800, 800);
+      const groundMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const ground = new THREE.Mesh(groundGeom, groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -0.05;
+      threeState.scene.add(ground);
+
+      // Ground Shadow Plane Receiver
+      const shadowPlane = new THREE.Mesh(groundGeom, sharedShadowMat);
+      shadowPlane.rotation.x = -Math.PI / 2;
+      shadowPlane.position.y = 0.05;
+      shadowPlane.receiveShadow = true;
+      threeState.scene.add(shadowPlane);
+
+      // Groups
+      threeState.urbanGroup = new THREE.Group();
+      threeState.scene.add(threeState.urbanGroup);
+
+      threeState.buildingGroup = new THREE.Group();
+      threeState.scene.add(threeState.buildingGroup);
+
+      // Animation Loop
+      function animateThree() {
+        threeState.animFrameId = requestAnimationFrame(animateThree);
+        if (threeState.controls) threeState.controls.update();
+        if (threeState.renderer && threeState.scene && threeState.camera) {
+          threeState.renderer.render(threeState.scene, threeState.camera);
+        }
+      }
+      animateThree();
+
+      // Resize Observer
+      const ro = new ResizeObserver(() => {
+        onThreeResize();
+      });
+      ro.observe(dom.threeContainer);
+
+      if (state.contextData) {
+        renderUrbanContext3D(state.contextData);
+      }
+    } catch (err) {
+      console.warn('WebGL initialization skipped or failed:', err);
+    }
+  }
+
+  function onThreeResize() {
+    if (!dom.threeContainer || !threeState.renderer || !threeState.camera) return;
+    const width = dom.threeContainer.clientWidth || 300;
+    const height = dom.threeContainer.clientHeight || 300;
+    if (width <= 0 || height <= 0) return;
+
+    const aspect = Math.max(0.1, width / height);
+    threeState.perspCamera.aspect = aspect;
+    threeState.perspCamera.updateProjectionMatrix();
+
+    const d = 100;
+    threeState.orthoCamera.left = -d * aspect;
+    threeState.orthoCamera.right = d * aspect;
+    threeState.orthoCamera.top = d;
+    threeState.orthoCamera.bottom = -d;
+    threeState.orthoCamera.updateProjectionMatrix();
+
+    threeState.renderer.setSize(width, height);
+  }
+
+  function setCameraMode(isAxo) {
+    threeState.isAxo = isAxo;
+    if (dom.btnAxonometric) dom.btnAxonometric.classList.toggle('active', isAxo);
+    if (dom.btnPerspective) dom.btnPerspective.classList.toggle('active', !isAxo);
+
+    const oldPos = threeState.camera.position.clone();
+    const oldTarget = threeState.controls.target.clone();
+
+    threeState.camera = isAxo ? threeState.orthoCamera : threeState.perspCamera;
+    threeState.camera.position.copy(oldPos);
+    threeState.controls.object = threeState.camera;
+    threeState.controls.target.copy(oldTarget);
+    threeState.controls.update();
+    onThreeResize();
+  }
+
+  function toggleMaximize(paneSide) {
+    if (paneSide === 'left') {
+      const isMax = dom.left3DPane.classList.toggle('maximized');
+      dom.right2DPane.classList.remove('maximized');
+      if (dom.btnMaximizeLeft) {
+        dom.btnMaximizeLeft.innerHTML = isMax 
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>'
+          : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+      }
+    } else {
+      const isMax = dom.right2DPane.classList.toggle('maximized');
+      dom.left3DPane.classList.remove('maximized');
+      if (dom.btnMaximizeRight) {
+        dom.btnMaximizeRight.innerHTML = isMax 
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>'
+          : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+      }
+    }
+    setTimeout(() => {
+      onThreeResize();
+      resizeCanvas();
+      requestRender();
+    }, 100);
+  }
+
+
+
+  function createArchitecturalVolume(verts, faces, colorHex = 0xffffff, opacity = 1.0, isRoad = false) {
+    const group = new THREE.Group();
+    if (!Array.isArray(verts) || !Array.isArray(faces) || faces.length === 0) return { group };
+
+    const numTriangles = faces.length;
+    const pos = new Float32Array(numTriangles * 9);
+    const colors = new Float32Array(numTriangles * 9);
+
+    const pureWhite = new THREE.Color(colorHex);
+    const selfShadowColor = new THREE.Color(0xf0f0f0);
+    const sunFacingPositions = [];
+
+    for (let fi = 0; fi < numTriangles; fi++) {
+      const f = faces[fi];
+      if (!Array.isArray(f) || f.length < 3) continue;
+      const v0 = verts[f[0]];
+      const v1 = verts[f[1]];
+      const v2 = verts[f[2]];
+      if (!v0 || !v1 || !v2) continue;
+
+      const p0 = new THREE.Vector3(v0[0], v0[2] || 0, -v0[1]);
+      const p1 = new THREE.Vector3(v1[0], v1[2] || 0, -v1[1]);
+      const p2 = new THREE.Vector3(v2[0], v2[2] || 0, -v2[1]);
+
+      const vA = new THREE.Vector3().subVectors(p1, p0);
+      const vB = new THREE.Vector3().subVectors(p2, p0);
+      const faceNormal = new THREE.Vector3().crossVectors(vA, vB).normalize();
+
+      const dot = faceNormal.dot(SUN_VECTOR);
+      const isSunFacing = isRoad || (dot > 0.05);
+      const c = isSunFacing ? pureWhite : selfShadowColor;
+
+      for (let vi = 0; vi < 3; vi++) {
+        const v = verts[f[vi]];
+        pos[fi * 9 + vi * 3 + 0] = v[0];
+        pos[fi * 9 + vi * 3 + 1] = v[2] || 0;
+        pos[fi * 9 + vi * 3 + 2] = -v[1];
+
+        colors[fi * 9 + vi * 3 + 0] = c.r;
+        colors[fi * 9 + vi * 3 + 1] = c.g;
+        colors[fi * 9 + vi * 3 + 2] = c.b;
+      }
+
+      if (isSunFacing && !isRoad) {
+        for (let vi = 0; vi < 3; vi++) {
+          const v = verts[f[vi]];
+          sunFacingPositions.push(v[0], v[2] || 0, -v[1]);
+        }
+      }
+    }
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geom.computeVertexNormals();
+
+    const baseMat = new THREE.MeshBasicMaterial({
+      vertexColors: true,
+      transparent: opacity < 1.0,
+      opacity: opacity,
+      polygonOffset: isRoad,
+      polygonOffsetFactor: isRoad ? 2.0 : 0.0,
+      polygonOffsetUnits: isRoad ? 2.0 : 0.0,
+    });
+    const baseMesh = new THREE.Mesh(geom, baseMat);
+    group.add(baseMesh);
+
+    if (!isRoad) {
+      const casterMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+      const casterMesh = new THREE.Mesh(geom, casterMat);
+      casterMesh.castShadow = true;
+      group.add(casterMesh);
+
+      if (sunFacingPositions.length > 0 && sharedShadowMat) {
+        const sunGeom = new THREE.BufferGeometry();
+        sunGeom.setAttribute('position', new THREE.Float32BufferAttribute(sunFacingPositions, 3));
+        sunGeom.computeVertexNormals();
+        const overlay = new THREE.Mesh(sunGeom, sharedShadowMat);
+        overlay.receiveShadow = true;
+        group.add(overlay);
+      }
+    }
+
+    return { geom, baseMesh, group };
+  }
+
+  function toPt(p) {
+    if (!p) return { x: 0, y: 0 };
+    if (Array.isArray(p)) return { x: Number(p[0]) || 0, y: Number(p[1]) || 0 };
+    return { x: Number(p.x) || 0, y: Number(p.y) || 0 };
+  }
+
+  function renderUrbanContext3D(contextData) {
+    if (!threeState.urbanGroup) return;
+    while (threeState.urbanGroup.children.length > 0) {
+      const obj = threeState.urbanGroup.children[0];
+      threeState.urbanGroup.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+    }
+    if (!contextData) return;
+
+    // Update floating info card
+    if (dom.siteCityBadge) dom.siteCityBadge.textContent = (contextData.city || 'PARCEL').toUpperCase();
+    if (dom.siteIdLabel) dom.siteIdLabel.textContent = contextData.siteId || contextData.site_id || 'REAL_SITE';
+    const siteArea = contextData.siteArea || contextData.site_area || contextData.area || 0;
+    if (dom.siteAreaVal) dom.siteAreaVal.textContent = `${Number(siteArea).toFixed(1)} m²`;
+    if (dom.siteTierVal) dom.siteTierVal.textContent = contextData.areaTier || contextData.area_tier || 'XS';
+    if (dom.siteFarVal) dom.siteFarVal.textContent = Number(contextData.targetFar || contextData.target_far || 2.5).toFixed(2);
+    const bldgList = contextData.buildings || contextData.neighbor_buildings || [];
+    if (dom.siteNeighborsVal) dom.siteNeighborsVal.textContent = String(bldgList.length);
+
+    // Frame camera based on site radius
+    const R = Number(contextData.radius || 100.0);
+    const aspect = (dom.threeContainer.clientWidth || 600) / Math.max(1, dom.threeContainer.clientHeight || 600);
+    const orthoSize = R * 1.35;
+    if (threeState.orthoCamera) {
+      threeState.orthoCamera.left = -orthoSize * aspect;
+      threeState.orthoCamera.right = orthoSize * aspect;
+      threeState.orthoCamera.top = orthoSize;
+      threeState.orthoCamera.bottom = -orthoSize;
+      const camDist = R * 2.8;
+      threeState.orthoCamera.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
+      threeState.orthoCamera.updateProjectionMatrix();
+    }
+    if (threeState.perspCamera) {
+      const camDist = R * 2.8;
+      threeState.perspCamera.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
+      threeState.perspCamera.updateProjectionMatrix();
+    }
+    if (threeState.controls) {
+      threeState.controls.target.set(0, 5, 0);
+      threeState.controls.update();
+    }
+
+    // 1. Render Bounding Box Border Line
+    const borderPts = [
+      new THREE.Vector3(-R, 0.1,  R),
+      new THREE.Vector3( R, 0.1,  R),
+      new THREE.Vector3( R, 0.1, -R),
+      new THREE.Vector3(-R, 0.1, -R),
+      new THREE.Vector3(-R, 0.1,  R),
+    ];
+    const borderGeom = new THREE.BufferGeometry().setFromPoints(borderPts);
+    threeState.urbanGroup.add(new THREE.Line(borderGeom, new THREE.LineBasicMaterial({ color: 0xd1d5db, linewidth: 1.2 })));
+
+    // 2. Render Neighbor Context Buildings (Context Generator Bauhaus Engine)
+    if (Array.isArray(bldgList)) {
+      bldgList.forEach(b => {
+        if (Array.isArray(b.vertices) && Array.isArray(b.faces) && b.faces.length > 0) {
+          const { geom, group } = createArchitecturalVolume(b.vertices, b.faces, 0xffffff, 0.98, false);
+          const edges = new THREE.EdgesGeometry(geom, 20);
+          const lineMat = new THREE.LineBasicMaterial({ color: 0x999999, linewidth: 1.2 });
+          group.add(new THREE.LineSegments(edges, lineMat));
+          threeState.urbanGroup.add(group);
+        }
+      });
+    }
+
+    // 3. Render Vehicular Roads
+    const roadList = contextData.roads || [];
+    if (Array.isArray(roadList)) {
+      roadList.forEach(r => {
+        if (Array.isArray(r.vertices) && Array.isArray(r.faces) && r.faces.length > 0) {
+          const { group } = createArchitecturalVolume(r.vertices, r.faces, 0xffffff, 1.0, true);
+          threeState.urbanGroup.add(group);
+        }
+      });
+    }
+
+    // 4. Render Green Spaces
+    const greenList = contextData.greenSpaces || contextData.green_spaces || [];
+    if (Array.isArray(greenList)) {
+      greenList.forEach(g => {
+        if (Array.isArray(g.vertices) && Array.isArray(g.faces) && g.faces.length > 0) {
+          const { group } = createArchitecturalVolume(g.vertices, g.faces, 0xdcfce7, 1.0, true);
+          threeState.urbanGroup.add(group);
+        }
+      });
+    }
+
+    // 5. Render Central Site Parcel Footprint
+    let sitePoly = contextData.sitePolygon || contextData.polygon || contextData.site_polygon;
+    if (!sitePoly && state.boundaries.length > 0) {
+      const b0 = state.boundaries[0];
+      const ox = b0.originOffset?.x || 0;
+      const oy = b0.originOffset?.y || 0;
+      sitePoly = b0.outer.map(p => ({ x: p.x + ox, y: p.y + oy }));
+    }
+
+    if (Array.isArray(sitePoly) && sitePoly.length >= 3) {
+      // Blue Outline
+      const pts = sitePoly.map(p => {
+        const pt = toPt(p);
+        return new THREE.Vector3(pt.x, 0.15, -pt.y);
+      });
+      pts.push(pts[0].clone());
+      const lineGeom = new THREE.BufferGeometry().setFromPoints(pts);
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x2563eb, linewidth: 3 });
+      threeState.urbanGroup.add(new THREE.Line(lineGeom, lineMat));
+
+      // Soft Coral Red Parcel Surface
+      const shape = new THREE.Shape();
+      sitePoly.forEach((p, idx) => {
+        const pt = toPt(p);
+        if (idx === 0) shape.moveTo(pt.x, -pt.y);
+        else shape.lineTo(pt.x, -pt.y);
+      });
+      const parcelGeom = new THREE.ShapeGeometry(shape);
+      parcelGeom.rotateX(-Math.PI / 2);
+      const parcelMat = new THREE.MeshBasicMaterial({ color: 0xfca5a5, transparent: true, opacity: 0.85 });
+      const parcelMesh = new THREE.Mesh(parcelGeom, parcelMat);
+      parcelMesh.position.y = 0.02;
+      threeState.urbanGroup.add(parcelMesh);
+    }
+  }
+
+  function syncBuildingExtrusions3D(placementsList) {
+    if (!threeState.buildingGroup) return;
+
+    // Clear old building extrusions
+    while (threeState.buildingGroup.children.length > 0) {
+      const obj = threeState.buildingGroup.children[0];
+      threeState.buildingGroup.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+    }
+
+    const useMerged = !state.disableMerging;
+    const effectiveList = (useMerged && Array.isArray(state.currentMergedPlacements) && state.currentMergedPlacements.length > 0)
+      ? state.currentMergedPlacements
+      : (Array.isArray(placementsList) && placementsList.length > 0 ? placementsList : state.individualPlacementsList);
+
+    if (!Array.isArray(effectiveList) || effectiveList.length === 0) return;
+
+    const floorHeight = 3.5;
+    const matCore = new THREE.MeshStandardMaterial({ color: 0xdc745d, roughness: 0.45, metalness: 0.1 });
+    const matRoom = new THREE.MeshStandardMaterial({ color: 0xa9c5ae, roughness: 0.45, metalness: 0.1 });
+    const matSpecial = new THREE.MeshStandardMaterial({ color: 0x6e9c89, roughness: 0.45, metalness: 0.1 });
+    const matCorridor = new THREE.MeshStandardMaterial({ color: 0xe1ba57, roughness: 0.45, metalness: 0.1 });
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0x111712, linewidth: 1.5 });
+
+    effectiveList.forEach(placement => {
+      const floorIdx = Number(placement.instanceIdx ?? placement.floorIndex ?? 0);
+      const poly = placement.poly || placement.polygon || placement.mergedPolygon || placement.coords || placement.shape;
+      if (!Array.isArray(poly) || poly.length < 3) return;
+
+      const floorBoundary = state.boundaryByInstance?.get(String(floorIdx)) || state.boundaries[floorIdx] || state.boundaries[0];
+      const dx = Number(floorBoundary?.offset?.x || 0);
+      const dy = Number(floorBoundary?.offset?.y || 0);
+      const ox = Number(floorBoundary?.originOffset?.x || 0);
+      const oy = Number(floorBoundary?.originOffset?.y || 0);
+
+      const shape = new THREE.Shape();
+      poly.forEach((p, idx) => {
+        const pt = toPt(p);
+        // Transform from 2D multi-floor world coordinates to 3D site coordinates
+        const localX = pt.x - dx;
+        const localY = pt.y - dy;
+        const x3d = localX + ox;
+        const z3d = -(localY + oy);
+        if (idx === 0) shape.moveTo(x3d, z3d);
+        else shape.lineTo(x3d, z3d);
+      });
+
+      const geom = new THREE.ExtrudeGeometry(shape, {
+        depth: floorHeight - 0.15,
+        bevelEnabled: true,
+        bevelSize: 0.05,
+        bevelThickness: 0.05
+      });
+      geom.rotateX(-Math.PI / 2);
+      geom.translate(0, floorIdx * floorHeight + 0.1, 0);
+
+      const cat = placement.category || (placement.module ? placement.module.category : 'room');
+      const mat = cat === 'core' ? matCore : cat === 'special' ? matSpecial : cat === 'corridor' ? matCorridor : matRoom;
+
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      const edges = new THREE.EdgesGeometry(geom, 25);
+      const edgeLine = new THREE.LineSegments(edges, edgeMat);
+      mesh.add(edgeLine);
+
+      threeState.buildingGroup.add(mesh);
+    });
   }
 
   function setupCanvasEvents() {
@@ -2910,10 +3601,9 @@ window.onerror = function(message, source, lineno, colno, error) {
     const ctx = context;
     ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
     ctx.clearRect(0, 0, view.width, view.height);
-    ctx.fillStyle = '#e9e6de';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, view.width, view.height);
 
-    drawGrid(ctx);
     if (state.showSDFGrid) drawSDFGrid(ctx);
     drawSites(ctx);
     drawPlacements(ctx);
@@ -3024,15 +3714,7 @@ window.onerror = function(message, source, lineno, colno, error) {
   }
 
   function drawGrid(ctx) {
-    const topLeft = screenToWorld(0, 0);
-    const bottomRight = screenToWorld(view.width, view.height);
-    let minorStep = 1;
-    if (view.zoom < 4) minorStep = 5;
-    else if (view.zoom < 8) minorStep = 2;
-    const majorStep = minorStep * 5;
-
-    drawGridSet(ctx, topLeft, bottomRight, minorStep, 'rgba(28, 37, 30, 0.055)', 0.7);
-    drawGridSet(ctx, topLeft, bottomRight, majorStep, 'rgba(28, 37, 30, 0.105)', 0.9);
+    // Pure white canvas background without grid
   }
 
   function drawGridSet(ctx, topLeft, bottomRight, step, color, lineWidth) {
@@ -3995,16 +4677,13 @@ window.onerror = function(message, source, lineno, colno, error) {
 
   function updateMergingButton() {
     if (!dom.toggleMergingBtn) return;
-    const title = dom.toggleMergingBtn.querySelector('strong');
-    const detail = dom.toggleMergingBtn.querySelector('small');
+    const span = dom.toggleMergingBtn.querySelector('span:last-child') || dom.toggleMergingBtn.querySelector('strong');
     if (state.disableMerging) {
-      dom.toggleMergingBtn.classList.add('action-primary');
-      if (title) title.textContent = 'Enable Merging (M)';
-      if (detail) detail.textContent = 'Show merged shapes';
+      dom.toggleMergingBtn.classList.add('dock-btn-primary');
+      if (span) span.textContent = 'Enable Merging (M)';
     } else {
-      dom.toggleMergingBtn.classList.remove('action-primary');
-      if (title) title.textContent = 'Disable Merging (M)';
-      if (detail) detail.textContent = 'Show original shapes';
+      dom.toggleMergingBtn.classList.remove('dock-btn-primary');
+      if (span) span.textContent = 'Disable Merging (M)';
     }
   }
 

@@ -39,7 +39,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import uvicorn
@@ -49,7 +49,8 @@ import graph
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PUBLIC_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "public"))
+FRONTEND_DIST = os.path.abspath(os.path.join(BASE_DIR, "..", "frontend", "dist"))
+PUBLIC_DIR = FRONTEND_DIST if os.path.isdir(FRONTEND_DIST) else os.path.abspath(os.path.join(BASE_DIR, "..", "public"))
 OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
 MIN_SHARED_EDGE = 0.5
 MAX_CORRIDOR_WIDTH = 1.5
@@ -87,14 +88,16 @@ _TORCH_RUNTIME_CONFIGURED = False
 
 
 DEFAULT_SETTINGS: dict[str, Any] = {
-    "boundaryType": "free",
+    "boundaryType": "real",
     "siteAreaTier": "ANY",
+    "city": "ALL",
     "atriumPolicy": "none",
     "singleFloor": False,
     "publicMode": False,
-    "parallelEnvironments": 4,
+    "parallelEnvironments": 9,
+    "batchSize": 9,
     "maxModules": 130,
-    "learningRate": 0.001,
+    "learningRate": 0.003,
     "minEdge": 3.0,
     "maxEdge": 9.0,
     "dictCap": 10,
@@ -106,11 +109,17 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "allowCorridors": False,
     "allowStop": True,
     "beamSearchWidth": 1,
+    "lookaheadSteps": 3,
     "recordTrajectories": False,
     "bufferEpisodes": 1,
+    "realSiteId": "",
 }
 
-BOUNDARY_TYPES = {"lobed", "lshape", "ushape", "tshape", "convex", "rect", "free"}
+BOUNDARY_TYPES = {
+    "lobed", "lshape", "ushape", "tshape", "convex", "rect", "free",
+    "real", "mixed", "real site", "real_site", "mixed random with real sites",
+    "mixed_real", "mixed_random_with_real_sites"
+}
 SITE_AREA_TIERS = {"ANY", "XS", "S", "M", "L", "XL"}
 ATRIUM_POLICIES = {"central", "none"}
 
@@ -137,7 +146,9 @@ def _finite_number(value: Any, name: str) -> float:
 
 
 def _integer(value: Any, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise SettingsError(f"{name} must be an integer")
+    if isinstance(value, float) and not value.is_integer():
         raise SettingsError(f"{name} must be an integer")
     return int(value)
 
@@ -192,22 +203,36 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
 
     if not isinstance(patch, dict):
         raise SettingsError("settings must be an object")
-    unknown = sorted(set(patch) - set(DEFAULT_SETTINGS) - {"maxEdges"})
+    unknown = sorted(set(patch) - set(DEFAULT_SETTINGS) - {"maxEdges", "batchSize"})
     if unknown:
         raise SettingsError(f"unknown setting: {unknown[0]}")
 
     merged = dict(current)
     merged.update(patch)
+    if "batchSize" in patch and "parallelEnvironments" not in patch:
+        merged["parallelEnvironments"] = patch["batchSize"]
+    elif "parallelEnvironments" in patch and "batchSize" not in patch:
+        merged["batchSize"] = patch["parallelEnvironments"]
+
     if "maxEdges" in merged:
         merged["maxEdges"] = int(
             _in_range(_integer(merged["maxEdges"], "maxEdges"), 3, 8, "maxEdges")
         )
 
-    boundary_type = merged["boundaryType"]
-    if not isinstance(boundary_type, str) or boundary_type not in BOUNDARY_TYPES:
+    raw_boundary = str(merged["boundaryType"]).lower().strip()
+    if raw_boundary in ("real site", "real_site"):
+        boundary_type = "real"
+    elif raw_boundary in ("mixed random with real sites", "mixed_real", "mixed_random_with_real_sites"):
+        boundary_type = "mixed"
+    else:
+        boundary_type = raw_boundary
+    merged["boundaryType"] = boundary_type
+
+    if boundary_type not in BOUNDARY_TYPES:
         raise SettingsError("boundaryType is not supported")
-    site_area_tier = merged["siteAreaTier"]
-    if not isinstance(site_area_tier, str) or site_area_tier not in SITE_AREA_TIERS:
+    site_area_tier = str(merged["siteAreaTier"]).upper()
+    merged["siteAreaTier"] = site_area_tier
+    if site_area_tier not in SITE_AREA_TIERS:
         raise SettingsError("siteAreaTier is not supported")
     atrium_policy = merged["atriumPolicy"]
     if not isinstance(atrium_policy, str) or atrium_policy not in ATRIUM_POLICIES:
@@ -224,6 +249,7 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     merged["parallelEnvironments"] = int(
         _in_range(_integer(merged["parallelEnvironments"], "parallelEnvironments"), 1, 16, "parallelEnvironments")
     )
+    merged["batchSize"] = merged["parallelEnvironments"]
     merged["maxModules"] = int(
         _in_range(_integer(merged["maxModules"], "maxModules"), 10, 300, "maxModules")
     )
@@ -236,7 +262,12 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     merged["maxRoomHops"] = int(
         _in_range(_integer(merged.get("maxRoomHops", 3), "maxRoomHops"), 1, 10, "maxRoomHops")
     )
+    merged["bufferEpisodes"] = int(
+        _in_range(_integer(merged.get("bufferEpisodes", 2), "bufferEpisodes"), 1, 16, "bufferEpisodes")
+    )
     merged["seed"] = int(_in_range(_integer(merged["seed"], "seed"), 0, 2**31 - 1, "seed"))
+    if "lookaheadSteps" in merged:
+        merged["lookaheadSteps"] = int(_in_range(_integer(merged["lookaheadSteps"], "lookaheadSteps"), 1, 5, "lookaheadSteps"))
 
     for key in ("minEdge", "maxEdge"):
         merged[key] = _half_step(
@@ -622,31 +653,81 @@ class EquivariantRelationalSetTransformer(nn.Module):
 
 
 class DynamicValueCritic(nn.Module):
-    """Permutation-invariant Set Transformer value head for dynamic partial floorplan states."""
+    """SE(2)-equivariant relational Set Transformer value head for dynamic partial floorplan states."""
 
-    def __init__(self, pooled_site_dim: int = POOLED_SITE_DIM, mod_token_dim: int = 10, hidden_dim: int = 48):
+    def __init__(
+        self,
+        pooled_site_dim: int = POOLED_SITE_DIM,
+        mod_token_dim: int = 11,
+        hidden_dim: int = 48,
+        num_heads: int = 4,
+        num_rbf: int = 8,
+    ):
         super().__init__()
+        self.hidden_dim = hidden_dim
+        self.num_heads = num_heads
         self.mod_proj = nn.Linear(mod_token_dim, hidden_dim)
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=hidden_dim, nhead=4, dim_feedforward=64, batch_first=True, dropout=0.0
+
+        self.register_buffer("rbf_centers", torch.linspace(0.0, 30.0, num_rbf))
+        self.rbf_sigma = 30.0 / num_rbf
+
+        edge_in_dim = num_rbf + 2
+        self.edge_mlp = nn.Sequential(
+            nn.Linear(edge_in_dim, 32),
+            nn.SiLU(),
+            nn.Linear(32, num_heads),
         )
-        self.mod_transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
+
+        head_dim = hidden_dim // num_heads
+        self.q_proj = nn.Linear(hidden_dim, hidden_dim)
+        self.k_proj = nn.Linear(hidden_dim, hidden_dim)
+        self.v_proj = nn.Linear(hidden_dim, hidden_dim)
+        self.out_proj = nn.Linear(hidden_dim, hidden_dim)
+        self.norm1 = nn.LayerNorm(hidden_dim)
+        self.ffn = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim * 2),
+            nn.SiLU(),
+            nn.Linear(hidden_dim * 2, hidden_dim),
+        )
+        self.norm2 = nn.LayerNorm(hidden_dim)
+
         self.empty_token = nn.Parameter(torch.zeros(1, 1, hidden_dim))
         self.site_macro_proj = nn.Sequential(
             nn.Linear(pooled_site_dim + 3, hidden_dim),
             nn.SiLU(),
         )
         self.head = nn.Sequential(
-            nn.Linear(hidden_dim * 2, 32),
+            nn.Linear(hidden_dim * 3, 32),
             nn.SiLU(),
             nn.Linear(32, 1),
         )
+
+    def _compute_edge_features(
+        self,
+        positions: torch.Tensor,
+        angles: torch.Tensor,
+    ) -> torch.Tensor:
+        diff_pos = positions.unsqueeze(1) - positions.unsqueeze(0)
+        dist = torch.norm(diff_pos, dim=-1)
+        rbf = torch.exp(
+            -((dist.unsqueeze(-1) - self.rbf_centers) ** 2)
+            / (2.0 * (self.rbf_sigma**2))
+        )
+
+        diff_angle = angles.unsqueeze(1) - angles.unsqueeze(0)
+        cos_diff = torch.cos(diff_angle)
+        sin_diff = torch.sin(diff_angle)
+        angle_feats = torch.stack([cos_diff, sin_diff], dim=-1)
+
+        return torch.cat([rbf, angle_feats], dim=-1)
 
     def forward(
         self,
         pooled_site: torch.Tensor,
         placed_tokens: torch.Tensor | None = None,
         macro_state: torch.Tensor | None = None,
+        positions: torch.Tensor | None = None,
+        angles: torch.Tensor | None = None,
     ) -> torch.Tensor:
         B = pooled_site.shape[0] if pooled_site.ndim > 1 else 1
         if pooled_site.ndim == 1:
@@ -658,16 +739,44 @@ class DynamicValueCritic(nn.Module):
 
         site_feat = self.site_macro_proj(torch.cat([pooled_site, macro_state], dim=-1))
 
-        if placed_tokens is None or (placed_tokens.ndim >= 2 and placed_tokens.shape[1] == 0):
-            mod_h = self.empty_token.expand(B, -1, -1).squeeze(1)
+        if placed_tokens is None or (placed_tokens.ndim >= 2 and placed_tokens.shape[1] == 0) or (placed_tokens.ndim == 1 and placed_tokens.shape[0] == 0):
+            mod_mean = self.empty_token.expand(B, -1, -1).squeeze(1)
+            mod_max = self.empty_token.expand(B, -1, -1).squeeze(1)
         else:
             if placed_tokens.ndim == 2:
                 placed_tokens = placed_tokens.unsqueeze(0)
             H = self.mod_proj(placed_tokens)
-            H_trans = self.mod_transformer(H)
-            mod_h = H_trans.mean(dim=1)
+            N = placed_tokens.shape[1]
 
-        combined = torch.cat([site_feat, mod_h], dim=-1)
+            if positions is not None and angles is not None and N > 1:
+                pos = positions if positions.ndim == 2 else positions[0]
+                ang = angles if angles.ndim == 1 else angles[0]
+                edge_feats = self._compute_edge_features(pos, ang)
+                edge_bias = self.edge_mlp(edge_feats).permute(2, 0, 1)
+
+                head_dim = self.hidden_dim // self.num_heads
+                scale = 1.0 / math.sqrt(head_dim)
+
+                h_s = H.squeeze(0) if H.shape[0] == 1 else H[0]
+                q = self.q_proj(h_s).view(N, self.num_heads, head_dim).permute(1, 0, 2)
+                k = self.k_proj(h_s).view(N, self.num_heads, head_dim).permute(1, 0, 2)
+                v = self.v_proj(h_s).view(N, self.num_heads, head_dim).permute(1, 0, 2)
+
+                attn_scores = torch.bmm(q, k.transpose(1, 2)) * scale + edge_bias
+                attn_weights = F.softmax(attn_scores, dim=-1)
+                attn_out = (
+                    torch.bmm(attn_weights, v)
+                    .permute(1, 0, 2)
+                    .contiguous()
+                    .view(1, N, self.hidden_dim)
+                )
+                H = self.norm1(H + self.out_proj(attn_out))
+                H = self.norm2(H + self.ffn(H))
+
+            mod_mean = H.mean(dim=1)
+            mod_max = H.max(dim=1).values
+
+        combined = torch.cat([site_feat, mod_mean, mod_max], dim=-1)
         return self.head(combined).squeeze(-1)
 
 
@@ -758,9 +867,11 @@ class PolicyModel(nn.Module):
         pooled_site: torch.Tensor,
         placed_tokens: torch.Tensor | None = None,
         macro_state: torch.Tensor | None = None,
+        positions: torch.Tensor | None = None,
+        angles: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """Predict dynamic normalized state return using Set Transformer."""
-        return self.value_head(pooled_site, placed_tokens, macro_state)
+        """Predict dynamic normalized state return using SE(2) relational Set Transformer."""
+        return self.value_head(pooled_site, placed_tokens, macro_state, positions, angles)
 
     def shape_parameter_logits(self, pooled_site: torch.Tensor) -> tuple[torch.Tensor, ...]:
         """Score num_edges, edge lengths, and internal angles."""
@@ -827,6 +938,8 @@ class PlacementPolicyDecision:
     positions: torch.Tensor | None = None
     angles: torch.Tensor | None = None
     placed_tokens: torch.Tensor | None = None
+    placed_positions: torch.Tensor | None = None
+    placed_angles: torch.Tensor | None = None
     macro_state: torch.Tensor | None = None
 
 
@@ -1307,6 +1420,7 @@ class FloorEnvironment:
 
     def world_boundary(self) -> dict:
         dx, dy = self.offset
+        origin_offset = self.boundary.get("originOffset", {"x": 0.0, "y": 0.0})
         return {
             "instanceIdx": self.index,
             "outer": G.translate_polygon(self.site["outer"], dx, dy),
@@ -1314,6 +1428,8 @@ class FloorEnvironment:
             "exactArea": float(self.site["exactArea"]),
             "siteArea": float(self.site["exactArea"]),
             "family": self.boundary.get("family", self.boundary.get("type", "procedural")),
+            "offset": {"x": float(dx), "y": float(dy)},
+            "originOffset": origin_offset,
         }
 
     def _frontier_cells(self) -> list[dict]:
@@ -2829,7 +2945,7 @@ class FloorEnvironment:
         return not violations, sorted(set(violations))
 
     def _deep_interior_room_metrics(self) -> tuple[int, float, float, float]:
-        """Compute count, area, ratio, and un-diluted depth penalty score of habitable rooms based on hop distance from facade."""
+        """Compute continuous Distance-to-Air darkness metric and progressive interior penalties."""
         habitable_rooms = [p for p in self.placements if p.get("category") in ("room", "special")]
         if not habitable_rooms:
             return 0, 0.0, 0.0, 0.0
@@ -2837,68 +2953,72 @@ class FloorEnvironment:
         polys = [p["poly"] for p in self.placements]
         segs = G.exposed_wall_segments(polys)
         
-        # A room is a Facade Room (Depth 0) if it has exposed exterior wall segments or touches site boundary
-        facade_room_ids = set()
+        # 1. Identify Boundary / Outside Rooms and compute Euclidean distance from centroid to closest outside edge
+        outside_room_air_dist: dict[str, float] = {}
         for p in habitable_rooms:
-            if float(p.get("outerExposure", 0.0)) >= 0.5:
-                facade_room_ids.add(p["id"])
-                
-        for seg in segs:
-            if float(seg.get("length", 0.0)) >= 0.4:
-                poly_idx = seg.get("polygonIndex")
-                if poly_idx is not None and poly_idx < len(self.placements):
-                    p = self.placements[poly_idx]
-                    if p.get("category") in ("room", "special"):
-                        facade_room_ids.add(p["id"])
-                        
-        if not facade_room_ids:
+            rid = p["id"]
+            center = p.get("center", G.polygon_centroid(p["poly"]))
+            poly = p["poly"]
+            poly_idx = p.get("placementIndex", next((i for i, pl in enumerate(self.placements) if pl["id"] == rid), None))
+            poly_edges = [{"a": poly[k], "b": poly[(k + 1) % len(poly)]} for k in range(len(poly))]
+            room_segs = [
+                seg for seg in segs
+                if float(seg.get("length", 0.0)) >= 0.35 and (
+                    seg.get("polygonIndex") == poly_idx or
+                    G.point_to_segments_dist(
+                        {"x": 0.5 * (float(seg["a"]["x"]) + float(seg["b"]["x"])), "y": 0.5 * (float(seg["a"]["y"]) + float(seg["b"]["y"]))},
+                        poly_edges
+                    ) < 0.15
+                )
+            ]
+            
+            if room_segs or float(p.get("outerExposure", 0.0)) >= 0.4:
+                min_d = G.point_to_segments_dist(center, room_segs) if room_segs else max(1.0, math.sqrt(float(p.get("area", 15.0))) / 2.0)
+                outside_room_air_dist[rid] = min_d
+
+        if not outside_room_air_dist:
             total_area = sum(float(p.get("area", 0.0)) for p in habitable_rooms)
-            # All rooms are completely buried with no facade contact: assign max penalty to all
             depth_score = sum(45.0 * max(0.5, float(p.get("area", 15.0)) / 15.0) for p in habitable_rooms)
             return len(habitable_rooms), total_area, 1.0, depth_score
 
-        depth: dict[str, int] = {rid: 0 for rid in facade_room_ids}
-        queue = list(facade_room_ids)
-        while queue:
-            curr_id = queue.pop(0)
-            curr_depth = depth[curr_id]
+        # 2. Propagate Distance-to-Air to Inside Rooms using Dijkstra on the Adjacency Contact Graph
+        distance_to_air: dict[str, float] = dict(outside_room_air_dist)
+        pq: list[tuple[float, str]] = [(d, rid) for rid, d in outside_room_air_dist.items()]
+        heapq.heapify(pq)
+        
+        while pq:
+            curr_dist, curr_id = heapq.heappop(pq)
+            if curr_dist > distance_to_air.get(curr_id, math.inf):
+                continue
+            curr_p = self.placement_by_id.get(curr_id)
+            if curr_p is None:
+                continue
+            c1 = curr_p.get("center", G.polygon_centroid(curr_p["poly"]))
+            
             for neighbor_id in self.adjacency_map.get(curr_id, ()):
-                if neighbor_id in self.placement_by_id:
-                    neighbor = self.placement_by_id[neighbor_id]
-                    if neighbor.get("category") in ("room", "special") and neighbor_id not in depth:
-                        depth[neighbor_id] = curr_depth + 1
-                        queue.append(neighbor_id)
-                        
-        deep_rooms = [p for p in habitable_rooms if depth.get(p["id"], 999) >= 2]
+                neighbor = self.placement_by_id.get(neighbor_id)
+                if neighbor is not None and neighbor.get("category") in ("room", "special"):
+                    c2 = neighbor.get("center", G.polygon_centroid(neighbor["poly"]))
+                    hop_dist = math.hypot(float(c2["x"]) - float(c1["x"]), float(c2["y"]) - float(c1["y"]))
+                    new_dist = curr_dist + hop_dist
+                    if new_dist < distance_to_air.get(neighbor_id, math.inf):
+                        distance_to_air[neighbor_id] = new_dist
+                        heapq.heappush(pq, (new_dist, neighbor_id))
+
+        deep_rooms = [p for p in habitable_rooms if distance_to_air.get(p["id"], 999.0) > 4.5]
         deep_count = len(deep_rooms)
         deep_area = sum(float(p.get("area", 0.0)) for p in deep_rooms)
         total_rentable = sum(float(p.get("area", 0.0)) for p in habitable_rooms)
         deep_ratio = _safe_ratio(deep_area, total_rentable)
         
-        # Direct per-room progressive depth penalty:
-        # d=0 -> 0.0 (facade room, direct daylight)
-        # d=1 -> 1.5 (mild penalty for borrowed daylight)
-        # d=2 -> 8.0 (windowless room, clear defect)
-        # d=3 -> 18.0 (severely buried room)
-        # d=4 -> 30.0 (deep tomb)
-        # d>=5 -> 45.0 + 10.0*(d-5) (catastrophic interior void)
+        # 3. Continuous Progressive Darkness / Distance-to-Air Penalty:
+        # d <= 4.5m: 0.0 pts (Direct daylight envelope)
+        # d > 4.5m: 0.55 * (d - 4.5)^1.32 pts (d=8m -> ~2.9 pts, d=12m -> ~7.9 pts, d=16m -> ~13.8 pts)
         depth_penalty_score = 0.0
         for p in habitable_rooms:
-            d = depth.get(p["id"], 999)
-            if d == 1:
-                base_rate = 1.5
-            elif d == 2:
-                base_rate = 8.0
-            elif d == 3:
-                base_rate = 18.0
-            elif d == 4:
-                base_rate = 30.0
-            elif d >= 5:
-                base_rate = 45.0 + 10.0 * min(d - 5, 5)
-            else:
-                base_rate = 0.0
-                
-            if base_rate > 0.0:
+            d = distance_to_air.get(p["id"], 50.0)
+            if d > 4.5:
+                base_rate = 0.55 * ((d - 4.5) ** 1.32)
                 area_factor = max(0.5, float(p.get("area", 15.0)) / 15.0)
                 depth_penalty_score += base_rate * area_factor
                 
@@ -2933,9 +3053,9 @@ class FloorEnvironment:
             }
             
             other_segs = [s for j, s in enumerate(exposed_segments) if j != i]
-            t = G.ray_intersect_segments(mid, (nx, ny), other_segs, min_dist=0.05, max_dist=3.0)
-            if t is not None and t < 3.0:
-                severity = (3.0 - t) / 3.0
+            t = G.ray_intersect_segments(mid, (nx, ny), other_segs, min_dist=0.05, max_dist=5.0)
+            if t is not None and t < 5.0:
+                severity = (5.0 - t) / 5.0
                 occluded_length += length * severity
                 
         chasm_ratio = _safe_ratio(occluded_length, exposed_perimeter)
@@ -3589,19 +3709,76 @@ class ParallelTrainer:
         master_rng = G.RNG(base_seed)
         floor_count = int(settings["parallelEnvironments"])
         tier = settings.get("siteAreaTier", "ANY")
-        floor_target_areas = G.sample_building_floor_areas(tier, floor_count, master_rng)
+        raw_boundary_type = str(settings.get("boundaryType", "free")).lower()
 
-        for index in range(floor_count):
-            rng = G.RNG(base_seed + index * 8191)
-            floor_settings = dict(settings)
-            floor_settings["targetSiteArea"] = floor_target_areas[index]
-            boundary = G.make_boundary(settings["boundaryType"], rng.fork(11), floor_settings)
-            candidates = G.atrium_candidates(boundary, rng.fork(23))
-            atrium, atrium_log_prob = self._choose_atrium(settings, boundary, candidates)
-            if atrium_log_prob is not None:
-                atrium_log_probs.append(atrium_log_prob)
-            site = G.build_site(boundary, atrium.get("holes", []))
-            records.append((boundary, atrium, site, rng.fork(53)))
+        # Determine if this building episode will use a Real Site or Procedural Boundary
+        use_real_site = False
+        if raw_boundary_type in ("real", "realsite", "real_site", "real site"):
+            use_real_site = True
+        elif raw_boundary_type in ("mixed", "mixed_random", "mixed random with real sites", "mixed_real", "mixed_random_with_real_sites"):
+            use_real_site = (master_rng.uniform(0.0, 1.0) < 0.5)
+
+        if use_real_site:
+            dataset = G.load_real_sites_dataset()
+            sites_dict = dataset.get("sites", {})
+            tier_upper = str(tier).upper()
+            tier_index = dataset.get("tier_index", {})
+
+            target_site_id = settings.get("realSiteId") or settings.get("siteId")
+            city_filter = str(settings.get("city", "ALL")).lower().strip()
+            if target_site_id and target_site_id in sites_dict:
+                chosen_site_id = target_site_id
+            else:
+                candidates = tier_index.get(tier_upper, []) if tier_upper in tier_index and tier_index[tier_upper] else list(sites_dict.keys())
+                if city_filter not in ("all", "any", ""):
+                    filtered_cands = [sid for sid in candidates if sites_dict[sid].get("city_code", "").lower() == city_filter or city_filter in sites_dict[sid].get("city", "").lower()]
+                    if filtered_cands:
+                        candidates = filtered_cands
+                if candidates:
+                    chosen_site_id = master_rng.pick(candidates)
+                else:
+                    chosen_site_id = list(sites_dict.keys())[0] if sites_dict else None
+
+            common_floor_settings = dict(settings)
+            common_floor_settings["boundaryType"] = "real"
+            common_floor_settings["realSiteId"] = chosen_site_id
+            common_boundary = G.make_boundary("real", master_rng.fork(11), common_floor_settings)
+
+            for index in range(floor_count):
+                rng = G.RNG(base_seed + index * 8191)
+                boundary = copy.deepcopy(common_boundary)
+                boundary["seed"] = f"real_floor_{index}"
+                candidates = G.atrium_candidates(boundary, rng.fork(23))
+                atrium, atrium_log_prob = self._choose_atrium(settings, boundary, candidates)
+                if atrium_log_prob is not None:
+                    atrium_log_probs.append(atrium_log_prob)
+                site = G.build_site(boundary, atrium.get("holes", []))
+                if "parameters" in boundary and isinstance(boundary["parameters"], dict):
+                    site["contextData"] = boundary["parameters"]
+                records.append((boundary, atrium, site, rng.fork(53)))
+        else:
+            floor_target_areas = G.sample_building_floor_areas(tier, floor_count, master_rng)
+            proc_family = raw_boundary_type
+            if proc_family in ("free", "random", "arbitrary"):
+                proc_family = master_rng.pick(("convex", "concave", "lobed", "notched"))
+            elif proc_family in ("mixed", "mixed_random", "mixed random with real sites", "mixed_real", "mixed_random_with_real_sites"):
+                proc_family = master_rng.pick(("convex", "lobed", "rect", "concave"))
+
+            for index in range(floor_count):
+                rng = G.RNG(base_seed + index * 8191)
+                floor_settings = dict(settings)
+                floor_settings["targetSiteArea"] = floor_target_areas[index]
+                floor_settings["boundaryType"] = proc_family
+                boundary = G.make_boundary(proc_family, rng.fork(11), floor_settings)
+                candidates = G.atrium_candidates(boundary, rng.fork(23))
+                atrium, atrium_log_prob = self._choose_atrium(settings, boundary, candidates)
+                if atrium_log_prob is not None:
+                    atrium_log_probs.append(atrium_log_prob)
+                site = G.build_site(boundary, atrium.get("holes", []))
+                if "parameters" in boundary and isinstance(boundary["parameters"], dict):
+                    site["contextData"] = boundary["parameters"]
+                records.append((boundary, atrium, site, rng.fork(53)))
+
         offsets = self._layout_offsets(records)
         return (
             [
@@ -4076,9 +4253,6 @@ class ParallelTrainer:
         primary_site_area = float(floors[0].site["exactArea"]) if floors else 1000.0
         max_cores = _max_cores_for_site(primary_site_area)
         if not placing_first:
-            # Multi-floor cores scale with building area. Offer subsequent
-            # cores after every floor has developed sufficient rooms, matching the quality
-            # gate used by the independent-floor policy.
             core_counts = [
                 sum(
                     1
@@ -4097,9 +4271,15 @@ class ParallelTrainer:
             ]
             if any(count == 0 or count >= max_cores for count in core_counts):
                 return []
-            min_current_cores = min(core_counts)
-            if any(count < SECOND_CORE_MIN_ROOMS * min_current_cores for count in room_counts):
+            min_current_cores = min(core_counts) if core_counts else 0
+            # Every floor must have started room placement (count >= 1), and building must have matured
+            if any(count < 1 for count in room_counts):
                 return []
+            avg_rooms = sum(room_counts) / max(1, len(floors))
+            req_avg = float(SECOND_CORE_MIN_ROOMS * min_current_cores)
+            if avg_rooms < req_avg and not any(len(env.attachment_edges) == 0 for env in floors):
+                return []
+
         proposal_by_signature: dict[
             tuple[str, float, float, float], tuple[dict, dict, float, float]
         ] = {}
@@ -4116,78 +4296,85 @@ class ParallelTrainer:
                     anchor_y,
                 )
         else:
-            # Existing layouts use their bounded exposed-edge frontiers as the
-            # proposal source. Every proposal is still rechecked on every floor.
-            for module in modules:
-                for environment in floors:
-                    for candidate in environment.generate_candidates_for_module(
-                        module,
-                        active_settings,
-                        orientation_basis,
-                        category_filter=("core",),
-                    ):
-                        if candidate.module.get("category") != "core":
-                            continue
-                        signature = self._core_transform_signature(
-                            module,
-                            candidate.rotation,
-                            candidate.anchor_x,
-                            candidate.anchor_y,
-                        )
-                        proposal_by_signature.setdefault(
-                            signature,
-                            (
+            # 1. Fast Remote Core Proposals for Uncovered Site Wings
+            common_unoccupied = set(floors[0].site["cellSet"]) - set(floors[0].occupied)
+            for env in floors[1:]:
+                common_unoccupied.intersection_update(set(env.site["cellSet"]) - set(env.occupied))
+
+            core_centers = []
+            for env in floors:
+                for p in env.placements:
+                    if p.get("category") == "core":
+                        core_centers.append(p["center"])
+
+            valid_remote_cells = []
+            core_spacing = float(active_settings.get("coreSpacing", 8.0))
+            for cell_key in common_unoccupied:
+                x_t, y_t = cell_key.split(",")
+                cx, cy = float(x_t) + 0.5, float(y_t) + 0.5
+                if all(math.hypot(cx - cc["x"], cy - cc["y"]) >= core_spacing for cc in core_centers):
+                    clearance = min(float(env.site.get("distance", {}).get(cell_key, 0.0)) for env in floors)
+                    valid_remote_cells.append((clearance, int(x_t), int(y_t)))
+
+            valid_remote_cells.sort(key=lambda t: -t[0])
+            for _, rx, ry in valid_remote_cells[:16]:
+                for module in modules:
+                    if float(module.get("area", 0.0)) + 1.0e-8 < 24.0:
+                        continue
+                    for rotation in module.get("rotations", ()):
+                        for cell in rotation.get("cells", ())[:4]:
+                            anchor_x = float(rx - cell["x"])
+                            anchor_y = float(ry - cell["y"])
+                            signature = self._core_transform_signature(
+                                module, rotation, anchor_x, anchor_y
+                            )
+                            if signature in proposal_by_signature:
+                                continue
+                            proposal_by_signature[signature] = (
                                 module,
-                                candidate.rotation,
-                                candidate.anchor_x,
-                                candidate.anchor_y,
-                            ),
-                        )
+                                rotation,
+                                anchor_x,
+                                anchor_y,
+                            )
+                            if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
+                                break
                         if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
                             break
                     if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
                         break
-                if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
-                    break
 
+            # 2. Frontier-Attached Proposals (sampled from active environments)
             if len(proposal_by_signature) < CORE_STACK_PROPOSAL_LIMIT:
-                common_unoccupied = set(floors[0].site["cellSet"]) - set(floors[0].occupied)
-                for env in floors[1:]:
-                    common_unoccupied.intersection_update(set(env.site["cellSet"]) - set(env.occupied))
-
-                core_centers = []
-                for env in floors:
-                    for p in env.placements:
-                        if p.get("category") == "core":
-                            core_centers.append(p["center"])
-
-                valid_remote_cells = []
-                core_spacing = float(active_settings.get("coreSpacing", 8.0))
-                for cell_key in common_unoccupied:
-                    x_t, y_t = cell_key.split(",")
-                    cx, cy = float(x_t) + 0.5, float(y_t) + 0.5
-                    if all(math.hypot(cx - cc["x"], cy - cc["y"]) >= core_spacing for cc in core_centers):
-                        clearance = min(float(env.site.get("distance", {}).get(cell_key, 0.0)) for env in floors)
-                        valid_remote_cells.append((clearance, int(x_t), int(y_t)))
-
-                valid_remote_cells.sort(key=lambda t: -t[0])
-                for _, rx, ry in valid_remote_cells[:12]:
-                    for module in modules:
-                        for rotation in module.get("rotations", ()):
-                            for cell in rotation.get("cells", ())[:4]:
-                                anchor_x = float(rx - cell["x"])
-                                anchor_y = float(ry - cell["y"])
-                                signature = self._core_transform_signature(
-                                    module, rotation, anchor_x, anchor_y
-                                )
-                                if signature in proposal_by_signature:
-                                    continue
-                                proposal_by_signature[signature] = (
-                                    module,
-                                    rotation,
-                                    anchor_x,
-                                    anchor_y,
-                                )
+                for env in floors[:3]:
+                    sample_edges = list(env.attachment_edges.values())[:8]
+                    for edge in sample_edges:
+                        p1 = edge["a"]
+                        p2 = edge["b"]
+                        dx = p2["x"] - p1["x"]
+                        dy = p2["y"] - p1["y"]
+                        edge_len = edge["length"]
+                        for module in modules:
+                            if float(module.get("area", 0.0)) + 1.0e-8 < 24.0:
+                                continue
+                            for rotation in module.get("rotations", ()):
+                                for edge_idx, r_edge in enumerate(rotation.get("edges", ())):
+                                    if abs(r_edge.get("length", 0) - edge_len) > 0.1:
+                                        continue
+                                    anchor_x = float(p1["x"] - r_edge["a"]["x"])
+                                    anchor_y = float(p1["y"] - r_edge["a"]["y"])
+                                    signature = self._core_transform_signature(
+                                        module, rotation, anchor_x, anchor_y
+                                    )
+                                    if signature in proposal_by_signature:
+                                        continue
+                                    proposal_by_signature[signature] = (
+                                        module,
+                                        rotation,
+                                        anchor_x,
+                                        anchor_y,
+                                    )
+                                    if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
+                                        break
                                 if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
                                     break
                             if len(proposal_by_signature) >= CORE_STACK_PROPOSAL_LIMIT:
@@ -4222,6 +4409,8 @@ class ParallelTrainer:
         decision_features: Sequence[Sequence[float]] | None = None,
         decision_action_index: int = 0,
         decision_temperature: float = 1.0,
+        decision_positions: Sequence[Sequence[float]] | None = None,
+        decision_angles: Sequence[float] | None = None,
     ) -> list[dict]:
         """Revalidate and atomically commit one building-level core action."""
 
@@ -4277,6 +4466,8 @@ class ParallelTrainer:
                 decision_action_index,
                 decision_temperature,
                 log_prob,
+                positions=decision_positions,
+                angles=decision_angles,
             )
         self.core_stack_records.append(
             {
@@ -4531,6 +4722,31 @@ class ParallelTrainer:
         self._commit_generation(self.settings, generation, *prepared)
         return self.site_event()
 
+    def set_specific_site(
+        self,
+        site_id: str | None = None,
+        city: str | None = None,
+        tier: str | None = None,
+        site_data: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Atomically switch to a specific site while preserving learned policy state."""
+        new_settings = dict(self.settings)
+        new_settings["boundaryType"] = "real"
+        if site_id:
+            new_settings["realSiteId"] = site_id
+            new_settings["siteId"] = site_id
+        if city:
+            new_settings["city"] = city
+        if tier:
+            new_settings["siteAreaTier"] = tier
+
+        generation = self.generation_id + 1
+        prepared = self._prepare_generation(
+            new_settings, generation, self.episode
+        )
+        self._commit_generation(new_settings, generation, *prepared)
+        return self.site_event()
+
     def reset_policy(self) -> dict[str, Any]:
         """Reset all learned state, then atomically publish a fresh generation."""
 
@@ -4656,6 +4872,13 @@ class ParallelTrainer:
         metrics = self._aggregate_online()
         diagnostics = self._runtime_diagnostics()
         metrics["runtimeDiagnostics"] = diagnostics
+        context_data = None
+        if self.environments:
+            env0 = self.environments[0]
+            if "contextData" in env0.site:
+                context_data = env0.site["contextData"]
+            elif "parameters" in env0.boundary:
+                context_data = env0.boundary.get("parameters")
         return {
             "type": "site",
             "generationId": self.generation_id,
@@ -4668,6 +4891,7 @@ class ParallelTrainer:
             "scoreHistory": list(self.score_history),
             "bestScore": float(self.best_score),
             "coreStacking": self._core_stacking_event(),
+            "contextData": context_data,
         }
 
     def _aggregate_terminal(
@@ -4754,7 +4978,7 @@ class ParallelTrainer:
         )
         deep_interior_penalty = min(50.0, avg_depth_score_per_floor)
 
-        # Narrow facade chasm penalty (opposing exterior walls < 3.0m apart)
+        # Narrow facade chasm penalty (opposing exterior walls < 5.0m apart)
         total_chasm_len = math.fsum(float(item.get("facadeChasmOccludedLength", 0.0)) for item in per_site)
         avg_chasm_len = total_chasm_len / max(1, len(per_site))
         facade_chasm_ratio = _safe_ratio(total_chasm_len, perimeter)
@@ -4946,17 +5170,40 @@ class ParallelTrainer:
         self.placement_log_probs.append(log_prob)
         self.placement_log_probs_by_environment.setdefault(environment_index, []).append(log_prob)
 
-    def _extract_placed_tokens(self, environment: FloorEnvironment) -> list[list[float]]:
+    def _extract_placed_tokens(self, environment: FloorEnvironment) -> tuple[list[list[float]], list[list[float]], list[float]]:
         tokens = []
+        positions = []
+        angles = []
         site_bounds = environment.site["bounds"]
         width = max(1.0, site_bounds["maxX"] - site_bounds["minX"])
         height = max(1.0, site_bounds["maxY"] - site_bounds["minY"])
         site_area = max(1.0, float(environment.site["exactArea"]))
         cores = [environment.placement_by_id[cid] for cid in environment.core_ids]
 
+        habitable_rooms = [p for p in environment.placements if p.get("category") in ("room", "special")]
+        polys = [p["poly"] for p in environment.placements]
+        segs = G.exposed_wall_segments(polys) if polys else []
+        outside_dists = {}
+        for p in habitable_rooms:
+            rid = p["id"]
+            center = p.get("center", G.polygon_centroid(p["poly"]))
+            poly_edges = [{"a": p["poly"][k], "b": p["poly"][(k + 1) % len(p["poly"])]} for k in range(len(p["poly"]))]
+            room_segs = [
+                seg for seg in segs
+                if float(seg.get("length", 0.0)) >= 0.35 and (
+                    G.point_to_segments_dist(
+                        {"x": 0.5 * (float(seg["a"]["x"]) + float(seg["b"]["x"])), "y": 0.5 * (float(seg["a"]["y"]) + float(seg["b"]["y"]))},
+                        poly_edges
+                    ) < 0.15
+                )
+            ]
+            if room_segs or float(p.get("outerExposure", 0.0)) >= 0.4:
+                outside_dists[rid] = G.point_to_segments_dist(center, room_segs) if room_segs else max(1.0, math.sqrt(float(p.get("area", 15.0))) / 2.0)
+
         for p in environment.placements:
             cx = float(p["center"]["x"])
             cy = float(p["center"]["y"])
+            positions.append([cx, cy])
             rel_x = (cx - site_bounds["minX"]) / width
             rel_y = (cy - site_bounds["minY"]) / height
             rot_val = p.get("rotation")
@@ -4967,6 +5214,7 @@ class ParallelTrainer:
             else:
                 ang_deg = float(p.get("angle", 0.0))
             ang = math.radians(ang_deg)
+            angles.append(ang)
             cos_a = math.cos(ang)
             sin_a = math.sin(ang)
             area_ratio = float(p.get("area", 0.0)) / site_area
@@ -4981,15 +5229,17 @@ class ParallelTrainer:
             else:
                 dist_core_norm = 0.0
 
+            dist_air_norm = outside_dists.get(p["id"], 4.5) / 12.0
+
             poly = p.get("poly", [])
             pw = float(p.get("minWidth", G.min_polygon_width(poly))) if poly else 3.0
             pl = float(p.get("maxLength", math.sqrt(max(1.0, float(p.get("area", 9.0)))))) if poly else 3.0
             aspect_ratio = min(5.0, pl / max(0.5, pw))
 
             tokens.append([
-                rel_x, rel_y, cos_a, sin_a, area_ratio, is_core, is_room, is_special, dist_core_norm, aspect_ratio
+                rel_x, rel_y, cos_a, sin_a, area_ratio, is_core, is_room, is_special, dist_core_norm, dist_air_norm, aspect_ratio
             ])
-        return tokens
+        return tokens, positions, angles
 
     def _record_placement_decision(
         self,
@@ -5006,16 +5256,36 @@ class ParallelTrainer:
         ang_t = torch.tensor(angles, dtype=torch.float32) if angles is not None else None
 
         placed_tokens_tensor = None
+        placed_positions_tensor = None
+        placed_angles_tensor = None
         macro_state_tensor = None
         if 0 <= environment_index < len(self.environments):
             env = self.environments[environment_index]
-            raw_tokens = self._extract_placed_tokens(env)
+            raw_tokens, raw_pos, raw_ang = self._extract_placed_tokens(env)
             if raw_tokens:
                 placed_tokens_tensor = torch.tensor(raw_tokens, dtype=torch.float32)
+                placed_positions_tensor = torch.tensor(raw_pos, dtype=torch.float32)
+                placed_angles_tensor = torch.tensor(raw_ang, dtype=torch.float32)
             site_area = max(1.0, float(env.site["exactArea"]))
             raw_macro = [
                 env.filled_area / site_area,
                 len(env.placements) / 100.0,
+                len(self.dictionary) / 30.0,
+            ]
+            macro_state_tensor = torch.tensor(raw_macro, dtype=torch.float32)
+        elif environment_index == BUILDING_TRAJECTORY_INDEX and self.environments:
+            env0 = self.environments[0]
+            raw_tokens, raw_pos, raw_ang = self._extract_placed_tokens(env0)
+            if raw_tokens:
+                placed_tokens_tensor = torch.tensor(raw_tokens, dtype=torch.float32)
+                placed_positions_tensor = torch.tensor(raw_pos, dtype=torch.float32)
+                placed_angles_tensor = torch.tensor(raw_ang, dtype=torch.float32)
+            tot_filled = math.fsum(e.filled_area for e in self.environments)
+            tot_site_area = max(1.0, math.fsum(float(e.site["exactArea"]) for e in self.environments))
+            tot_placements = sum(len(e.placements) for e in self.environments)
+            raw_macro = [
+                tot_filled / tot_site_area,
+                tot_placements / (100.0 * max(1, len(self.environments))),
                 len(self.dictionary) / 30.0,
             ]
             macro_state_tensor = torch.tensor(raw_macro, dtype=torch.float32)
@@ -5030,6 +5300,8 @@ class ParallelTrainer:
                 positions=pos_t,
                 angles=ang_t,
                 placed_tokens=placed_tokens_tensor,
+                placed_positions=placed_positions_tensor,
+                placed_angles=placed_angles_tensor,
                 macro_state=macro_state_tensor,
             )
         )
@@ -5098,7 +5370,7 @@ class ParallelTrainer:
         value_preds: list[torch.Tensor] = []
         decision_targets: list[float] = []
 
-        # 1. Compute dynamic GAE advantages and store transitions in rollout buffer
+        # 1. Compute dynamic GAE advantages with Potential-Based Reward Shaping (PBRS)
         if self.placement_decisions:
             grouped_decisions: dict[int, list[PlacementPolicyDecision]] = {}
             for decision in self.placement_decisions:
@@ -5106,22 +5378,39 @@ class ParallelTrainer:
 
             for env_idx, env_decisions in sorted(grouped_decisions.items()):
                 t_steps = len(env_decisions)
-                floor_target = floor_targets[env_idx] if env_idx < len(floor_targets) else normalized_score
+                floor_target = normalized_score if (env_idx < 0 or env_idx >= len(floor_targets)) else floor_targets[env_idx]
                 env_v_vals: list[float] = []
 
                 for d in env_decisions:
                     tok = d.placed_tokens.to(self.device) if d.placed_tokens is not None else None
                     mac = d.macro_state.to(self.device) if d.macro_state is not None else None
-                    vp = self.model.value(pooled_site, tok, mac)
+                    pos = d.placed_positions.to(self.device) if d.placed_positions is not None else None
+                    ang = d.placed_angles.to(self.device) if d.placed_angles is not None else None
+                    vp = self.model.value(pooled_site, tok, mac, pos, ang)
                     env_v_vals.append(float(vp.detach().cpu().item()))
 
                 gae = 0.0
                 for t in reversed(range(t_steps)):
-                    step_reward = floor_target if t == t_steps - 1 else 0.0
-                    v_next = 0.0 if t == t_steps - 1 else env_v_vals[t + 1]
+                    d = env_decisions[t]
+                    phi_t = 0.0
+                    if d.macro_state is not None:
+                        fill_t = float(d.macro_state[0])
+                        phi_t = 15.0 * min(1.0, fill_t / 0.45)
+
+                    if t == t_steps - 1:
+                        step_reward = floor_target - phi_t
+                        v_next = 0.0
+                    else:
+                        d_next = env_decisions[t + 1]
+                        phi_next = 0.0
+                        if d_next.macro_state is not None:
+                            fill_next = float(d_next.macro_state[0])
+                            phi_next = 15.0 * min(1.0, fill_next / 0.45)
+                        step_reward = gamma * phi_next - phi_t
+                        v_next = env_v_vals[t + 1]
+
                     delta = step_reward + gamma * v_next - env_v_vals[t]
                     gae = delta + gamma * gae_lambda * gae
-                    d = env_decisions[t]
                     self.rollout_buffer.append({
                         "features": d.features,
                         "positions": d.positions,
@@ -5130,6 +5419,8 @@ class ParallelTrainer:
                         "temperature": d.temperature,
                         "old_log_prob": d.old_log_prob,
                         "placed_tokens": d.placed_tokens,
+                        "placed_positions": d.placed_positions,
+                        "placed_angles": d.placed_angles,
                         "macro_state": d.macro_state,
                         "pooled_site": pooled_site.detach().cpu(),
                         "advantage": gae,
@@ -5168,6 +5459,8 @@ class ParallelTrainer:
                         pooled = item["pooled_site"].to(self.device)
                         tok = item["placed_tokens"].to(self.device) if item["placed_tokens"] is not None else None
                         mac = item["macro_state"].to(self.device) if item["macro_state"] is not None else None
+                        placed_pos = item["placed_positions"].to(self.device) if item.get("placed_positions") is not None else None
+                        placed_ang = item["placed_angles"].to(self.device) if item.get("placed_angles") is not None else None
 
                         group_logits = (
                             torch.nan_to_num(
@@ -5193,7 +5486,7 @@ class ParallelTrainer:
                             probs = group_log_probs.exp()
                             entropy_terms.append(-(probs * group_log_probs).sum() / math.log(count))
 
-                        vp = self.model.value(pooled, tok, mac)
+                        vp = self.model.value(pooled, tok, mac, placed_pos, placed_ang)
                         val_preds.append(vp.reshape(-1))
                         val_targets.append(item["target_value"])
 
@@ -5725,6 +6018,9 @@ class ParallelTrainer:
         if shared_stacks:
             gate_actions: list[CoreStackCandidate | None] = []
             gate_features: list[list[float]] = []
+            gate_positions: list[tuple[float, float]] = []
+            gate_angles: list[float] = []
+
             if candidate_groups and not initial_core_required:
                 floor_alternatives = [
                     _mean_feature_rows(
@@ -5734,15 +6030,29 @@ class ParallelTrainer:
                 ]
                 gate_actions.append(None)
                 gate_features.append(_mean_feature_rows(floor_alternatives))
-            gate_actions.extend(shared_stacks)
-            gate_features.extend(stack.features for stack in shared_stacks)
+                gate_positions.append((0.0, 0.0))
+                gate_angles.append(0.0)
+
+            for stack in shared_stacks:
+                gate_actions.append(stack)
+                gate_features.append(stack.features)
+                gate_positions.append((stack.anchor_x, stack.anchor_y))
+                gate_angles.append(float(stack.rotation.get("angle", 0.0)))
+
             gate_tensor = torch.tensor(
                 gate_features, dtype=torch.float32, device=self.device
             )
+            gate_pos_t = torch.tensor(
+                gate_positions, dtype=torch.float32, device=self.device
+            )
+            gate_ang_t = torch.tensor(
+                gate_angles, dtype=torch.float32, device=self.device
+            )
+
             gate_started = time.perf_counter()
             with torch.no_grad():
                 gate_logits = torch.nan_to_num(
-                    self.model.placement_logits(gate_tensor),
+                    self.model.placement_logits(gate_tensor, gate_pos_t, gate_ang_t),
                     nan=0.0,
                     posinf=20.0,
                     neginf=-20.0,
@@ -5765,6 +6075,8 @@ class ParallelTrainer:
                         decision_features=gate_features,
                         decision_action_index=gate_offset,
                         decision_temperature=temperature,
+                        decision_positions=gate_positions,
+                        decision_angles=gate_angles,
                     )
                 )
                 self.step_profiler.record(
@@ -5778,6 +6090,8 @@ class ParallelTrainer:
                     gate_offset,
                     temperature,
                     gate_log_prob,
+                    positions=gate_positions,
+                    angles=gate_angles,
                 )
 
         if not stack_selected:
@@ -6444,6 +6758,96 @@ async def get_styles_css() -> FileResponse:
     return FileResponse(os.path.join(PUBLIC_DIR, "styles.css"))
 
 
+@app.get("/vendor/{file_path:path}")
+async def get_vendor_asset(file_path: str) -> FileResponse:
+    target = os.path.normpath(os.path.join(PUBLIC_DIR, "vendor", file_path))
+    vendor_root = os.path.abspath(os.path.join(PUBLIC_DIR, "vendor"))
+    if not os.path.abspath(target).startswith(vendor_root):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if not os.path.exists(target):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(target)
+
+
+@app.get("/assets/{file_path:path}")
+async def get_asset(file_path: str) -> FileResponse:
+    target = os.path.normpath(os.path.join(PUBLIC_DIR, "assets", file_path))
+    assets_root = os.path.abspath(os.path.join(PUBLIC_DIR, "assets"))
+    if not os.path.abspath(target).startswith(assets_root):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if not os.path.exists(target):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(target)
+
+
+CONTEXT_GEN_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "Context Generator"))
+if CONTEXT_GEN_DIR not in sys.path:
+    sys.path.insert(0, CONTEXT_GEN_DIR)
+
+try:
+    from fetch_custom_site import fetch_custom_site as _fetch_custom_site_py
+    from delete_custom_site import delete_custom_site as _delete_custom_site_py
+except Exception:
+    _fetch_custom_site_py = None
+    _delete_custom_site_py = None
+
+
+@app.get("/data/{file_path:path}")
+async def get_data_file(file_path: str) -> FileResponse:
+    target = os.path.normpath(os.path.join(CONTEXT_GEN_DIR, "app", "public", "data", file_path))
+    if not os.path.exists(target):
+        target = os.path.normpath(os.path.join(PUBLIC_DIR, "data", file_path))
+    if not os.path.exists(target):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(target, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+
+
+@app.get("/sites/{file_path:path}")
+async def get_site_file(file_path: str) -> FileResponse:
+    target = os.path.normpath(os.path.join(CONTEXT_GEN_DIR, "app", "public", "sites", file_path))
+    if not os.path.exists(target):
+        target = os.path.normpath(os.path.join(PUBLIC_DIR, "sites", file_path))
+    if not os.path.exists(target):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(target, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+
+
+@app.post("/api/fetch-custom-site")
+async def api_fetch_custom_site(request: Request):
+    data = await request.json()
+    lat = float(data.get("lat", 48.8566))
+    lon = float(data.get("lon", 2.3522))
+    name = str(data.get("name", "Custom Location"))
+    poly = data.get("custom_polygon") or data.get("polygon")
+    road_sb = float(data.get("road_setback", 2.0))
+    bldg_sb = float(data.get("building_setback", 3.0))
+    p_type = str(data.get("parcel_type", "convex_hull"))
+
+    if _fetch_custom_site_py:
+        res = await asyncio.to_thread(
+            _fetch_custom_site_py,
+            lat=lat,
+            lon=lon,
+            custom_name=name,
+            custom_polygon=poly,
+            road_setback=road_sb,
+            building_setback=bldg_sb,
+            parcel_type=p_type,
+        )
+        return res
+    return {"success": False, "error": "Context Generator fetcher unavailable"}
+
+
+@app.post("/api/delete-custom-site")
+async def api_delete_custom_site(request: Request):
+    data = await request.json()
+    site_id = str(data.get("site_id", ""))
+    if _delete_custom_site_py:
+        res = await asyncio.to_thread(_delete_custom_site_py, site_id)
+        return res
+    return {"success": False, "error": "Context Generator deleter unavailable"}
+
+
 def _error_event(
     trainer: ParallelTrainer,
     message: str,
@@ -6525,6 +6929,13 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     await _send_json(websocket, site)
                 elif command == "newSite":
                     site = await asyncio.to_thread(trainer.new_site)
+                    await _send_json(websocket, site)
+                elif command == "setSite":
+                    site_id = message.get("siteId")
+                    city = message.get("city")
+                    tier = message.get("tier")
+                    site_data = message.get("siteData")
+                    site = await asyncio.to_thread(trainer.set_specific_site, site_id, city, tier, site_data)
                     await _send_json(websocket, site)
                 elif command == "resetPolicy":
                     site = await asyncio.to_thread(trainer.reset_policy)
