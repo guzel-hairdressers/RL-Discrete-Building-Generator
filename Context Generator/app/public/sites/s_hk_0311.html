@@ -135,6 +135,16 @@ optimizerGroup.name = 'optimizerGroup';
 scene.add(optimizerGroup);
 window.optimizerGroup = optimizerGroup;
 
+// Ambient and Fill Lighting for Architectural Module Visibility
+if (!window._moduleLabLightsAdded) {
+  window._moduleLabLightsAdded = true;
+  const ambLight = new THREE.AmbientLight(0xffffff, 0.75);
+  scene.add(ambLight);
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
+  fillLight.position.set(-120, 160, -100);
+  scene.add(fillLight);
+}
+
 window.addEventListener('message', (event) => {
   if (!event.data || event.data.type !== 'optimizer_placements') return;
   const { placements, boundaries } = event.data;
@@ -145,11 +155,11 @@ window.addEventListener('message', (event) => {
   if (!Array.isArray(placements) || placements.length === 0) return;
 
   const floorHeight = 3.5;
-  const matCore = new THREE.MeshStandardMaterial({ color: 0xdc745d, roughness: 0.45, metalness: 0.1 });
-  const matRoom = new THREE.MeshStandardMaterial({ color: 0xa9c5ae, roughness: 0.45, metalness: 0.1 });
-  const matSpecial = new THREE.MeshStandardMaterial({ color: 0x6e9c89, roughness: 0.45, metalness: 0.1 });
-  const matCorridor = new THREE.MeshStandardMaterial({ color: 0xe1ba57, roughness: 0.45, metalness: 0.1 });
-  const edgeMat = new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 1.5 });
+  const matCore = new THREE.MeshLambertMaterial({ color: 0xee7258 });
+  const matRoom = new THREE.MeshLambertMaterial({ color: 0x9bc2a7 });
+  const matSpecial = new THREE.MeshLambertMaterial({ color: 0x649880 });
+  const matCorridor = new THREE.MeshLambertMaterial({ color: 0xebb952 });
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x1e293b, linewidth: 1.2 });
 
   placements.forEach((placement) => {
     const floorIdx = Number(placement.instanceIdx ?? placement.floorIndex ?? 0);
@@ -164,21 +174,21 @@ window.addEventListener('message', (event) => {
 
     const shape = new THREE.Shape();
     poly.forEach((p, idx) => {
-      const px = Number(p.x || p[0] || 0);
-      const py = Number(p.y || p[1] || 0);
+      const px = Number(p.x ?? p[0] ?? 0);
+      const py = Number(p.y ?? p[1] ?? 0);
       const localX = px - dx;
       const localY = py - dy;
       const x3d = localX + ox;
-      const z3d = -(localY + oy);
-      if (idx === 0) shape.moveTo(x3d, z3d);
-      else shape.lineTo(x3d, z3d);
+      const y3d = localY + oy;
+      if (idx === 0) shape.moveTo(x3d, y3d);
+      else shape.lineTo(x3d, y3d);
     });
 
     const geom = new THREE.ExtrudeGeometry(shape, {
       depth: floorHeight - 0.15,
       bevelEnabled: true,
-      bevelSize: 0.05,
-      bevelThickness: 0.05,
+      bevelSize: 0.04,
+      bevelThickness: 0.04,
     });
     geom.rotateX(-Math.PI / 2);
     geom.translate(0, floorIdx * floorHeight + 0.2, 0);
@@ -190,13 +200,14 @@ window.addEventListener('message', (event) => {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
-    const edges = new THREE.EdgesGeometry(geom, 25);
+    const edges = new THREE.EdgesGeometry(geom, 20);
     const line = new THREE.LineSegments(edges, edgeMat);
     mesh.add(line);
 
     optimizerGroup.add(mesh);
   });
 });
+
 scene.background = new THREE.Color(0xffffff); // Pure 100% white background
 
 const aspect = window.innerWidth / window.innerHeight;
