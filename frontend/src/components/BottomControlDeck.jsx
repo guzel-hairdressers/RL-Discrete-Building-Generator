@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore, percentToArea, areaToPercent } from '../store/useStore';
 import { RewardTrendChart } from './RewardTrendChart';
+import { DiagnosticsDrawer } from './DiagnosticsDrawer';
 
 export const BottomControlDeck = () => {
   const mode = useStore((s) => s.mode);
@@ -30,7 +31,6 @@ export const BottomControlDeck = () => {
   const step = useStore((s) => s.step);
   const boundaries = useStore((s) => s.boundaries);
   const totalSiteArea = useStore((s) => s.totalSiteArea);
-  const diagnostics = useStore((s) => s.diagnostics || {});
   const device = useStore((s) => s.device);
 
   const isTraining = mode === 'training';
@@ -46,16 +46,12 @@ export const BottomControlDeck = () => {
   return (
     <footer className="bottom-deck-floating-wrapper">
       {/* Expandable Slide-Up Panel (Settings or Diagnostics) */}
-      {activeBottomDrawer && (
+      {activeBottomDrawer === 'settings' && (
         <div className="expanded-bottom-drawer glass-panel">
           <div className="drawer-header">
             <div className="drawer-title-group">
-              <span className="drawer-title">
-                {activeBottomDrawer === 'settings' ? 'CONFIGURATION & PARAMETERS' : 'DEVELOPER & RL DIAGNOSTICS'}
-              </span>
-              <span className="drawer-subtitle">
-                {activeBottomDrawer === 'settings' ? 'Module Lab Architectural Kernel' : `Live Telemetry on Device ${device}`}
-              </span>
+              <span className="drawer-title">CONFIGURATION & PARAMETERS</span>
+              <span className="drawer-subtitle">Module Lab Architectural Kernel</span>
             </div>
             <button
               className="drawer-close-btn"
@@ -67,185 +63,145 @@ export const BottomControlDeck = () => {
           </div>
 
           <div className="drawer-body">
-            {activeBottomDrawer === 'settings' ? (
-              <div className="settings-grid">
-                {/* Column 1: Multi-Floor & Scale */}
-                <div className="settings-section">
-                  <h4 className="section-title">Morphology & Multi-Floor</h4>
-                  <div className="setting-row">
-                    <label>Parallel Floors (Batch Size)</label>
-                    <div className="input-with-val">
-                      <input
-                        type="range"
-                        min="1"
-                        max="12"
-                        value={settings.parallelEnvironments || 9}
-                        onChange={(e) => updateSettings({ parallelEnvironments: parseInt(e.target.value) })}
-                      />
-                      <span className="val-tag">{settings.parallelEnvironments || 9} stories</span>
-                    </div>
-                  </div>
-                  <div className="setting-row">
-                    <label>Max Modules / Floor</label>
-                    <div className="input-with-val">
-                      <input
-                        type="range"
-                        min="30"
-                        max="240"
-                        step="5"
-                        value={settings.maxModules || 130}
-                        onChange={(e) => updateSettings({ maxModules: parseInt(e.target.value) })}
-                      />
-                      <span className="val-tag">{settings.maxModules || 130}</span>
-                    </div>
-                  </div>
-                  <div className="setting-row">
-                    <label>Max Room Hops Depth</label>
-                    <div className="input-with-val">
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        value={settings.maxRoomHops || 3}
-                        onChange={(e) => updateSettings({ maxRoomHops: parseInt(e.target.value) })}
-                      />
-                      <span className="val-tag">{settings.maxRoomHops || 3} hops</span>
-                    </div>
+            <div className="settings-grid">
+              {/* Column 1: Multi-Floor & Scale */}
+              <div className="settings-section">
+                <h4 className="section-title">Morphology & Multi-Floor</h4>
+                <div className="setting-row">
+                  <label>Parallel Floors (Batch Size)</label>
+                  <div className="input-with-val">
+                    <input
+                      type="range"
+                      min="1"
+                      max="12"
+                      value={settings.parallelEnvironments || 9}
+                      onChange={(e) => updateSettings({ parallelEnvironments: parseInt(e.target.value) })}
+                    />
+                    <span className="val-tag">{settings.parallelEnvironments || 9} stories</span>
                   </div>
                 </div>
-
-                {/* Column 2: Architectural Filters & Clearances */}
-                <div className="settings-section">
-                  <h4 className="section-title">Architectural Filters & Clearances</h4>
-                  <div className="setting-row">
-                    <label>Crevice Filter Angle</label>
-                    <span className="val-tag badge-tag">45.0° Active</span>
-                  </div>
-                  <div className="setting-row">
-                    <label>Narrow Facade Chasm Clearance</label>
-                    <span className="val-tag badge-tag">3.0m Raycast</span>
-                  </div>
-                  <div className="setting-row">
-                    <label>Deep Daylight Penalty</label>
-                    <span className="val-tag badge-tag">Facade Depth ≥ 2</span>
-                  </div>
-                  <div className="setting-row">
-                    <label>Core Shaft Spacing</label>
-                    <div className="input-with-val">
-                      <input
-                        type="range"
-                        min="4"
-                        max="16"
-                        step="1"
-                        value={settings.coreSpacing || 8}
-                        onChange={(e) => updateSettings({ coreSpacing: parseFloat(e.target.value) })}
-                      />
-                      <span className="val-tag">{settings.coreSpacing || 8}m</span>
-                    </div>
+                <div className="setting-row">
+                  <label>Max Modules / Floor</label>
+                  <div className="input-with-val">
+                    <input
+                      type="range"
+                      min="30"
+                      max="240"
+                      step="5"
+                      value={settings.maxModules || 130}
+                      onChange={(e) => updateSettings({ maxModules: parseInt(e.target.value) })}
+                    />
+                    <span className="val-tag">{settings.maxModules || 130}</span>
                   </div>
                 </div>
-
-                {/* Column 3: Reinforcement Learning & Optimizer */}
-                <div className="settings-section">
-                  <h4 className="section-title">Reinforcement Learning & PPO</h4>
-                  <div className="setting-row">
-                    <label>Learning Rate</label>
-                    <div className="input-with-val">
-                      <input
-                        type="range"
-                        min="0.0005"
-                        max="0.01"
-                        step="0.0005"
-                        value={settings.learningRate || 0.003}
-                        onChange={(e) => updateSettings({ learningRate: parseFloat(e.target.value) })}
-                      />
-                      <span className="val-tag">{settings.learningRate || 0.003}</span>
-                    </div>
+                <div className="setting-row">
+                  <label>Max Room Hops Depth</label>
+                  <div className="input-with-val">
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={settings.maxRoomHops || 3}
+                      onChange={(e) => updateSettings({ maxRoomHops: parseInt(e.target.value) })}
+                    />
+                    <span className="val-tag">{settings.maxRoomHops || 3} hops</span>
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="diagnostics-grid">
-                <div className="diag-card">
-                  <span className="diag-label">CRITIC LOSS (L_V)</span>
-                  <strong className="diag-val">{diagnostics.criticLoss?.toFixed(4) || '0.0142'}</strong>
-                  <span className="diag-sub">MSE value error</span>
+
+              {/* Column 2: Architectural Filters & Clearances */}
+              <div className="settings-section">
+                <h4 className="section-title">Architectural Filters & Clearances</h4>
+                <div className="setting-row">
+                  <label>Crevice Filter Angle</label>
+                  <span className="val-tag badge-tag">45.0° Active</span>
                 </div>
-                <div className="diag-card">
-                  <span className="diag-label">POLICY LOSS (L_π)</span>
-                  <strong className="diag-val">{diagnostics.policyLoss?.toFixed(4) || '-0.0089'}</strong>
-                  <span className="diag-sub">PPO clipped surrogate</span>
+                <div className="setting-row">
+                  <label>Narrow Facade Chasm Clearance</label>
+                  <span className="val-tag badge-tag">3.0m Raycast</span>
                 </div>
-                <div className="diag-card">
-                  <span className="diag-label">ENTROPY BONUS</span>
-                  <strong className="diag-val">{diagnostics.entropy?.toFixed(3) || '1.842'}</strong>
-                  <span className="diag-sub">Exploration density</span>
+                <div className="setting-row">
+                  <label>Deep Daylight Penalty</label>
+                  <span className="val-tag badge-tag">Facade Depth ≥ 2</span>
                 </div>
-                <div className="diag-card">
-                  <span className="diag-label">ACTION SPACE (|A|)</span>
-                  <strong className="diag-val">{diagnostics.actionSpaceSize || '184'}</strong>
-                  <span className="diag-sub">Legal valid candidates</span>
-                </div>
-                <div className="diag-card">
-                  <span className="diag-label">CANDIDATE LATENCY</span>
-                  <strong className="diag-val">{diagnostics.candidateLatencyMs?.toFixed(2) || '2.84'} ms</strong>
-                  <span className="diag-sub">C-accelerated SAT</span>
-                </div>
-                <div className="diag-card">
-                  <span className="diag-label">STEP TIME</span>
-                  <strong className="diag-val">{diagnostics.stepTimeMs?.toFixed(2) || '4.15'} ms</strong>
-                  <span className="diag-sub">Neural step duration</span>
-                </div>
-                <div className="diag-card">
-                  <span className="diag-label">ENGINE THROUGHPUT</span>
-                  <strong className="diag-val">{diagnostics.throughputStepsPerSec || '241'} stp/s</strong>
-                  <span className="diag-sub">Parallel multi-floor</span>
-                </div>
-                <div className="diag-card">
-                  <span className="diag-label">CORE SHAFT STACKING</span>
-                  <strong className="diag-val" style={{ color: '#059669' }}>100.0% EXACT</strong>
-                  <span className="diag-sub">0 shaft misalignment</span>
+                <div className="setting-row">
+                  <label>Core Shaft Spacing</label>
+                  <div className="input-with-val">
+                    <input
+                      type="range"
+                      min="4"
+                      max="16"
+                      step="1"
+                      value={settings.coreSpacing || 8}
+                      onChange={(e) => updateSettings({ coreSpacing: parseFloat(e.target.value) })}
+                    />
+                    <span className="val-tag">{settings.coreSpacing || 8}m</span>
+                  </div>
                 </div>
               </div>
-            )}
+
+              {/* Column 3: Reinforcement Learning & Optimizer */}
+              <div className="settings-section">
+                <h4 className="section-title">Reinforcement Learning & PPO</h4>
+                <div className="setting-row">
+                  <label>Learning Rate</label>
+                  <div className="input-with-val">
+                    <input
+                      type="range"
+                      min="0.0005"
+                      max="0.01"
+                      step="0.0005"
+                      value={settings.learningRate || 0.003}
+                      onChange={(e) => updateSettings({ learningRate: parseFloat(e.target.value) })}
+                    />
+                    <span className="val-tag">{settings.learningRate || 0.003}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Diagnostics Panel */}
+      {activeBottomDrawer === 'diagnostics' && (
+        <DiagnosticsDrawer onClose={() => setActiveBottomDrawer(null)} />
       )}
 
       {/* Floating Centered Bottom Control Deck (Divided exactly in the middle) */}
       <div className="bottom-deck-floating glass-dock">
         {/* LEFT HALF (Controls on top, Filters on bottom) */}
         <div className="deck-half deck-left-half">
-          {/* Row 1: Action Buttons */}
+          {/* Row 1: Action Buttons with Shortcuts */}
           <div className="deck-subrow deck-row-actions">
-            {/* Split Button: Start Training | Start Inference */}
+            {/* Split Button: (Space) Start Training | Start Inference */}
             {trainingWanted ? (
               <button
                 type="button"
                 className="btn-clean-pause"
                 onClick={pauseExecution}
-                title="Pause Current Generation (Space)"
+                title="Pause Execution (Space)"
               >
-                ❚❚ Pause
+                ❚❚ (Space) Pause
               </button>
             ) : (
               <div className="split-btn-clean">
                 <button
                   type="button"
-                  className={`split-side-btn ${mode === 'training' ? 'active-side' : ''}`}
+                  className="split-side-btn"
                   onClick={startTraining}
-                  title="Start Training Policy"
+                  title="Start Training Policy (Space)"
                 >
-                  Start Training
+                  ▶ (Space) Start Training
                 </button>
                 <span className="split-mid-divider"></span>
                 <button
                   type="button"
-                  className={`split-side-btn ${mode === 'inference' ? 'active-side' : ''}`}
+                  className="split-side-btn"
                   onClick={startInference}
                   title="Start Inference Generation"
                 >
-                  Start Inference
+                  ▶ Start Inference
                 </button>
               </div>
             )}
@@ -258,7 +214,7 @@ export const BottomControlDeck = () => {
                 onClick={() => setResetConfirmOpen(true)}
                 title="Reset Model Weights (R)"
               >
-                Reset Weights
+                ↺ (R) Reset Weights
               </button>
             )}
 
@@ -270,13 +226,13 @@ export const BottomControlDeck = () => {
                 onClick={saveCheckpoint}
                 title="Save Checkpoint Weights (S)"
               >
-                Save Weights
+                ↓ (S) Save Weights
               </button>
             )}
 
             {/* Load Weights */}
-            <label className="deck-btn-clean file-label-clean" title="Load Checkpoint (.pt)">
-              Load Weights
+            <label className="deck-btn-clean file-label-clean" title="Load Weights (.pt)">
+              ↑ (L) Load Weights
               <input
                 type="file"
                 accept=".pt"
@@ -303,9 +259,9 @@ export const BottomControlDeck = () => {
                 type="button"
                 className={`deck-btn-clean ${activeBottomDrawer === 'settings' ? 'active-tab' : ''}`}
                 onClick={() => setActiveBottomDrawer('settings')}
-                title="Toggle Configuration Panel"
+                title="Configuration & Hyperparameters"
               >
-                Settings
+                ⚙ Settings
               </button>
             )}
 
@@ -314,13 +270,13 @@ export const BottomControlDeck = () => {
               type="button"
               className={`deck-btn-clean ${activeBottomDrawer === 'diagnostics' ? 'active-tab' : ''}`}
               onClick={() => setActiveBottomDrawer('diagnostics')}
-              title="Toggle Live RL Diagnostics"
+              title="Live Telemetry & Diagnostics"
             >
-              Diagnostics
+              📊 Diagnostics
             </button>
           </div>
 
-          {/* Row 2: Filters */}
+          {/* Row 2: Filters with wider sliders and comfortable spacing */}
           <div className="deck-subrow deck-row-filters">
             {/* Boundary Type Dropdown */}
             <div className="filter-group-clean">
@@ -341,7 +297,7 @@ export const BottomControlDeck = () => {
               </select>
             </div>
 
-            {/* Plot Area Tier Pills & Compact Slider */}
+            {/* Plot Area Tier Pills & Wider Slider */}
             <div className="filter-group-clean flex-compact-slider">
               <div className="filter-label-row">
                 <span className="filter-label-clean">Plot Area</span>
@@ -377,11 +333,14 @@ export const BottomControlDeck = () => {
                 />
                 <div className="slider-track-compact"></div>
               </div>
+              <span className="slider-readout-text">{filters.minArea} m² – {filters.maxArea} m²</span>
             </div>
 
-            {/* Context Height Compact Slider */}
+            {/* Context Height Slider */}
             <div className="filter-group-clean flex-compact-slider">
-              <span className="filter-label-clean">Context Height</span>
+              <div className="filter-label-row">
+                <span className="filter-label-clean">Context Height</span>
+              </div>
               <div className="dual-slider-compact">
                 <input
                   type="range"
@@ -401,9 +360,10 @@ export const BottomControlDeck = () => {
                 />
                 <div className="slider-track-compact"></div>
               </div>
+              <span className="slider-readout-text">{filters.minHeight}m – {filters.maxHeight}m</span>
             </div>
 
-            {/* Custom Site & Reset Buttons */}
+            {/* Custom Site & Reset Filters Buttons */}
             <div className="filter-buttons-clean">
               <button
                 type="button"
@@ -417,9 +377,9 @@ export const BottomControlDeck = () => {
                 type="button"
                 className="btn-reset-clean"
                 onClick={resetFilters}
-                title="Reset Filters"
+                title="Reset Filters to Default"
               >
-                Reset
+                Reset Filters
               </button>
             </div>
           </div>

@@ -19,6 +19,7 @@ export const PlanCanvas2D = () => {
     startX: 0,
     startY: 0,
   });
+  const lastSizeRef = useRef({ w: 0, h: 0 });
 
   const boundaries = useStore((s) => s.boundaries);
   const individualPlacementsList = useStore((s) => s.individualPlacementsList);
@@ -244,12 +245,20 @@ export const PlanCanvas2D = () => {
       scheduleRender();
     };
 
-    const handleResize = () => {
-      scheduleRender();
-    };
-
-    const ro = new ResizeObserver(() => {
-      scheduleRender();
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const newW = entry.contentRect.width;
+        const newH = entry.contentRect.height;
+        if (lastSizeRef.current.w > 0 && newW > 0) {
+          const deltaW = newW - lastSizeRef.current.w;
+          const deltaH = newH - lastSizeRef.current.h;
+          viewRef.current.panX += deltaW / 2;
+          viewRef.current.panY += deltaH / 2;
+        }
+        lastSizeRef.current.w = newW;
+        lastSizeRef.current.h = newH;
+        scheduleRender();
+      }
     });
     ro.observe(canvas);
 
@@ -257,7 +266,6 @@ export const PlanCanvas2D = () => {
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
     canvas.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('resize', handleResize);
 
     scheduleRender();
 
@@ -267,7 +275,6 @@ export const PlanCanvas2D = () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
       canvas.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('resize', handleResize);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
   }, [scheduleRender]);
