@@ -118,11 +118,11 @@ export const BottomControlDeck = () => {
                 </div>
                 <div className="setting-row">
                   <label>Narrow Facade Chasm Clearance</label>
-                  <span className="val-tag badge-tag">3.0m Raycast</span>
+                  <span className="val-tag badge-tag">5.0m Raycast Threshold</span>
                 </div>
                 <div className="setting-row">
                   <label>Deep Daylight Penalty</label>
-                  <span className="val-tag badge-tag">Facade Depth ≥ 2</span>
+                  <span className="val-tag badge-tag">Distance to Air &gt; 4.5m</span>
                 </div>
                 <div className="setting-row">
                   <label>Core Shaft Spacing</label>
@@ -172,9 +172,9 @@ export const BottomControlDeck = () => {
       <div className="bottom-deck-floating glass-dock">
         {/* LEFT HALF (Controls on top, Filters on bottom) */}
         <div className="deck-half deck-left-half">
-          {/* Row 1: Action Buttons with Shortcuts */}
+          {/* Row 1: Action Buttons with Keyboard Shortcuts (Clean text, no icons) */}
           <div className="deck-subrow deck-row-actions">
-            {/* Split Button: (Space) Start Training | Start Inference */}
+            {/* Split Button: Start Training (Space) | Start Inference */}
             {trainingWanted ? (
               <button
                 type="button"
@@ -182,7 +182,7 @@ export const BottomControlDeck = () => {
                 onClick={pauseExecution}
                 title="Pause Execution (Space)"
               >
-                ❚❚ (Space) Pause
+                Pause (Space)
               </button>
             ) : (
               <div className="split-btn-clean">
@@ -192,7 +192,7 @@ export const BottomControlDeck = () => {
                   onClick={startTraining}
                   title="Start Training Policy (Space)"
                 >
-                  ▶ (Space) Start Training
+                  Start Training (Space)
                 </button>
                 <span className="split-mid-divider"></span>
                 <button
@@ -201,7 +201,7 @@ export const BottomControlDeck = () => {
                   onClick={startInference}
                   title="Start Inference Generation"
                 >
-                  ▶ Start Inference
+                  Start Inference
                 </button>
               </div>
             )}
@@ -214,7 +214,7 @@ export const BottomControlDeck = () => {
                 onClick={() => setResetConfirmOpen(true)}
                 title="Reset Model Weights (R)"
               >
-                ↺ (R) Reset Weights
+                Reset Weights (R)
               </button>
             )}
 
@@ -226,13 +226,13 @@ export const BottomControlDeck = () => {
                 onClick={saveCheckpoint}
                 title="Save Checkpoint Weights (S)"
               >
-                ↓ (S) Save Weights
+                Save Weights (S)
               </button>
             )}
 
             {/* Load Weights */}
             <label className="deck-btn-clean file-label-clean" title="Load Weights (.pt)">
-              ↑ (L) Load Weights
+              Load Weights (L)
               <input
                 type="file"
                 accept=".pt"
@@ -261,22 +261,22 @@ export const BottomControlDeck = () => {
                 onClick={() => setActiveBottomDrawer('settings')}
                 title="Configuration & Hyperparameters"
               >
-                ⚙ Settings
+                Settings
               </button>
             )}
 
-            {/* Diagnostics Button */}
+            {/* Diagnostics Button (Clean text, no icon) */}
             <button
               type="button"
               className={`deck-btn-clean ${activeBottomDrawer === 'diagnostics' ? 'active-tab' : ''}`}
               onClick={() => setActiveBottomDrawer('diagnostics')}
               title="Live Telemetry & Diagnostics"
             >
-              📊 Diagnostics
+              Diagnostics
             </button>
           </div>
 
-          {/* Row 2: Filters with wider sliders and comfortable spacing */}
+          {/* Row 2: Filters with equal spacing and stacked action buttons */}
           <div className="deck-subrow deck-row-filters">
             {/* Boundary Type Dropdown */}
             <div className="filter-group-clean">
@@ -297,7 +297,7 @@ export const BottomControlDeck = () => {
               </select>
             </div>
 
-            {/* Plot Area Tier Pills & Wider Slider */}
+            {/* Plot Area Tier Pills & Slider */}
             <div className="filter-group-clean flex-compact-slider">
               <div className="filter-label-row">
                 <span className="filter-label-clean">Plot Area</span>
@@ -363,8 +363,8 @@ export const BottomControlDeck = () => {
               <span className="slider-readout-text">{filters.minHeight}m – {filters.maxHeight}m</span>
             </div>
 
-            {/* Custom Site & Reset Filters Buttons */}
-            <div className="filter-buttons-clean">
+            {/* Stacked Custom Site & Reset Filters Buttons */}
+            <div className="filter-buttons-stacked">
               <button
                 type="button"
                 className="btn-custom-clean"
@@ -385,7 +385,7 @@ export const BottomControlDeck = () => {
           </div>
         </div>
 
-        {/* Center Divider (Fixed in exact middle of screen / dock) */}
+        {/* Center Divider (Full Height of the Bottom Bar) */}
         <div className="deck-center-divider"></div>
 
         {/* RIGHT HALF (Metrics on top, Reward Trend on bottom) */}

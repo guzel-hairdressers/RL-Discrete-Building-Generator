@@ -256,9 +256,10 @@ body, html, #root {
   padding-left: 16px;
 }
 
+/* Full-Height Vertical Divider between halves */
 .deck-center-divider {
   width: 1px;
-  height: 90%;
+  height: 100%;
   background: #cbd5e1;
   flex-shrink: 0;
 }
@@ -276,7 +277,7 @@ body, html, #root {
 
 .deck-row-filters {
   height: 52px;
-  gap: 12px;
+  gap: 16px;
   border-top: 1px solid #f1f5f9;
   padding-top: 5px;
 }
@@ -292,7 +293,7 @@ body, html, #root {
   padding-top: 4px;
 }
 
-/* Split Button Clean (Pure White) */
+/* Split Button Clean (Pure White, Full-Height Separator) */
 .split-btn-clean {
   display: inline-flex;
   align-items: center;
@@ -321,7 +322,7 @@ body, html, #root {
 
 .split-mid-divider {
   width: 1px;
-  height: 14px;
+  height: 100%;
   background: #cbd5e1;
 }
 
@@ -337,7 +338,7 @@ body, html, #root {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
 }
 
 .deck-btn-clean {
@@ -367,16 +368,17 @@ body, html, #root {
   border-color: #0f172a;
 }
 
-/* Filters Clean & Breathable */
+/* Filters Clean & Breathable with Equal Gaps */
 .filter-group-clean {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex-shrink: 0;
 }
 
 .filter-group-clean.flex-compact-slider {
   flex: 1 1 0;
-  min-width: 130px;
+  min-width: 120px;
   max-width: 180px;
 }
 
@@ -475,34 +477,45 @@ body, html, #root {
   margin-top: 1px;
 }
 
-.filter-buttons-clean {
+/* Stacked Action Buttons (Custom Site over Reset Filters) */
+.filter-buttons-stacked {
   display: flex;
-  gap: 6px;
-  margin-left: auto;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .btn-custom-clean {
-  font-size: 9.5px;
+  font-size: 8.5px;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 1px 7px;
+  border-radius: 3px;
   border: 1px solid #0f172a;
   background: #0f172a;
   color: #ffffff;
   cursor: pointer;
   white-space: nowrap;
+  height: 17px;
+  line-height: 13px;
 }
 
 .btn-reset-clean {
-  font-size: 9.5px;
+  font-size: 8.5px;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 1px 7px;
+  border-radius: 3px;
   border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #0f172a;
   cursor: pointer;
   white-space: nowrap;
+  height: 17px;
+  line-height: 13px;
+}
+
+.btn-reset-clean:hover {
+  background: #f1f5f9;
 }
 
 /* Metrics Clean (Right Top) */
