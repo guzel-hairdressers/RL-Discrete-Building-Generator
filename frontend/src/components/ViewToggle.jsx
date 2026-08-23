@@ -6,15 +6,17 @@ export const ViewToggle = () => {
   const setViewMode = useStore((s) => s.setViewMode);
 
   return (
-    <div id="view-toggle" className="glass-pill-toggle">
+    <div className="view-mode-pill glass-card">
       <button
-        className={`toggle-btn ${viewMode === 'axonometric' ? 'active' : ''}`}
+        type="button"
+        className={`view-btn ${viewMode === 'axonometric' ? 'active' : ''}`}
         onClick={() => setViewMode('axonometric')}
       >
         Axonometric
       </button>
       <button
-        className={`toggle-btn ${viewMode === 'perspective' ? 'active' : ''}`}
+        type="button"
+        className={`view-btn ${viewMode === 'perspective' ? 'active' : ''}`}
         onClick={() => setViewMode('perspective')}
       >
         Perspective
@@ -22,3 +24,5 @@ export const ViewToggle = () => {
     </div>
   );
 };
+
+export default ViewToggle;

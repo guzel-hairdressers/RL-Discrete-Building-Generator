@@ -21,9 +21,9 @@ export const SiteInfoCard = () => {
 
   if (!site) {
     return (
-      <div id="site-info-card" className="glass-card">
-        <div id="site-city-title">NO MATCHING SITES</div>
-        <div id="site-coords">Adjust filters to view sites</div>
+      <div className="site-info-card glass-card">
+        <div className="info-title">NO MATCHING SITES</div>
+        <div className="info-sub">Adjust filters to view sites</div>
       </div>
     );
   }
@@ -38,9 +38,9 @@ export const SiteInfoCard = () => {
   const isCustom = Boolean(site.is_custom || site.site_id?.startsWith('custom_') || site.city_code === 'custom');
 
   return (
-    <div id="site-info-card" className="glass-card">
+    <div className="site-info-card glass-card">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div id="site-city-title">
+        <div className="info-title">
           {(site.city_name || site.city_code).toUpperCase()}
         </div>
         {isCustom && (
@@ -52,30 +52,30 @@ export const SiteInfoCard = () => {
             }}
             title="Remove Custom Site"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
         )}
       </div>
-      <div id="site-coords">
+      <div className="info-sub">
         Lat: {latVal.toFixed(4)}, Lon: {lonVal.toFixed(4)}
       </div>
-      <div className="info-grid">
-        <div className="info-item full-width">
+      <div className="info-metrics-list">
+        <div className="info-metric-item">
           <span className="info-label">SITE AREA</span>
           <span className="info-val">
             {site.site_area_m2?.toFixed(1) || '--'} m² ({site.area_tier})
           </span>
         </div>
-        <div className="info-item full-width">
+        <div className="info-metric-item">
           <span className="info-label">CONTEXT HEIGHT</span>
           <span className="info-val">
             {site.avg_height_m?.toFixed(1) || 0}m | {site.max_height_m?.toFixed(1) || 0}m
           </span>
         </div>
-        <div className="info-item full-width">
+        <div className="info-metric-item">
           <span className="info-label">CONTEXT STOREYS</span>
           <span className="info-val">
             {avgStoreys} | {maxStoreys}
@@ -85,3 +85,5 @@ export const SiteInfoCard = () => {
     </div>
   );
 };
+
+export default SiteInfoCard;

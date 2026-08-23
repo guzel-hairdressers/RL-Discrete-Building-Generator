@@ -78,8 +78,8 @@ export const useStore = create((set, get) => ({
   generationId: 0,
   episode: 0,
   step: 0,
-  bestScore: -40.0,
-  scoreHistory: [],
+  bestReward: -40.0,
+  rewardHistory: [],
   metrics: {
     score: -40.0,
     fillRatio: 0,
@@ -103,6 +103,7 @@ export const useStore = create((set, get) => ({
   totalSiteArea: 0,
   individualPlacementsList: [],
   currentMergedPlacements: [],
+  completed3DPlacements: [], // Only updated when an episode finishes
   dictionary: [],
   mergedDictionary: [],
   contextData: null,
@@ -112,24 +113,32 @@ export const useStore = create((set, get) => ({
   maximizedPane: null,
   hoveredModuleId: null,
 
-  // Settings & Panels
+  // Settings & Expandable Bottom Panels
   settings: { ...DEFAULT_SETTINGS },
-  settingsOpen: false,
-  developerOpen: false,
+  activeBottomDrawer: null, // null | 'settings' | 'diagnostics'
   resetConfirmOpen: false,
 
-  // Setters
+  // Setters & Panel Toggles
   setCustomModalOpen: (open) => set({ customModalOpen: open }),
   setMode: (newMode) => {
     set({ mode: newMode });
     get().sendCommand({ cmd: 'setMode', mode: newMode });
   },
-  setSettingsOpen: (open) => set({ settingsOpen: open }),
-  setDeveloperOpen: (open) => set({ developerOpen: open }),
+  setActiveBottomDrawer: (drawer) => {
+    set((s) => ({ activeBottomDrawer: s.activeBottomDrawer === drawer ? null : drawer }));
+  },
   setResetConfirmOpen: (open) => set({ resetConfirmOpen: open }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setMaximizedPane: (pane) => set((s) => ({ maximizedPane: s.maximizedPane === pane ? null : pane })),
   setHoveredModuleId: (id) => set({ hoveredModuleId: id }),
+
+  // Set Boundary Type (Family)
+  setBoundaryType: (type) => {
+    get().updateSettings({ boundaryType: type });
+    if (type !== 'real') {
+      get().requestNewSite();
+    }
+  },
 
   // Load Context Generator Urban Dataset
   loadDatasets: async () => {
@@ -333,24 +342,63 @@ export const useStore = create((set, get) => ({
     get().sendCommand({ cmd: 'updateSettings', settings: get().settings });
   },
 
-  toggleTraining: () => {
-    const { trainingWanted, mode, sendCommand, generationId, episode, step } = get();
-    const nextWanted = !trainingWanted;
+  // Execution Control: Split Training / Inference & Pause
+  startTraining: () => {
     set({
-      trainingWanted: nextWanted,
-      phase: nextWanted ? 'running' : 'paused',
-      statusMessage: nextWanted
-        ? (mode === 'inference' ? 'Generating building plan...' : 'Training policy active')
-        : 'Paused by user',
+      mode: 'training',
+      trainingWanted: true,
+      phase: 'running',
+      statusMessage: 'Training policy active',
     });
+    get().sendCommand({ cmd: 'setMode', mode: 'training' });
+    get().sendCommand({
+      cmd: 'step',
+      generationId: get().generationId,
+      episode: get().episode,
+      step: get().step,
+    });
+  },
 
-    if (nextWanted) {
-      sendCommand({ cmd: 'step', generationId, episode, step });
+  startInference: () => {
+    set({
+      mode: 'inference',
+      trainingWanted: true,
+      phase: 'running',
+      statusMessage: 'Generating building plan (Inference)...',
+    });
+    get().sendCommand({ cmd: 'setMode', mode: 'inference' });
+    get().sendCommand({
+      cmd: 'step',
+      generationId: get().generationId,
+      episode: get().episode,
+      step: get().step,
+    });
+  },
+
+  pauseExecution: () => {
+    set({
+      trainingWanted: false,
+      phase: 'paused',
+      statusMessage: 'Paused by user',
+    });
+  },
+
+  toggleTraining: () => {
+    const { trainingWanted, startTraining, pauseExecution } = get();
+    if (trainingWanted) {
+      pauseExecution();
+    } else {
+      startTraining();
     }
   },
 
   requestNewSite: () => {
-    get().navigateCarousel(1);
+    const { settings, sendCommand } = get();
+    if (settings.boundaryType === 'real') {
+      get().navigateCarousel(1);
+    } else {
+      sendCommand({ cmd: 'newSite' });
+    }
   },
 
   resetPolicy: () => {
@@ -427,8 +475,8 @@ export const useStore = create((set, get) => ({
         dictionary: data.dictionary || [],
         device: data.device ? data.device.toUpperCase() : 'CPU',
         metrics: data.metrics || get().metrics,
-        scoreHistory: data.scoreHistory || [],
-        bestScore: data.bestScore ?? get().bestScore,
+        rewardHistory: data.scoreHistory || [],
+        bestReward: data.bestScore ?? get().bestReward,
         statusMessage: `Site ready · ${bList.length} floors`,
       });
 
@@ -459,12 +507,21 @@ export const useStore = create((set, get) => ({
       }
     } else if (type === 'episodeDone') {
       const nextEp = data.nextEpisode ?? get().episode + 1;
+
+      // Update completed3DPlacements so the 3D scene captures the finalized building at episode completion!
+      const finalized = (data.mergedPlacements && data.mergedPlacements.length > 0)
+        ? data.mergedPlacements
+        : (get().currentMergedPlacements && get().currentMergedPlacements.length > 0
+            ? get().currentMergedPlacements
+            : get().individualPlacementsList);
+
       set({
         phase: 'complete',
         episode: data.completedEpisode,
+        completed3DPlacements: finalized,
         metrics: data.metrics || get().metrics,
-        scoreHistory: data.scoreHistory || get().scoreHistory,
-        bestScore: data.bestScore ?? get().bestScore,
+        rewardHistory: data.scoreHistory || get().rewardHistory,
+        bestReward: data.bestScore ?? get().bestReward,
         statusMessage: `Episode ${data.completedEpisode} complete`,
       });
 

@@ -1,10 +1,8 @@
 import React, { useEffect } from 'react';
 import { useStore } from './store/useStore';
-import { TopHud } from './components/TopHud';
 import { ThreeViewer } from './components/ThreeViewer';
 import { PlanCanvas2D } from './components/PlanCanvas2D';
-import { BottomDock } from './components/BottomDock';
-import { SettingsDrawer } from './components/SettingsDrawer';
+import { BottomControlDeck } from './components/BottomControlDeck';
 import { ResetModal } from './components/ResetModal';
 import { CustomSiteModal } from './components/CustomSiteModal';
 import './App.css';
@@ -18,8 +16,8 @@ export function App() {
   const saveCheckpoint = useStore((s) => s.saveCheckpoint);
   const mode = useStore((s) => s.mode);
   const maximizedPane = useStore((s) => s.maximizedPane);
-  const setDeveloperOpen = useStore((s) => s.setDeveloperOpen);
-  const developerOpen = useStore((s) => s.developerOpen);
+  const setActiveBottomDrawer = useStore((s) => s.setActiveBottomDrawer);
+  const activeBottomDrawer = useStore((s) => s.activeBottomDrawer);
 
   // Initialize Connection
   useEffect(() => {
@@ -50,18 +48,16 @@ export function App() {
         saveCheckpoint();
       } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyD') {
         e.preventDefault();
-        setDeveloperOpen(!developerOpen);
+        setActiveBottomDrawer(activeBottomDrawer === 'diagnostics' ? null : 'diagnostics');
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleTraining, requestNewSite, toggleMerging, setResetConfirmOpen, saveCheckpoint, mode, developerOpen, setDeveloperOpen]);
+  }, [toggleTraining, requestNewSite, toggleMerging, setResetConfirmOpen, saveCheckpoint, mode, activeBottomDrawer, setActiveBottomDrawer]);
 
   return (
     <div className="app-shell">
-      <TopHud />
-
       <main className="stage">
         <div className={`stage-split-container ${maximizedPane ? `maximized-${maximizedPane}` : ''}`}>
           {maximizedPane !== 'right' && <ThreeViewer />}
@@ -69,8 +65,9 @@ export function App() {
         </div>
       </main>
 
-      <BottomDock />
-      <SettingsDrawer />
+      {/* Unified Bottom Control Deck (Filters, Action Split Button, Metrics HUD, Reward Trend, Expandable Drawers) */}
+      <BottomControlDeck />
+
       <ResetModal />
       <CustomSiteModal />
     </div>
