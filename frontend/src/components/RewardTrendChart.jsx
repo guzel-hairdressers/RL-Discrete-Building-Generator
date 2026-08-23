@@ -4,22 +4,56 @@ import { useStore } from '../store/useStore';
 export const RewardTrendChart = () => {
   const canvasRef = useRef(null);
   const rewardHistory = useStore((s) => s.rewardHistory);
+  const fillHistory = useStore((s) => s.fillHistory);
+  const rentableHistory = useStore((s) => s.rentableHistory);
+  const modulesHistory = useStore((s) => s.modulesHistory);
+  const activeTrendMetric = useStore((s) => s.activeTrendMetric);
+  const setActiveTrendMetric = useStore((s) => s.setActiveTrendMetric);
   const metrics = useStore((s) => s.metrics);
+
   const [showFullHistory, setShowFullHistory] = useState(false);
-  const [hoverData, setHoverData] = useState(null); // { ep, reward, x, y }
+  const [hoverData, setHoverData] = useState(null); // { ep, val, x, y }
   const [hoverFactor, setHoverFactor] = useState(0); // 0 (smoothed) to 1 (fit)
-  const hoverAnimRef = useRef(null);
 
-  // Raw values array
-  const rawValues = rewardHistory.length > 0 ? rewardHistory : [metrics.score || -40];
+  // Configure Active Metric Details
+  let rawValues = [];
+  let metricTitle = 'REWARD TREND';
+  let unit = '';
+  let themeColor = '#059669'; // Emerald
+  let fillColor = 'rgba(16, 185, 129, 0.18)';
+
+  if (activeTrendMetric === 'fill') {
+    rawValues = fillHistory.length > 0 ? fillHistory : [Math.round((metrics.fillRatio || 0) * 100)];
+    metricTitle = 'AVG. FILL % TREND';
+    unit = '%';
+    themeColor = '#2563eb'; // Blue
+    fillColor = 'rgba(37, 99, 235, 0.18)';
+  } else if (activeTrendMetric === 'rentable') {
+    rawValues = rentableHistory.length > 0 ? rentableHistory : [Math.round((metrics.rentableRatio || 0) * 100)];
+    metricTitle = 'RENTABLE % TREND';
+    unit = '%';
+    themeColor = '#8b5cf6'; // Purple
+    fillColor = 'rgba(139, 92, 246, 0.18)';
+  } else if (activeTrendMetric === 'modules') {
+    rawValues = modulesHistory.length > 0 ? modulesHistory : [metrics.placedCount || 0];
+    metricTitle = 'MODULES PLACED TREND';
+    unit = ' mod';
+    themeColor = '#d97706'; // Amber
+    fillColor = 'rgba(217, 119, 6, 0.18)';
+  } else {
+    rawValues = rewardHistory.length > 0 ? rewardHistory : [metrics.score || -40];
+    metricTitle = 'REWARD TREND';
+    unit = '';
+    themeColor = '#059669';
+    fillColor = 'rgba(16, 185, 129, 0.18)';
+  }
+
   const totalEpisodes = rawValues.length;
-
-  // Sliced values for crop (last 100 or full)
   const isCropped = !showFullHistory && totalEpisodes > 100;
   const values = isCropped ? rawValues.slice(-100) : rawValues;
   const startEp = isCropped ? totalEpisodes - values.length + 1 : 1;
 
-  // Window Smoothing Function (Adaptive Gaussian-Weighted Moving Window from v0.7)
+  // Window Smoothing Function (Adaptive Gaussian-Weighted Moving Window)
   const computeWindowSmoothedPoints = (rawVals, basePoints) => {
     if (rawVals.length < 2) return basePoints;
     const n = rawVals.length;
@@ -41,12 +75,12 @@ export const RewardTrendChart = () => {
     });
   };
 
-  // Regression Fit Function (Quadratic / Polynomial Fit from v0.7)
+  // Regression Fit Function (Quadratic Polynomial Fit)
   const computeFittedPoints = (rawVals, basePoints) => {
     const n = rawVals.length;
     if (n < 3) return basePoints;
 
-    const m = 3; // Quadratic fit
+    const m = 3;
     const A = Array.from({ length: m }, () => new Float64Array(m + 1));
     const sumsU = new Float64Array(5);
     const sumsUY = new Float64Array(3);
@@ -110,7 +144,7 @@ export const RewardTrendChart = () => {
 
     const dpr = window.devicePixelRatio || 1;
     const w = canvas.clientWidth || 320;
-    const h = canvas.clientHeight || 36;
+    const h = canvas.clientHeight || 46;
 
     if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
       canvas.width = Math.round(w * dpr);
@@ -121,31 +155,31 @@ export const RewardTrendChart = () => {
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, w, h);
 
-    const marginLeft = 26;
+    const marginLeft = 30;
     const marginRight = 8;
-    const marginTop = 3;
-    const marginBottom = 10;
+    const marginTop = 4;
+    const marginBottom = 12;
     const gridW = w - marginLeft - marginRight;
     const gridH = h - marginTop - marginBottom;
 
     const min = Math.min(...values);
     const max = Math.max(...values);
-    const span = Math.max(6, max - min);
+    const span = Math.max(activeTrendMetric === 'reward' ? 6 : 5, max - min);
 
     // Y-Axis Numerical Labels
     ctx.font = '500 7.5px Inter, system-ui, sans-serif';
     ctx.fillStyle = '#64748b';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText(max.toFixed(0), marginLeft - 4, marginTop + 2);
-    ctx.fillText(min.toFixed(0), marginLeft - 4, marginTop + gridH);
+    ctx.fillText(`${max.toFixed(0)}${unit}`, marginLeft - 4, marginTop + 2);
+    ctx.fillText(`${min.toFixed(0)}${unit}`, marginLeft - 4, marginTop + gridH);
 
     // X-Axis Epoch Labels
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(`Ep ${startEp}`, marginLeft, h - marginBottom + 1);
+    ctx.fillText(`Ep ${startEp}`, marginLeft, h - marginBottom + 2);
     ctx.textAlign = 'right';
-    ctx.fillText(`Ep ${totalEpisodes}`, w - marginRight, h - marginBottom + 1);
+    ctx.fillText(`Ep ${totalEpisodes}`, w - marginRight, h - marginBottom + 2);
 
     // Grid Baseline Lines
     ctx.strokeStyle = '#e2e8f0';
@@ -161,11 +195,11 @@ export const RewardTrendChart = () => {
       y: marginTop + gridH - ((val - min) / span) * gridH,
     }));
 
-    // Area Fill
+    // Area Fill Gradient
     if (basePoints.length > 1) {
       const grad = ctx.createLinearGradient(0, marginTop, 0, marginTop + gridH);
-      grad.addColorStop(0, 'rgba(16, 185, 129, 0.18)');
-      grad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+      grad.addColorStop(0, fillColor);
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.beginPath();
       ctx.moveTo(basePoints[0].x, marginTop + gridH);
       for (const pt of basePoints) ctx.lineTo(pt.x, pt.y);
@@ -181,7 +215,7 @@ export const RewardTrendChart = () => {
       if (idx === 0) ctx.moveTo(pt.x, pt.y);
       else ctx.lineTo(pt.x, pt.y);
     });
-    ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
+    ctx.strokeStyle = themeColor + '40';
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -196,21 +230,21 @@ export const RewardTrendChart = () => {
       if (i === 0) ctx.moveTo(sx, sy);
       else ctx.lineTo(sx, sy);
     }
-    ctx.strokeStyle = hoverFactor > 0.5 ? '#2563eb' : '#059669';
-    ctx.lineWidth = 1.75;
+    ctx.strokeStyle = hoverFactor > 0.5 ? '#2563eb' : themeColor;
+    ctx.lineWidth = 1.8;
     ctx.stroke();
 
     // Active End Point Dot
     if (basePoints.length > 0) {
       const last = basePoints[basePoints.length - 1];
-      ctx.fillStyle = '#059669';
+      ctx.fillStyle = themeColor;
       ctx.beginPath();
       ctx.arc(last.x, last.y, 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
 
     ctx.restore();
-  }, [values, totalEpisodes, startEp, hoverFactor]);
+  }, [values, totalEpisodes, startEp, hoverFactor, activeTrendMetric, unit, themeColor, fillColor]);
 
   // Pointer interactions for Hover & Fitting
   const handlePointerMove = (e) => {
@@ -218,16 +252,16 @@ export const RewardTrendChart = () => {
     if (!canvas || values.length === 0) return;
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
-    const marginLeft = 26;
+    const marginLeft = 30;
     const marginRight = 8;
     const gridW = rect.width - marginLeft - marginRight;
 
     const relX = Math.max(0, Math.min(gridW, mouseX - marginLeft));
     const idx = Math.round((relX / gridW) * (values.length - 1));
     const epNum = startEp + idx;
-    const rewardVal = values[idx];
+    const metricVal = values[idx];
 
-    setHoverData({ ep: epNum, reward: rewardVal, clientX: e.clientX, clientY: e.clientY });
+    setHoverData({ ep: epNum, val: metricVal, clientX: e.clientX, clientY: e.clientY });
     setHoverFactor(1.0);
   };
 
@@ -243,7 +277,19 @@ export const RewardTrendChart = () => {
       onPointerLeave={handlePointerLeave}
     >
       <div className="trend-header">
-        <span className="trend-title">REWARD TREND</span>
+        {/* Metric Selector Dropdown / Pill */}
+        <select
+          className="trend-metric-select"
+          value={activeTrendMetric}
+          onChange={(e) => setActiveTrendMetric(e.target.value)}
+          title="Switch Trend Metric"
+        >
+          <option value="reward">REWARD TREND</option>
+          <option value="fill">AVG. FILL % TREND</option>
+          <option value="rentable">RENTABLE % TREND</option>
+          <option value="modules">MODULES PLACED TREND</option>
+        </select>
+
         {totalEpisodes > 100 && (
           <button
             type="button"
@@ -260,7 +306,7 @@ export const RewardTrendChart = () => {
         ref={canvasRef}
         style={{
           width: '100%',
-          height: '36px',
+          height: '46px',
           display: 'block',
           cursor: 'crosshair',
         }}
@@ -276,7 +322,7 @@ export const RewardTrendChart = () => {
             zIndex: 1000,
           }}
         >
-          <strong>Ep {hoverData.ep}</strong> · {hoverData.reward?.toFixed(1)}
+          <strong>Ep {hoverData.ep}</strong> · {hoverData.val?.toFixed(1)}{unit}
         </div>
       )}
     </div>

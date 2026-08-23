@@ -14,6 +14,7 @@ export const BottomControlDeck = () => {
   const loadCheckpoint = useStore((s) => s.loadCheckpoint);
   const activeBottomDrawer = useStore((s) => s.activeBottomDrawer);
   const setActiveBottomDrawer = useStore((s) => s.setActiveBottomDrawer);
+  const customModalOpen = useStore((s) => s.customModalOpen);
   const setCustomModalOpen = useStore((s) => s.setCustomModalOpen);
 
   const settings = useStore((s) => s.settings);
@@ -32,6 +33,9 @@ export const BottomControlDeck = () => {
   const boundaries = useStore((s) => s.boundaries);
   const totalSiteArea = useStore((s) => s.totalSiteArea);
   const device = useStore((s) => s.device);
+
+  const activeTrendMetric = useStore((s) => s.activeTrendMetric);
+  const setActiveTrendMetric = useStore((s) => s.setActiveTrendMetric);
 
   const isTraining = mode === 'training';
   const minPercent = areaToPercent(filters.minArea);
@@ -367,7 +371,7 @@ export const BottomControlDeck = () => {
             <div className="filter-buttons-stacked">
               <button
                 type="button"
-                className="btn-custom-clean"
+                className={`btn-custom-clean ${customModalOpen ? 'active-tab' : ''}`}
                 onClick={() => setCustomModalOpen(true)}
                 title="Harvest Custom Urban Location"
               >
@@ -390,19 +394,31 @@ export const BottomControlDeck = () => {
 
         {/* RIGHT HALF (Metrics on top, Reward Trend on bottom) */}
         <div className="deck-half deck-right-half">
-          {/* Row 1: Metrics HUD */}
+          {/* Row 1: Metrics HUD (Clickable to switch trend chart) */}
           <div className="deck-subrow deck-row-metrics">
-            <div className="metric-box-clean">
+            <div
+              className={`metric-box-clean clickable-metric ${activeTrendMetric === 'reward' ? 'active-metric' : ''}`}
+              onClick={() => setActiveTrendMetric('reward')}
+              title="Show Reward Trend"
+            >
               <span className="metric-lbl">REWARD</span>
               <strong className="metric-num">{rewardVal}</strong>
               <span className="metric-desc">Best {bestVal}</span>
             </div>
-            <div className="metric-box-clean">
+            <div
+              className={`metric-box-clean clickable-metric ${activeTrendMetric === 'fill' ? 'active-metric' : ''}`}
+              onClick={() => setActiveTrendMetric('fill')}
+              title="Show Avg. Fill % Trend"
+            >
               <span className="metric-lbl">AVG. FILL</span>
               <strong className="metric-num">{fillPct}%</strong>
               <span className="metric-desc">{filledArea} m² filled</span>
             </div>
-            <div className="metric-box-clean">
+            <div
+              className={`metric-box-clean clickable-metric ${activeTrendMetric === 'rentable' ? 'active-metric' : ''}`}
+              onClick={() => setActiveTrendMetric('rentable')}
+              title="Show Rentable % Trend"
+            >
               <span className="metric-lbl">RENTABLE</span>
               <strong className="metric-num">{rentablePct}%</strong>
               <span className="metric-desc">of filled area</span>
@@ -412,7 +428,11 @@ export const BottomControlDeck = () => {
               <strong className="metric-num">{String(episode).padStart(3, '0')}</strong>
               <span className="metric-desc">{boundaries.length || 9} floors</span>
             </div>
-            <div className="metric-box-clean">
+            <div
+              className={`metric-box-clean clickable-metric ${activeTrendMetric === 'modules' ? 'active-metric' : ''}`}
+              onClick={() => setActiveTrendMetric('modules')}
+              title="Show Modules Placed Trend"
+            >
               <span className="metric-lbl">STEP</span>
               <strong className="metric-num">{String(step).padStart(3, '0')}</strong>
               <span className="metric-desc">modules placed</span>

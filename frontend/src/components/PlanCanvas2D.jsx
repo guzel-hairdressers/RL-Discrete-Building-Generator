@@ -235,7 +235,7 @@ export const PlanCanvas2D = () => {
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      const zoomFactor = Math.exp(-e.deltaY * 0.0015);
+      const zoomFactor = Math.exp(-e.deltaY * 0.00225);
       const newZoom = Math.max(1.0, Math.min(120.0, viewRef.current.zoom * zoomFactor));
 
       viewRef.current.panX = mouseX - (mouseX - viewRef.current.panX) * (newZoom / viewRef.current.zoom);

@@ -80,6 +80,11 @@ export const useStore = create((set, get) => ({
   step: 0,
   bestReward: -40.0,
   rewardHistory: [],
+  fillHistory: [],
+  rentableHistory: [],
+  modulesHistory: [],
+  activeTrendMetric: 'reward', // 'reward' | 'fill' | 'rentable' | 'modules'
+  setActiveTrendMetric: (metric) => set({ activeTrendMetric: metric }),
   metrics: {
     score: -40.0,
     fillRatio: 0,
@@ -515,15 +520,23 @@ export const useStore = create((set, get) => ({
             ? get().currentMergedPlacements
             : get().individualPlacementsList);
 
-      set({
+      const effectiveMetrics = data.metrics || get().metrics;
+      const currentFillPct = Math.round(((effectiveMetrics.fillRatio) || 0) * 1000) / 10;
+      const currentRentablePct = Math.round(((effectiveMetrics.rentableRatio) || 0) * 1000) / 10;
+      const currentModulesCount = effectiveMetrics.placedCount ?? get().step ?? 0;
+
+      set((state) => ({
         phase: 'complete',
         episode: data.completedEpisode,
         completed3DPlacements: finalized,
-        metrics: data.metrics || get().metrics,
-        rewardHistory: data.scoreHistory || get().rewardHistory,
-        bestReward: data.bestScore ?? get().bestReward,
+        metrics: effectiveMetrics,
+        rewardHistory: data.scoreHistory || state.rewardHistory,
+        fillHistory: [...state.fillHistory, currentFillPct],
+        rentableHistory: [...state.rentableHistory, currentRentablePct],
+        modulesHistory: [...state.modulesHistory, currentModulesCount],
+        bestReward: data.bestScore ?? state.bestReward,
         statusMessage: `Episode ${data.completedEpisode} complete`,
-      });
+      }));
 
       if (get().mode === 'inference' && !get().autoGenerate) {
         set({ trainingWanted: false, phase: 'paused' });

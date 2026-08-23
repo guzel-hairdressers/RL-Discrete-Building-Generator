@@ -117,32 +117,9 @@ export const ThreeViewer = () => {
 
       {/* Floating UI Elements matching wireframe sketch */}
       <SiteInfoCard />
+      {/* Upper View Toggle & Integrated Expand Toolbar */}
       <ViewToggle />
       <CarouselNav />
-
-      {/* Split-View Expand / Collapse Button */}
-      <button
-        type="button"
-        className="pane-expand-btn left-expand"
-        onClick={() => setMaximizedPane('left')}
-        title={isMaximized ? 'Restore Split View' : 'Expand 3D Context View (100%)'}
-      >
-        {isMaximized ? (
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="4 14 10 14 10 20"></polyline>
-            <polyline points="20 10 14 10 14 4"></polyline>
-            <line x1="14" y1="10" x2="21" y2="3"></line>
-            <line x1="3" y1="21" x2="10" y2="14"></line>
-          </svg>
-        ) : (
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <polyline points="9 21 3 21 3 15"></polyline>
-            <line x1="21" y1="3" x2="14" y2="10"></line>
-            <line x1="3" y1="21" x2="10" y2="14"></line>
-          </svg>
-        )}
-      </button>
     </div>
   );
 };

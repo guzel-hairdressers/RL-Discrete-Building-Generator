@@ -31,6 +31,20 @@ export function App() {
         return;
       }
 
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+      // Ctrl/Cmd+Shift+D for Diagnostics
+      if (isCmdOrCtrl && e.shiftKey && e.code === 'KeyD') {
+        e.preventDefault();
+        setActiveBottomDrawer(activeBottomDrawer === 'diagnostics' ? null : 'diagnostics');
+        return;
+      }
+
+      // If Cmd, Ctrl, or Alt is held, allow standard browser actions (Reload Cmd+R, Hard Reload Cmd+Shift+R, Save Cmd+S, etc.)
+      if (isCmdOrCtrl || e.altKey) {
+        return;
+      }
+
       if (e.code === 'Space') {
         e.preventDefault();
         toggleTraining();
@@ -46,9 +60,6 @@ export function App() {
       } else if (e.code === 'KeyS' && mode === 'training') {
         e.preventDefault();
         saveCheckpoint();
-      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyD') {
-        e.preventDefault();
-        setActiveBottomDrawer(activeBottomDrawer === 'diagnostics' ? null : 'diagnostics');
       }
     };
 
