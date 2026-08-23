@@ -1,5 +1,6 @@
 import React from 'react';
 import { useStore, percentToArea, areaToPercent } from '../store/useStore';
+import { RewardTrendChart } from './RewardTrendChart';
 
 export const BottomControlDeck = () => {
   const mode = useStore((s) => s.mode);
@@ -7,12 +8,9 @@ export const BottomControlDeck = () => {
   const startTraining = useStore((s) => s.startTraining);
   const startInference = useStore((s) => s.startInference);
   const pauseExecution = useStore((s) => s.pauseExecution);
-  const requestNewSite = useStore((s) => s.requestNewSite);
   const setResetConfirmOpen = useStore((s) => s.setResetConfirmOpen);
   const saveCheckpoint = useStore((s) => s.saveCheckpoint);
   const loadCheckpoint = useStore((s) => s.loadCheckpoint);
-  const disableMerging = useStore((s) => s.disableMerging);
-  const toggleMerging = useStore((s) => s.toggleMerging);
   const activeBottomDrawer = useStore((s) => s.activeBottomDrawer);
   const setActiveBottomDrawer = useStore((s) => s.setActiveBottomDrawer);
   const setCustomModalOpen = useStore((s) => s.setCustomModalOpen);
@@ -28,7 +26,6 @@ export const BottomControlDeck = () => {
 
   const metrics = useStore((s) => s.metrics);
   const bestReward = useStore((s) => s.bestReward);
-  const rewardHistory = useStore((s) => s.rewardHistory);
   const episode = useStore((s) => s.episode);
   const step = useStore((s) => s.step);
   const boundaries = useStore((s) => s.boundaries);
@@ -46,56 +43,8 @@ export const BottomControlDeck = () => {
   const rewardVal = typeof metrics.score === 'number' ? metrics.score.toFixed(1) : '-40.0';
   const bestVal = typeof bestReward === 'number' ? bestReward.toFixed(1) : '--';
 
-  // Render SVG Sparkline for Reward Trend
-  const renderRewardSparkline = () => {
-    const history = rewardHistory.length > 0 ? rewardHistory : [metrics.score || -40];
-    const width = 280;
-    const height = 34;
-    const padding = 4;
-
-    const min = Math.min(...history);
-    const max = Math.max(...history);
-    const range = max - min || 1;
-
-    const points = history.map((val, idx) => {
-      const x = padding + (idx / Math.max(1, history.length - 1)) * (width - 2 * padding);
-      const y = height - padding - ((val - min) / range) * (height - 2 * padding);
-      return `${x},${y}`;
-    }).join(' ');
-
-    const lastX = padding + (width - 2 * padding);
-    const lastVal = history[history.length - 1];
-    const lastY = height - padding - ((lastVal - min) / range) * (height - 2 * padding);
-
-    return (
-      <svg className="sparkline-svg" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-        <defs>
-          <linearGradient id="rewardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
-          </linearGradient>
-        </defs>
-        {history.length > 1 && (
-          <polygon
-            points={`${padding},${height - padding} ${points} ${lastX},${height - padding}`}
-            fill="url(#rewardGrad)"
-          />
-        )}
-        <polyline
-          fill="none"
-          stroke="#059669"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          points={points}
-        />
-        <circle cx={lastX} cy={lastY} r="3" fill="#059669" />
-      </svg>
-    );
-  };
-
   return (
-    <footer className="bottom-control-deck-container">
+    <footer className="bottom-deck-floating-wrapper">
       {/* Expandable Slide-Up Panel (Settings or Diagnostics) */}
       {activeBottomDrawer && (
         <div className="expanded-bottom-drawer glass-panel">
@@ -165,7 +114,7 @@ export const BottomControlDeck = () => {
                   </div>
                 </div>
 
-                {/* Column 2: Architectural Penalties & Grammar */}
+                {/* Column 2: Architectural Filters & Clearances */}
                 <div className="settings-section">
                   <h4 className="section-title">Architectural Filters & Clearances</h4>
                   <div className="setting-row">
@@ -212,22 +161,6 @@ export const BottomControlDeck = () => {
                       />
                       <span className="val-tag">{settings.learningRate || 0.003}</span>
                     </div>
-                  </div>
-                  <div className="setting-row">
-                    <label>Atrium Sampling Policy</label>
-                    <select
-                      className="custom-select-small"
-                      value={settings.atriumPolicy || 'none'}
-                      onChange={(e) => updateSettings({ atriumPolicy: e.target.value })}
-                    >
-                      <option value="none">None (Solid Floorplate)</option>
-                      <option value="procedural">Procedural Courtyards</option>
-                      <option value="learned">Policy-Learned Atriums</option>
-                    </select>
-                  </div>
-                  <div className="setting-row">
-                    <label>BPE Vocabulary Merge Bonus</label>
-                    <span className="val-tag badge-tag">Clipped +30.0 pts</span>
                   </div>
                 </div>
               </div>
@@ -279,40 +212,40 @@ export const BottomControlDeck = () => {
         </div>
       )}
 
-      {/* Main Unified Control Deck Bar (2 Rows: Actions & Metrics ON TOP, Filters & Sparkline ON BOTTOM) */}
-      <div className="bottom-deck-main glass-dock">
-        {/* ROW 1 (TOP): Actions & Mode (Left) & Metrics HUD (Right) */}
-        <div className="deck-row top-row">
-          {/* Top-Left: Action Buttons & Split Training/Inference */}
-          <div className="deck-section actions-section">
-            {/* Split Button: START TRAINING | START INFERENCE (Morphs to PAUSE when running) */}
+      {/* Floating Centered Bottom Control Deck (Divided exactly in the middle) */}
+      <div className="bottom-deck-floating glass-dock">
+        {/* LEFT HALF (Controls on top, Filters on bottom) */}
+        <div className="deck-half deck-left-half">
+          {/* Row 1: Action Buttons */}
+          <div className="deck-subrow deck-row-actions">
+            {/* Split Button: Start Training | Start Inference */}
             {trainingWanted ? (
               <button
                 type="button"
-                className="split-pause-btn"
+                className="btn-clean-pause"
                 onClick={pauseExecution}
                 title="Pause Current Generation (Space)"
               >
-                ❚❚ PAUSE ({mode === 'inference' ? 'Inference' : 'Training'})
+                ❚❚ Pause
               </button>
             ) : (
-              <div className="split-btn-group">
+              <div className="split-btn-clean">
                 <button
                   type="button"
-                  className={`split-action-btn ${mode === 'training' ? 'primary-active' : ''}`}
+                  className={`split-side-btn ${mode === 'training' ? 'active-side' : ''}`}
                   onClick={startTraining}
-                  title="Start Neural Policy Training (Space)"
+                  title="Start Training Policy"
                 >
-                  START TRAINING
+                  Start Training
                 </button>
-                <div className="split-separator"></div>
+                <span className="split-mid-divider"></span>
                 <button
                   type="button"
-                  className={`split-action-btn ${mode === 'inference' ? 'primary-active' : ''}`}
+                  className={`split-side-btn ${mode === 'inference' ? 'active-side' : ''}`}
                   onClick={startInference}
-                  title="Start Inference & Generation (Space)"
+                  title="Start Inference Generation"
                 >
-                  START INFERENCE
+                  Start Inference
                 </button>
               </div>
             )}
@@ -321,11 +254,11 @@ export const BottomControlDeck = () => {
             {isTraining && (
               <button
                 type="button"
-                className="deck-btn"
+                className="deck-btn-clean"
                 onClick={() => setResetConfirmOpen(true)}
                 title="Reset Model Weights (R)"
               >
-                ↺ Reset Weights
+                Reset Weights
               </button>
             )}
 
@@ -333,17 +266,17 @@ export const BottomControlDeck = () => {
             {isTraining && (
               <button
                 type="button"
-                className="deck-btn"
+                className="deck-btn-clean"
                 onClick={saveCheckpoint}
                 title="Save Checkpoint Weights (S)"
               >
-                ↓ Save Weights
+                Save Weights
               </button>
             )}
 
             {/* Load Weights */}
-            <label className="deck-btn file-label-btn" title="Load Weights Checkpoint (.pt)">
-              ↑ Load Weights
+            <label className="deck-btn-clean file-label-clean" title="Load Checkpoint (.pt)">
+              Load Weights
               <input
                 type="file"
                 accept=".pt"
@@ -368,112 +301,56 @@ export const BottomControlDeck = () => {
             {isTraining && (
               <button
                 type="button"
-                className={`deck-btn ${activeBottomDrawer === 'settings' ? 'active-deck-btn' : ''}`}
+                className={`deck-btn-clean ${activeBottomDrawer === 'settings' ? 'active-tab' : ''}`}
                 onClick={() => setActiveBottomDrawer('settings')}
-                title="Toggle Architectural & Morphological Settings"
+                title="Toggle Configuration Panel"
               >
-                ⚙ Settings
+                Settings
               </button>
             )}
 
             {/* Diagnostics Button */}
             <button
               type="button"
-              className={`deck-btn ${activeBottomDrawer === 'diagnostics' ? 'active-deck-btn' : ''}`}
+              className={`deck-btn-clean ${activeBottomDrawer === 'diagnostics' ? 'active-tab' : ''}`}
               onClick={() => setActiveBottomDrawer('diagnostics')}
-              title="Toggle Live Neural & RL Diagnostics"
+              title="Toggle Live RL Diagnostics"
             >
-              📊 Diagnostics
-            </button>
-
-            {/* New Site Button */}
-            <button
-              type="button"
-              className="deck-btn"
-              onClick={requestNewSite}
-              title="Generate / Switch Next Site (N)"
-            >
-              ＋ New Site
-            </button>
-
-            {/* Disable / Enable Merging */}
-            <button
-              type="button"
-              className={`deck-btn ${disableMerging ? 'active-deck-btn' : ''}`}
-              onClick={toggleMerging}
-              title="Toggle BPE Room Merging (M)"
-            >
-              {disableMerging ? 'Enable Merging' : 'Disable Merging'}
+              Diagnostics
             </button>
           </div>
 
-          <div className="deck-divider"></div>
-
-          {/* Top-Right: Metrics HUD Strip */}
-          <div className="deck-section metrics-section">
-            <div className="hud-metric-box">
-              <span className="hud-label">REWARD</span>
-              <strong className="hud-val">{rewardVal}</strong>
-              <span className="hud-sub">Best {bestVal}</span>
-            </div>
-            <div className="hud-metric-box">
-              <span className="hud-label">AVG. FILL</span>
-              <strong className="hud-val">{fillPct}%</strong>
-              <span className="hud-sub">{filledArea} m² filled</span>
-            </div>
-            <div className="hud-metric-box">
-              <span className="hud-label">RENTABLE</span>
-              <strong className="hud-val">{rentablePct}%</strong>
-              <span className="hud-sub">of filled area</span>
-            </div>
-            <div className="hud-metric-box">
-              <span className="hud-label">EP</span>
-              <strong className="hud-val">{String(episode).padStart(3, '0')}</strong>
-              <span className="hud-sub">{boundaries.length || 9} floors</span>
-            </div>
-            <div className="hud-metric-box">
-              <span className="hud-label">STEP</span>
-              <strong className="hud-val">{String(step).padStart(3, '0')}</strong>
-              <span className="hud-sub">modules placed</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ROW 2 (BOTTOM): Filters (Left) & Reward Trend Sparkline (Right) */}
-        <div className="deck-row bottom-row">
-          {/* Bottom-Left: Filters */}
-          <div className="deck-section filters-section">
+          {/* Row 2: Filters */}
+          <div className="deck-subrow deck-row-filters">
             {/* Boundary Type Dropdown */}
-            <div className="filter-item">
-              <span className="item-label">BOUNDARY TYPE</span>
+            <div className="filter-group-clean">
+              <span className="filter-label-clean">Boundary Type</span>
               <select
-                className="deck-select"
+                className="filter-select-clean"
                 value={settings.boundaryType || 'free'}
                 onChange={(e) => setBoundaryType(e.target.value)}
               >
-                <option value="free">Free (Mixed Procedural)</option>
-                <option value="real">Real OSM Urban Parcel</option>
-                <option value="convex">Convex Polygon</option>
-                <option value="concave">Concave Polygon</option>
-                <option value="lobed">Multi-Lobed Perimeter</option>
-                <option value="notched">Notched Courtyard</option>
-                <option value="rect">Rectangular Block</option>
-                <option value="lshape">L-Shape Footprint</option>
-                <option value="ushape">U-Shape Footprint</option>
-                <option value="tshape">T-Shape Footprint</option>
+                <option value="free">Mixed</option>
+                <option value="real">OSM Plot</option>
+                <option value="rect">Rectangular</option>
+                <option value="convex">Convex</option>
+                <option value="concave">Concave</option>
+                <option value="lshape">L-Shape</option>
+                <option value="ushape">U-Shape</option>
+                <option value="tshape">T-Shape</option>
               </select>
             </div>
 
-            {/* Plot Area Tiers & Slider */}
-            <div className="filter-item flex-2">
-              <div className="item-header">
-                <span className="item-label">PLOT AREA</span>
-                <div className="tier-pills">
+            {/* Plot Area Tier Pills & Compact Slider */}
+            <div className="filter-group-clean flex-compact-slider">
+              <div className="filter-label-row">
+                <span className="filter-label-clean">Plot Area</span>
+                <div className="tier-pills-clean">
                   {['ANY', 'XS', 'S', 'M', 'L', 'XL'].map((t) => (
                     <button
                       key={t}
                       type="button"
-                      className={`tier-pill ${filters.activeTier === t ? 'active' : ''}`}
+                      className={`tier-pill-clean ${filters.activeTier === t ? 'active' : ''}`}
                       onClick={() => selectTier(t)}
                     >
                       {t}
@@ -481,7 +358,7 @@ export const BottomControlDeck = () => {
                   ))}
                 </div>
               </div>
-              <div className="dual-slider-wrap">
+              <div className="dual-slider-compact">
                 <input
                   type="range"
                   min="0"
@@ -498,17 +375,14 @@ export const BottomControlDeck = () => {
                   value={maxPercent}
                   onChange={(e) => setFilter('maxArea', Math.max(percentToArea(parseFloat(e.target.value)), filters.minArea))}
                 />
-                <div className="slider-track"></div>
+                <div className="slider-track-compact"></div>
               </div>
-              <span className="item-sub-val">{filters.minArea} m² – {filters.maxArea} m²</span>
             </div>
 
-            {/* Context Height Slider */}
-            <div className="filter-item flex-2">
-              <div className="item-header">
-                <span className="item-label">CONTEXT HEIGHT</span>
-              </div>
-              <div className="dual-slider-wrap">
+            {/* Context Height Compact Slider */}
+            <div className="filter-group-clean flex-compact-slider">
+              <span className="filter-label-clean">Context Height</span>
+              <div className="dual-slider-compact">
                 <input
                   type="range"
                   min="10"
@@ -525,16 +399,15 @@ export const BottomControlDeck = () => {
                   value={filters.maxHeight}
                   onChange={(e) => setFilter('maxHeight', Math.max(parseInt(e.target.value), filters.minHeight))}
                 />
-                <div className="slider-track"></div>
+                <div className="slider-track-compact"></div>
               </div>
-              <span className="item-sub-val">{filters.minHeight}m – {filters.maxHeight}m</span>
             </div>
 
             {/* Custom Site & Reset Buttons */}
-            <div className="filter-buttons-stack">
+            <div className="filter-buttons-clean">
               <button
                 type="button"
-                className="deck-action-btn btn-custom-site"
+                className="btn-custom-clean"
                 onClick={() => setCustomModalOpen(true)}
                 title="Harvest Custom Urban Location"
               >
@@ -542,23 +415,53 @@ export const BottomControlDeck = () => {
               </button>
               <button
                 type="button"
-                className="deck-action-btn btn-reset-filters"
+                className="btn-reset-clean"
                 onClick={resetFilters}
-                title="Reset Filters to Default"
+                title="Reset Filters"
               >
-                Reset Filters
+                Reset
               </button>
             </div>
           </div>
+        </div>
 
-          <div className="deck-divider"></div>
+        {/* Center Divider (Fixed in exact middle of screen / dock) */}
+        <div className="deck-center-divider"></div>
 
-          {/* Bottom-Right: Reward Trend Live Sparkline */}
-          <div className="deck-section sparkline-section">
-            <span className="sparkline-title">REWARD TREND</span>
-            <div className="sparkline-container">
-              {renderRewardSparkline()}
+        {/* RIGHT HALF (Metrics on top, Reward Trend on bottom) */}
+        <div className="deck-half deck-right-half">
+          {/* Row 1: Metrics HUD */}
+          <div className="deck-subrow deck-row-metrics">
+            <div className="metric-box-clean">
+              <span className="metric-lbl">REWARD</span>
+              <strong className="metric-num">{rewardVal}</strong>
+              <span className="metric-desc">Best {bestVal}</span>
             </div>
+            <div className="metric-box-clean">
+              <span className="metric-lbl">AVG. FILL</span>
+              <strong className="metric-num">{fillPct}%</strong>
+              <span className="metric-desc">{filledArea} m² filled</span>
+            </div>
+            <div className="metric-box-clean">
+              <span className="metric-lbl">RENTABLE</span>
+              <strong className="metric-num">{rentablePct}%</strong>
+              <span className="metric-desc">of filled area</span>
+            </div>
+            <div className="metric-box-clean">
+              <span className="metric-lbl">EP</span>
+              <strong className="metric-num">{String(episode).padStart(3, '0')}</strong>
+              <span className="metric-desc">{boundaries.length || 9} floors</span>
+            </div>
+            <div className="metric-box-clean">
+              <span className="metric-lbl">STEP</span>
+              <strong className="metric-num">{String(step).padStart(3, '0')}</strong>
+              <span className="metric-desc">modules placed</span>
+            </div>
+          </div>
+
+          {/* Row 2: Reward Trend Chart */}
+          <div className="deck-subrow deck-row-trend">
+            <RewardTrendChart />
           </div>
         </div>
       </div>

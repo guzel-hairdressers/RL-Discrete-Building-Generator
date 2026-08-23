@@ -136,72 +136,70 @@ export const PlanCanvas2D = () => {
     animFrameRef.current = requestAnimationFrame(render);
   }, [render]);
 
-  // Architectural Staggered Scale Bar Function
+  // Exact Architectural Crenellated Stepped Scale Bar (Context Generator Standard)
   const drawArchitecturalScaleBar = (ctx, canvasWidth, zoom) => {
-    // Select standard metric step (5m, 10m, 20m, 50m, 100m, 200m)
-    const targetPixelWidth = 140;
-    const rawMeters = targetPixelWidth / zoom;
-    const niceSteps = [1, 2, 5, 10, 20, 50, 100, 200, 500];
-    let stepMeters = niceSteps[0];
-    for (const step of niceSteps) {
-      if (step * zoom <= 180) stepMeters = step;
-      else break;
-    }
+    const targetWidth = Math.max(90, Math.min(160, canvasWidth * 0.16));
+    const rawD = targetWidth / (10 * zoom);
+    
+    const niceDist = (raw) => {
+      if (!Number.isFinite(raw) || raw <= 0) return 1;
+      const exp = 10 ** Math.floor(Math.log10(raw));
+      const norm = raw / exp;
+      if (norm <= 1) return exp;
+      if (norm <= 2) return 2 * exp;
+      if (norm <= 5) return 5 * exp;
+      return 10 * exp;
+    };
 
-    const totalMeters = stepMeters * 2;
-    const segWidth = stepMeters * zoom;
-    const barWidth = totalMeters * zoom;
-    const barHeight = 6;
-    const rightMargin = 58;
-    const topMargin = 14;
-    const startX = canvasWidth - barWidth - rightMargin;
-    const startY = topMargin + 12;
+    const distance = niceDist(rawD);
+    const factors = [0, 1, 2, 5, 10];
+    const offsets = factors.map((f) => f * distance * zoom);
+    const totalBarWidth = offsets[offsets.length - 1];
+
+    const rightMargin = 56;
+    const x = canvasWidth - totalBarWidth - rightMargin;
+    const y = 30;
+    const y_top = y - 6;
+    const y_bottom = y;
 
     ctx.save();
+    ctx.strokeStyle = '#0f172a';
+    ctx.fillStyle = '#0f172a';
+    ctx.lineWidth = 1.15;
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'miter';
+    ctx.font = '700 8.5px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
 
-    // Background Badge
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 1;
+    // 1. Draw the crenellated staggered scale bar line
     ctx.beginPath();
-    ctx.roundRect(startX - 12, topMargin - 8, barWidth + 24, 42, 6);
-    ctx.fill();
+    ctx.moveTo(x + offsets[0], y_bottom);
+    ctx.lineTo(x + offsets[0], y_top);
+
+    for (let i = 0; i < offsets.length - 1; i++) {
+      const y_level = (i % 2 === 0) ? y_top : y_bottom;
+      if (i > 0) {
+        const y_prev_level = ((i - 1) % 2 === 0) ? y_top : y_bottom;
+        ctx.lineTo(x + offsets[i], y_prev_level);
+        ctx.lineTo(x + offsets[i], y_level);
+      }
+      ctx.lineTo(x + offsets[i + 1], y_level);
+    }
+
+    const last_segment_idx = offsets.length - 2;
+    const y_last_level = (last_segment_idx % 2 === 0) ? y_top : y_bottom;
+    const y_opposite_level = (y_last_level === y_top) ? y_bottom : y_top;
+    ctx.lineTo(x + offsets[offsets.length - 1], y_opposite_level);
     ctx.stroke();
 
-    // Scale Header Label
-    ctx.font = '600 9px Inter, system-ui, sans-serif';
-    ctx.fillStyle = '#475569';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText('METRIC SCALE', startX, topMargin - 3);
-
-    // Staggered Alternating Blocks (Top Half vs Bottom Half)
-    // Segment 1 (0 to stepMeters): Black Left, White Right
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(startX, startY, segWidth / 2, barHeight / 2);
-    ctx.fillRect(startX + segWidth / 2, startY + barHeight / 2, segWidth / 2, barHeight / 2);
-
-    // Segment 2 (stepMeters to totalMeters): Black Left, White Right
-    ctx.fillRect(startX + segWidth, startY, segWidth / 2, barHeight / 2);
-    ctx.fillRect(startX + segWidth + segWidth / 2, startY + barHeight / 2, segWidth / 2, barHeight / 2);
-
-    // Outline around entire scale bar
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(startX, startY, barWidth, barHeight);
-
-    // Tick Marks & Metric Number Labels
-    ctx.font = '500 9px Inter, system-ui, sans-serif';
-    ctx.fillStyle = '#0f172a';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-
-    // 0m
-    ctx.fillText('0', startX, startY + barHeight + 3);
-    // Middle step
-    ctx.fillText(`${stepMeters}m`, startX + segWidth, startY + barHeight + 3);
-    // End step
-    ctx.fillText(`${totalMeters}m`, startX + barWidth, startY + barHeight + 3);
+    // 2. Draw labels above the scale bar
+    offsets.forEach((offset, index) => {
+      const factor = factors[index];
+      const val = factor * distance;
+      const label = index === offsets.length - 1 ? `${val}m` : `${val}`;
+      ctx.fillText(label, x + offset, y_top - 3);
+    });
 
     ctx.restore();
   };
