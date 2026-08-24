@@ -514,16 +514,29 @@ export const useStore = create((set, get) => ({
 
       const isEval = !!data.isEvaluation;
 
-      set((state) => ({
-        step: data.step ?? state.step + 1,
-        individualPlacementsList: isEval ? (data.placements || []) : [...state.individualPlacementsList, ...(data.placements || [])],
-        currentMergedPlacements: incomingMerged || state.currentMergedPlacements,
-        dictionary: data.dictionary || state.dictionary,
-        mergedDictionary: data.mergedDictionary || state.mergedDictionary,
-        metrics: data.metrics || state.metrics,
-        diagnostics: data.diagnostics || state.diagnostics,
-        statusMessage: `Episode ${data.episode} · step ${data.step}`,
-      }));
+      set((state) => {
+        let nextList;
+        if (isEval || (data.step != null && data.step <= 1) || (data.episode != null && data.episode !== state.episode)) {
+          nextList = data.placements || [];
+        } else {
+          const idMap = new Map();
+          state.individualPlacementsList.forEach((p) => { if (p && p.id) idMap.set(p.id, p); });
+          (data.placements || []).forEach((p) => { if (p && p.id) idMap.set(p.id, p); });
+          nextList = Array.from(idMap.values());
+        }
+
+        return {
+          step: data.step ?? state.step + 1,
+          episode: data.episode ?? state.episode,
+          individualPlacementsList: nextList,
+          currentMergedPlacements: incomingMerged || ((data.step != null && data.step <= 1) ? [] : state.currentMergedPlacements),
+          dictionary: data.dictionary || state.dictionary,
+          mergedDictionary: data.mergedDictionary || state.mergedDictionary,
+          metrics: data.metrics || state.metrics,
+          diagnostics: data.diagnostics || state.diagnostics,
+          statusMessage: `Episode ${data.episode} · step ${data.step}`,
+        };
+      });
 
       if (get().trainingWanted) {
         setTimeout(() => {
