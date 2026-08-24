@@ -3686,6 +3686,7 @@ class ParallelTrainer:
     def _layout_offsets(site_records: Sequence[tuple[dict, dict, dict, G.RNG]]) -> list[tuple[float, float]]:
         count = len(site_records)
         columns = max(1, math.ceil(math.sqrt(count)))
+        rows = max(1, math.ceil(count / columns))
         widths = []
         heights = []
         for _, _, site, _ in site_records:
@@ -3694,7 +3695,11 @@ class ParallelTrainer:
             heights.append(bounds["maxY"] - bounds["minY"])
         column_width = max(widths, default=40.0) + 14.0
         row_height = max(heights, default=30.0) + 14.0
-        return [((index % columns) * column_width, (index // columns) * row_height) for index in range(count)]
+        # Invert rows so Floor 1 is top-left and Floor 9 is bottom-right on the inverted canvas
+        return [
+            ((index % columns) * column_width, (rows - 1 - (index // columns)) * row_height)
+            for index in range(count)
+        ]
 
     def _build_sites(
         self,

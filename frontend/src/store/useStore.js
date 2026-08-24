@@ -522,7 +522,7 @@ export const useStore = create((set, get) => ({
             episode: Number(data.episode ?? get().episode),
             step: Number(data.step ?? get().step),
           });
-        }, 30);
+        }, 0);
       }
     } else if (type === 'error') {
       console.warn('Server error received:', data);
