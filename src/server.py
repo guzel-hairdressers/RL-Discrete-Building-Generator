@@ -4203,17 +4203,14 @@ class ParallelTrainer:
         if not common_keys:
             return []
 
-        def target_score(cell_key: str) -> tuple[float, int, int]:
-            x_text, y_text = cell_key.split(",")
-            x, y = int(x_text), int(y_text)
-            clearance = min(
-                float(environment.site.get("distance", {}).get(cell_key, 0.0))
-                for environment in environments
-            )
-            return (-clearance, x, y)
-
+        # Sample anchor cells uniformly across the shared-floor intersection
+        # instead of always taking the highest-clearance (most central) cells,
+        # so the policy can learn non-central core placements.
+        key_list = list(common_keys)
+        perm = torch.randperm(len(key_list), device=self.device)
         targets = []
-        for cell_key in heapq.nsmallest(16, common_keys, key=target_score):
+        for idx in perm[: min(16, len(key_list))].tolist():
+            cell_key = key_list[idx]
             x_text, y_text = cell_key.split(",")
             targets.append({"x": int(x_text), "y": int(y_text)})
 
@@ -4322,11 +4319,16 @@ class ParallelTrainer:
                 x_t, y_t = cell_key.split(",")
                 cx, cy = float(x_t) + 0.5, float(y_t) + 0.5
                 if all(math.hypot(cx - cc["x"], cy - cc["y"]) >= core_spacing for cc in core_centers):
-                    clearance = min(float(env.site.get("distance", {}).get(cell_key, 0.0)) for env in floors)
-                    valid_remote_cells.append((clearance, int(x_t), int(y_t)))
+                    valid_remote_cells.append((int(x_t), int(y_t)))
 
-            valid_remote_cells.sort(key=lambda t: -t[0])
-            for _, rx, ry in valid_remote_cells[:16]:
+            # Sample candidate cells uniformly rather than by descending
+            # clearance, so uncovered-wing proposals are not centre-biased.
+            if valid_remote_cells:
+                perm = torch.randperm(len(valid_remote_cells), device=self.device)
+                sampled_remote = [valid_remote_cells[idx] for idx in perm[:16].tolist()]
+            else:
+                sampled_remote = []
+            for rx, ry in sampled_remote:
                 for module in modules:
                     if float(module.get("area", 0.0)) + 1.0e-8 < 24.0:
                         continue
@@ -5003,15 +5005,15 @@ class ParallelTrainer:
 
         raw_score = 100.0 * max(
             0.0,
-            1.05 * scaled_fill
+            0.80 * scaled_fill
             + 0.15 * scaled_rentable
-            + 0.10 * daylight
+            + 0.25 * daylight
             + 0.02 * reuse
             + 0.02 * constructibility
             + 0.01 * envelope_efficiency
             - area_variance_penalty
             - partial_connection_penalty
-            - (deep_interior_penalty / 100.0)
+            - (deep_interior_penalty / 60.0)
             - (facade_chasm_penalty / 100.0),
         )
         multiplier_used = self.topology_multiplier
@@ -5100,15 +5102,15 @@ class ParallelTrainer:
 
         raw_score = 100.0 * max(
             0.0,
-            1.05 * scaled_fill
+            0.80 * scaled_fill
             + 0.15 * scaled_rentable
-            + 0.10 * daylight
+            + 0.25 * daylight
             + 0.02 * reuse
             + 0.02 * constructibility
             + 0.01 * envelope_efficiency
             - area_variance_penalty
             - partial_connection_penalty
-            - (deep_interior_penalty / 100.0)
+            - (deep_interior_penalty / 60.0)
             - (facade_chasm_penalty / 100.0),
         )
 
@@ -5163,7 +5165,13 @@ class ParallelTrainer:
                 posinf=20.0,
                 neginf=-20.0,
             ).clamp(-30.0, 30.0) / temperature
-        distribution = torch.distributions.Categorical(logits=logits)
+        probs = torch.softmax(logits, dim=0)
+        placement_epsilon = max(0.10, 0.50 * math.exp(-self.episode / 40.0))
+        behavior = (
+            (1.0 - placement_epsilon) * probs
+            + placement_epsilon * torch.full_like(probs, 1.0 / probs.shape[0])
+        )
+        distribution = torch.distributions.Categorical(probs=behavior)
         selected = distribution.sample()
         selected_offset = int(selected.item())
         self._record_placement_decision(
@@ -5737,10 +5745,20 @@ class ParallelTrainer:
         self.episode += 1
         dict_synthesis_start = time.perf_counter()
         next_initial_stacks: list[CoreStackCandidate] = []
+        next_basis = (
+            0.0
+            if float(self.settings["angleStep"]) <= 0.0
+            else G.RNG(
+                int(self.settings["seed"])
+                + self.generation_id * 104729
+                + self.episode * 65537
+            ).uniform(0.0, 180.0)
+        )
         if not bool(self.settings["singleFloor"]) and len(self.environments) > 1:
-            # Keep the already-proven learned core across episodes on this site.
-            # New room vocabulary remains dynamic, but a later episode can never
-            # enter an unvalidated partial-core state.
+            # Re-sample a fresh learned core every episode so the policy can
+            # explore core shape and placement instead of re-using the previous
+            # proven core. Fall back to the proven core only when the fresh
+            # sample has no exact shared transform on every floor.
             primary_core = next(
                 (
                     module
@@ -5749,10 +5767,9 @@ class ParallelTrainer:
                 ),
                 None,
             )
-            if primary_core is None:
-                raise CoreStackingError("completed multi-floor episode lost its primary core module")
-            next_dictionary = [primary_core]
-            next_shape_logs = []
+            next_dictionary, next_shape_logs = self._synthesize_dictionary(
+                self.settings, self.environments, self.generation_id, self.episode
+            )
             empty_floors: list[FloorEnvironment] = []
             for environment in self.environments:
                 empty = FloorEnvironment(
@@ -5770,11 +5787,6 @@ class ParallelTrainer:
                 )
                 empty.reset(next_dictionary)
                 empty_floors.append(empty)
-            next_basis = (
-                0.0
-                if float(self.settings["angleStep"]) <= 0.0
-                else (self.episode * float(self.settings["angleStep"]) * 3.0) % 180.0
-            )
             preflight = self._shared_core_stack_candidates(
                 next_basis,
                 environments=empty_floors,
@@ -5782,9 +5794,24 @@ class ParallelTrainer:
                 settings=self.settings,
             )
             if not preflight:
-                raise CoreStackingError(
-                    "the proven core failed empty-floor prevalidation for the next episode"
+                if primary_core is None:
+                    raise CoreStackingError(
+                        "completed multi-floor episode lost its primary core module"
+                    )
+                next_dictionary = [primary_core]
+                next_shape_logs = []
+                for empty in empty_floors:
+                    empty.reset(next_dictionary)
+                preflight = self._shared_core_stack_candidates(
+                    next_basis,
+                    environments=empty_floors,
+                    dictionary=next_dictionary,
+                    settings=self.settings,
                 )
+                if not preflight:
+                    raise CoreStackingError(
+                        "the proven core failed empty-floor prevalidation for the next episode"
+                    )
         else:
             next_dictionary, next_shape_logs = self._synthesize_dictionary(
                 self.settings, self.environments, self.generation_id, self.episode
@@ -5943,7 +5970,9 @@ class ParallelTrainer:
         orientation_basis = (
             0.0
             if angle_step <= 0.0
-            else (self.episode * angle_step * 3.0) % 180.0
+            else G.RNG(
+                int(self.settings["seed"]) + self.generation_id * 104729 + self.episode * 65537
+            ).uniform(0.0, 180.0)
         )
         multi_floor = (
             not bool(self.settings["singleFloor"])
@@ -6080,7 +6109,13 @@ class ParallelTrainer:
                     posinf=20.0,
                     neginf=-20.0,
                 ).clamp(-30.0, 30.0) / temperature
-            gate_distribution = torch.distributions.Categorical(logits=gate_logits)
+            gate_probs = torch.softmax(gate_logits, dim=0)
+            gate_epsilon = max(0.10, 0.50 * math.exp(-self.episode / 40.0))
+            gate_behavior = (
+                (1.0 - gate_epsilon) * gate_probs
+                + gate_epsilon * torch.full_like(gate_probs, 1.0 / gate_probs.shape[0])
+            )
+            gate_distribution = torch.distributions.Categorical(probs=gate_behavior)
             gate_index = gate_distribution.sample()
             gate_offset = int(gate_index.item())
             gate_log_prob = gate_distribution.log_prob(gate_index)

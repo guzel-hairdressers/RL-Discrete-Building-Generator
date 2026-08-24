@@ -51,7 +51,7 @@ export const ThreeViewer = () => {
     const base = s.render_html
       ? s.render_html.startsWith('/') ? s.render_html : '/' + s.render_html
       : `/sites/${s.site_id}.html`;
-    return `${base}?v=v091_white`;
+    return `${base}?v=v092_context_${Date.now()}`;
   };
 
   const configureIframe = useCallback((iframe) => {
