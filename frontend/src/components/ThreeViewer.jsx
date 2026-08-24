@@ -83,10 +83,9 @@ export const ThreeViewer = () => {
       },
     }, '*');
 
-    const isReal = settings.boundaryType === 'real';
     iframe.contentWindow.postMessage({
       type: 'set_context_visibility',
-      visible: isReal,
+      visible: true,
     }, '*');
 
     try {

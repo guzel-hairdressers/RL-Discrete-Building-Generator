@@ -6834,7 +6834,7 @@ async def get_scripts_file(file_path: str) -> FileResponse:
         target = os.path.normpath(os.path.join(PUBLIC_DIR, "scripts", file_path))
     if not os.path.exists(target):
         raise HTTPException(status_code=404, detail="Script not found")
-    return FileResponse(target, media_type="application/javascript", headers={"Cache-Control": "public, max-age=31536000, immutable"})
+    return FileResponse(target, media_type="application/javascript", headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
 @app.get("/styles/{file_path:path}")
@@ -6846,7 +6846,7 @@ async def get_styles_file(file_path: str) -> FileResponse:
         target = os.path.normpath(os.path.join(PUBLIC_DIR, "styles", file_path))
     if not os.path.exists(target):
         raise HTTPException(status_code=404, detail="Stylesheet not found")
-    return FileResponse(target, media_type="text/css", headers={"Cache-Control": "public, max-age=31536000, immutable"})
+    return FileResponse(target, media_type="text/css", headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
