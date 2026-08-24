@@ -605,28 +605,39 @@ export const useStore = create((set, get) => ({
         const shouldChangeSite = (autoChangeLimit <= 20) && (currentSiteCount >= autoChangeLimit);
 
         if (shouldChangeSite) {
-          set({
-            episodesOnCurrentSite: 0,
-            episode: nextEp,
-            step: 0,
-            individualPlacementsList: [],
-            currentMergedPlacements: [],
-            completed3DPlacements: [],
-            phase: 'running',
-          });
-          get().requestNewSite();
-        } else {
-          set({
-            episodesOnCurrentSite: currentSiteCount,
-            episode: nextEp,
-            step: 0,
-            individualPlacementsList: [],
-            currentMergedPlacements: [],
-            completed3DPlacements: [],
-            phase: 'running',
-          });
           setTimeout(() => {
-            get().sendCommand({ cmd: 'step', generationId: get().generationId, episode: nextEp, step: 0 });
+            if (get().trainingWanted) {
+              set({
+                episodesOnCurrentSite: 0,
+                episode: nextEp,
+                step: 0,
+                individualPlacementsList: [],
+                currentMergedPlacements: [],
+                completed3DPlacements: [],
+                phase: 'running',
+              });
+              get().requestNewSite();
+            }
+          }, 400);
+        } else {
+          setTimeout(() => {
+            if (get().trainingWanted) {
+              set({
+                episodesOnCurrentSite: currentSiteCount,
+                episode: nextEp,
+                step: 0,
+                individualPlacementsList: [],
+                currentMergedPlacements: [],
+                completed3DPlacements: [],
+                phase: 'running',
+              });
+              get().sendCommand({
+                cmd: 'step',
+                generationId: Number(get().generationId),
+                episode: Number(nextEp),
+                step: 0,
+              });
+            }
           }, 100);
         }
       }

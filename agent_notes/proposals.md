@@ -190,3 +190,83 @@ Entries are **strictly ordered by priority and status**, matching the issue-trac
   Policy directly outputs continuous Gaussian coordinates $(x, y, \theta) \sim \mathcal{N}(\mu, \Sigma)$ without action masking or anchor constraints.
 * **Rationale & Tradeoffs**:
   In dense geometric packing, $>99\%$ of randomly sampled continuous $(x, y, \theta)$ points result in site boundary clipping or wall collisions. Without masking, the policy receives constant collision penalties, leading to vanishing policy gradients and complete learning failure.
+
+---
+
+## 4. Proposed Future Algorithm Versions (Separate Track — Deferred, Not in Current Implementation Pass)
+
+These three proposals define a *separate* algorithm version. They are explicitly **out of scope for the current A2C-refactor + bug-fix pass** and will be implemented (if approved) after that pass is benchmarked and stable.
+
+### PROP-16: Graph-First Generation with Voronoi Geometry Realization
+* **Category**: Graph RL / Topology-First Generation
+* **Status**: `Proposed — Separate Algorithm Version (Deferred)` (Priority: High)
+* **Rating**: **HIGH (Future Core)**
+
+* **Concept** — a three-stage pipeline that separates *topology* from *geometry*:
+  1. **Topology construction (RL)**. The agent builds a graph $G = (V, E)$ inside the site boundary. Vertices $V$ are abstract cells (no concrete shape yet), positioned at cell centers; edges $E$ are adjacencies (cells that touch). The agent grows the graph node/edge by node/edge, rewarded for producing **repeating patterns**.
+  2. **Label assignment**. Each vertex is assigned a module label from the dictionary so as to *minimize dictionary length* (maximize module reuse) and *roughly equalize cell areas*. This is a graph coloring / tiling / compression problem — implementable as a second RL head or a deterministic optimizer.
+  3. **Geometry realization**. Voronoi cells around the vertex positions produce the actual room shapes; edges that Voronoi leaves ill-defined are resolved by simple laws (orthogonalization, area balancing, snapping to principal axes — see PROP-18).
+
+* **Rationale & Tradeoffs**:
+  Decouples the *discrete* combinatorial problem (adjacency + tiling) from the *continuous* geometry problem (exact wall placement). The RL inner loop becomes pure discrete graph operations, with **no expensive SAT polygon checks per step** (the current `generate_candidates` bottleneck). "Repeating patterns" formalizes what BPE/merging is already groping toward — a real graph-grammar / tessellation objective rather than a post-hoc merge pass — and a connected, typed graph can encode hard architectural invariants (connectivity, circulation continuity) directly.
+
+* **Implementation options**:
+  - *Sequential autoregressive graph growth* (add one node/edge per step) — matches the existing step-based trainer and GAE credit assignment.
+  - *One-shot graph generation* (a GNN / graph-transformer emits the whole adjacency matrix conditioned on the site) — fewer steps but harder credit assignment.
+  - *Graph grammar (split-and-merge)*: start from one cell, repeatedly split cells (recursive subdivision) or merge neighbors — naturally produces hierarchical, self-similar patterns.
+
+* **Reward for "repeating patterns" (the crux)** — candidate definitions:
+  - (a) subgraph-isomorphism / automorphism counts over the growing graph,
+  - (b) a compression objective (MDL / BPE merge size — reuse the existing `graph.bpe_merge`),
+  - (c) symmetry detection (reflection / rotation invariance of subgraphs),
+  - (d) a learned discriminator that scores "pattern-ness" adversarially.
+
+* **Risks & open questions**:
+  - Defining a tractable, differentiable-enough "pattern" reward is the hardest part.
+  - Not every graph is tileable by the dictionary → needs a label-assignment *feasibility* check so the RL never produces untileable graphs.
+  - Voronoi → orthogonal, buildable rooms is where the geometry work lives (orthogonalization, area balancing, snapping). Existing Voronoi-based architectural plan literature exists to lean on.
+  - *Relation to PROP-14*: PROP-14 deprioritized graph RL for speed, but that was a *hybrid* graph+vector approach *inside* the fast C-SAT loop. This proposal sidesteps that by **deferring all geometry to the end**, so the graph RL itself never runs SAT checks.
+
+### PROP-17: Typed-Cell Placement (Decouple Vertical Scope from Function; Voids as Connectivity Glue)
+* **Category**: Action-Space Redesign / Architectural Invariants
+* **Status**: `Proposed — Separate Algorithm Version (Deferred)` (Priority: High)
+* **Rating**: **HIGH (Future Core)**
+
+* **Concept** — replace the "core vs normal module" dichotomy with two orthogonal axes:
+  - **Vertical scope** (a *placement property*, not a category): `multi-floor` (placed once, replicated on every floor with aligned anchor/rotation) vs `independent` (exists on a single floor). *Any* element may be multi-floor.
+  - **Function/enclosure** (element type): `core` (vertical circulation/egress — **must** be multi-floor), `room` (habitable, enclosed — either scope), `void` (open/unenclosed interior space: atrium / courtyard / light-well / gap — the "empty" element), `balcony` (open exterior attached to a room — independent only).
+
+* **Connectivity invariant**: elements cannot be placed *disconnected*; to express distance the model places `void` elements between them (the "ditch"). This makes "the plan is one connected component (possibly routed through voids)" a **hard constraint of the action space**, not a learned penalty — which structurally eliminates the remote-core failure mode (a core dropped in a detached wing that other floors then cannot reach). `void` is a single type doing double duty: a big central void = atrium/light-well (daylight bonus); a thin void = ditch (scores nothing). Let geometry/score sort the two rather than splitting them into separate types.
+
+* **Type mutation**: allow a `relabel` action so the model can change an already-placed cell's type at a later step (e.g. provisional `void` → `room`, or `room` → `void`) as the plan evolves. This gives the model a reversible, incremental way to reshape topology without tearing down.
+
+* **Rationale & Tradeoffs**:
+  Conflating "stacks vertically" with "is egress" is what creates the remote-core problem; decoupling them is strictly more expressive (a multi-floor lobby/stairwell can be a `room`, not a `core`). Enforcing connectivity in the action space — with voids as the escape valve — handles the single most important architectural invariant (circulation/egress continuity) by *constraint* rather than *penalty*. Empty space becomes a first-class, *valued* element instead of a byproduct.
+
+* **Implementation options**:
+  - *Hard adjacency (frontier attachment)* + a `void` type: every new element must touch the frontier; distance is expressed via voids. Simple, fast, and unifies with the frontier/action-space speed work.
+  - *Connected-component placement*: place anywhere, but only if it becomes graph-connected (directly or via voids placed in the same action). More flexible, larger action space.
+
+* **Risks & open questions**:
+  - Hard adjacency can bias toward compact blobs → mitigate with the `void` type + the pattern reward (PROP-16).
+  - Void scoring is load-bearing: good voids (atrium daylight, courtyard adjacency) must be rewarded, thin "ditches" must not.
+  - Multi-floor *non-core* elements spend their area on every floor (like cores) — the multi-floor vs independent decision must itself be a *learned* action with a cost signal, or it will always collapse to "independent."
+
+### PROP-18: Principal-Axes (PCA) Orientation Prior
+* **Category**: Geometry / State Representation
+* **Status**: `Proposed — Technique (Deferred)` (Priority: Medium-High)
+* **Rating**: **HIGH (Widely Applicable)**
+
+* **Concept**:
+  Compute the site's principal axes (PCA of the boundary polygon's vertices, or an area-weighted sample) and (a) feed the axis angle(s) + anisotropy as features to the model, and/or (b) use them to align the placement grid / candidate orientation basis.
+
+* **Rationale & Tradeoffs**:
+  Current orientation guidance is a *single random angle per episode* (`orientation_basis`, `src/server.py:5975`) with no awareness of the site's own geometry. For the very common rectangular / near-rectangular sites, the dominant axes are the rectangle's sides — and grid-aligned layouts along those axes are frequently (not always) optimal. Feeding the principal axes lets the model *learn* "grid-aligned is sometimes best" instead of either imposing a hard grid or relying on a blind random basis. The anisotropy (ratio of principal-axis lengths) is also a cheap elongation signal.
+
+* **Implementation options**:
+  - (a) extra features in `_candidate_features` / `_site_descriptor` (axis angle + anisotropy),
+  - (b) a learned blend between the principal axis and the random basis,
+  - (c) a full 2D spectral / Laplacian embedding of the boundary.
+
+* **Risks & open questions**:
+  PCA on the full boundary is degenerate for near-square sites (axes are ill-defined) → needs a fallback (longest-edge direction, or the existing random basis) when anisotropy is low.

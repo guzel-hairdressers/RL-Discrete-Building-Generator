@@ -57,14 +57,12 @@ export const ThreeViewer = () => {
   const configureIframe = useCallback((iframe) => {
     if (!iframe || !iframe.contentWindow) return;
 
-    // When paused, show intermediate merged placements; otherwise show completed episode building
-    const effectiveList = (phase === 'paused' && !disableMerging && currentMergedPlacements && currentMergedPlacements.length > 0)
-      ? currentMergedPlacements
-      : ((completed3DPlacements && completed3DPlacements.length > 0)
-          ? completed3DPlacements
-          : ((!disableMerging && currentMergedPlacements && currentMergedPlacements.length > 0)
-              ? currentMergedPlacements
-              : []));
+    // Live Real-Time 3D Building Stream (Merged on Pause / Episode Done, Live Unmerged during Episode)
+    const effectiveList = (Array.isArray(completed3DPlacements) && completed3DPlacements.length > 0)
+      ? completed3DPlacements
+      : ((!disableMerging && Array.isArray(currentMergedPlacements) && currentMergedPlacements.length > 0)
+          ? currentMergedPlacements
+          : (Array.isArray(individualPlacementsList) ? individualPlacementsList : []));
 
     const isReal = settings.boundaryType === 'real';
     const firstBoundary = Array.isArray(boundaries) && boundaries.length > 0 ? boundaries[0] : null;
