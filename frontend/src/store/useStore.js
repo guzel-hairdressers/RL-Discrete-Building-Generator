@@ -354,8 +354,6 @@ export const useStore = create((set, get) => ({
       mode: 'training',
       trainingWanted: true,
       phase: 'running',
-      completed3DPlacements: [],
-      currentMergedPlacements: [],
       statusMessage: 'Training policy active',
     });
     get().sendCommand({ cmd: 'setMode', mode: 'training' });
@@ -563,7 +561,6 @@ export const useStore = create((set, get) => ({
           step: 0,
           individualPlacementsList: [],
           currentMergedPlacements: [],
-          completed3DPlacements: [],
           phase: 'running',
         });
         setTimeout(() => {

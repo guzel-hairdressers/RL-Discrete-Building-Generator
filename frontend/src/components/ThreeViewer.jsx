@@ -57,14 +57,14 @@ export const ThreeViewer = () => {
   const configureIframe = useCallback((iframe) => {
     if (!iframe || !iframe.contentWindow) return;
 
-    // On the 3D left viewport: only show merged intermediate state on pause or completion
-    if (phase === 'running') return;
-
-    const effectiveList = (!disableMerging && currentMergedPlacements && currentMergedPlacements.length > 0)
+    // When paused, show intermediate merged placements; otherwise show completed episode building
+    const effectiveList = (phase === 'paused' && !disableMerging && currentMergedPlacements && currentMergedPlacements.length > 0)
       ? currentMergedPlacements
       : ((completed3DPlacements && completed3DPlacements.length > 0)
           ? completed3DPlacements
-          : []);
+          : ((!disableMerging && currentMergedPlacements && currentMergedPlacements.length > 0)
+              ? currentMergedPlacements
+              : []));
 
     iframe.contentWindow.postMessage({
       type: 'optimizer_placements',
