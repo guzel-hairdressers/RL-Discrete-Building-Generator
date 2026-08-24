@@ -262,80 +262,139 @@ export const DiagnosticsDrawer = ({ onClose }) => {
 
   const isRunning = phase === 'running';
 
-  // Compute Display Shapes:
-  // - When running: Unmerged procedural dictionary (or raw placed shapes)
-  // - When paused / completed: Merged macro-polygons (with red cores preserved)
+  // Canonical Polygon Signature (Invariant under 2D Rotation, Translation, and Reflection)
+  const getPolygonSignature = (poly) => {
+    if (!Array.isArray(poly) || poly.length < 3) return 'empty';
+    const n = poly.length;
+    const sideLengths = [];
+    let area2 = 0;
+    for (let i = 0; i < n; i++) {
+      const p1 = poly[i];
+      const p2 = poly[(i + 1) % n];
+      const x1 = Number(p1.x ?? p1[0] ?? 0);
+      const y1 = Number(p1.y ?? p1[1] ?? 0);
+      const x2 = Number(p2.x ?? p2[0] ?? 0);
+      const y2 = Number(p2.y ?? p2[1] ?? 0);
+      const len = Math.hypot(x2 - x1, y2 - y1);
+      sideLengths.push(Math.round(len * 50) / 50);
+      area2 += (x1 * y2 - x2 * y1);
+    }
+    const area = Math.abs(area2) / 2;
+
+    const canonicalCycles = [];
+    for (let i = 0; i < n; i++) {
+      canonicalCycles.push(sideLengths.slice(i).concat(sideLengths.slice(0, i)).join(','));
+    }
+    const rev = [...sideLengths].reverse();
+    for (let i = 0; i < n; i++) {
+      canonicalCycles.push(rev.slice(i).concat(rev.slice(0, i)).join(','));
+    }
+    canonicalCycles.sort();
+    return `${n}_A${Math.round(area * 10)}_${canonicalCycles[0]}`;
+  };
+
+  // Compute Display Shapes with Geometric Canonicalization & Clean Human Naming (m1, m2, m1+m2, etc.)
   const displayShapes = (() => {
-    if (isRunning) {
-      if (Array.isArray(dictionary) && dictionary.length > 0) {
-        return dictionary.map((mod, idx) => ({
-          id: mod.id ?? `mod_${idx}`,
-          name: mod.name || `Primitive Module ${mod.id ?? idx + 1}`,
-          category: mod.category || 'room',
-          isCore: mod.category === 'core' || mod.isCore || (mod.id && String(mod.id).toLowerCase().includes('core')),
-          poly: mod.poly || mod.polygon || mod.coords,
-          area: safeNum(mod.area, 0),
-          uses: safeNum(mod.uses, 1),
-        }));
+    const primitiveRegistry = new Map();
+    let primCounter = 1;
+
+    const getPrimitiveName = (poly) => {
+      const sig = getPolygonSignature(poly);
+      if (sig === 'empty') return 'm?';
+      if (!primitiveRegistry.has(sig)) {
+        primitiveRegistry.set(sig, `m${primCounter++}`);
       }
-      // Fallback: extract unique modules from individualPlacementsList
-      const map = new Map();
-      individualPlacementsList.forEach((p) => {
-        const id = p.module?.id || p.id;
-        if (id && !map.has(id)) {
-          map.set(id, {
-            id,
-            name: p.module?.name || `Module ${id}`,
-            category: p.category || p.module?.category || 'room',
-            isCore: p.isCore || p.category === 'core' || (p.id && String(p.id).toLowerCase().includes('core')),
-            poly: p.module?.poly || p.poly,
+      return primitiveRegistry.get(sig);
+    };
+
+    if (Array.isArray(dictionary)) {
+      dictionary.forEach((mod) => {
+        const poly = mod.poly || mod.polygon || mod.coords;
+        if (poly) getPrimitiveName(poly);
+      });
+    }
+
+    if (isRunning) {
+      const source = (Array.isArray(dictionary) && dictionary.length > 0)
+        ? dictionary.map((mod) => ({
+            poly: mod.poly || mod.polygon || mod.coords,
+            category: mod.category || 'room',
+            isCore: mod.category === 'core' || mod.isCore || (mod.id && String(mod.id).toLowerCase().includes('core')),
+            area: safeNum(mod.area, 0),
+            uses: safeNum(mod.uses, 1),
+          }))
+        : individualPlacementsList;
+
+      const groupMap = new Map();
+      source.forEach((p) => {
+        const poly = p.module?.poly || p.poly || p.polygon || p.coords;
+        if (!poly || poly.length < 3) return;
+        const sig = getPolygonSignature(poly);
+        const name = getPrimitiveName(poly);
+        const isCore = p.isCore || p.category === 'core' || (p.id && String(p.id).toLowerCase().includes('core')) || (p.module && p.module.category === 'core');
+
+        if (!groupMap.has(sig)) {
+          groupMap.set(sig, {
+            id: name,
+            name: name,
+            category: isCore ? 'core' : 'room',
+            isCore: isCore,
+            poly: poly,
             area: safeNum(p.area || p.module?.area, 0),
-            uses: 1,
+            uses: p.uses || 1,
           });
-        } else if (id && map.has(id)) {
-          map.get(id).uses = (map.get(id).uses || 1) + 1;
+        } else {
+          groupMap.get(sig).uses += (p.uses || 1);
         }
       });
-      return Array.from(map.values());
+      return Array.from(groupMap.values());
     } else {
-      // Merged Shapes on pause or episode completion
-      if (Array.isArray(mergedDictionary) && mergedDictionary.length > 0) {
-        return mergedDictionary.map((mod, idx) => ({
-          id: mod.id ?? `merge_${idx}`,
-          name: mod.name || `Merged Macro ${mod.id ?? idx + 1}`,
-          category: mod.category || (mod.components?.some((c) => c.isCore || c.category === 'core') ? 'core' : 'room'),
-          isCore: mod.isCore || mod.components?.some((c) => c.isCore || c.category === 'core'),
-          poly: mod.poly || mod.polygon || mod.mergedPolygon,
-          components: mod.components,
-          area: safeNum(mod.area, 0),
-          uses: safeNum(mod.uses, 1),
-        }));
-      }
-
       const sourcePlacements = (currentMergedPlacements && currentMergedPlacements.length > 0)
         ? currentMergedPlacements
         : ((completed3DPlacements && completed3DPlacements.length > 0) ? completed3DPlacements : individualPlacementsList);
 
-      const map = new Map();
-      sourcePlacements.forEach((p, idx) => {
-        const id = p.id || `shape_${idx}`;
-        if (!map.has(id)) {
-          const compCount = Array.isArray(p.components) ? p.components.length : 1;
-          map.set(id, {
-            id,
-            name: p.name || (compCount > 1 ? `Merged Macro (${compCount}x)` : `Module ${id}`),
-            category: p.category || (p.components?.some((c) => c.isCore || c.category === 'core') ? 'core' : 'room'),
-            isCore: p.isCore || p.components?.some((c) => c.isCore || c.category === 'core'),
-            poly: p.poly || p.polygon || p.mergedPolygon,
-            components: p.components,
+      const groupMap = new Map();
+      sourcePlacements.forEach((p) => {
+        const poly = p.poly || p.polygon || p.mergedPolygon || p.coords;
+        if (!poly || poly.length < 3) return;
+        const components = p.components || [];
+        const isComposite = Array.isArray(components) && components.length > 1;
+
+        let cleanName = '';
+        let compositeSig = '';
+
+        if (isComposite) {
+          const compNames = components.map((c) => {
+            const cp = c.poly || c.polygon || c.coords;
+            return getPrimitiveName(cp);
+          });
+          compNames.sort();
+          cleanName = compNames.join('+');
+          compositeSig = `comp_${cleanName}_${getPolygonSignature(poly)}`;
+        } else {
+          cleanName = getPrimitiveName(poly);
+          compositeSig = `prim_${cleanName}_${getPolygonSignature(poly)}`;
+        }
+
+        const isCore = p.isCore || p.category === 'core' || components.some((c) => c.isCore || c.category === 'core');
+
+        if (!groupMap.has(compositeSig)) {
+          groupMap.set(compositeSig, {
+            id: cleanName,
+            name: cleanName,
+            category: isCore ? 'core' : 'room',
+            isCore: isCore,
+            poly: poly,
+            components: isComposite ? components : null,
             area: safeNum(p.area, 0),
             uses: 1,
           });
         } else {
-          map.get(id).uses = (map.get(id).uses || 1) + 1;
+          groupMap.get(compositeSig).uses += 1;
         }
       });
-      return Array.from(map.values());
+
+      return Array.from(groupMap.values());
     }
   })();
 
