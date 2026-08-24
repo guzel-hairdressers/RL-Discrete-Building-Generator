@@ -13,6 +13,21 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
       },
+      '/sites': {
+        target: 'http://localhost:8000',
+      },
+      '/data': {
+        target: 'http://localhost:8000',
+      },
+      '/scripts': {
+        target: 'http://localhost:8000',
+      },
+      '/styles': {
+        target: 'http://localhost:8000',
+      },
+      '/vendor': {
+        target: 'http://localhost:8000',
+      },
     },
   },
   build: {
