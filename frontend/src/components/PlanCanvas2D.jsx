@@ -3,9 +3,9 @@ import { useStore } from '../store/useStore';
 
 const CATEGORY_COLORS = {
   core: '#ff4d4d',     // Pure vibrant red for core
-  corridor: '#ccccff', // HSL 240, 100%, 90% light blue
-  room: '#ccccff',     // HSL 240, 100%, 90% light blue
-  special: '#ccccff',  // HSL 240, 100%, 90% light blue
+  corridor: '#ffffff', // Clean architectural white
+  room: '#ffffff',     // Clean architectural white
+  special: '#ffffff',  // Clean architectural white
 };
 
 export const PlanCanvas2D = () => {
@@ -209,7 +209,7 @@ export const PlanCanvas2D = () => {
           });
           ctx.closePath();
           ctx.strokeStyle = isHovered ? '#0284c7' : '#000000';
-          ctx.lineWidth = (isHovered ? 2.2 : 1.35) / zoom;
+          ctx.lineWidth = (isHovered ? 3.3 : 2.05) / zoom;
           ctx.lineJoin = 'round';
           ctx.stroke();
         }
@@ -235,7 +235,7 @@ export const PlanCanvas2D = () => {
         ctx.fill();
 
         ctx.strokeStyle = isHovered ? '#0284c7' : '#000000';
-        ctx.lineWidth = (isHovered ? 2.2 : 1.35) / zoom;
+        ctx.lineWidth = (isHovered ? 3.3 : 2.05) / zoom;
         ctx.lineJoin = 'round';
         ctx.stroke();
       }

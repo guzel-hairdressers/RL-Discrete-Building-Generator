@@ -159,10 +159,10 @@ window.addEventListener('message', (event) => {
 
   const coreLitColor = new THREE.Color(theme.core || '#ffcccc');
   const coreShadowColor = new THREE.Color(theme.coreShadow || '#ff9999');
-  const roomLitColor = new THREE.Color(theme.room || '#ccccff');
-  const roomShadowColor = new THREE.Color(theme.roomShadow || '#9999ff');
+  const roomLitColor = new THREE.Color(theme.room || '#ffffff');
+  const roomShadowColor = new THREE.Color(theme.roomShadow || '#e2e8f0');
   const edgeHex = theme.edge ? (typeof theme.edge === 'string' ? parseInt(theme.edge.replace('#', '0x')) : theme.edge) : 0x000000;
-  const edgeMat = new THREE.LineBasicMaterial({ color: edgeHex, linewidth: 2.5 });
+  const edgeMat = new THREE.LineBasicMaterial({ color: edgeHex, linewidth: 3.5 });
 
   const sunDir = (typeof sunVector !== 'undefined') ? sunVector : new THREE.Vector3(130, 220, 90).normalize();
 
@@ -286,10 +286,12 @@ window.addEventListener('message', (event) => {
     const edges = new THREE.EdgesGeometry(outerGeom, 15);
     const edgeOffsets = [
       [0, 0, 0],
-      [0.035, 0, 0], [-0.035, 0, 0],
-      [0, 0.035, 0], [0, -0.035, 0],
-      [0, 0, 0.035], [0, 0, -0.035],
-      [0.025, 0.025, 0.025], [-0.025, -0.025, -0.025]
+      [0.055, 0, 0], [-0.055, 0, 0],
+      [0, 0.055, 0], [0, -0.055, 0],
+      [0, 0, 0.055], [0, 0, -0.055],
+      [0.04, 0.04, 0.04], [-0.04, -0.04, -0.04],
+      [0.04, -0.04, 0.04], [-0.04, 0.04, -0.04],
+      [0.04, 0.04, -0.04], [-0.04, -0.04, 0.04]
     ];
     edgeOffsets.forEach(([ox, oy, oz]) => {
       const line = new THREE.LineSegments(edges, edgeMat);

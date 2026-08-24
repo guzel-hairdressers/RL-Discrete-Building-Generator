@@ -3352,9 +3352,9 @@ window.onerror = function(message, source, lineno, colno, error) {
     const floorHeight = 3.5;
     const coreLitColor = new THREE.Color(0xffcccc);
     const coreShadowColor = new THREE.Color(0xff9999);
-    const roomLitColor = new THREE.Color(0xccccff);
-    const roomShadowColor = new THREE.Color(0x9999ff);
-    const edgeMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2.5 });
+    const roomLitColor = new THREE.Color(0xffffff);
+    const roomShadowColor = new THREE.Color(0xe2e8f0);
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3.5 });
 
     effectiveList.forEach(placement => {
       const floorIdx = Number(placement.instanceIdx ?? placement.floorIndex ?? 0);
@@ -3474,10 +3474,12 @@ window.onerror = function(message, source, lineno, colno, error) {
       const edges = new THREE.EdgesGeometry(outerGeom, 15);
       const edgeOffsets = [
         [0, 0, 0],
-        [0.035, 0, 0], [-0.035, 0, 0],
-        [0, 0.035, 0], [0, -0.035, 0],
-        [0, 0, 0.035], [0, 0, -0.035],
-        [0.025, 0.025, 0.025], [-0.025, -0.025, -0.025]
+        [0.055, 0, 0], [-0.055, 0, 0],
+        [0, 0.055, 0], [0, -0.055, 0],
+        [0, 0, 0.055], [0, 0, -0.055],
+        [0.04, 0.04, 0.04], [-0.04, -0.04, -0.04],
+        [0.04, -0.04, 0.04], [-0.04, 0.04, -0.04],
+        [0.04, 0.04, -0.04], [-0.04, -0.04, 0.04]
       ];
       edgeOffsets.forEach(([ox, oy, oz]) => {
         const line = new THREE.LineSegments(edges, edgeMat);
