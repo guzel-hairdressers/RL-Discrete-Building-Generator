@@ -113,6 +113,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "recordTrajectories": False,
     "bufferEpisodes": 1,
     "realSiteId": "",
+    "autoChangeEpisodes": 1,
 }
 
 BOUNDARY_TYPES = {
@@ -262,6 +263,10 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     merged["maxRoomHops"] = int(
         _in_range(_integer(merged.get("maxRoomHops", 3), "maxRoomHops"), 1, 10, "maxRoomHops")
     )
+    if "autoChangeEpisodes" in merged:
+        merged["autoChangeEpisodes"] = int(
+            _in_range(_integer(merged["autoChangeEpisodes"], "autoChangeEpisodes"), 1, 999999, "autoChangeEpisodes")
+        )
     merged["bufferEpisodes"] = int(
         _in_range(_integer(merged.get("bufferEpisodes", 2), "bufferEpisodes"), 1, 16, "bufferEpisodes")
     )
