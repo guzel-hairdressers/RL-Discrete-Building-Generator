@@ -48,6 +48,7 @@ export const DEFAULT_SETTINGS = {
   allowCorridors: false,
   allowStop: true,
   lookaheadSteps: 3,
+  autoChangeEpisodes: 1, // 1 to 20, or 21 (displayed as '∞' / 'Never')
 };
 
 const DEFAULT_FILTERS = {
@@ -78,6 +79,7 @@ export const useStore = create((set, get) => ({
   generationId: 0,
   episode: 0,
   step: 0,
+  episodesOnCurrentSite: 0,
   bestReward: -40.0,
   rewardHistory: [],
   fillHistory: [],
@@ -594,20 +596,39 @@ export const useStore = create((set, get) => ({
         statusMessage: `Episode ${data.completedEpisode} complete`,
       }));
 
+      const autoChangeLimit = get().settings.autoChangeEpisodes ?? 1;
+      const currentSiteCount = (get().episodesOnCurrentSite || 0) + 1;
+
       if (get().mode === 'inference' && !get().autoGenerate) {
-        set({ trainingWanted: false, phase: 'paused' });
+        set({ trainingWanted: false, phase: 'paused', episodesOnCurrentSite: currentSiteCount });
       } else if (get().trainingWanted) {
-        set({
-          episode: nextEp,
-          step: 0,
-          individualPlacementsList: [],
-          currentMergedPlacements: [],
-          completed3DPlacements: [],
-          phase: 'running',
-        });
-        setTimeout(() => {
-          get().sendCommand({ cmd: 'step', generationId: get().generationId, episode: nextEp, step: 0 });
-        }, 100);
+        const shouldChangeSite = (autoChangeLimit <= 20) && (currentSiteCount >= autoChangeLimit);
+
+        if (shouldChangeSite) {
+          set({
+            episodesOnCurrentSite: 0,
+            episode: nextEp,
+            step: 0,
+            individualPlacementsList: [],
+            currentMergedPlacements: [],
+            completed3DPlacements: [],
+            phase: 'running',
+          });
+          get().requestNewSite();
+        } else {
+          set({
+            episodesOnCurrentSite: currentSiteCount,
+            episode: nextEp,
+            step: 0,
+            individualPlacementsList: [],
+            currentMergedPlacements: [],
+            completed3DPlacements: [],
+            phase: 'running',
+          });
+          setTimeout(() => {
+            get().sendCommand({ cmd: 'step', generationId: get().generationId, episode: nextEp, step: 0 });
+          }, 100);
+        }
       }
     }
   },

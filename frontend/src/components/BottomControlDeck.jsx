@@ -147,7 +147,25 @@ export const BottomControlDeck = () => {
 
               {/* Column 3: Reinforcement Learning & Optimizer */}
               <div className="settings-section">
-                <h4 className="section-title">Reinforcement Learning & PPO</h4>
+                <h4 className="section-title">Reinforcement Learning & Training</h4>
+                <div className="setting-row">
+                  <label>Auto-Change Sites</label>
+                  <div className="input-with-val">
+                    <input
+                      type="range"
+                      min="1"
+                      max="21"
+                      step="1"
+                      value={settings.autoChangeEpisodes ?? 1}
+                      onChange={(e) => updateSettings({ autoChangeEpisodes: parseInt(e.target.value) })}
+                    />
+                    <span className="val-tag">
+                      {(settings.autoChangeEpisodes ?? 1) >= 21
+                        ? '∞ (Never)'
+                        : `${settings.autoChangeEpisodes ?? 1} ${(settings.autoChangeEpisodes ?? 1) === 1 ? 'episode' : 'episodes'}`}
+                    </span>
+                  </div>
+                </div>
                 <div className="setting-row">
                   <label>Learning Rate</label>
                   <div className="input-with-val">
