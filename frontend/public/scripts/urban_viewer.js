@@ -1,11 +1,47 @@
-import * as THREE from '/vendor/three/build/three.module.js';
-import { OrbitControls } from '/vendor/three/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 export function initUrbanContext(DATA) {
   // --- Scene Setup ---
   const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff); // Pure 100% white background
   window.scene = scene;
   window.THREE = THREE;
+
+  const aspect = window.innerWidth / window.innerHeight;
+  const R = DATA.radius || 150;
+
+  // Orthographic Camera (Axonometric) - DEFAULT
+  const orthoSize = R * 1.45;
+  const cameraOrtho = new THREE.OrthographicCamera(
+    -orthoSize * aspect, orthoSize * aspect,
+    orthoSize, -orthoSize,
+    1, 3000
+  );
+  const camDist = R * 2.8;
+  cameraOrtho.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
+
+  // Perspective Camera
+  const cameraPersp = new THREE.PerspectiveCamera(38, aspect, 1, 3000);
+  cameraPersp.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
+
+  let activeCamera = cameraOrtho; // DEFAULT AXONOMETRIC
+
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.NoToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+
+  // Controls
+  const controls = new OrbitControls(activeCamera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.18;
+  controls.maxPolarAngle = Math.PI / 2.0;
+  controls.target.set(0, (DATA.maxHeight || 40) * 0.08, 0);
 
   // Global Optimizer Placements Group
   const optimizerGroup = new THREE.Group();
@@ -13,27 +49,349 @@ export function initUrbanContext(DATA) {
   scene.add(optimizerGroup);
   window.optimizerGroup = optimizerGroup;
 
-  // Ambient and Fill Lighting for Architectural Module Visibility
-  if (!window._moduleLabLightsAdded) {
-    window._moduleLabLightsAdded = true;
-    const ambLight = new THREE.AmbientLight(0xffffff, 0.95);
-    scene.add(ambLight);
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.50);
-    fillLight.position.set(-120, 160, -100);
-    scene.add(fillLight);
+  // Camera State Persistence
+  try {
+    const savedState = localStorage.getItem('context_generator_camera_view');
+    if (savedState) {
+      const view = JSON.parse(savedState);
+      if (
+        view &&
+        view.pos &&
+        Array.isArray(view.pos) &&
+        !isNaN(view.pos[0]) &&
+        !isNaN(view.pos[1]) &&
+        !isNaN(view.pos[2]) &&
+        (Math.abs(view.pos[0]) > 0.001 || Math.abs(view.pos[1]) > 0.001 || Math.abs(view.pos[2]) > 0.001) &&
+        view.target &&
+        Array.isArray(view.target) &&
+        !isNaN(view.target[0]) &&
+        !isNaN(view.target[1]) &&
+        !isNaN(view.target[2])
+      ) {
+        cameraOrtho.position.set(view.pos[0], view.pos[1], view.pos[2]);
+        cameraPersp.position.set(view.pos[0], view.pos[1], view.pos[2]);
+        if (view.zoom && !isNaN(view.zoom)) cameraOrtho.zoom = view.zoom;
+        cameraOrtho.updateProjectionMatrix();
+        cameraPersp.updateProjectionMatrix();
+        controls.target.set(view.target[0], view.target[1], view.target[2]);
+        if (view.isPersp) {
+          activeCamera = cameraPersp;
+          controls.object = cameraPersp;
+        }
+      }
+    }
+  } catch (e) {}
+
+  controls.addEventListener('change', () => {
+    try {
+      if (
+        !isNaN(activeCamera.position.x) &&
+        !isNaN(activeCamera.position.y) &&
+        !isNaN(activeCamera.position.z) &&
+        (Math.abs(activeCamera.position.x) > 0.001 || Math.abs(activeCamera.position.y) > 0.001 || Math.abs(activeCamera.position.z) > 0.001) &&
+        !isNaN(controls.target.x) &&
+        !isNaN(controls.target.y) &&
+        !isNaN(controls.target.z)
+      ) {
+        const view = {
+          pos: [activeCamera.position.x, activeCamera.position.y, activeCamera.position.z],
+          target: [controls.target.x, controls.target.y, controls.target.z],
+          zoom: cameraOrtho.zoom,
+          isPersp: activeCamera === cameraPersp,
+        };
+        localStorage.setItem('context_generator_camera_view', JSON.stringify(view));
+      }
+    } catch (e) {}
+  });
+
+  // Sun Light & Vector
+  const sunVector = new THREE.Vector3(130, 220, 90).normalize();
+  const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  sunLight.position.set(130, 220, 90);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.width = 2048;
+  sunLight.shadow.mapSize.height = 2048;
+
+  const shadowDim = R * 1.6;
+  sunLight.shadow.camera.left = -shadowDim;
+  sunLight.shadow.camera.right = shadowDim;
+  sunLight.shadow.camera.top = shadowDim;
+  sunLight.shadow.camera.bottom = -shadowDim;
+  sunLight.shadow.camera.near = 10;
+  sunLight.shadow.camera.far = 600;
+  sunLight.shadow.bias = -0.0005;
+  sunLight.shadow.normalBias = 0.05;
+  scene.add(sunLight);
+
+  // Ground Plane
+  const groundGeom = new THREE.PlaneGeometry(R * 2, R * 2);
+  const groundMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const ground = new THREE.Mesh(groundGeom, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.05;
+  scene.add(ground);
+
+  // Shared Shadow Material Overlay
+  const sharedShadowMat = new THREE.ShadowMaterial({
+    color: 0x000000,
+    opacity: 0.08,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -1.0,
+    polygonOffsetUnits: -1.0,
+  });
+
+  const shadowPlane = new THREE.Mesh(groundGeom, sharedShadowMat);
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.position.y = 0.28;
+  shadowPlane.receiveShadow = true;
+  scene.add(shadowPlane);
+
+  // Bounding box border line
+  const borderPts = [
+    new THREE.Vector3(-R, 0.1,  R),
+    new THREE.Vector3( R, 0.1,  R),
+    new THREE.Vector3( R, 0.1, -R),
+    new THREE.Vector3(-R, 0.1, -R),
+    new THREE.Vector3(-R, 0.1,  R),
+  ];
+  const borderGeom = new THREE.BufferGeometry().setFromPoints(borderPts);
+  scene.add(new THREE.Line(borderGeom, new THREE.LineBasicMaterial({ color: 0xd1d5db, linewidth: 1.2 })));
+
+  // Meter Scale Ticks
+  function createTickLabel(text) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 128; canvas.height = 64;
+    ctx.font = '400 20px Inter, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#000000';
+    ctx.fillText(text, 64, 32);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
+    sprite.scale.set(14, 7, 1);
+    return sprite;
   }
 
-  // Handle Optimizer Placements Message
+  for (let val = -R; val <= R; val += 50) {
+    const xFront = createTickLabel(`${val}m`);
+    xFront.position.set(val, 0.5, R + 7);
+    scene.add(xFront);
+
+    const xBack = createTickLabel(`${val}m`);
+    xBack.position.set(val, 0.5, -R - 7);
+    scene.add(xBack);
+
+    const zLeft = createTickLabel(`${val}m`);
+    zLeft.position.set(-R - 7, 0.5, -val);
+    scene.add(zLeft);
+
+    const zRight = createTickLabel(`${val}m`);
+    zRight.position.set(R + 7, 0.5, -val);
+    scene.add(zRight);
+  }
+
+  // Architectural Volume Builder for Context Meshes (Buildings, Roads, Green Spaces)
+  function createArchitecturalVolume(verts, faces, colorHex = 0xffffff, opacity = 1.0, isRoad = false) {
+    const group = new THREE.Group();
+    if (!verts || !faces || faces.length === 0) return { geom: new THREE.BufferGeometry(), baseMesh: new THREE.Mesh(), group };
+
+    const numTriangles = faces.length;
+    const pos = new Float32Array(numTriangles * 9);
+    const colors = new Float32Array(numTriangles * 9);
+
+    const pureColor = new THREE.Color(colorHex);
+    const sunFacingPositions = [];
+
+    for (let fi = 0; fi < numTriangles; fi++) {
+      const f = faces[fi];
+      const p0 = new THREE.Vector3(verts[f[0]][0], verts[f[0]][2], -verts[f[0]][1]);
+      const p1 = new THREE.Vector3(verts[f[1]][0], verts[f[1]][2], -verts[f[1]][1]);
+      const p2 = new THREE.Vector3(verts[f[2]][0], verts[f[2]][2], -verts[f[2]][1]);
+
+      const vA = new THREE.Vector3().subVectors(p1, p0);
+      const vB = new THREE.Vector3().subVectors(p2, p0);
+      const faceNormal = new THREE.Vector3().crossVectors(vA, vB).normalize();
+
+      const dot = faceNormal.dot(sunVector);
+      const isSunFacing = (isRoad || dot > 0.05);
+      const c = pureColor;
+
+      for (let vi = 0; vi < 3; vi++) {
+        const v = verts[f[vi]];
+        pos[fi * 9 + vi * 3 + 0] = v[0];
+        pos[fi * 9 + vi * 3 + 1] = v[2];
+        pos[fi * 9 + vi * 3 + 2] = -v[1];
+
+        colors[fi * 9 + vi * 3 + 0] = c.r;
+        colors[fi * 9 + vi * 3 + 1] = c.g;
+        colors[fi * 9 + vi * 3 + 2] = c.b;
+      }
+
+      if (isSunFacing && !isRoad) {
+        for (let vi = 0; vi < 3; vi++) {
+          const v = verts[f[vi]];
+          sunFacingPositions.push(v[0], v[2], -v[1]);
+        }
+      }
+    }
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geom.computeVertexNormals();
+
+    const baseMat = new THREE.MeshBasicMaterial({
+      vertexColors: true,
+      transparent: opacity < 1.0,
+      opacity: opacity,
+      polygonOffset: isRoad,
+      polygonOffsetFactor: isRoad ? 2.0 : 0.0,
+      polygonOffsetUnits: isRoad ? 2.0 : 0.0,
+    });
+    const baseMesh = new THREE.Mesh(geom, baseMat);
+    group.add(baseMesh);
+
+    if (!isRoad) {
+      const casterMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+      const casterMesh = new THREE.Mesh(geom, casterMat);
+      casterMesh.castShadow = true;
+      group.add(casterMesh);
+
+      if (sunFacingPositions.length > 0) {
+        const sunGeom = new THREE.BufferGeometry();
+        sunGeom.setAttribute('position', new THREE.Float32BufferAttribute(sunFacingPositions, 3));
+        sunGeom.computeVertexNormals();
+
+        const buildingShadowOverlay = new THREE.Mesh(sunGeom, sharedShadowMat);
+        buildingShadowOverlay.receiveShadow = true;
+        group.add(buildingShadowOverlay);
+      }
+    }
+
+    return { geom, baseMesh, group };
+  }
+
+  // Surrounding Buildings and Context Setup
+  const interactiveObjects = [];
+  const contextGroup = new THREE.Group();
+  contextGroup.name = "surroundingContext";
+
+  if (DATA.buildings && Array.isArray(DATA.buildings)) {
+    for (const b of DATA.buildings) {
+      if (!b.vertices || !b.faces) continue;
+      const faceColor = 0xffffff;
+      const edgeColor = 0x999999;
+
+      const { geom, baseMesh, group } = createArchitecturalVolume(b.vertices, b.faces, faceColor, 0.98, false);
+      baseMesh.userData = {
+        isBuilding: true,
+        area: b.area || 0,
+        height: b.height || 0,
+        floors: b.floors || 0,
+        use: b.use || 'Commercial / Residential',
+      };
+
+      const edges = new THREE.EdgesGeometry(geom, 20);
+      const lineMat = new THREE.LineBasicMaterial({ color: new THREE.Color(edgeColor), linewidth: 1.2 });
+      group.add(new THREE.LineSegments(edges, lineMat));
+
+      contextGroup.add(group);
+      interactiveObjects.push(baseMesh);
+    }
+  }
+
+  // Vehicular Road Network
+  if (DATA.roads && Array.isArray(DATA.roads)) {
+    for (const r of DATA.roads) {
+      if (!r.vertices || !r.faces) continue;
+      const { group } = createArchitecturalVolume(r.vertices, r.faces, 0xffffff, 1.0, true);
+      contextGroup.add(group);
+    }
+    if (DATA.roadOutlines && Array.isArray(DATA.roadOutlines)) {
+      for (const outline of DATA.roadOutlines) {
+        if (outline.length >= 2) {
+          const rPts = outline.map(p => new THREE.Vector3(p[0], 0.04, -p[1]));
+          const rGeom = new THREE.BufferGeometry().setFromPoints(rPts);
+          const rMat = new THREE.LineBasicMaterial({ color: 0xd1d5db, linewidth: 1.0 });
+          contextGroup.add(new THREE.Line(rGeom, rMat));
+        }
+      }
+    }
+  }
+
+  // Green Spaces / Parks
+  if (DATA.greenSpaces && Array.isArray(DATA.greenSpaces)) {
+    for (const g of DATA.greenSpaces) {
+      if (!g.vertices || !g.faces) continue;
+      const { group } = createArchitecturalVolume(g.vertices, g.faces, 0xdcfce7, 1.0, true);
+      contextGroup.add(group);
+    }
+  }
+
+  scene.add(contextGroup);
+
+  // Testing Site Parcel
+  if (DATA.site && DATA.site.vertices && DATA.site.faces) {
+    const siteGroup = new THREE.Group();
+    const siteFaceColor = 0xfca5a5; // Soft Coral Red
+
+    const geom = new THREE.BufferGeometry();
+    const pos = new Float32Array(DATA.site.faces.length * 9);
+    for (let fi = 0; fi < DATA.site.faces.length; fi++) {
+      const f = DATA.site.faces[fi];
+      for (let vi = 0; vi < 3; vi++) {
+        const v = DATA.site.vertices[f[vi]];
+        pos[fi * 9 + vi * 3 + 0] = v[0];
+        pos[fi * 9 + vi * 3 + 1] = v[2];
+        pos[fi * 9 + vi * 3 + 2] = -v[1];
+      }
+    }
+    geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geom.computeVertexNormals();
+
+    const baseMat = new THREE.MeshLambertMaterial({
+      color: new THREE.Color(siteFaceColor),
+      emissive: new THREE.Color(siteFaceColor).multiplyScalar(0.55),
+      transparent: true,
+      opacity: 0.92,
+    });
+    const baseMesh = new THREE.Mesh(geom, baseMat);
+    baseMesh.receiveShadow = true;
+    baseMesh.userData = {
+      isSite: true,
+      area: DATA.siteArea,
+      tier: DATA.areaTier,
+      far: DATA.metrics?.far,
+      bldgs: DATA.metrics?.buildingCount,
+      maxHeight: DATA.metrics?.maxHeight,
+      avgHeight: DATA.metrics?.avgHeight,
+      maxFloors: DATA.metrics?.maxFloors,
+      avgFloors: DATA.metrics?.avgFloors,
+    };
+    siteGroup.add(baseMesh);
+    interactiveObjects.push(baseMesh);
+
+    // Site Perimeter Boundary Line (Solid Red Line)
+    if (DATA.sitePerimeter && DATA.sitePerimeter.length >= 3) {
+      const outPts = DATA.sitePerimeter.map((p) => new THREE.Vector3(p[0], 0.26, -p[1]));
+      outPts.push(outPts[0].clone());
+      const siteLineGeom = new THREE.BufferGeometry().setFromPoints(outPts);
+      const siteLineMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2.5 });
+      siteGroup.add(new THREE.Line(siteLineGeom, siteLineMat));
+    }
+
+    scene.add(siteGroup);
+  }
+
+  // Handle Optimizer Placements and UI Messages
   window.addEventListener('message', (event) => {
     if (!event.data) return;
-    
+
     if (event.data.type === 'set_context_visibility') {
       const isVisible = event.data.visible !== false;
-      scene.traverse((obj) => {
-        if (obj.name && (obj.name.toLowerCase().includes('context') || obj.name.toLowerCase().includes('surround'))) {
-          obj.visible = isVisible;
-        }
-      });
+      contextGroup.visible = isVisible;
       return;
     }
 
@@ -59,8 +417,6 @@ export function initUrbanContext(DATA) {
     const roomShadowColor = new THREE.Color(theme.roomShadow || '#e2e8f0');
     const edgeHex = theme.edge ? (typeof theme.edge === 'string' ? parseInt(theme.edge.replace('#', '0x')) : theme.edge) : 0x000000;
     const edgeMat = new THREE.LineBasicMaterial({ color: edgeHex, linewidth: 3.5 });
-
-    const sunDir = (typeof sunVector !== 'undefined') ? sunVector : new THREE.Vector3(130, 220, 90).normalize();
 
     placements.forEach((placement) => {
       const floorIdx = Number(placement.instanceIdx ?? placement.floorIndex ?? 0);
@@ -126,7 +482,7 @@ export function initUrbanContext(DATA) {
           const vB = new THREE.Vector3().subVectors(p2, p0);
           const faceNormal = new THREE.Vector3().crossVectors(vA, vB).normalize();
 
-          const dot = faceNormal.dot(sunDir);
+          const dot = faceNormal.dot(sunVector);
           const isSunFacing = dot > 0.05;
           const c = isSunFacing ? litColor : shadowColor;
 
@@ -196,202 +552,6 @@ export function initUrbanContext(DATA) {
       });
     });
   });
-
-  scene.background = new THREE.Color(0xffffff);
-
-  const aspect = window.innerWidth / window.innerHeight;
-  const R = DATA.radius || 150;
-
-  // Orthographic Camera (Axonometric) - DEFAULT
-  const orthoSize = R * 1.45;
-  const cameraOrtho = new THREE.OrthographicCamera(
-    -orthoSize * aspect, orthoSize * aspect,
-    orthoSize, -orthoSize,
-    1, 3000
-  );
-  const camDist = R * 2.8;
-  cameraOrtho.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
-
-  // Perspective Camera
-  const cameraPersp = new THREE.PerspectiveCamera(38, aspect, 1, 3000);
-  cameraPersp.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
-
-  let activeCamera = cameraOrtho;
-
-  // Renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.toneMapping = THREE.NoToneMapping;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  document.body.appendChild(renderer.domElement);
-
-  // Controls
-  const controls = new OrbitControls(activeCamera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.18;
-  controls.maxPolarAngle = Math.PI / 2.0;
-  controls.target.set(0, (DATA.maxHeight || 40) * 0.08, 0);
-
-  // Load Saved Camera State if available
-  try {
-    const savedState = localStorage.getItem('context_generator_camera_view');
-    if (savedState) {
-      const view = JSON.parse(savedState);
-      if (view && view.pos && view.target) {
-        cameraOrtho.position.set(view.pos[0], view.pos[1], view.pos[2]);
-        cameraPersp.position.set(view.pos[0], view.pos[1], view.pos[2]);
-        controls.target.set(view.target[0], view.target[1], view.target[2]);
-      }
-    }
-  } catch (e) {}
-
-  controls.addEventListener('end', () => {
-    try {
-      localStorage.setItem('context_generator_camera_view', JSON.stringify({
-        pos: [activeCamera.position.x, activeCamera.position.y, activeCamera.position.z],
-        target: [controls.target.x, controls.target.y, controls.target.z],
-      }));
-    } catch (e) {}
-  });
-
-  // Lighting
-  const sunElevation = THREE.MathUtils.degToRad(DATA.sun?.elevation || 45);
-  const sunAzimuth = THREE.MathUtils.degToRad(DATA.sun?.azimuth || 135);
-  const sunVector = new THREE.Vector3(
-    Math.cos(sunElevation) * Math.sin(sunAzimuth),
-    Math.sin(sunElevation),
-    Math.cos(sunElevation) * Math.cos(sunAzimuth)
-  ).normalize();
-
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.25);
-  dirLight.position.copy(sunVector).multiplyScalar(400);
-  dirLight.castShadow = true;
-  dirLight.shadow.mapSize.width = 2048;
-  dirLight.shadow.mapSize.height = 2048;
-  const shadowRange = R * 1.5;
-  dirLight.shadow.camera.left = -shadowRange;
-  dirLight.shadow.camera.right = shadowRange;
-  dirLight.shadow.camera.top = shadowRange;
-  dirLight.shadow.camera.bottom = -shadowRange;
-  dirLight.shadow.camera.near = 10;
-  dirLight.shadow.camera.far = 1000;
-  dirLight.shadow.bias = -0.00035;
-  scene.add(dirLight);
-
-  // Ground Plane
-  const groundGeom = new THREE.PlaneGeometry(R * 8, R * 8);
-  const groundMat = new THREE.ShadowMaterial({ opacity: 0.16 });
-  const groundMesh = new THREE.Mesh(groundGeom, groundMat);
-  groundMesh.rotation.x = -Math.PI / 2;
-  groundMesh.position.y = -0.05;
-  groundMesh.receiveShadow = true;
-  scene.add(groundMesh);
-
-  // Surrounding Buildings and Site Setup
-  const interactiveObjects = [];
-  const edgeLineMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1.5 });
-
-  if (DATA.buildings && Array.isArray(DATA.buildings)) {
-    const contextGroup = new THREE.Group();
-    contextGroup.name = "surroundingContext";
-
-    DATA.buildings.forEach((bldg) => {
-      if (!bldg.polygon || bldg.polygon.length < 3) return;
-      const shape = new THREE.Shape();
-      bldg.polygon.forEach((p, i) => {
-        if (i === 0) shape.moveTo(p[0], -p[1]);
-        else shape.lineTo(p[0], -p[1]);
-      });
-
-      const height = bldg.height || 12;
-      const bGeom = new THREE.ExtrudeGeometry(shape, {
-        depth: height,
-        bevelEnabled: false,
-      });
-      bGeom.rotateX(-Math.PI / 2);
-
-      const bMat = new THREE.MeshLambertMaterial({
-        color: 0xf8fafc,
-        emissive: 0x1e293b,
-        emissiveIntensity: 0.05,
-      });
-
-      const bMesh = new THREE.Mesh(bGeom, bMat);
-      bMesh.castShadow = true;
-      bMesh.receiveShadow = true;
-      bMesh.userData = {
-        isBuilding: true,
-        height: height,
-        floors: bldg.floors || Math.round(height / 3.5),
-        area: bldg.area || 0,
-        use: bldg.use || 'Commercial / Residential',
-      };
-      contextGroup.add(bMesh);
-      interactiveObjects.push(bMesh);
-
-      // Building Outline
-      const bEdges = new THREE.EdgesGeometry(bGeom, 25);
-      const bLine = new THREE.LineSegments(bEdges, edgeLineMat);
-      contextGroup.add(bLine);
-    });
-
-    scene.add(contextGroup);
-  }
-
-  // Testing Site Parcel
-  if (DATA.site) {
-    const siteGroup = new THREE.Group();
-    const siteFaceColor = 0xfca5a5;
-
-    const geom = new THREE.BufferGeometry();
-    const pos = new Float32Array(DATA.site.faces.length * 9);
-    for (let fi = 0; fi < DATA.site.faces.length; fi++) {
-      const f = DATA.site.faces[fi];
-      for (let vi = 0; vi < 3; vi++) {
-        const v = DATA.site.vertices[f[vi]];
-        pos[fi * 9 + vi * 3 + 0] = v[0];
-        pos[fi * 9 + vi * 3 + 1] = v[2];
-        pos[fi * 9 + vi * 3 + 2] = -v[1];
-      }
-    }
-    geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    geom.computeVertexNormals();
-
-    const baseMat = new THREE.MeshLambertMaterial({
-      color: new THREE.Color(siteFaceColor),
-      emissive: new THREE.Color(siteFaceColor).multiplyScalar(0.55),
-      transparent: true,
-      opacity: 0.92,
-    });
-    const baseMesh = new THREE.Mesh(geom, baseMat);
-    baseMesh.receiveShadow = true;
-    baseMesh.userData = {
-      isSite: true,
-      area: DATA.siteArea,
-      tier: DATA.areaTier,
-      far: DATA.metrics?.far,
-      bldgs: DATA.metrics?.buildingCount,
-      maxHeight: DATA.metrics?.maxHeight,
-      avgHeight: DATA.metrics?.avgHeight,
-      maxFloors: DATA.metrics?.maxFloors,
-      avgFloors: DATA.metrics?.avgFloors,
-    };
-    siteGroup.add(baseMesh);
-    interactiveObjects.push(baseMesh);
-
-    // Site Perimeter Boundary Line (Red)
-    if (DATA.sitePerimeter && DATA.sitePerimeter.length >= 3) {
-      const outPts = DATA.sitePerimeter.map((p) => new THREE.Vector3(p[0], 0.26, -p[1]));
-      outPts.push(outPts[0].clone());
-      const siteLineGeom = new THREE.BufferGeometry().setFromPoints(outPts);
-      const siteLineMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2.5 });
-      siteGroup.add(new THREE.Line(siteLineGeom, siteLineMat));
-    }
-
-    scene.add(siteGroup);
-  }
 
   // --- Smooth Camera View Snap Function ---
   let isAnimatingCamera = false;
@@ -550,7 +710,7 @@ export function initUrbanContext(DATA) {
     const hits = raycaster.intersectObjects(interactiveObjects);
 
     if (hoveredObj) {
-      hoveredObj.material.color.setHex(hoveredObj.userData.isSite ? 0xfca5a5 : 0xf8fafc);
+      hoveredObj.material.color.setHex(hoveredObj.userData.isSite ? 0xfca5a5 : 0xffffff);
       hoveredObj = null;
     }
 
@@ -631,7 +791,6 @@ export function initUrbanContext(DATA) {
 
   animate();
 
-  // Notify parent window that 3D viewer is loaded and ready
   try {
     window.parent.postMessage({ type: 'viewer_ready' }, '*');
   } catch (e) {}
