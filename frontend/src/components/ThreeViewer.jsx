@@ -163,16 +163,19 @@ export const ThreeViewer = () => {
     } catch (e) {}
   }, [viewMode, activeSite?.site_id]);
 
-  // Listen to camera mode changes initiated inside the iframe
+  // Listen to camera mode changes or viewer ready signals initiated inside the iframe
   useEffect(() => {
     const handleMsg = (e) => {
       if (e.data && e.data.type === 'camera_mode_change' && e.data.mode) {
         setViewMode(e.data.mode);
       }
+      if (e.data && e.data.type === 'viewer_ready') {
+        configureIframe(activeIframeRef.current);
+      }
     };
     window.addEventListener('message', handleMsg);
     return () => window.removeEventListener('message', handleMsg);
-  }, [setViewMode]);
+  }, [setViewMode, configureIframe]);
 
   // Sync 3D Building Extrusions from Optimizer into the Active Scene
   useEffect(() => {

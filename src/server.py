@@ -6821,7 +6821,32 @@ async def get_asset(file_path: str) -> FileResponse:
         raise HTTPException(status_code=403, detail="Forbidden")
     if not os.path.exists(target):
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(target)
+    media_type = "application/javascript" if file_path.endswith(".js") else ("text/css" if file_path.endswith(".css") else None)
+    return FileResponse(target, media_type=media_type)
+
+
+@app.get("/scripts/{file_path:path}")
+async def get_scripts_file(file_path: str) -> FileResponse:
+    target = os.path.normpath(os.path.join(PROJECT_ROOT, "frontend", "dist", "scripts", file_path))
+    if not os.path.exists(target):
+        target = os.path.normpath(os.path.join(PROJECT_ROOT, "frontend", "public", "scripts", file_path))
+    if not os.path.exists(target):
+        target = os.path.normpath(os.path.join(PUBLIC_DIR, "scripts", file_path))
+    if not os.path.exists(target):
+        raise HTTPException(status_code=404, detail="Script not found")
+    return FileResponse(target, media_type="application/javascript", headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+
+@app.get("/styles/{file_path:path}")
+async def get_styles_file(file_path: str) -> FileResponse:
+    target = os.path.normpath(os.path.join(PROJECT_ROOT, "frontend", "dist", "styles", file_path))
+    if not os.path.exists(target):
+        target = os.path.normpath(os.path.join(PROJECT_ROOT, "frontend", "public", "styles", file_path))
+    if not os.path.exists(target):
+        target = os.path.normpath(os.path.join(PUBLIC_DIR, "styles", file_path))
+    if not os.path.exists(target):
+        raise HTTPException(status_code=404, detail="Stylesheet not found")
+    return FileResponse(target, media_type="text/css", headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
 PROJECT_ROOT = os.path.dirname(BASE_DIR)

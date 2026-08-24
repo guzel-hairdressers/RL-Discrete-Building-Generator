@@ -1,0 +1,57 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  overflow: hidden;
+  background-color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1a1a1a;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+#canvas-container {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#gizmo-container {
+  position: absolute;
+  top: 58px;
+  right: 18px;
+  width: 90px;
+  height: 90px;
+  z-index: 100;
+  pointer-events: auto;
+  cursor: grab;
+}
+
+#tooltip {
+  position: absolute;
+  display: none;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e2e8f0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #1e293b;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+#controls-bar, #ui-container, .camera-toggle {
+  display: none !important;
+  visibility: hidden !important;
+}
