@@ -501,9 +501,11 @@ export const useStore = create((set, get) => ({
         ? data.mergedPlacements
         : null;
 
+      const isEval = !!data.isEvaluation;
+
       set((state) => ({
         step: data.step ?? state.step + 1,
-        individualPlacementsList: [...state.individualPlacementsList, ...(data.placements || [])],
+        individualPlacementsList: isEval ? (data.placements || []) : [...state.individualPlacementsList, ...(data.placements || [])],
         currentMergedPlacements: incomingMerged || state.currentMergedPlacements,
         dictionary: data.dictionary || state.dictionary,
         mergedDictionary: data.mergedDictionary || state.mergedDictionary,
@@ -516,11 +518,23 @@ export const useStore = create((set, get) => ({
         setTimeout(() => {
           get().sendCommand({
             cmd: 'step',
-            generationId: data.generationId,
-            episode: data.episode,
-            step: data.step,
+            generationId: Number(data.generationId ?? get().generationId),
+            episode: Number(data.episode ?? get().episode),
+            step: Number(data.step ?? get().step),
           });
         }, 30);
+      }
+    } else if (type === 'error') {
+      console.warn('Server error received:', data);
+      if (get().trainingWanted) {
+        setTimeout(() => {
+          get().sendCommand({
+            cmd: 'step',
+            generationId: Number(data.generationId ?? get().generationId),
+            episode: Number(data.episode ?? get().episode),
+            step: Number(get().step),
+          });
+        }, 50);
       }
     } else if (type === 'episodeDone') {
       const nextEp = data.nextEpisode ?? get().episode + 1;

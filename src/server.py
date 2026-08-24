@@ -6505,12 +6505,14 @@ class ParallelTrainer:
 
         return {
             "type": "placements",
+            "isEvaluation": True,
             "generationId": self.generation_id,
             "episode": self.episode,
             "step": self.step_number,
             "placements": placements,
             "mergedPlacements": merged_placements_formatted,
             "mergedDictionary": [_public_merged_module(module) for module in merged_vocab],
+            "dictionary": [_public_module(module) for module in self.dictionary],
             "metrics": metrics,
             "coreStacking": self._core_stacking_event(),
             "diagnostics": diagnostics,

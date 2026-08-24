@@ -335,7 +335,7 @@ export function initUrbanContext(DATA) {
   // Testing Site Parcel
   if (DATA.site && DATA.site.vertices && DATA.site.faces) {
     const siteGroup = new THREE.Group();
-    const siteFaceColor = 0xfca5a5; // Soft Coral Red
+    const siteFaceColor = 0xffcccc; // 90% Lightness Soft Red // Soft Coral Red
 
     const geom = new THREE.BufferGeometry();
     const pos = new Float32Array(DATA.site.faces.length * 9);
@@ -353,9 +353,9 @@ export function initUrbanContext(DATA) {
 
     const baseMat = new THREE.MeshLambertMaterial({
       color: new THREE.Color(siteFaceColor),
-      emissive: new THREE.Color(siteFaceColor).multiplyScalar(0.55),
+      emissive: new THREE.Color(siteFaceColor).multiplyScalar(0.70),
       transparent: true,
-      opacity: 0.92,
+      opacity: 0.95,
     });
     const baseMesh = new THREE.Mesh(geom, baseMat);
     baseMesh.receiveShadow = true;
@@ -711,8 +711,8 @@ export function initUrbanContext(DATA) {
 
     if (hoveredObj) {
       if (hoveredObj.userData.isSite) {
-        hoveredObj.material.color.setHex(0xfca5a5);
-        hoveredObj.material.emissive.set(new THREE.Color(0xfca5a5).multiplyScalar(0.55));
+        hoveredObj.material.color.setHex(0xffcccc);
+        hoveredObj.material.emissive.set(new THREE.Color(0xffcccc).multiplyScalar(0.55));
       } else {
         hoveredObj.material.color.setHex(0xffffff);
       }
@@ -725,8 +725,8 @@ export function initUrbanContext(DATA) {
 
       if (tooltip) {
         if (obj.userData.isSite) {
-          obj.material.color.setHex(0xf87171);
-          obj.material.emissive.set(new THREE.Color(0xf87171).multiplyScalar(0.70));
+          obj.material.color.setHex(0xff9999);
+          obj.material.emissive.set(new THREE.Color(0xff9999).multiplyScalar(0.70));
           tooltip.style.display = 'block';
           tooltip.style.left = (e.clientX + 14) + 'px';
           tooltip.style.top = (e.clientY + 14) + 'px';
