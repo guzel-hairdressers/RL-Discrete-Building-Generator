@@ -308,7 +308,12 @@ export const useStore = create((set, get) => ({
   setActiveSiteIndex: (index) => {
     const { filteredSites } = get();
     if (index >= 0 && index < filteredSites.length) {
-      set({ activeSiteIndex: index });
+      set({
+        activeSiteIndex: index,
+        individualPlacementsList: [],
+        currentMergedPlacements: [],
+        completed3DPlacements: [],
+      });
       const site = filteredSites[index];
       get().syncSiteWithOptimizer(site);
     }
@@ -407,6 +412,11 @@ export const useStore = create((set, get) => ({
 
   requestNewSite: () => {
     const { settings, sendCommand } = get();
+    set({
+      individualPlacementsList: [],
+      currentMergedPlacements: [],
+      completed3DPlacements: [],
+    });
     if (settings.boundaryType === 'real') {
       get().navigateCarousel(1);
     } else {
@@ -485,6 +495,7 @@ export const useStore = create((set, get) => ({
         contextData: data.contextData || null,
         individualPlacementsList: [],
         currentMergedPlacements: [],
+        completed3DPlacements: [],
         dictionary: data.dictionary || [],
         device: data.device ? data.device.toUpperCase() : 'CPU',
         metrics: data.metrics || get().metrics,
