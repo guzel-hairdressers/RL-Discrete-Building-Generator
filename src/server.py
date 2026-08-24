@@ -4207,7 +4207,7 @@ class ParallelTrainer:
         # instead of always taking the highest-clearance (most central) cells,
         # so the policy can learn non-central core placements.
         key_list = list(common_keys)
-        perm = torch.randperm(len(key_list), device=self.device)
+        perm = torch.randperm(len(key_list))
         targets = []
         for idx in perm[: min(16, len(key_list))].tolist():
             cell_key = key_list[idx]
@@ -4324,7 +4324,7 @@ class ParallelTrainer:
             # Sample candidate cells uniformly rather than by descending
             # clearance, so uncovered-wing proposals are not centre-biased.
             if valid_remote_cells:
-                perm = torch.randperm(len(valid_remote_cells), device=self.device)
+                perm = torch.randperm(len(valid_remote_cells))
                 sampled_remote = [valid_remote_cells[idx] for idx in perm[:16].tolist()]
             else:
                 sampled_remote = []

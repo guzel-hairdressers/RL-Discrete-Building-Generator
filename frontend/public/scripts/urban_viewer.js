@@ -143,7 +143,7 @@ export function initUrbanContext(DATA) {
 
   const shadowPlane = new THREE.Mesh(groundGeom, sharedShadowMat);
   shadowPlane.rotation.x = -Math.PI / 2;
-  shadowPlane.position.y = 0.28;
+  shadowPlane.position.y = -0.01;
   shadowPlane.receiveShadow = true;
   scene.add(shadowPlane);
 
@@ -710,7 +710,12 @@ export function initUrbanContext(DATA) {
     const hits = raycaster.intersectObjects(interactiveObjects);
 
     if (hoveredObj) {
-      hoveredObj.material.color.setHex(hoveredObj.userData.isSite ? 0xfca5a5 : 0xffffff);
+      if (hoveredObj.userData.isSite) {
+        hoveredObj.material.color.setHex(0xfca5a5);
+        hoveredObj.material.emissive.set(new THREE.Color(0xfca5a5).multiplyScalar(0.55));
+      } else {
+        hoveredObj.material.color.setHex(0xffffff);
+      }
       hoveredObj = null;
     }
 
@@ -721,6 +726,7 @@ export function initUrbanContext(DATA) {
       if (tooltip) {
         if (obj.userData.isSite) {
           obj.material.color.setHex(0xf87171);
+          obj.material.emissive.set(new THREE.Color(0xf87171).multiplyScalar(0.70));
           tooltip.style.display = 'block';
           tooltip.style.left = (e.clientX + 14) + 'px';
           tooltip.style.top = (e.clientY + 14) + 'px';
