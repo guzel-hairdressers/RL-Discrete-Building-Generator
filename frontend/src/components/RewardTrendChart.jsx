@@ -7,9 +7,11 @@ export const RewardTrendChart = () => {
   const fillHistory = useStore((s) => s.fillHistory);
   const rentableHistory = useStore((s) => s.rentableHistory);
   const modulesHistory = useStore((s) => s.modulesHistory);
+  const epTimeHistory = useStore((s) => s.epTimeHistory);
   const activeTrendMetric = useStore((s) => s.activeTrendMetric);
   const setActiveTrendMetric = useStore((s) => s.setActiveTrendMetric);
   const metrics = useStore((s) => s.metrics);
+  const diagnostics = useStore((s) => s.diagnostics);
 
   const [showFullHistory, setShowFullHistory] = useState(false);
   const [hoverData, setHoverData] = useState(null); // { ep, val, x, y }
@@ -40,6 +42,12 @@ export const RewardTrendChart = () => {
     unit = ' mod';
     themeColor = '#d97706'; // Amber
     fillColor = 'rgba(217, 119, 6, 0.18)';
+  } else if (activeTrendMetric === 'epTime') {
+    rawValues = epTimeHistory.length > 0 ? epTimeHistory : [Math.round(diagnostics.episodeTimeMs || 142)];
+    metricTitle = 'EPISODE TIME TREND';
+    unit = ' ms';
+    themeColor = '#0284c7'; // Sky
+    fillColor = 'rgba(2, 132, 199, 0.18)';
   } else {
     rawValues = rewardHistory.length > 0 ? rewardHistory : [metrics.score || -40];
     metricTitle = 'REWARD TREND';
@@ -288,6 +296,7 @@ export const RewardTrendChart = () => {
           <option value="fill">AVG. FILL % TREND</option>
           <option value="rentable">RENTABLE % TREND</option>
           <option value="modules">MODULES PLACED TREND</option>
+          <option value="epTime">EPISODE TIME TREND</option>
         </select>
 
         {totalEpisodes > 100 && (

@@ -3350,11 +3350,11 @@ window.onerror = function(message, source, lineno, colno, error) {
     if (!Array.isArray(effectiveList) || effectiveList.length === 0) return;
 
     const floorHeight = 3.5;
-    const matCore = new THREE.MeshStandardMaterial({ color: 0xdc745d, roughness: 0.45, metalness: 0.1 });
-    const matRoom = new THREE.MeshStandardMaterial({ color: 0xa9c5ae, roughness: 0.45, metalness: 0.1 });
-    const matSpecial = new THREE.MeshStandardMaterial({ color: 0x6e9c89, roughness: 0.45, metalness: 0.1 });
-    const matCorridor = new THREE.MeshStandardMaterial({ color: 0xe1ba57, roughness: 0.45, metalness: 0.1 });
-    const edgeMat = new THREE.LineBasicMaterial({ color: 0x111712, linewidth: 1.5 });
+    const coreLitColor = new THREE.Color(0xffcccc);
+    const coreShadowColor = new THREE.Color(0xff9999);
+    const roomLitColor = new THREE.Color(0xccccff);
+    const roomShadowColor = new THREE.Color(0x9999ff);
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2.5 });
 
     effectiveList.forEach(placement => {
       const floorIdx = Number(placement.instanceIdx ?? placement.floorIndex ?? 0);
@@ -3367,37 +3367,123 @@ window.onerror = function(message, source, lineno, colno, error) {
       const ox = Number(floorBoundary?.originOffset?.x || 0);
       const oy = Number(floorBoundary?.originOffset?.y || 0);
 
-      const shape = new THREE.Shape();
+      const comps = (Array.isArray(placement.components) && placement.components.length > 1)
+        ? placement.components
+        : [placement];
+
+      comps.forEach(comp => {
+        const cPoly = comp.poly || comp.polygon || comp.coords || comp.shape;
+        if (!Array.isArray(cPoly) || cPoly.length < 3) return;
+
+        const cShape = new THREE.Shape();
+        cPoly.forEach((p, idx) => {
+          const pt = toPt(p);
+          const localX = pt.x - dx;
+          const localY = pt.y - dy;
+          const x3d = localX + ox;
+          const z3d = -(localY + oy);
+          if (idx === 0) cShape.moveTo(x3d, z3d);
+          else cShape.lineTo(x3d, z3d);
+        });
+
+        const cGeom = new THREE.ExtrudeGeometry(cShape, {
+          depth: floorHeight - 0.15,
+          bevelEnabled: true,
+          bevelSize: 0.05,
+          bevelThickness: 0.05
+        });
+        cGeom.rotateX(-Math.PI / 2);
+        cGeom.translate(0, floorIdx * floorHeight + 0.1, 0);
+
+        const cCat = comp.category || (comp.module ? comp.module.category : 'room');
+        const isCore = cCat === 'core' || comp.isCore || (comp.id && String(comp.id).toLowerCase().includes('core'));
+        const litColor = isCore ? coreLitColor : roomLitColor;
+        const shadowColor = isCore ? coreShadowColor : roomShadowColor;
+
+        const nonIndexed = cGeom.toNonIndexed();
+        const posAttr = nonIndexed.attributes.position;
+        const vertexCount = posAttr.count;
+        const numTris = vertexCount / 3;
+        const colors = new Float32Array(vertexCount * 3);
+
+        for (let ti = 0; ti < numTris; ti++) {
+          const idx0 = ti * 3;
+          const idx1 = ti * 3 + 1;
+          const idx2 = ti * 3 + 2;
+
+          const p0 = new THREE.Vector3(posAttr.getX(idx0), posAttr.getY(idx0), posAttr.getZ(idx0));
+          const p1 = new THREE.Vector3(posAttr.getX(idx1), posAttr.getY(idx1), posAttr.getZ(idx1));
+          const p2 = new THREE.Vector3(posAttr.getX(idx2), posAttr.getY(idx2), posAttr.getZ(idx2));
+
+          const vA = new THREE.Vector3().subVectors(p1, p0);
+          const vB = new THREE.Vector3().subVectors(p2, p0);
+          const faceNormal = new THREE.Vector3().crossVectors(vA, vB).normalize();
+
+          const dot = faceNormal.dot(SUN_VECTOR);
+          const isSunFacing = dot > 0.05;
+          const c = isSunFacing ? litColor : shadowColor;
+
+          colors[idx0 * 3 + 0] = c.r;
+          colors[idx0 * 3 + 1] = c.g;
+          colors[idx0 * 3 + 2] = c.b;
+
+          colors[idx1 * 3 + 0] = c.r;
+          colors[idx1 * 3 + 1] = c.g;
+          colors[idx1 * 3 + 2] = c.b;
+
+          colors[idx2 * 3 + 0] = c.r;
+          colors[idx2 * 3 + 1] = c.g;
+          colors[idx2 * 3 + 2] = c.b;
+        }
+
+        nonIndexed.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        nonIndexed.computeVertexNormals();
+
+        const baseMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+        const mesh = new THREE.Mesh(nonIndexed, baseMat);
+
+        const casterMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+        const casterMesh = new THREE.Mesh(nonIndexed, casterMat);
+        casterMesh.castShadow = true;
+        mesh.add(casterMesh);
+
+        threeState.buildingGroup.add(mesh);
+      });
+
+      // Add solid black multi-pass outline around the outer merged macro-polygon
+      const outerShape = new THREE.Shape();
       poly.forEach((p, idx) => {
         const pt = toPt(p);
-        // Transform from 2D multi-floor world coordinates to 3D site coordinates
         const localX = pt.x - dx;
         const localY = pt.y - dy;
         const x3d = localX + ox;
         const z3d = -(localY + oy);
-        if (idx === 0) shape.moveTo(x3d, z3d);
-        else shape.lineTo(x3d, z3d);
+        if (idx === 0) outerShape.moveTo(x3d, z3d);
+        else outerShape.lineTo(x3d, z3d);
       });
 
-      const geom = new THREE.ExtrudeGeometry(shape, {
+      const outerGeom = new THREE.ExtrudeGeometry(outerShape, {
         depth: floorHeight - 0.15,
         bevelEnabled: true,
         bevelSize: 0.05,
         bevelThickness: 0.05
       });
-      geom.rotateX(-Math.PI / 2);
-      geom.translate(0, floorIdx * floorHeight + 0.1, 0);
+      outerGeom.rotateX(-Math.PI / 2);
+      outerGeom.translate(0, floorIdx * floorHeight + 0.1, 0);
 
-      const cat = placement.category || (placement.module ? placement.module.category : 'room');
-      const mat = cat === 'core' ? matCore : cat === 'special' ? matSpecial : cat === 'corridor' ? matCorridor : matRoom;
-
-      const mesh = new THREE.Mesh(geom, mat);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-
-      const edges = new THREE.EdgesGeometry(geom, 25);
-      const edgeLine = new THREE.LineSegments(edges, edgeMat);
-      mesh.add(edgeLine);
+      const edges = new THREE.EdgesGeometry(outerGeom, 15);
+      const edgeOffsets = [
+        [0, 0, 0],
+        [0.035, 0, 0], [-0.035, 0, 0],
+        [0, 0.035, 0], [0, -0.035, 0],
+        [0, 0, 0.035], [0, 0, -0.035],
+        [0.025, 0.025, 0.025], [-0.025, -0.025, -0.025]
+      ];
+      edgeOffsets.forEach(([ox, oy, oz]) => {
+        const line = new THREE.LineSegments(edges, edgeMat);
+        line.position.set(ox, oy, oz);
+        threeState.buildingGroup.add(line);
+      });
 
       threeState.buildingGroup.add(mesh);
     });

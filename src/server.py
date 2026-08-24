@@ -39,9 +39,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response, JSONResponse
 import uvicorn
 
 import geometry as G
@@ -2845,6 +2845,8 @@ class FloorEnvironment:
             "center": world_center,
             "rotation": placement["rotation"],
             "area": placement["area"],
+            "category": candidate.module["category"],
+            "isCore": (candidate.module.get("category") == "core" or placement.get("coreStackLocked", False)),
             "neighbors": list(candidate.neighbors),
             "module": {
                 "id": candidate.module["id"],
@@ -3726,8 +3728,15 @@ class ParallelTrainer:
 
             target_site_id = settings.get("realSiteId") or settings.get("siteId")
             city_filter = str(settings.get("city", "ALL")).lower().strip()
-            if target_site_id and target_site_id in sites_dict:
-                chosen_site_id = target_site_id
+            if target_site_id:
+                if target_site_id not in sites_dict:
+                    G._REAL_SITES_CACHE = None
+                    dataset = G.load_real_sites_dataset()
+                    sites_dict = dataset.get("sites", {})
+                if target_site_id in sites_dict:
+                    chosen_site_id = target_site_id
+                else:
+                    chosen_site_id = list(sites_dict.keys())[0] if sites_dict else None
             else:
                 candidates = tier_index.get(tier_upper, []) if tier_upper in tier_index and tier_index[tier_upper] else list(sites_dict.keys())
                 if city_filter not in ("all", "any", ""):
@@ -4735,6 +4744,10 @@ class ParallelTrainer:
         if site_id:
             new_settings["realSiteId"] = site_id
             new_settings["siteId"] = site_id
+            dataset = G.load_real_sites_dataset()
+            if site_id not in dataset.get("sites", {}):
+                G._REAL_SITES_CACHE = None
+                G.load_real_sites_dataset()
         if city:
             new_settings["city"] = city
         if tier:
@@ -5826,25 +5839,35 @@ class ParallelTrainer:
                 if "components" in node:
                     for comp in node["components"]:
                         comp_world_poly = G.translate_polygon(comp["poly"], dx, dy)
+                        comp_cat = comp.get("category", "room")
+                        if comp.get("isCore") or (comp.get("id") and "core" in str(comp["id"]).lower()):
+                            comp_cat = "core"
+                        elif "shapeType" in comp and comp["shapeType"].startswith("M_round"):
+                            comp_cat = "room"
                         components_formatted.append({
                             "id": comp["id"],
                             "poly": comp_world_poly,
                             "instanceIdx": env_idx,
                             "center": G.polygon_centroid(comp_world_poly),
+                            "category": comp_cat,
+                            "isCore": (comp_cat == "core"),
                             "module": {
                                 "id": comp.get("shapeType", comp.get("moduleId", comp["id"])),
-                                "category": comp.get("category", "room"),
+                                "category": comp_cat,
                             }
                         })
                 else:
+                    is_core = (category == "core") or (node.get("id") and "core" in str(node["id"]).lower())
                     components_formatted.append({
                         "id": node["id"],
                         "poly": world_poly,
                         "instanceIdx": env_idx,
                         "center": G.polygon_centroid(world_poly),
+                        "category": "core" if is_core else category,
+                        "isCore": is_core,
                         "module": {
                             "id": node.get("shapeType", node.get("moduleId", node["id"])),
-                            "category": category,
+                            "category": "core" if is_core else category,
                         }
                     })
                     
@@ -6383,25 +6406,35 @@ class ParallelTrainer:
                 if "components" in node:
                     for comp in node["components"]:
                         comp_world_poly = G.translate_polygon(comp["poly"], dx, dy)
+                        comp_cat = comp.get("category", "room")
+                        if comp.get("isCore") or (comp.get("id") and "core" in str(comp["id"]).lower()):
+                            comp_cat = "core"
+                        elif "shapeType" in comp and comp["shapeType"].startswith("M_round"):
+                            comp_cat = "room"
                         components_formatted.append({
                             "id": comp["id"],
                             "poly": comp_world_poly,
                             "instanceIdx": env_idx,
                             "center": G.polygon_centroid(comp_world_poly),
+                            "category": comp_cat,
+                            "isCore": (comp_cat == "core"),
                             "module": {
                                 "id": comp.get("shapeType", comp.get("moduleId", comp["id"])),
-                                "category": comp.get("category", "room"),
+                                "category": comp_cat,
                             }
                         })
                 else:
+                    is_core = (category == "core") or (node.get("id") and "core" in str(node["id"]).lower())
                     components_formatted.append({
                         "id": node["id"],
                         "poly": world_poly,
                         "instanceIdx": env_idx,
                         "center": G.polygon_centroid(world_poly),
+                        "category": "core" if is_core else category,
+                        "isCore": is_core,
                         "module": {
                             "id": node.get("shapeType", node.get("moduleId", node["id"])),
-                            "category": category,
+                            "category": "core" if is_core else category,
                         }
                     })
                     
@@ -6758,6 +6791,17 @@ async def get_styles_css() -> FileResponse:
     return FileResponse(os.path.join(PUBLIC_DIR, "styles.css"))
 
 
+THREE_MODULES_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "frontend", "node_modules", "three"))
+
+
+@app.get("/vendor/three/{file_path:path}")
+async def get_three_vendor(file_path: str) -> FileResponse:
+    target = os.path.normpath(os.path.join(THREE_MODULES_DIR, file_path))
+    if not os.path.abspath(target).startswith(THREE_MODULES_DIR) or not os.path.exists(target):
+        raise HTTPException(status_code=404, detail="Three.js vendor asset not found")
+    return FileResponse(target, headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+
 @app.get("/vendor/{file_path:path}")
 async def get_vendor_asset(file_path: str) -> FileResponse:
     target = os.path.normpath(os.path.join(PUBLIC_DIR, "vendor", file_path))
@@ -6780,35 +6824,66 @@ async def get_asset(file_path: str) -> FileResponse:
     return FileResponse(target)
 
 
-CONTEXT_GEN_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "Context Generator"))
-if CONTEXT_GEN_DIR not in sys.path:
-    sys.path.insert(0, CONTEXT_GEN_DIR)
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 try:
-    from fetch_custom_site import fetch_custom_site as _fetch_custom_site_py
-    from delete_custom_site import delete_custom_site as _delete_custom_site_py
+    from context_generator import fetch_custom_site as _fetch_custom_site_py
+    from context_generator import delete_custom_site as _delete_custom_site_py
 except Exception:
     _fetch_custom_site_py = None
     _delete_custom_site_py = None
 
 
 @app.get("/data/{file_path:path}")
-async def get_data_file(file_path: str) -> FileResponse:
-    target = os.path.normpath(os.path.join(CONTEXT_GEN_DIR, "app", "public", "data", file_path))
+async def get_data_file(file_path: str):
+    target = os.path.normpath(os.path.join(PROJECT_ROOT, "frontend", "dist", "data", file_path))
+    if not os.path.exists(target):
+        target = os.path.normpath(os.path.join(PROJECT_ROOT, "frontend", "public", "data", file_path))
     if not os.path.exists(target):
         target = os.path.normpath(os.path.join(PUBLIC_DIR, "data", file_path))
     if not os.path.exists(target):
+        if file_path == "custom_sites_dataset.json":
+            return JSONResponse([], headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(target, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
 @app.get("/sites/{file_path:path}")
-async def get_site_file(file_path: str) -> FileResponse:
-    target = os.path.normpath(os.path.join(CONTEXT_GEN_DIR, "app", "public", "sites", file_path))
+async def get_site_file(file_path: str):
+    target = os.path.normpath(os.path.join(PROJECT_ROOT, "frontend", "dist", "sites", file_path))
+    if not os.path.exists(target):
+        target = os.path.normpath(os.path.join(PROJECT_ROOT, "frontend", "public", "sites", file_path))
     if not os.path.exists(target):
         target = os.path.normpath(os.path.join(PUBLIC_DIR, "sites", file_path))
     if not os.path.exists(target):
         raise HTTPException(status_code=404, detail="File not found")
+
+    if file_path.endswith(".html"):
+        try:
+            with open(target, "r", encoding="utf-8", errors="replace") as f:
+                html_content = f.read()
+            # Rewrite slow CDN dependencies to ultra-fast local server route
+            html_content = html_content.replace(
+                "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                "/vendor/three/build/three.module.js",
+            ).replace(
+                "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+                "/vendor/three/examples/jsm/",
+            )
+            return Response(
+                content=html_content,
+                media_type="text/html",
+                headers={
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
+                }
+            )
+        except Exception:
+            pass
+
     return FileResponse(target, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 

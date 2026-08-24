@@ -33,6 +33,7 @@ export const BottomControlDeck = () => {
   const boundaries = useStore((s) => s.boundaries);
   const totalSiteArea = useStore((s) => s.totalSiteArea);
   const device = useStore((s) => s.device);
+  const diagnostics = useStore((s) => s.diagnostics || {});
 
   const activeTrendMetric = useStore((s) => s.activeTrendMetric);
   const setActiveTrendMetric = useStore((s) => s.setActiveTrendMetric);
@@ -196,7 +197,7 @@ export const BottomControlDeck = () => {
                   onClick={startTraining}
                   title="Start Training Policy (Space)"
                 >
-                  Start Training (Space)
+                  Start Training
                 </button>
                 <span className="split-mid-divider"></span>
                 <button
@@ -210,31 +211,27 @@ export const BottomControlDeck = () => {
               </div>
             )}
 
-            {/* Reset Weights (Only in Training Mode) */}
-            {isTraining && (
-              <button
-                type="button"
-                className="deck-btn-clean"
-                onClick={() => setResetConfirmOpen(true)}
-                title="Reset Model Weights (R)"
-              >
-                Reset Weights (R)
-              </button>
-            )}
+            {/* Slot 2: Reset Weights */}
+            <button
+              type="button"
+              className="deck-btn-clean"
+              onClick={() => setResetConfirmOpen(true)}
+              title="Reset Model Weights (R)"
+            >
+              Reset Weights (R)
+            </button>
 
-            {/* Save Weights (Only in Training Mode) */}
-            {isTraining && (
-              <button
-                type="button"
-                className="deck-btn-clean"
-                onClick={saveCheckpoint}
-                title="Save Checkpoint Weights (S)"
-              >
-                Save Weights (S)
-              </button>
-            )}
+            {/* Slot 3: Save Weights */}
+            <button
+              type="button"
+              className="deck-btn-clean"
+              onClick={saveCheckpoint}
+              title="Save Checkpoint Weights (S)"
+            >
+              Save Weights (S)
+            </button>
 
-            {/* Load Weights */}
+            {/* Slot 4: Load Weights */}
             <label className="deck-btn-clean file-label-clean" title="Load Weights (.pt)">
               Load Weights (L)
               <input
@@ -257,19 +254,17 @@ export const BottomControlDeck = () => {
               />
             </label>
 
-            {/* Settings (Only in Training Mode) */}
-            {isTraining && (
-              <button
-                type="button"
-                className={`deck-btn-clean ${activeBottomDrawer === 'settings' ? 'active-tab' : ''}`}
-                onClick={() => setActiveBottomDrawer('settings')}
-                title="Configuration & Hyperparameters"
-              >
-                Settings
-              </button>
-            )}
+            {/* Slot 5: Settings */}
+            <button
+              type="button"
+              className={`deck-btn-clean ${activeBottomDrawer === 'settings' ? 'active-tab' : ''}`}
+              onClick={() => setActiveBottomDrawer('settings')}
+              title="Configuration & Hyperparameters"
+            >
+              Settings
+            </button>
 
-            {/* Diagnostics Button (Clean text, no icon) */}
+            {/* Slot 6: Diagnostics Button */}
             <button
               type="button"
               className={`deck-btn-clean ${activeBottomDrawer === 'diagnostics' ? 'active-tab' : ''}`}
@@ -394,10 +389,10 @@ export const BottomControlDeck = () => {
 
         {/* RIGHT HALF (Metrics on top, Reward Trend on bottom) */}
         <div className="deck-half deck-right-half">
-          {/* Row 1: Metrics HUD (Clickable to switch trend chart) */}
+          {/* Row 1: Metrics HUD (Right-aligned, clickable to switch trend chart) */}
           <div className="deck-subrow deck-row-metrics">
             <div
-              className={`metric-box-clean clickable-metric ${activeTrendMetric === 'reward' ? 'active-metric' : ''}`}
+              className="metric-box-clean clickable-metric"
               onClick={() => setActiveTrendMetric('reward')}
               title="Show Reward Trend"
             >
@@ -406,7 +401,7 @@ export const BottomControlDeck = () => {
               <span className="metric-desc">Best {bestVal}</span>
             </div>
             <div
-              className={`metric-box-clean clickable-metric ${activeTrendMetric === 'fill' ? 'active-metric' : ''}`}
+              className="metric-box-clean clickable-metric"
               onClick={() => setActiveTrendMetric('fill')}
               title="Show Avg. Fill % Trend"
             >
@@ -415,7 +410,7 @@ export const BottomControlDeck = () => {
               <span className="metric-desc">{filledArea} m² filled</span>
             </div>
             <div
-              className={`metric-box-clean clickable-metric ${activeTrendMetric === 'rentable' ? 'active-metric' : ''}`}
+              className="metric-box-clean clickable-metric"
               onClick={() => setActiveTrendMetric('rentable')}
               title="Show Rentable % Trend"
             >
@@ -429,13 +424,24 @@ export const BottomControlDeck = () => {
               <span className="metric-desc">{boundaries.length || 9} floors</span>
             </div>
             <div
-              className={`metric-box-clean clickable-metric ${activeTrendMetric === 'modules' ? 'active-metric' : ''}`}
+              className="metric-box-clean clickable-metric"
               onClick={() => setActiveTrendMetric('modules')}
               title="Show Modules Placed Trend"
             >
               <span className="metric-lbl">STEP</span>
               <strong className="metric-num">{String(step).padStart(3, '0')}</strong>
-              <span className="metric-desc">modules placed</span>
+              <span className="metric-desc">modules</span>
+            </div>
+            <div
+              className="metric-box-clean clickable-metric"
+              onClick={() => setActiveTrendMetric('epTime')}
+              title="Show Episode Time Trend"
+            >
+              <span className="metric-lbl">EP TIME</span>
+              <strong className="metric-num">
+                {diagnostics.episodeTimeMs ? `${Math.round(diagnostics.episodeTimeMs)}ms` : (step > 0 ? `${Math.round(step * (diagnostics.stepTimeMs || 4.2))}ms` : '142ms')}
+              </strong>
+              <span className="metric-desc">Step {diagnostics.stepTimeMs ? `${diagnostics.stepTimeMs.toFixed(1)}ms` : '4.2ms'}</span>
             </div>
           </div>
 

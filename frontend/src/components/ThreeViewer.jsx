@@ -1,36 +1,154 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { useStore } from '../store/useStore';
 import { SiteInfoCard } from './SiteInfoCard';
-import { CarouselNav } from './CarouselNav';
 import { ViewToggle } from './ViewToggle';
 
 export const ThreeViewer = () => {
-  const iframeRef = useRef(null);
+  const activeIframeRef = useRef(null);
+  const incomingIframeRef = useRef(null);
 
   const filteredSites = useStore((s) => s.filteredSites);
   const activeSiteIndex = useStore((s) => s.activeSiteIndex);
   const viewMode = useStore((s) => s.viewMode);
+  const setViewMode = useStore((s) => s.setViewMode);
+  const settings = useStore((s) => s.settings);
   const boundaries = useStore((s) => s.boundaries);
   const completed3DPlacements = useStore((s) => s.completed3DPlacements);
   const individualPlacementsList = useStore((s) => s.individualPlacementsList);
   const currentMergedPlacements = useStore((s) => s.currentMergedPlacements);
   const disableMerging = useStore((s) => s.disableMerging);
+  const phase = useStore((s) => s.phase);
   const maximizedPane = useStore((s) => s.maximizedPane);
-  const setMaximizedPane = useStore((s) => s.setMaximizedPane);
 
-  const site = filteredSites[activeSiteIndex];
+  const targetSite = filteredSites[activeSiteIndex];
 
-  // Direct reference to the exact Context Generator standalone 3D visualization
-  const targetSrc = site
-    ? site.render_html
-      ? site.render_html.startsWith('/') ? site.render_html : '/' + site.render_html
-      : `/sites/${site.site_id}.html`
-    : null;
+  // Double-buffering state: active visible site vs incoming background loading site
+  const [activeSite, setActiveSite] = useState(targetSite || null);
+  const [incomingSite, setIncomingSite] = useState(null);
 
-  // Sync Camera Mode (Axo vs Persp) with the underlying 3D Engine in the iframe
+  // When targetSite changes, queue it as incomingSite
   useEffect(() => {
-    const iframe = iframeRef.current;
+    if (!targetSite) {
+      setActiveSite(null);
+      setIncomingSite(null);
+      return;
+    }
+    if (!activeSite) {
+      setActiveSite(targetSite);
+      setIncomingSite(null);
+      return;
+    }
+    if (targetSite.site_id !== activeSite.site_id) {
+      setIncomingSite(targetSite);
+    } else {
+      setIncomingSite(null);
+    }
+  }, [targetSite?.site_id]);
+
+  const getTargetSrc = (s) => {
+    if (!s) return null;
+    const base = s.render_html
+      ? s.render_html.startsWith('/') ? s.render_html : '/' + s.render_html
+      : `/sites/${s.site_id}.html`;
+    return `${base}?v=v091_white`;
+  };
+
+  const configureIframe = useCallback((iframe) => {
+    if (!iframe || !iframe.contentWindow) return;
+
+    const isRunning = phase === 'running';
+    const effectiveList = (isRunning || disableMerging)
+      ? individualPlacementsList
+      : ((currentMergedPlacements && currentMergedPlacements.length > 0)
+          ? currentMergedPlacements
+          : ((completed3DPlacements && completed3DPlacements.length > 0)
+              ? completed3DPlacements
+              : individualPlacementsList));
+
+    iframe.contentWindow.postMessage({
+      type: 'optimizer_placements',
+      placements: effectiveList,
+      boundaries: boundaries,
+      colorTheme: {
+        core: '#ffcccc',
+        coreShadow: '#ff9999',
+        room: '#ccccff',
+        roomShadow: '#9999ff',
+        corridor: '#ccccff',
+        corridorShadow: '#9999ff',
+        special: '#ccccff',
+        specialShadow: '#9999ff',
+        edge: '#000000',
+      },
+    }, '*');
+
+    const isReal = settings.boundaryType === 'real';
+    iframe.contentWindow.postMessage({
+      type: 'set_context_visibility',
+      visible: isReal,
+    }, '*');
+
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      // 1. Inject override style to permanently hide internal site UI elements
+      const hideStyle = doc.createElement('style');
+      hideStyle.innerHTML = '#controls-bar, #ui-container, .camera-toggle { display: none !important; visibility: hidden !important; }';
+      doc.head.appendChild(hideStyle);
+
+      // 2. Position Orientation Gizmo clearly visible in top-right of the 3D pane (no fly-in animation on reload)
+      const gizmo = doc.getElementById('gizmo-container');
+      if (gizmo) {
+        gizmo.style.display = 'block';
+        gizmo.style.visibility = 'visible';
+        gizmo.style.opacity = '1';
+        gizmo.style.top = '58px';
+        gizmo.style.transition = 'none';
+        gizmo.style.right = maximizedPane === 'left' ? '18px' : 'calc(25vw + 18px)';
+        gizmo.style.zIndex = '100';
+      }
+
+      // 3. Enforce viewMode on the 3D scene
+      const btnPersp = doc.getElementById('btn-persp');
+      const btnOrtho = doc.getElementById('btn-ortho') || doc.getElementById('btn-axono');
+      if (viewMode === 'axonometric' && btnOrtho) {
+        btnOrtho.click();
+      } else if (viewMode === 'perspective' && btnPersp) {
+        btnPersp.click();
+      }
+      iframe.contentWindow.postMessage({ type: 'set_camera_mode', mode: viewMode }, '*');
+
+      // 4. Hide surrounding context if boundary is not OSM Plot
+      if (!isReal && doc.defaultView) {
+        const win = doc.defaultView;
+        if (win.scene) {
+          win.scene.traverse((obj) => {
+            if (obj.name && (obj.name.toLowerCase().includes('context') || obj.name.toLowerCase().includes('surround'))) {
+              obj.visible = false;
+            }
+          });
+        }
+      }
+    } catch (e) {}
+  }, [completed3DPlacements, boundaries, currentMergedPlacements, individualPlacementsList, disableMerging, settings.boundaryType, viewMode, maximizedPane]);
+
+  // Sync Gizmo Position on Pane Maximize / Restore (smooth transition on user toggle)
+  useEffect(() => {
+    const iframe = activeIframeRef.current;
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      const gizmo = doc.getElementById('gizmo-container');
+      if (gizmo) {
+        gizmo.style.transition = 'right 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+        gizmo.style.right = maximizedPane === 'left' ? '18px' : 'calc(25vw + 18px)';
+      }
+    } catch (e) {}
+  }, [maximizedPane]);
+
+  // Sync Camera Mode (Axo vs Persp) with the active 3D Engine
+  useEffect(() => {
+    const iframe = activeIframeRef.current;
     if (!iframe || !iframe.contentWindow) return;
     try {
       const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -41,75 +159,116 @@ export const ThreeViewer = () => {
         const btn = doc.getElementById('btn-persp');
         if (btn) btn.click();
       }
+      iframe.contentWindow.postMessage({ type: 'set_camera_mode', mode: viewMode }, '*');
     } catch (e) {}
-  }, [viewMode]);
+  }, [viewMode, activeSite?.site_id]);
 
-  // Sync 3D Building Extrusions from Optimizer into the Scene
-  // Only update when completed3DPlacements updates at the end of an episode!
+  // Listen to camera mode changes initiated inside the iframe
   useEffect(() => {
-    const iframe = iframeRef.current;
+    const handleMsg = (e) => {
+      if (e.data && e.data.type === 'camera_mode_change' && e.data.mode) {
+        setViewMode(e.data.mode);
+      }
+    };
+    window.addEventListener('message', handleMsg);
+    return () => window.removeEventListener('message', handleMsg);
+  }, [setViewMode]);
+
+  // Sync 3D Building Extrusions from Optimizer into the Active Scene
+  useEffect(() => {
+    const iframe = activeIframeRef.current;
     if (!iframe || !iframe.contentWindow) return;
 
-    // Use completed3DPlacements if available; otherwise fallback to current if initial load
-    const effectiveList = (completed3DPlacements && completed3DPlacements.length > 0)
-      ? completed3DPlacements
-      : ((!disableMerging && currentMergedPlacements.length > 0)
+    const isRunning = phase === 'running';
+    const effectiveList = (isRunning || disableMerging)
+      ? individualPlacementsList
+      : ((currentMergedPlacements && currentMergedPlacements.length > 0)
           ? currentMergedPlacements
-          : individualPlacementsList);
+          : ((completed3DPlacements && completed3DPlacements.length > 0)
+              ? completed3DPlacements
+              : individualPlacementsList));
 
     iframe.contentWindow.postMessage({
       type: 'optimizer_placements',
       placements: effectiveList,
       boundaries: boundaries,
+      colorTheme: {
+        core: '#ffcccc',
+        coreShadow: '#ff9999',
+        room: '#ccccff',
+        roomShadow: '#9999ff',
+        corridor: '#ccccff',
+        corridorShadow: '#9999ff',
+        special: '#ccccff',
+        specialShadow: '#9999ff',
+        edge: '#000000',
+      },
     }, '*');
-  }, [completed3DPlacements, boundaries, activeSiteIndex]);
 
-  const handleIframeLoad = () => {
-    const iframe = iframeRef.current;
-    if (!iframe || !iframe.contentWindow) return;
-
-    const effectiveList = (completed3DPlacements && completed3DPlacements.length > 0)
-      ? completed3DPlacements
-      : ((!disableMerging && currentMergedPlacements.length > 0)
-          ? currentMergedPlacements
-          : individualPlacementsList);
-
+    const isReal = settings.boundaryType === 'real';
     iframe.contentWindow.postMessage({
-      type: 'optimizer_placements',
-      placements: effectiveList,
-      boundaries: boundaries,
+      type: 'set_context_visibility',
+      visible: isReal,
     }, '*');
+  }, [completed3DPlacements, currentMergedPlacements, individualPlacementsList, disableMerging, phase, boundaries, activeSite?.site_id, settings.boundaryType]);
 
-    try {
-      // Hide internal fallback UI cards since we render the rich React UI over the iframe
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      const card = doc.getElementById('ui-container');
-      if (card) card.style.display = 'none';
-      const cBar = doc.getElementById('controls-bar');
-      if (cBar) cBar.style.display = 'none';
-    } catch (e) {}
+  const handleActiveIframeLoad = () => {
+    configureIframe(activeIframeRef.current);
+  };
+
+  const handleIncomingIframeLoad = () => {
+    const nextIframe = incomingIframeRef.current;
+    configureIframe(nextIframe);
+
+    // After 80ms buffer paint, cleanly promote incoming site to active site (zero flicker!)
+    setTimeout(() => {
+      if (incomingSite) {
+        setActiveSite(incomingSite);
+        setIncomingSite(null);
+      }
+    }, 80);
   };
 
   const isMaximized = maximizedPane === 'left';
+  const activeSrc = getTargetSrc(activeSite);
+  const incomingSrc = getTargetSrc(incomingSite);
 
   return (
     <div className={`left-3d-pane ${isMaximized ? 'pane-maximized' : ''}`}>
-      {targetSrc ? (
+      {/* 1. Visible Active Iframe */}
+      {activeSrc && (
         <iframe
-          ref={iframeRef}
-          key={site?.site_id || 'site'}
-          src={targetSrc}
-          title={site?.site_id || 'site'}
-          onLoad={handleIframeLoad}
+          ref={activeIframeRef}
+          key={activeSite?.site_id}
+          src={activeSrc}
+          title={activeSite?.site_id || 'site'}
+          onLoad={handleActiveIframeLoad}
+          className="three-viewport-iframe"
           style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            display: 'block',
-            background: '#ffffff',
+            zIndex: 1,
+            pointerEvents: incomingSite ? 'none' : 'auto',
           }}
         />
-      ) : (
+      )}
+
+      {/* 2. Seamless Incoming Buffer Iframe (zero flicker transition) */}
+      {incomingSite && incomingSrc && (
+        <iframe
+          ref={incomingIframeRef}
+          key={incomingSite.site_id}
+          src={incomingSrc}
+          title={incomingSite.site_id}
+          onLoad={handleIncomingIframeLoad}
+          className="three-viewport-iframe"
+          style={{
+            zIndex: 2,
+            opacity: 0,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      {!activeSite && !incomingSite && (
         <div className="empty-scene" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="empty-msg" style={{ color: '#64748b', fontWeight: 600 }}>No sites match the selected filters</div>
         </div>
@@ -119,7 +278,6 @@ export const ThreeViewer = () => {
       <SiteInfoCard />
       {/* Upper View Toggle & Integrated Expand Toolbar */}
       <ViewToggle />
-      <CarouselNav />
     </div>
   );
 };

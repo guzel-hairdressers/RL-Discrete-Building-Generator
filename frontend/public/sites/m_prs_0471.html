@@ -42,7 +42,7 @@
   .metric-val { font-weight: 600; color: #1e293b; font-size: 13px; }
 
   /* Top-Right Controls Bar (Axonometric & Perspective ONLY) */
-  #controls-bar {
+  #controls-bar { display: none !important;
     position: absolute; top: 20px; right: 20px; z-index: 10;
     display: flex; gap: 6px; background: rgba(255, 255, 255, 0.95);
     padding: 5px; border-radius: 10px;
@@ -64,7 +64,7 @@
 
   /* Interactive Blender Orientation Gizmo Container directly under the top-right bar */
   #gizmo-container {
-    position: absolute; top: 72px; right: 20px; z-index: 10;
+    position: absolute; top: 58px; right: calc(25vw + 18px); z-index: 100;
     width: 120px; height: 120px;
     pointer-events: auto;
   }
@@ -112,8 +112,8 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    "three": "/vendor/three/build/three.module.js",
+    "three/addons/": "/vendor/three/examples/jsm/"
   }
 }
 </script>
@@ -126,6 +126,179 @@ const DATA = {"buildings":[{"vertices":[[-35.92,-51.38,0.0],[-35.92,-66.49,0.0],
 
 // --- Scene Setup ---
 const scene = new THREE.Scene();
+window.scene = scene;
+window.THREE = THREE;
+
+// Global Optimizer Placements Group
+const optimizerGroup = new THREE.Group();
+optimizerGroup.name = 'optimizerGroup';
+scene.add(optimizerGroup);
+window.optimizerGroup = optimizerGroup;
+
+// Ambient and Fill Lighting for Architectural Module Visibility
+if (!window._moduleLabLightsAdded) {
+  window._moduleLabLightsAdded = true;
+  const ambLight = new THREE.AmbientLight(0xffffff, 0.95);
+  scene.add(ambLight);
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.50);
+  fillLight.position.set(-120, 160, -100);
+  scene.add(fillLight);
+}
+
+window.addEventListener('message', (event) => {
+  if (!event.data || event.data.type !== 'optimizer_placements') return;
+  const { placements, boundaries } = event.data;
+  while (optimizerGroup.children.length > 0) {
+    const child = optimizerGroup.children.pop();
+    if (child.geometry) child.geometry.dispose();
+  }
+  if (!Array.isArray(placements) || placements.length === 0) return;
+
+  const floorHeight = 3.5;
+  const theme = event.data.colorTheme || {};
+
+  const coreLitColor = new THREE.Color(theme.core || '#ffcccc');
+  const coreShadowColor = new THREE.Color(theme.coreShadow || '#ff9999');
+  const roomLitColor = new THREE.Color(theme.room || '#ccccff');
+  const roomShadowColor = new THREE.Color(theme.roomShadow || '#9999ff');
+  const edgeHex = theme.edge ? (typeof theme.edge === 'string' ? parseInt(theme.edge.replace('#', '0x')) : theme.edge) : 0x000000;
+  const edgeMat = new THREE.LineBasicMaterial({ color: edgeHex, linewidth: 2.5 });
+
+  const sunDir = (typeof sunVector !== 'undefined') ? sunVector : new THREE.Vector3(130, 220, 90).normalize();
+
+  placements.forEach((placement) => {
+    const floorIdx = Number(placement.instanceIdx ?? placement.floorIndex ?? 0);
+    const poly = placement.poly || placement.polygon || placement.mergedPolygon || placement.coords;
+    if (!Array.isArray(poly) || poly.length < 3) return;
+
+    const floorBoundary = (Array.isArray(boundaries) && (boundaries.find((b) => Number(b.instanceIdx) === floorIdx) || boundaries[floorIdx])) || { offset: { x: 0, y: 0 }, originOffset: { x: 0, y: 0 } };
+    const dx = Number(floorBoundary?.offset?.x || 0);
+    const dy = Number(floorBoundary?.offset?.y || 0);
+    const ox = Number(floorBoundary?.originOffset?.x || 0);
+    const oy = Number(floorBoundary?.originOffset?.y || 0);
+
+    const comps = (Array.isArray(placement.components) && placement.components.length > 1)
+      ? placement.components
+      : [placement];
+
+    comps.forEach((comp) => {
+      const cPoly = comp.poly || comp.polygon || comp.coords;
+      if (!Array.isArray(cPoly) || cPoly.length < 3) return;
+
+      const cShape = new THREE.Shape();
+      cPoly.forEach((p, idx) => {
+        const px = Number(p.x ?? p[0] ?? 0);
+        const py = Number(p.y ?? p[1] ?? 0);
+        const localX = px - dx;
+        const localY = py - dy;
+        const x3d = localX + ox;
+        const y3d = localY + oy;
+        if (idx === 0) cShape.moveTo(x3d, y3d);
+        else cShape.lineTo(x3d, y3d);
+      });
+
+      const cGeom = new THREE.ExtrudeGeometry(cShape, {
+        depth: floorHeight - 0.15,
+        bevelEnabled: true,
+        bevelSize: 0.04,
+        bevelThickness: 0.04,
+      });
+      cGeom.rotateX(-Math.PI / 2);
+      cGeom.translate(0, floorIdx * floorHeight + 0.2, 0);
+
+      const cCat = comp.category || (comp.module ? comp.module.category : 'room');
+      const isCore = cCat === 'core' || comp.isCore || (comp.id && String(comp.id).toLowerCase().includes('core'));
+      const litColor = isCore ? coreLitColor : roomLitColor;
+      const shadowColor = isCore ? coreShadowColor : roomShadowColor;
+
+      const nonIndexed = cGeom.toNonIndexed();
+      const posAttr = nonIndexed.attributes.position;
+      const vertexCount = posAttr.count;
+      const numTris = vertexCount / 3;
+      const colors = new Float32Array(vertexCount * 3);
+
+      for (let ti = 0; ti < numTris; ti++) {
+        const idx0 = ti * 3;
+        const idx1 = ti * 3 + 1;
+        const idx2 = ti * 3 + 2;
+
+        const p0 = new THREE.Vector3(posAttr.getX(idx0), posAttr.getY(idx0), posAttr.getZ(idx0));
+        const p1 = new THREE.Vector3(posAttr.getX(idx1), posAttr.getY(idx1), posAttr.getZ(idx1));
+        const p2 = new THREE.Vector3(posAttr.getX(idx2), posAttr.getY(idx2), posAttr.getZ(idx2));
+
+        const vA = new THREE.Vector3().subVectors(p1, p0);
+        const vB = new THREE.Vector3().subVectors(p2, p0);
+        const faceNormal = new THREE.Vector3().crossVectors(vA, vB).normalize();
+
+        const dot = faceNormal.dot(sunDir);
+        const isSunFacing = dot > 0.05;
+        const c = isSunFacing ? litColor : shadowColor;
+
+        colors[idx0 * 3 + 0] = c.r;
+        colors[idx0 * 3 + 1] = c.g;
+        colors[idx0 * 3 + 2] = c.b;
+
+        colors[idx1 * 3 + 0] = c.r;
+        colors[idx1 * 3 + 1] = c.g;
+        colors[idx1 * 3 + 2] = c.b;
+
+        colors[idx2 * 3 + 0] = c.r;
+        colors[idx2 * 3 + 1] = c.g;
+        colors[idx2 * 3 + 2] = c.b;
+      }
+
+      nonIndexed.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      nonIndexed.computeVertexNormals();
+
+      const baseMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+      const mesh = new THREE.Mesh(nonIndexed, baseMat);
+
+      const casterMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+      const casterMesh = new THREE.Mesh(nonIndexed, casterMat);
+      casterMesh.castShadow = true;
+      mesh.add(casterMesh);
+
+      optimizerGroup.add(mesh);
+    });
+
+    // Solid black multi-pass outline around the outer merged macro-polygon
+    const outerShape = new THREE.Shape();
+    poly.forEach((p, idx) => {
+      const px = Number(p.x ?? p[0] ?? 0);
+      const py = Number(p.y ?? p[1] ?? 0);
+      const localX = px - dx;
+      const localY = py - dy;
+      const x3d = localX + ox;
+      const y3d = localY + oy;
+      if (idx === 0) outerShape.moveTo(x3d, y3d);
+      else outerShape.lineTo(x3d, y3d);
+    });
+
+    const outerGeom = new THREE.ExtrudeGeometry(outerShape, {
+      depth: floorHeight - 0.15,
+      bevelEnabled: true,
+      bevelSize: 0.04,
+      bevelThickness: 0.04,
+    });
+    outerGeom.rotateX(-Math.PI / 2);
+    outerGeom.translate(0, floorIdx * floorHeight + 0.2, 0);
+
+    const edges = new THREE.EdgesGeometry(outerGeom, 15);
+    const edgeOffsets = [
+      [0, 0, 0],
+      [0.035, 0, 0], [-0.035, 0, 0],
+      [0, 0.035, 0], [0, -0.035, 0],
+      [0, 0, 0.035], [0, 0, -0.035],
+      [0.025, 0.025, 0.025], [-0.025, -0.025, -0.025]
+    ];
+    edgeOffsets.forEach(([ox, oy, oz]) => {
+      const line = new THREE.LineSegments(edges, edgeMat);
+      line.position.set(ox, oy, oz);
+      optimizerGroup.add(line);
+    });
+  });
+});
+
 scene.background = new THREE.Color(0xffffff); // Pure 100% white background
 
 const aspect = window.innerWidth / window.innerHeight;
@@ -187,7 +360,7 @@ try {
       cameraOrtho.updateProjectionMatrix();
       cameraPersp.updateProjectionMatrix();
       controls.target.set(view.target[0], view.target[1], view.target[2]);
-      if (view.isPersp) {
+      if (view.isPersp && window.self === window.top) {
         activeCamera = cameraPersp;
         controls.object = cameraPersp;
       }
@@ -242,7 +415,7 @@ scene.add(ground);
 // Projects soft cast shadows cleanly onto ground, roads, roofs, and sun-facing building walls!
 const sharedShadowMat = new THREE.ShadowMaterial({
   color: 0x000000,
-  opacity: 0.12,
+  opacity: 0.05,
   depthWrite: false,
   polygonOffset: true,
   polygonOffsetFactor: -1.0,
@@ -251,7 +424,7 @@ const sharedShadowMat = new THREE.ShadowMaterial({
 
 const shadowPlane = new THREE.Mesh(groundGeom, sharedShadowMat);
 shadowPlane.rotation.x = -Math.PI / 2;
-shadowPlane.position.y = 0.05; // Placed above ground (-0.05) & roads (0.01) so shadows render in Top view
+shadowPlane.position.y = 0.28; // Placed above ground (-0.05) & roads (0.01) so shadows render in Top view
 shadowPlane.receiveShadow = true;
 scene.add(shadowPlane);
 
@@ -317,7 +490,7 @@ function createArchitecturalVolume(verts, faces, colorHex = 0xffffff, opacity = 
   const colors = new Float32Array(numTriangles * 9);
 
   const pureWhite = new THREE.Color(colorHex);
-  const selfShadowColor = new THREE.Color(0xf0f0f0); // Soft Lighter Pure Monochrome Grey (R=240, G=240, B=240)
+  const selfShadowColor = new THREE.Color(0xffffff);
 
   const sunFacingPositions = [];
 
@@ -335,7 +508,7 @@ function createArchitecturalVolume(verts, faces, colorHex = 0xffffff, opacity = 
     // Check orientation relative to sun light direction
     const dot = faceNormal.dot(sunVector);
     const isSunFacing = (isRoad || dot > 0.05);
-    const c = isSunFacing ? pureWhite : selfShadowColor;
+    const c = pureWhite;
 
     for (let vi = 0; vi < 3; vi++) {
       const v = verts[f[vi]];
@@ -465,12 +638,14 @@ if (DATA.site) {
   geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geom.computeVertexNormals();
 
-  const baseMat = new THREE.MeshBasicMaterial({
+  const baseMat = new THREE.MeshLambertMaterial({
     color: new THREE.Color(siteFaceColor),
-    transparent: true, opacity: 0.88,
+    emissive: new THREE.Color(siteFaceColor).multiplyScalar(0.55),
+    transparent: true, opacity: 0.92,
   });
   const baseMesh = new THREE.Mesh(geom, baseMat);
-  baseMesh.castShadow = true;
+  baseMesh.receiveShadow = true;
+  siteGroup.add(baseMesh);
   baseMesh.userData = {
     isSite: true,
     area: DATA.siteArea,
@@ -704,7 +879,7 @@ renderer.domElement.addEventListener('mousemove', (e) => {
         <div style="color:#334155;"><b style="color:#0f172a;">Context Storeys:</b> ${obj.userData.avgFloors} | ${obj.userData.maxFloors}</div>
       `;
     } else if (obj.userData.isBuilding) {
-      obj.material.color.setHex(0xe2e8f0);
+      obj.material.color.setHex(0xdbeafe);
       tooltip.style.display = 'block';
       tooltip.style.left = (e.clientX + 14) + 'px';
       tooltip.style.top = (e.clientY + 14) + 'px';

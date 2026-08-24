@@ -83,7 +83,8 @@ export const useStore = create((set, get) => ({
   fillHistory: [],
   rentableHistory: [],
   modulesHistory: [],
-  activeTrendMetric: 'reward', // 'reward' | 'fill' | 'rentable' | 'modules'
+  epTimeHistory: [],
+  activeTrendMetric: 'reward', // 'reward' | 'fill' | 'rentable' | 'modules' | 'epTime'
   setActiveTrendMetric: (metric) => set({ activeTrendMetric: metric }),
   metrics: {
     score: -40.0,
@@ -353,6 +354,8 @@ export const useStore = create((set, get) => ({
       mode: 'training',
       trainingWanted: true,
       phase: 'running',
+      completed3DPlacements: [],
+      currentMergedPlacements: [],
       statusMessage: 'Training policy active',
     });
     get().sendCommand({ cmd: 'setMode', mode: 'training' });
@@ -369,6 +372,8 @@ export const useStore = create((set, get) => ({
       mode: 'inference',
       trainingWanted: true,
       phase: 'running',
+      completed3DPlacements: [],
+      currentMergedPlacements: [],
       statusMessage: 'Generating building plan (Inference)...',
     });
     get().sendCommand({ cmd: 'setMode', mode: 'inference' });
@@ -385,6 +390,11 @@ export const useStore = create((set, get) => ({
       trainingWanted: false,
       phase: 'paused',
       statusMessage: 'Paused by user',
+    });
+    get().sendCommand({
+      cmd: 'evaluate',
+      generationId: get().generationId,
+      episode: get().episode,
     });
   },
 
@@ -489,10 +499,14 @@ export const useStore = create((set, get) => ({
         get().sendCommand({ cmd: 'step', generationId: data.generationId, episode: data.episode ?? 0, step: 0 });
       }
     } else if (type === 'placements') {
+      const incomingMerged = (Array.isArray(data.mergedPlacements) && data.mergedPlacements.length > 0)
+        ? data.mergedPlacements
+        : null;
+
       set((state) => ({
         step: data.step ?? state.step + 1,
         individualPlacementsList: [...state.individualPlacementsList, ...(data.placements || [])],
-        currentMergedPlacements: data.mergedPlacements || state.currentMergedPlacements,
+        currentMergedPlacements: incomingMerged || state.currentMergedPlacements,
         dictionary: data.dictionary || state.dictionary,
         mergedDictionary: data.mergedDictionary || state.mergedDictionary,
         metrics: data.metrics || state.metrics,
@@ -513,7 +527,7 @@ export const useStore = create((set, get) => ({
     } else if (type === 'episodeDone') {
       const nextEp = data.nextEpisode ?? get().episode + 1;
 
-      // Update completed3DPlacements so the 3D scene captures the finalized building at episode completion!
+      // Update completed3DPlacements so the 3D and 2D scenes capture the finalized building at episode completion!
       const finalized = (data.mergedPlacements && data.mergedPlacements.length > 0)
         ? data.mergedPlacements
         : (get().currentMergedPlacements && get().currentMergedPlacements.length > 0
@@ -524,16 +538,19 @@ export const useStore = create((set, get) => ({
       const currentFillPct = Math.round(((effectiveMetrics.fillRatio) || 0) * 1000) / 10;
       const currentRentablePct = Math.round(((effectiveMetrics.rentableRatio) || 0) * 1000) / 10;
       const currentModulesCount = effectiveMetrics.placedCount ?? get().step ?? 0;
+      const currentEpTime = Math.round(data.diagnostics?.episodeTimeMs || (currentModulesCount * (data.diagnostics?.stepTimeMs || 4.2)) || 142);
 
       set((state) => ({
         phase: 'complete',
         episode: data.completedEpisode,
         completed3DPlacements: finalized,
+        currentMergedPlacements: finalized,
         metrics: effectiveMetrics,
         rewardHistory: data.scoreHistory || state.rewardHistory,
         fillHistory: [...state.fillHistory, currentFillPct],
         rentableHistory: [...state.rentableHistory, currentRentablePct],
         modulesHistory: [...state.modulesHistory, currentModulesCount],
+        epTimeHistory: [...state.epTimeHistory, currentEpTime],
         bestReward: data.bestScore ?? state.bestReward,
         statusMessage: `Episode ${data.completedEpisode} complete`,
       }));
@@ -546,6 +563,7 @@ export const useStore = create((set, get) => ({
           step: 0,
           individualPlacementsList: [],
           currentMergedPlacements: [],
+          completed3DPlacements: [],
           phase: 'running',
         });
         setTimeout(() => {

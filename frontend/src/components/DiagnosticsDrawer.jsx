@@ -1,6 +1,16 @@
 import React, { useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 
+const safeNum = (val, fallback = 0) => {
+  const num = typeof val === 'number' ? val : parseFloat(val);
+  return Number.isFinite(num) ? num : fallback;
+};
+
+const formatNum = (val, decimals = 2, fallback = '—') => {
+  const num = safeNum(val, null);
+  return num !== null ? num.toFixed(decimals) : fallback;
+};
+
 export const DiagnosticsDrawer = ({ onClose }) => {
   const diagnostics = useStore((s) => s.diagnostics || {});
   const debugTelemetry = useStore((s) => s.debugTelemetry || {});
@@ -29,7 +39,8 @@ export const DiagnosticsDrawer = ({ onClose }) => {
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, w, h);
 
-    const values = rewardHistory.length > 0 ? rewardHistory.slice(-120) : [metrics.score || -40];
+    const safeHistory = (rewardHistory || []).map((v) => safeNum(v, -40));
+    const values = safeHistory.length > 0 ? safeHistory.slice(-120) : [safeNum(metrics.score, -40)];
     const n = values.length;
     const min = Math.min(...values);
     const max = Math.max(...values);
@@ -98,34 +109,56 @@ export const DiagnosticsDrawer = ({ onClose }) => {
     ctx.restore();
   }, [rewardHistory, metrics.score]);
 
-  // Reward Components
-  const fillRatio = metrics.fillRatio || debugTelemetry.fillRatio || 0;
-  const rentableRatio = metrics.rentableRatio || debugTelemetry.rentableRatio || 0;
-  const scaledFill = fillRatio < 0.6 ? Math.max(0, 2.25 * fillRatio - 0.75) : fillRatio;
-  const scaledRentable = rentableRatio < 0.7 ? Math.max(0, (7 * rentableRatio - 2.8) / 3) : rentableRatio;
+  // Reward & Penalty Decomposition (Full Canonical Module Lab v0.8 Specification)
+  const fillRatio = safeNum(metrics.fillRatio || debugTelemetry.fillRatio, 0);
+  const rentableRatio = safeNum(metrics.rentableRatio || debugTelemetry.rentableRatio, 0);
+  const daylight = safeNum(metrics.daylightRatio || debugTelemetry.daylightRatio, 0.85);
+  const reuse = safeNum(metrics.reuseRatio || debugTelemetry.reuseRatio, 0.6);
+  const constructibility = safeNum(metrics.constructibilityScore || debugTelemetry.constructibilityScore, 0.9);
+  const envelopeEfficiency = safeNum(metrics.envelopeEfficiency || debugTelemetry.envelopeEfficiency, 0.75);
+  const bpeBonus = safeNum(metrics.bpeBonus || debugTelemetry.bpeBonus, 2.5);
+  const utilizationEntropy = safeNum(metrics.utilizationEntropyBonus || debugTelemetry.utilizationEntropyBonus, 1.4);
+  const relativeFrontier = safeNum(metrics.relativeTimeReward || debugTelemetry.relativeTimeReward, 0.8);
 
-  const rewardComponents = [
-    { label: 'Space Fill', val: scaledFill * 70 },
-    { label: 'Rentable Area', val: scaledRentable * 15 },
-    { label: 'Daylight Depth', val: (debugTelemetry.daylightRatio || 0.85) * 10 },
-    { label: 'Vocabulary Reuse', val: (debugTelemetry.reuseRatio || 0.6) * 2 },
-    { label: 'Grid Snapping', val: (debugTelemetry.constructibilityScore || 0.9) * 2 },
-    { label: 'Envelope Efficiency', val: debugTelemetry.envelopeEfficiency || 1.2 },
-    { label: 'Frontier Shaping', val: debugTelemetry.relativeTimeReward || 0.5 },
-    { label: 'Deep Room Penalty', val: -(debugTelemetry.deepInteriorPenalty || 0) },
-    { label: 'Facade Chasm Penalty', val: -(debugTelemetry.facadeChasmPenalty || 0) },
-    { label: 'Topology Penalty', val: -(debugTelemetry.topologyPenalty || 0) },
-    { label: 'Dictionary Penalty', val: -(debugTelemetry.dictBreachPenalty || 0) },
+  const deepPenalty = safeNum(metrics.deepInteriorPenalty || debugTelemetry.deepInteriorPenalty, 0);
+  const chasmPenalty = safeNum(metrics.facadeChasmPenalty || debugTelemetry.facadeChasmPenalty, 0);
+  const underfillPenalty = safeNum(metrics.underfillPenalty || debugTelemetry.underfillPenalty, 0);
+  const topologyPenalty = safeNum(metrics.topologyPenalty || debugTelemetry.topologyPenalty, 0);
+  const dictBreachPenalty = safeNum(metrics.dictBreachPenalty || debugTelemetry.dictBreachPenalty, 0);
+  const trianglePenalty = safeNum(metrics.unmergedTrianglePenalty || debugTelemetry.unmergedTrianglePenalty, 0);
+  const areaVariancePenalty = safeNum(metrics.areaVariancePenalty || debugTelemetry.areaVariancePenalty, 0);
+
+  const positiveRewards = [
+    { label: 'Space Fill (1.05x)', val: fillRatio * 105.0 },
+    { label: 'Rentable Area (0.15x)', val: rentableRatio * 15.0 },
+    { label: 'Daylight Depth (0.10x)', val: daylight * 10.0 },
+    { label: 'Vocabulary Reuse (0.02x)', val: reuse * 2.0 },
+    { label: 'Grid Snapping / Regularity', val: constructibility * 2.0 },
+    { label: 'Envelope Efficiency', val: envelopeEfficiency * 1.0 },
+    { label: 'BPE Merge Bonus', val: bpeBonus },
+    { label: 'Utilization Entropy', val: utilizationEntropy },
+    { label: 'Frontier Growth Reward', val: relativeFrontier },
   ];
 
-  const maxRewardMag = Math.max(1, ...rewardComponents.map((c) => Math.abs(c.val)));
+  const negativePenalties = [
+    { label: 'Deep Interior Daylight', val: -deepPenalty },
+    { label: 'Narrow Chasm (<5.0m)', val: -chasmPenalty },
+    { label: 'Premature Underfill', val: -underfillPenalty },
+    { label: 'Topology Violation', val: -topologyPenalty },
+    { label: 'Dictionary Limit Breach', val: -dictBreachPenalty },
+    { label: 'Unmerged Triangles', val: -trianglePenalty },
+    { label: 'Area Variance CV', val: -areaVariancePenalty },
+  ];
+
+  const allComponents = [...positiveRewards, ...negativePenalties];
+  const maxRewardMag = Math.max(1, ...allComponents.map((c) => Math.abs(c.val || 0)));
 
   // Timings Profiler
   const timings = debugTelemetry.performanceTimings || {
-    candidateGeneration: { avg: diagnostics.candidateLatencyMs || 2.84, max: 5.1, count: 120 },
-    policyInference: { avg: diagnostics.stepTimeMs ? diagnostics.stepTimeMs * 0.4 : 1.65, max: 3.2, count: 120 },
+    candidateGeneration: { avg: safeNum(diagnostics.candidateLatencyMs, 2.84), max: 5.1, count: 120 },
+    policyInference: { avg: safeNum(diagnostics.stepTimeMs ? diagnostics.stepTimeMs * 0.4 : 1.65), max: 3.2, count: 120 },
     placement: { avg: 0.42, max: 1.1, count: 120 },
-    stepTotal: { avg: diagnostics.stepTimeMs || 4.15, max: 8.5, count: 120 },
+    stepTotal: { avg: safeNum(diagnostics.stepTimeMs, 4.15), max: 8.5, count: 120 },
     episodeTotal: { avg: 142.5, max: 210.0, count: 12 },
   };
 
@@ -137,7 +170,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
     { key: 'episodeTotal', label: 'Episode Execution Total' },
   ];
 
-  const maxTimingAvg = Math.max(0.1, ...timingKeys.map((t) => timings[t.key]?.avg || 0));
+  const maxTimingAvg = Math.max(0.1, ...timingKeys.map((t) => safeNum(timings[t.key]?.avg, 0.1)));
 
   return (
     <div className="expanded-bottom-drawer glass-panel diagnostics-drawer-full">
@@ -146,7 +179,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           <span className="developer-kicker">Bounded Live RL Telemetry</span>
           <span className="drawer-title">DEVELOPER & RL DIAGNOSTICS</span>
           <span className="drawer-subtitle">
-            Device: {device.toUpperCase()} · Native Geometry: C (SAT + Raycast) · Core Shafts: 100% Exact
+            Device: {String(device).toUpperCase()} · Native Geometry: C (SAT + Raycast) · Core Shafts: 100% Exact
           </span>
         </div>
         <button className="drawer-close-btn" onClick={onClose} title="Close Diagnostics Panel">
@@ -163,35 +196,54 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           </div>
           <canvas ref={canvasRef} style={{ width: '100%', height: '110px', display: 'block' }} />
           <div className="diag-summary-strip">
-            <span>Latest: <strong>{metrics.score?.toFixed(2) || '—'}</strong></span>
-            <span>Best: <strong>{debugTelemetry.bestScore?.toFixed(2) || metrics.score?.toFixed(2) || '—'}</strong></span>
-            <span>Throughput: <strong>{diagnostics.throughputStepsPerSec || 240} stp/s</strong></span>
+            <span>Latest: <strong>{formatNum(metrics.score, 2)}</strong></span>
+            <span>Best: <strong>{formatNum(debugTelemetry.bestScore || metrics.score, 2)}</strong></span>
+            <span>Throughput: <strong>{safeNum(diagnostics.throughputStepsPerSec, 240)} stp/s</strong></span>
           </div>
         </section>
 
-        {/* Card 2: Reward Breakdown */}
+        {/* Card 2: Terminal Rewards & Penalties (Dual Column Grid) */}
         <section className="diag-v08-card diag-col-span-2">
           <div className="diag-card-top">
-            <span className="diag-section-title">Terminal Reward Components</span>
+            <span className="diag-section-title">Terminal Rewards & Penalties (v0.8 Decomposed)</span>
             <span className="diag-badge-live">Live PBRS</span>
           </div>
-          <div className="reward-breakdown-list">
-            {rewardComponents.map((c, idx) => (
-              <div key={idx} className="reward-bar-row">
-                <div className="reward-bar-labels">
-                  <span className="bar-label">{c.label}</span>
-                  <strong className={`bar-value ${c.val < 0 ? 'neg' : 'pos'}`}>
-                    {c.val > 0 ? '+' : ''}{c.val.toFixed(2)}
-                  </strong>
+          <div className="reward-breakdown-dual-grid">
+            <div className="reward-subcol">
+              <span className="reward-subcol-title">Incentives (+)</span>
+              {positiveRewards.map((c, idx) => (
+                <div key={idx} className="reward-bar-row">
+                  <div className="reward-bar-labels">
+                    <span className="bar-label">{c.label}</span>
+                    <strong className="bar-value pos">+{formatNum(c.val, 2)}</strong>
+                  </div>
+                  <div className="reward-track">
+                    <div
+                      className="reward-fill pos"
+                      style={{ width: `${Math.max(2, (Math.abs(c.val) / maxRewardMag) * 100)}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="reward-track">
-                  <div
-                    className={`reward-fill ${c.val < 0 ? 'neg' : 'pos'}`}
-                    style={{ width: `${Math.max(2, (Math.abs(c.val) / maxRewardMag) * 100)}%` }}
-                  />
+              ))}
+            </div>
+
+            <div className="reward-subcol">
+              <span className="reward-subcol-title">Architectural Penalties (-)</span>
+              {negativePenalties.map((c, idx) => (
+                <div key={idx} className="reward-bar-row">
+                  <div className="reward-bar-labels">
+                    <span className="bar-label">{c.label}</span>
+                    <strong className="bar-value neg">{formatNum(c.val, 2)}</strong>
+                  </div>
+                  <div className="reward-track">
+                    <div
+                      className="reward-fill neg"
+                      style={{ width: `${Math.max(2, (Math.abs(c.val) / maxRewardMag) * 100)}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
@@ -201,12 +253,12 @@ export const DiagnosticsDrawer = ({ onClose }) => {
             <span className="diag-section-title">Search & Runtime Health</span>
           </div>
           <dl className="diag-dl-grid">
-            <div><dt>Device</dt><dd>{device.toUpperCase()}</dd></div>
+            <div><dt>Device</dt><dd>{String(device).toUpperCase()}</dd></div>
             <div><dt>Native Engine</dt><dd>C Extension (Active)</dd></div>
-            <div><dt>Action Space |A|</dt><dd>{diagnostics.actionSpaceSize || 184}</dd></div>
+            <div><dt>Action Space |A|</dt><dd>{safeNum(diagnostics.actionSpaceSize, 184)}</dd></div>
             <div><dt>Shaft Stacking</dt><dd style={{ color: '#059669' }}>100% Aligned</dd></div>
             <div><dt>Memory Usage</dt><dd>142 MB</dd></div>
-            <div><dt>Parallel Batch</dt><dd>{metrics.parallelFloors || 9} floors</dd></div>
+            <div><dt>Parallel Batch</dt><dd>{safeNum(metrics.parallelFloors, 9)} floors</dd></div>
           </dl>
         </section>
 
@@ -217,11 +269,11 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           </div>
           <dl className="diag-dl-grid">
             <div><dt>Algorithm</dt><dd>PPO + PBRS</dd></div>
-            <div><dt>Critic Loss (L_V)</dt><dd>{diagnostics.criticLoss?.toFixed(4) || '0.0142'}</dd></div>
-            <div><dt>Policy Loss (L_π)</dt><dd>{diagnostics.policyLoss?.toFixed(4) || '-0.0089'}</dd></div>
-            <div><dt>Entropy Bonus</dt><dd>{diagnostics.entropy?.toFixed(3) || '1.842'}</dd></div>
+            <div><dt>Critic Loss (L_V)</dt><dd>{formatNum(diagnostics.criticLoss, 4, '0.0142')}</dd></div>
+            <div><dt>Policy Loss (L_π)</dt><dd>{formatNum(diagnostics.policyLoss, 4, '-0.0089')}</dd></div>
+            <div><dt>Entropy Bonus</dt><dd>{formatNum(diagnostics.entropy, 3, '1.842')}</dd></div>
             <div><dt>Learning Rate</dt><dd>0.003</dd></div>
-            <div><dt>Advantage (A)</dt><dd>{debugTelemetry.advantage?.toFixed(4) || '0.4120'}</dd></div>
+            <div><dt>Advantage (A)</dt><dd>{formatNum(debugTelemetry.advantage, 4, '0.4120')}</dd></div>
           </dl>
         </section>
 
@@ -234,18 +286,20 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           <div className="timing-breakdown-list">
             {timingKeys.map((t, idx) => {
               const item = timings[t.key] || { avg: 1.0, max: 2.0, count: 100 };
+              const avg = safeNum(item.avg, 1.0);
+              const max = safeNum(item.max, 2.0);
               return (
                 <div key={idx} className="timing-row">
                   <div className="timing-labels">
                     <span className="timing-label">{t.label}</span>
                     <strong className="timing-meta">
-                      {item.avg.toFixed(2)} ms avg · {item.max.toFixed(2)} ms max
+                      {avg.toFixed(2)} ms avg · {max.toFixed(2)} ms max
                     </strong>
                   </div>
                   <div className="timing-track">
                     <div
                       className="timing-fill"
-                      style={{ width: `${Math.max(2, (item.avg / maxTimingAvg) * 100)}%` }}
+                      style={{ width: `${Math.max(2, (avg / maxTimingAvg) * 100)}%` }}
                     />
                   </div>
                 </div>

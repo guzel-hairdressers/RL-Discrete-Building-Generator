@@ -5,6 +5,7 @@ import { PlanCanvas2D } from './components/PlanCanvas2D';
 import { BottomControlDeck } from './components/BottomControlDeck';
 import { ResetModal } from './components/ResetModal';
 import { CustomSiteModal } from './components/CustomSiteModal';
+import { CarouselNav } from './components/CarouselNav';
 import './App.css';
 
 export function App() {
@@ -19,10 +20,17 @@ export function App() {
   const setActiveBottomDrawer = useStore((s) => s.setActiveBottomDrawer);
   const activeBottomDrawer = useStore((s) => s.activeBottomDrawer);
 
-  // Initialize Connection
+  // Initialize Connection and optional autotrain for automated verification
   useEffect(() => {
     initWebSocket();
-  }, [initWebSocket]);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('autotrain') === '1') {
+      const timer = setTimeout(() => {
+        toggleTraining();
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [initWebSocket, toggleTraining]);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -40,26 +48,44 @@ export function App() {
         return;
       }
 
-      // If Cmd, Ctrl, or Alt is held, allow standard browser actions (Reload Cmd+R, Hard Reload Cmd+Shift+R, Save Cmd+S, etc.)
+      // If Cmd, Ctrl, or Alt is held, allow standard browser actions (Reload Cmd+R, Hard Reload Cmd+Shift+R, Save Cmd+S, DevTools, etc.)
       if (isCmdOrCtrl || e.altKey) {
         return;
       }
 
+      // Space: Toggle Training / Inference
       if (e.code === 'Space') {
         e.preventDefault();
         toggleTraining();
-      } else if (e.code === 'KeyN') {
-        e.preventDefault();
-        requestNewSite();
-      } else if (e.code === 'KeyM') {
-        e.preventDefault();
-        toggleMerging();
-      } else if (e.code === 'KeyR' && mode === 'training') {
+        return;
+      }
+
+      // 'r' or 'R': Reset Weights (Single key press without Cmd/Ctrl)
+      if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
         setResetConfirmOpen(true);
-      } else if (e.code === 'KeyS' && mode === 'training') {
+        return;
+      }
+
+      // 's' or 'S': Save Weights
+      if (e.key === 's' || e.key === 'S') {
         e.preventDefault();
         saveCheckpoint();
+        return;
+      }
+
+      // 'm' or 'M': Toggle Room Merging (BPE)
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMerging();
+        return;
+      }
+
+      // 'n' or 'N': Next Site Request
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        requestNewSite();
+        return;
       }
     };
 
@@ -71,9 +97,11 @@ export function App() {
     <div className="app-shell">
       <main className="stage">
         <div className={`stage-split-container ${maximizedPane ? `maximized-${maximizedPane}` : ''}`}>
-          {maximizedPane !== 'right' && <ThreeViewer />}
-          {maximizedPane !== 'left' && <PlanCanvas2D />}
+          <ThreeViewer />
+          <div className="stage-center-divider" />
+          <PlanCanvas2D />
         </div>
+        <CarouselNav />
       </main>
 
       {/* Unified Bottom Control Deck (Filters, Action Split Button, Metrics HUD, Reward Trend, Expandable Drawers) */}

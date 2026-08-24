@@ -1917,14 +1917,63 @@ def load_real_sites_dataset() -> dict:
         return _REAL_SITES_CACHE
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_path = os.path.join(base_dir, "data", "real_sites_dataset.json")
+    dataset = {"total_sites": 0, "by_tier": {}, "tier_index": {}, "sites": {}}
     if os.path.exists(data_path):
         try:
             with open(data_path, "r", encoding="utf-8") as f:
-                _REAL_SITES_CACHE = json.load(f)
-                return _REAL_SITES_CACHE
+                dataset = json.load(f)
         except Exception:
             pass
-    _REAL_SITES_CACHE = {"total_sites": 0, "by_tier": {}, "tier_index": {}, "sites": {}}
+
+    # Dynamically scan custom site HTML files to guarantee zero missing custom sites
+    sites_dict = dataset.setdefault("sites", {})
+    tier_index = dataset.setdefault("tier_index", {})
+    by_tier = dataset.setdefault("by_tier", {})
+
+    import glob
+    custom_htmls = glob.glob(os.path.join(base_dir, "frontend", "public", "sites", "custom_*.html"))
+    custom_htmls += glob.glob(os.path.join(base_dir, "frontend", "dist", "sites", "custom_*.html"))
+    for hpath in set(custom_htmls):
+        site_id = os.path.splitext(os.path.basename(hpath))[0]
+        if site_id not in sites_dict:
+            try:
+                with open(hpath, "r", encoding="utf-8") as f:
+                    html = f.read()
+                start = html.find("const DATA = {")
+                if start != -1:
+                    start += len("const DATA = ")
+                    end = html.find(";\n\n// --- Three.js Setup", start)
+                    if end == -1:
+                        end = html.find(";\n\n// --- Scene Setup", start)
+                    if end != -1:
+                        data = json.loads(html[start:end])
+                        perim = data.get("sitePerimeter", [])
+                        if len(perim) >= 3:
+                            tier = data.get("areaTier", "XL").upper()
+                            polygon = [{"x": round(p[0], 2), "y": round(p[1], 2)} for p in perim]
+                            sites_dict[site_id] = {
+                                "site_id": site_id,
+                                "area_tier": tier,
+                                "site_area_m2": data.get("siteArea", 0.0),
+                                "city": data.get("cityName", "Custom"),
+                                "city_code": "custom",
+                                "is_custom": True,
+                                "polygon": polygon,
+                                "buildings_count": len(data.get("buildings", [])),
+                                "target_far": data.get("metrics", {}).get("far", 2.5),
+                                "metrics": data.get("metrics", {}),
+                                "radius": data.get("radius", 100.0),
+                            }
+                            tier_index.setdefault(tier, []).append(site_id)
+            except Exception:
+                pass
+
+    dataset["total_sites"] = len(sites_dict)
+    for t in ("XS", "S", "M", "L", "XL"):
+        if t in tier_index:
+            by_tier[t] = len(tier_index[t])
+
+    _REAL_SITES_CACHE = dataset
     return _REAL_SITES_CACHE
 
 

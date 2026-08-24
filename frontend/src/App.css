@@ -12,9 +12,6 @@
   --text-main: #0f172a;
   --text-muted: #64748b;
   --border-light: #cbd5e1;
-  --accent-green: #10b981;
-  --accent-blue: #2563eb;
-  --accent-coral: #ee7258;
 }
 
 body, html, #root {
@@ -34,6 +31,7 @@ body, html, #root {
   height: 100vh;
   position: relative;
   background: #ffffff;
+  overflow: hidden;
 }
 
 /* Glassmorphic Panels */
@@ -45,78 +43,139 @@ body, html, #root {
   box-shadow: none !important;
 }
 
-/* Stage Split View (Instantaneous layout transition without stretch/flicker) */
+/* Stage Split View (GPU Hardware Accelerated 120fps Layering) */
 .stage {
-  flex: 1 1 auto;
-  width: 100%;
+  width: 100vw;
   height: 100vh;
   position: relative;
   overflow: hidden;
 }
 
 .stage-split-container {
-  display: flex;
-  width: 100%;
+  width: 100vw;
   height: 100%;
   position: relative;
+  overflow: hidden;
 }
 
+/* Stage Center Splitting Line: Dedicated GPU layer, silky translate3d */
+.stage-center-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: #cbd5e1;
+  z-index: 35;
+  pointer-events: none;
+  will-change: transform;
+  transform: translate3d(50vw, 0, 0);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stage-split-container.maximized-right .stage-center-divider {
+  transform: translate3d(0, 0, 0);
+}
+
+.stage-split-container.maximized-left .stage-center-divider {
+  transform: translate3d(100vw, 0, 0);
+}
+
+/* Left 3D Pane: ALWAYS 100vw full screen, static, zero resize, zero lag */
 .left-3d-pane {
-  flex: 1 1 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
   height: 100%;
-  position: relative;
-  border-right: 1px solid #cbd5e1;
   background: #ffffff;
   overflow: hidden;
-  transition: none !important;
+  z-index: 5;
+  pointer-events: auto;
 }
 
+/* 3D Viewport Iframe: Fixed 100vw x 100vh, smoothly glides between -25vw (split center) and 0 (max center) */
+.three-viewport-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  border: none;
+  display: block;
+  background: #ffffff;
+  will-change: transform;
+  transform: translate3d(-25vw, 0, 0);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stage-split-container.maximized-left .three-viewport-iframe {
+  transform: translate3d(0, 0, 0);
+}
+
+/* Right 2D Pane: Anchored at right: 0. In split view width: 50vw (covers right half). On 3D expand, collapses to width: 0 (slides off right). On 2D expand, grows to width: 100vw (covers whole screen). */
 .right-2d-pane {
-  flex: 1 1 50%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50vw;
   height: 100%;
-  position: relative;
   background: #ffffff;
   overflow: hidden;
-  transition: none !important;
-}
-
-.stage-split-container.maximized-left .left-3d-pane {
-  flex: 1 1 100% !important;
-  border-right: none;
+  z-index: 20;
+  will-change: width;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .stage-split-container.maximized-right .right-2d-pane {
-  flex: 1 1 100% !important;
+  width: 100vw;
+  z-index: 30;
+}
+
+.stage-split-container.maximized-left .right-2d-pane {
+  width: 0;
+  z-index: 10;
+  pointer-events: none;
 }
 
 /* Unified Top Right Toolbar Group (Axo | Persp | Expand) */
 .top-toolbar-group {
   position: absolute;
   top: 14px;
-  right: 14px;
+  right: calc(50vw + 14px);
   z-index: 30;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  padding: 2px 4px;
+  padding: 0 4px;
+  height: 28px;
   gap: 2px;
+  transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.stage-split-container.maximized-left .top-toolbar-group {
+  right: 14px;
+}
+
+/* Full-Height 100% Divider between Perspective and Expand */
 .toolbar-divider {
   width: 1px;
-  height: 16px;
+  height: 100%;
+  align-self: stretch;
   background: #cbd5e1;
   margin: 0 3px;
+  display: block;
 }
 
 .toolbar-expand-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 6px;
+  padding: 0 6px;
+  height: 100%;
 }
 
 /* Split-View Expand Button for 2D View */
@@ -135,13 +194,49 @@ body, html, #root {
   border-radius: 6px;
   color: #334155;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .pane-expand-btn:hover {
   background: #f8fafc;
   color: #0f172a;
   border-color: #94a3b8;
+}
+
+/* Site Change Carousel Navigation Arrows (Always visible and anchored to screen edges) */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.carousel-arrow:hover {
+  background: #ffffff;
+  border-color: #94a3b8;
+  color: #0f172a;
+  transform: translateY(-50%) scale(1.06);
+}
+
+.carousel-arrow.left-arrow {
+  left: 14px;
+}
+
+.carousel-arrow.right-arrow {
+  right: 14px;
 }
 
 /* Upper Left Site Info Card */
@@ -208,9 +303,14 @@ body, html, #root {
   font-size: 10px;
   font-weight: 600;
   color: #64748b;
-  padding: 3px 8px;
+  padding: 0 8px;
+  height: 24px;
   border-radius: 4px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
   transition: all 0.15s ease;
 }
 
@@ -233,6 +333,7 @@ body, html, #root {
 
 .bottom-deck-floating {
   pointer-events: auto;
+  position: relative;
   width: calc(100vw - 28px);
   max-width: 1420px;
   height: 138px;
@@ -264,12 +365,16 @@ body, html, #root {
   padding-left: 18px;
 }
 
-/* Full-Height Vertical Divider between halves */
+/* Absolute Full-Height Vertical Divider matching stage center */
 .deck-center-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
   width: 1px;
+  transform: translateX(-50%);
   height: 100%;
   background: #cbd5e1;
-  flex-shrink: 0;
 }
 
 .deck-subrow {
@@ -278,34 +383,17 @@ body, html, #root {
   width: 100%;
 }
 
+/* Spaced Out Action Buttons Row */
 .deck-row-actions {
   height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   gap: 6px;
 }
 
-.deck-row-filters {
-  height: 68px;
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 6px;
-}
-
-.deck-row-metrics {
-  height: 44px;
-  justify-content: space-between;
-}
-
-.deck-row-trend {
-  height: 68px;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 4px;
-}
-
-/* Split Button Clean (Pure White, Full-Height Separator) */
+/* Action Split Button */
 .split-btn-clean {
   display: inline-flex;
   align-items: center;
@@ -313,8 +401,9 @@ body, html, #root {
   border: 1px solid #cbd5e1;
   border-radius: 5px;
   height: 28px;
+  flex: 1.85 1 0;
+  min-width: 180px;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
 .split-side-btn {
@@ -323,11 +412,23 @@ body, html, #root {
   font-size: 10px;
   font-weight: 600;
   color: #0f172a;
-  padding: 0 8px;
+  padding: 0 4px;
   height: 100%;
   cursor: pointer;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
   transition: background 0.15s ease;
+}
+
+.split-side-btn:first-child {
+  flex: 1 1 0;
+}
+
+.split-side-btn:last-child {
+  flex: 1 1 0;
 }
 
 .split-side-btn:hover {
@@ -341,14 +442,16 @@ body, html, #root {
   flex-shrink: 0;
 }
 
+/* Pause Button */
 .btn-clean-pause {
   height: 28px;
-  padding: 0 12px;
-  background: #d97706;
+  flex: 1.8 1 0;
+  min-width: 175px;
+  background: #0f172a;
   color: #ffffff;
   font-size: 10px;
   font-weight: 700;
-  border: none;
+  border: 1px solid #0f172a;
   border-radius: 5px;
   cursor: pointer;
   display: flex;
@@ -357,9 +460,14 @@ body, html, #root {
   white-space: nowrap;
 }
 
+.btn-clean-pause:hover {
+  background: #1e293b;
+}
+
 .deck-btn-clean {
   height: 28px;
-  padding: 0 8px;
+  flex: 1 1 0;
+  padding: 0 4px;
   font-size: 10px;
   font-weight: 600;
   color: #0f172a;
@@ -369,6 +477,8 @@ body, html, #root {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   white-space: nowrap;
   transition: all 0.15s ease;
 }
@@ -386,18 +496,28 @@ body, html, #root {
   border-color: #0f172a !important;
 }
 
-/* Filters Clean & Breathable (Span full width) */
+/* Filters Row (Labels strictly at the top on a single baseline, inputs moved lower) */
+.deck-row-filters {
+  height: 68px;
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 6px;
+}
+
 .filter-group-clean {
   display: flex;
   flex-direction: column;
-  gap: 2px;
   flex-shrink: 0;
 }
 
 .filter-group-clean.flex-compact-slider {
   flex: 1 1 auto;
-  min-width: 130px;
-  max-width: 220px;
+  min-width: 120px;
+  max-width: 210px;
 }
 
 .filter-label-clean {
@@ -406,17 +526,23 @@ body, html, #root {
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  height: 12px;
+  line-height: 12px;
+  display: block;
 }
 
 .filter-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 12px;
+  line-height: 12px;
 }
 
 .filter-select-clean {
+  margin-top: 10px;
   height: 24px;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 600;
   color: #0f172a;
   background: #ffffff;
@@ -450,6 +576,7 @@ body, html, #root {
 }
 
 .dual-slider-compact {
+  margin-top: 10px;
   position: relative;
   width: 100%;
   height: 10px;
@@ -492,11 +619,12 @@ body, html, #root {
   font-size: 7.5px;
   font-weight: 600;
   color: #64748b;
-  margin-top: 1px;
+  margin-top: 4px;
 }
 
-/* Stacked Action Buttons (White default, inverted when active) */
+/* Stacked Action Buttons (Lowered to match inputs level) */
 .filter-buttons-stacked {
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -504,53 +632,48 @@ body, html, #root {
   flex-shrink: 0;
 }
 
-.btn-custom-clean {
-  font-size: 8.5px;
-  font-weight: 700;
-  padding: 1px 8px;
-  border-radius: 4px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #0f172a;
-  cursor: pointer;
-  white-space: nowrap;
-  height: 18px;
-  line-height: 14px;
-  transition: all 0.15s ease;
-}
-
-.btn-custom-clean:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-}
-
+.btn-custom-clean,
 .btn-reset-clean {
-  font-size: 8.5px;
-  font-weight: 700;
-  padding: 1px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 0 8px;
   border-radius: 4px;
   border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #0f172a;
   cursor: pointer;
   white-space: nowrap;
-  height: 18px;
-  line-height: 14px;
+  height: 22px;
+  line-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.15s ease;
 }
 
+.btn-custom-clean:hover,
 .btn-reset-clean:hover {
   background: #f8fafc;
   border-color: #94a3b8;
 }
 
-/* Metrics Clean & Clickable HUD */
+/* Equal-Width & Spaced-Out Metrics HUD (No hover darkening) */
+.deck-row-metrics {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
 .metric-box-clean {
   display: flex;
   flex-direction: column;
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition: all 0.15s ease;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0;
+  background: transparent !important;
 }
 
 .metric-box-clean.clickable-metric {
@@ -558,12 +681,7 @@ body, html, #root {
 }
 
 .metric-box-clean.clickable-metric:hover {
-  background: #f1f5f9;
-}
-
-.metric-box-clean.active-metric {
-  background: #f1f5f9;
-  border-bottom: 2px solid #0f172a;
+  background: transparent !important;
 }
 
 .metric-lbl {
@@ -574,7 +692,7 @@ body, html, #root {
 }
 
 .metric-num {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: #0f172a;
   line-height: 1.1;
@@ -656,7 +774,7 @@ body, html, #root {
   border-radius: 12px;
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
   padding: 14px 20px;
-  max-height: 52vh;
+  max-height: 58vh;
   overflow-y: auto;
   z-index: 95;
   pointer-events: auto;
@@ -840,12 +958,29 @@ body, html, #root {
   color: #0f172a;
 }
 
-.reward-breakdown-list {
+.reward-breakdown-dual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.reward-subcol {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 120px;
-  overflow-y: auto;
+  gap: 3px;
+}
+
+.reward-subcol-title {
+  font-size: 8px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 2px;
+  margin-bottom: 2px;
 }
 
 .reward-bar-row {
