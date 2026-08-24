@@ -17,7 +17,95 @@ export const DiagnosticsDrawer = ({ onClose }) => {
   const metrics = useStore((s) => s.metrics || {});
   const device = useStore((s) => s.device || 'cpu');
   const rewardHistory = useStore((s) => s.rewardHistory || []);
+  const phase = useStore((s) => s.phase || 'running');
+  const dictionary = useStore((s) => s.dictionary || []);
+  const mergedDictionary = useStore((s) => s.mergedDictionary || []);
+  const currentMergedPlacements = useStore((s) => s.currentMergedPlacements || []);
+  const completed3DPlacements = useStore((s) => s.completed3DPlacements || []);
+  const individualPlacementsList = useStore((s) => s.individualPlacementsList || []);
+  const setHoveredModuleId = useStore((s) => s.setHoveredModuleId);
   const canvasRef = useRef(null);
+
+  // SVG Thumbnail Renderer for Shapes in Diagnostics (Red for Cores, White for Rooms, Crisp Black Outlines)
+  const renderShapeSVG = (shape, size = 38) => {
+    const poly = shape.poly || shape.polygon || shape.coords || [];
+    const components = shape.components || [];
+
+    const allPts = [];
+    if (Array.isArray(components) && components.length > 0) {
+      components.forEach((c) => {
+        const cp = c.poly || c.polygon || c.coords || [];
+        if (Array.isArray(cp)) {
+          cp.forEach((p) => allPts.push({ x: Number(p.x ?? p[0] ?? 0), y: -Number(p.y ?? p[1] ?? 0) }));
+        }
+      });
+    } else if (Array.isArray(poly) && poly.length >= 3) {
+      poly.forEach((p) => allPts.push({ x: Number(p.x ?? p[0] ?? 0), y: -Number(p.y ?? p[1] ?? 0) }));
+    }
+
+    if (allPts.length < 3) {
+      return (
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shape-svg-preview">
+          <rect width={size} height={size} rx={4} fill="#f1f5f9" stroke="#cbd5e1" strokeWidth={1} />
+          <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#94a3b8" fontSize="10" fontFamily="sans-serif">?</text>
+        </svg>
+      );
+    }
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    allPts.forEach((p) => {
+      if (p.x < minX) minX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y > maxY) maxY = p.y;
+    });
+
+    const w = Math.max(0.1, maxX - minX);
+    const h = Math.max(0.1, maxY - minY);
+    const maxDim = Math.max(w, h);
+    const pad = 4;
+    const box = 40;
+    const scale = (box - pad * 2) / maxDim;
+    const ox = pad + (box - pad * 2 - w * scale) / 2 - minX * scale;
+    const oy = pad + (box - pad * 2 - h * scale) / 2 - minY * scale;
+
+    const toSvgPt = (p) => {
+      const px = Number(p.x ?? p[0] ?? 0);
+      const py = -Number(p.y ?? p[1] ?? 0);
+      return `${(px * scale + ox).toFixed(1)},${(py * scale + oy).toFixed(1)}`;
+    };
+
+    const isOuterCore = shape.category === 'core' || shape.isCore || (shape.id && String(shape.id).toLowerCase().includes('core'));
+
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${box} ${box}`} className="shape-svg-preview">
+        <rect width={box} height={box} rx={4} fill="#f8fafc" stroke="#e2e8f0" strokeWidth={1} />
+        {Array.isArray(components) && components.length > 1 ? (
+          <>
+            {components.map((comp, cIdx) => {
+              const cp = comp.poly || comp.polygon || comp.coords || [];
+              if (!Array.isArray(cp) || cp.length < 3) return null;
+              const isCompCore = comp.category === 'core' || comp.isCore || (comp.id && String(comp.id).toLowerCase().includes('core'));
+              const fill = isCompCore ? '#ff4d4d' : '#ffffff';
+              const pts = cp.map(toSvgPt).join(' ');
+              return <polygon key={cIdx} points={pts} fill={fill} stroke="#94a3b8" strokeWidth={0.8} strokeLinejoin="round" />;
+            })}
+            {Array.isArray(poly) && poly.length >= 3 && (
+              <polygon points={poly.map(toSvgPt).join(' ')} fill="none" stroke="#000000" strokeWidth={1.8} strokeLinejoin="round" />
+            )}
+          </>
+        ) : (
+          <polygon
+            points={poly.map(toSvgPt).join(' ')}
+            fill={isOuterCore ? '#ff4d4d' : '#ffffff'}
+            stroke="#000000"
+            strokeWidth={1.8}
+            strokeLinejoin="round"
+          />
+        )}
+      </svg>
+    );
+  };
 
   // Score History Canvas in Diagnostics
   useEffect(() => {
@@ -172,6 +260,85 @@ export const DiagnosticsDrawer = ({ onClose }) => {
 
   const maxTimingAvg = Math.max(0.1, ...timingKeys.map((t) => safeNum(timings[t.key]?.avg, 0.1)));
 
+  const isRunning = phase === 'running';
+
+  // Compute Display Shapes:
+  // - When running: Unmerged procedural dictionary (or raw placed shapes)
+  // - When paused / completed: Merged macro-polygons (with red cores preserved)
+  const displayShapes = (() => {
+    if (isRunning) {
+      if (Array.isArray(dictionary) && dictionary.length > 0) {
+        return dictionary.map((mod, idx) => ({
+          id: mod.id ?? `mod_${idx}`,
+          name: mod.name || `Primitive Module ${mod.id ?? idx + 1}`,
+          category: mod.category || 'room',
+          isCore: mod.category === 'core' || mod.isCore || (mod.id && String(mod.id).toLowerCase().includes('core')),
+          poly: mod.poly || mod.polygon || mod.coords,
+          area: safeNum(mod.area, 0),
+          uses: safeNum(mod.uses, 1),
+        }));
+      }
+      // Fallback: extract unique modules from individualPlacementsList
+      const map = new Map();
+      individualPlacementsList.forEach((p) => {
+        const id = p.module?.id || p.id;
+        if (id && !map.has(id)) {
+          map.set(id, {
+            id,
+            name: p.module?.name || `Module ${id}`,
+            category: p.category || p.module?.category || 'room',
+            isCore: p.isCore || p.category === 'core' || (p.id && String(p.id).toLowerCase().includes('core')),
+            poly: p.module?.poly || p.poly,
+            area: safeNum(p.area || p.module?.area, 0),
+            uses: 1,
+          });
+        } else if (id && map.has(id)) {
+          map.get(id).uses = (map.get(id).uses || 1) + 1;
+        }
+      });
+      return Array.from(map.values());
+    } else {
+      // Merged Shapes on pause or episode completion
+      if (Array.isArray(mergedDictionary) && mergedDictionary.length > 0) {
+        return mergedDictionary.map((mod, idx) => ({
+          id: mod.id ?? `merge_${idx}`,
+          name: mod.name || `Merged Macro ${mod.id ?? idx + 1}`,
+          category: mod.category || (mod.components?.some((c) => c.isCore || c.category === 'core') ? 'core' : 'room'),
+          isCore: mod.isCore || mod.components?.some((c) => c.isCore || c.category === 'core'),
+          poly: mod.poly || mod.polygon || mod.mergedPolygon,
+          components: mod.components,
+          area: safeNum(mod.area, 0),
+          uses: safeNum(mod.uses, 1),
+        }));
+      }
+
+      const sourcePlacements = (currentMergedPlacements && currentMergedPlacements.length > 0)
+        ? currentMergedPlacements
+        : ((completed3DPlacements && completed3DPlacements.length > 0) ? completed3DPlacements : individualPlacementsList);
+
+      const map = new Map();
+      sourcePlacements.forEach((p, idx) => {
+        const id = p.id || `shape_${idx}`;
+        if (!map.has(id)) {
+          const compCount = Array.isArray(p.components) ? p.components.length : 1;
+          map.set(id, {
+            id,
+            name: p.name || (compCount > 1 ? `Merged Macro (${compCount}x)` : `Module ${id}`),
+            category: p.category || (p.components?.some((c) => c.isCore || c.category === 'core') ? 'core' : 'room'),
+            isCore: p.isCore || p.components?.some((c) => c.isCore || c.category === 'core'),
+            poly: p.poly || p.polygon || p.mergedPolygon,
+            components: p.components,
+            area: safeNum(p.area, 0),
+            uses: 1,
+          });
+        } else {
+          map.get(id).uses = (map.get(id).uses || 1) + 1;
+        }
+      });
+      return Array.from(map.values());
+    }
+  })();
+
   return (
     <div className="expanded-bottom-drawer glass-panel diagnostics-drawer-full">
       <div className="drawer-header">
@@ -305,6 +472,61 @@ export const DiagnosticsDrawer = ({ onClose }) => {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        {/* Card 6: Procedural Shape Library (Merged on Pause / Episode End, Unmerged during Episode) */}
+        <section className="diag-v08-card diag-col-span-4 diag-shape-library-card">
+          <div className="diag-card-top">
+            <div className="diag-title-with-badge">
+              <span className="diag-section-title">Procedural Shape Library</span>
+              <span className={`diag-mode-pill ${isRunning ? 'unmerged' : 'merged'}`}>
+                {isRunning ? 'Primitive Dictionary (Live Episode)' : 'BPE Merged Shapes (Paused / Episode Done)'}
+              </span>
+            </div>
+            <span className="diag-badge-live">
+              {displayShapes.length} {displayShapes.length === 1 ? 'Shape' : 'Shapes'}
+            </span>
+          </div>
+
+          <div className="diag-shape-list-container">
+            {displayShapes.length === 0 ? (
+              <div className="diag-empty-shapes">Waiting for procedural dictionary generation...</div>
+            ) : (
+              <div className="diag-shape-grid">
+                {displayShapes.map((shape, idx) => {
+                  const isCore = shape.category === 'core' || shape.isCore || (shape.id && String(shape.id).toLowerCase().includes('core'));
+                  const compCount = Array.isArray(shape.components) ? shape.components.length : 1;
+                  return (
+                    <div
+                      key={shape.id || idx}
+                      className="diag-shape-item"
+                      onMouseEnter={() => setHoveredModuleId(shape.id)}
+                      onMouseLeave={() => setHoveredModuleId(null)}
+                    >
+                      <div className="diag-shape-swatch">
+                        {renderShapeSVG(shape, 40)}
+                      </div>
+                      <div className="diag-shape-meta">
+                        <div className="diag-shape-header">
+                          <span className="diag-shape-name" title={shape.name || String(shape.id)}>
+                            {shape.name || `Shape ${idx + 1}`}
+                          </span>
+                          <span className={`diag-shape-badge ${isCore ? 'core' : 'room'}`}>
+                            {isCore ? 'CORE' : 'ROOM'}
+                          </span>
+                        </div>
+                        <div className="diag-shape-details">
+                          <span>{shape.area ? `${Math.round(shape.area)} m²` : (shape.poly ? `${shape.poly.length}v` : '—')}</span>
+                          {compCount > 1 && <span className="diag-comp-tag">{compCount} parts</span>}
+                          {shape.uses && <span className="diag-uses-tag">x{shape.uses}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       </div>

@@ -774,7 +774,7 @@ body, html, #root {
   border-radius: 12px;
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
   padding: 14px 20px;
-  max-height: 58vh;
+  max-height: 75vh;
   overflow-y: auto;
   z-index: 95;
   pointer-events: auto;
@@ -1085,3 +1085,141 @@ body, html, #root {
   height: 100%;
   background: #3b82f6;
 }
+
+/* Procedural Shape Library in Diagnostics Drawer */
+.diag-col-span-4 {
+  grid-column: span 4;
+}
+
+.diag-title-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diag-mode-pill {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diag-mode-pill.unmerged {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.diag-mode-pill.merged {
+  background: #fdf2f8;
+  color: #db2777;
+  border: 1px solid #fbcfe8;
+}
+
+.diag-shape-list-container {
+  max-height: 190px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.diag-shape-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.diag-shape-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.diag-shape-item:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.diag-shape-swatch {
+  flex-shrink: 0;
+}
+
+.diag-shape-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.diag-shape-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.diag-shape-name {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diag-shape-badge {
+  font-size: 7.5px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+}
+
+.diag-shape-badge.core {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+
+.diag-shape-badge.room {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.diag-shape-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.diag-comp-tag {
+  color: #8b5cf6;
+  font-weight: 700;
+}
+
+.diag-uses-tag {
+  color: #059669;
+  font-weight: 700;
+}
+
+.diag-empty-shapes {
+  font-size: 9.5px;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 12px;
+  text-align: center;
+}
+
