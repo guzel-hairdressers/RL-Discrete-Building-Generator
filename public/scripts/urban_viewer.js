@@ -400,6 +400,8 @@ export function initUrbanContext(DATA) {
     const numTris = vertexCount / 3;
     const colors = new Float32Array(vertexCount * 3);
 
+    const sunFacingPositions = [];
+
     for (let ti = 0; ti < numTris; ti++) {
       const idx0 = ti * 3;
       const idx1 = ti * 3 + 1;
@@ -423,6 +425,10 @@ export function initUrbanContext(DATA) {
         colors[vidx * 3 + 1] = c.g;
         colors[vidx * 3 + 2] = c.b;
       }
+
+      if (isSunFacing) {
+        sunFacingPositions.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+      }
     }
 
     geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
@@ -434,7 +440,6 @@ export function initUrbanContext(DATA) {
       opacity: 0.95,
     });
     const baseMesh = new THREE.Mesh(geom, defaultParcelMaterial);
-    baseMesh.receiveShadow = true;
     baseMesh.userData = {
       isSite: true,
       area: DATA.siteArea || 0,
@@ -448,6 +453,17 @@ export function initUrbanContext(DATA) {
     };
     siteGroup.add(baseMesh);
     interactiveObjects.push(baseMesh);
+
+    // Soft architectural shadow receiver overlay (cast by surrounding buildings onto the parcel)
+    if (sunFacingPositions.length > 0) {
+      const sunGeom = new THREE.BufferGeometry();
+      sunGeom.setAttribute('position', new THREE.Float32BufferAttribute(sunFacingPositions, 3));
+      sunGeom.computeVertexNormals();
+
+      const parcelShadowOverlay = new THREE.Mesh(sunGeom, sharedShadowMat);
+      parcelShadowOverlay.receiveShadow = true;
+      siteGroup.add(parcelShadowOverlay);
+    }
 
     if (outPts.length >= 3) {
       const siteLineGeom = new THREE.BufferGeometry().setFromPoints(outPts);
