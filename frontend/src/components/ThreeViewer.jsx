@@ -57,14 +57,14 @@ export const ThreeViewer = () => {
   const configureIframe = useCallback((iframe) => {
     if (!iframe || !iframe.contentWindow) return;
 
-    const isRunning = phase === 'running';
-    const effectiveList = (isRunning || disableMerging)
-      ? individualPlacementsList
-      : ((currentMergedPlacements && currentMergedPlacements.length > 0)
-          ? currentMergedPlacements
-          : ((completed3DPlacements && completed3DPlacements.length > 0)
-              ? completed3DPlacements
-              : individualPlacementsList));
+    // On the 3D left viewport: only show merged intermediate state on pause or completion
+    if (phase === 'running') return;
+
+    const effectiveList = (!disableMerging && currentMergedPlacements && currentMergedPlacements.length > 0)
+      ? currentMergedPlacements
+      : ((completed3DPlacements && completed3DPlacements.length > 0)
+          ? completed3DPlacements
+          : []);
 
     iframe.contentWindow.postMessage({
       type: 'optimizer_placements',
@@ -176,41 +176,8 @@ export const ThreeViewer = () => {
 
   // Sync 3D Building Extrusions from Optimizer into the Active Scene
   useEffect(() => {
-    const iframe = activeIframeRef.current;
-    if (!iframe || !iframe.contentWindow) return;
-
-    const isRunning = phase === 'running';
-    const effectiveList = (isRunning || disableMerging)
-      ? individualPlacementsList
-      : ((currentMergedPlacements && currentMergedPlacements.length > 0)
-          ? currentMergedPlacements
-          : ((completed3DPlacements && completed3DPlacements.length > 0)
-              ? completed3DPlacements
-              : individualPlacementsList));
-
-    iframe.contentWindow.postMessage({
-      type: 'optimizer_placements',
-      placements: effectiveList,
-      boundaries: boundaries,
-      colorTheme: {
-        core: '#ffcccc',
-        coreShadow: '#ff9999',
-        room: '#ffffff',
-        roomShadow: '#e2e8f0',
-        corridor: '#ffffff',
-        corridorShadow: '#e2e8f0',
-        special: '#ffffff',
-        specialShadow: '#e2e8f0',
-        edge: '#000000',
-      },
-    }, '*');
-
-    const isReal = settings.boundaryType === 'real';
-    iframe.contentWindow.postMessage({
-      type: 'set_context_visibility',
-      visible: isReal,
-    }, '*');
-  }, [completed3DPlacements, currentMergedPlacements, individualPlacementsList, disableMerging, phase, boundaries, activeSite?.site_id, settings.boundaryType]);
+    configureIframe(activeIframeRef.current);
+  }, [completed3DPlacements, currentMergedPlacements, individualPlacementsList, disableMerging, phase, boundaries, activeSite?.site_id, settings.boundaryType, configureIframe]);
 
   const handleActiveIframeLoad = () => {
     configureIframe(activeIframeRef.current);

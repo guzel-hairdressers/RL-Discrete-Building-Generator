@@ -136,7 +136,7 @@ export const PlanCanvas2D = () => {
       ctx.beginPath();
       outer.forEach((p, pIdx) => {
         const px = Number(p.x ?? p[0] ?? 0);
-        const py = Number(p.y ?? p[1] ?? 0);
+        const py = -Number(p.y ?? p[1] ?? 0);
         if (pIdx === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       });
@@ -158,11 +158,11 @@ export const PlanCanvas2D = () => {
       ctx.textBaseline = 'top';
 
       const minX = Math.min(...outer.map(p => Number(p.x ?? p[0] ?? 0)));
-      const maxY = Math.max(...outer.map(p => Number(p.y ?? p[1] ?? 0)));
+      const maxY = Math.max(...outer.map(p => -Number(p.y ?? p[1] ?? 0)));
       ctx.fillText(floorLabel, minX, maxY + 2.5 / zoom);
     });
 
-    // 2. Draw Placed Building Modules (Red Core, Blue Normal Blocks, Black Outlines)
+    // 2. Draw Placed Building Modules (Red Core, White Normal Blocks, Black Outlines)
     const isRunning = phase === 'running';
     const effectivePlacements = (isRunning || disableMerging)
       ? individualPlacementsList
@@ -177,7 +177,7 @@ export const PlanCanvas2D = () => {
       const components = placement.components;
 
       if (Array.isArray(components) && components.length > 1) {
-        // 1. Fill each constituent sub-component with its true color (Red for Core, Blue for Room)
+        // 1. Fill each constituent sub-component with its true color (Red for Core, White for Room)
         components.forEach((comp) => {
           const cPoly = comp.poly || comp.polygon || comp.coords;
           if (!Array.isArray(cPoly) || cPoly.length < 3) return;
@@ -188,7 +188,7 @@ export const PlanCanvas2D = () => {
           ctx.beginPath();
           cPoly.forEach((p, pIdx) => {
             const px = Number(p.x ?? p[0] ?? 0);
-            const py = Number(p.y ?? p[1] ?? 0);
+            const py = -Number(p.y ?? p[1] ?? 0);
             if (pIdx === 0) ctx.moveTo(px, py);
             else ctx.lineTo(px, py);
           });
@@ -203,7 +203,7 @@ export const PlanCanvas2D = () => {
           ctx.beginPath();
           outerPoly.forEach((p, pIdx) => {
             const px = Number(p.x ?? p[0] ?? 0);
-            const py = Number(p.y ?? p[1] ?? 0);
+            const py = -Number(p.y ?? p[1] ?? 0);
             if (pIdx === 0) ctx.moveTo(px, py);
             else ctx.lineTo(px, py);
           });
@@ -225,7 +225,7 @@ export const PlanCanvas2D = () => {
         ctx.beginPath();
         poly.forEach((p, pIdx) => {
           const px = Number(p.x ?? p[0] ?? 0);
-          const py = Number(p.y ?? p[1] ?? 0);
+          const py = -Number(p.y ?? p[1] ?? 0);
           if (pIdx === 0) ctx.moveTo(px, py);
           else ctx.lineTo(px, py);
         });
@@ -264,7 +264,7 @@ export const PlanCanvas2D = () => {
       const outer = b.outer || [];
       outer.forEach((p) => {
         const px = Number(p.x ?? p[0] ?? 0);
-        const py = Number(p.y ?? p[1] ?? 0);
+        const py = -Number(p.y ?? p[1] ?? 0);
         if (px < minX) minX = px;
         if (py < minY) minY = py;
         if (px > maxX) maxX = px;
