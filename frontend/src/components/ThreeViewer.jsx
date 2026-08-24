@@ -67,14 +67,22 @@ export const ThreeViewer = () => {
               : []));
 
     const isReal = settings.boundaryType === 'real';
-    const currentBoundaryPoly = (!isReal && Array.isArray(boundaries) && boundaries.length > 0 && boundaries[0].polygon)
-      ? boundaries[0].polygon
+    const firstBoundary = Array.isArray(boundaries) && boundaries.length > 0 ? boundaries[0] : null;
+    const currentBoundaryPoly = (!isReal && firstBoundary)
+      ? (firstBoundary.outer || firstBoundary.polygon || firstBoundary.coords || null)
       : null;
+    const boundaryOffset = firstBoundary ? {
+      dx: Number(firstBoundary?.offset?.x || 0),
+      dy: Number(firstBoundary?.offset?.y || 0),
+      ox: Number(firstBoundary?.originOffset?.x || 0),
+      oy: Number(firstBoundary?.originOffset?.y || 0),
+    } : null;
 
     iframe.contentWindow.postMessage({
       type: 'set_context_visibility',
       visible: isReal,
       customPolygon: currentBoundaryPoly,
+      boundaryOffset: boundaryOffset,
     }, '*');
 
     iframe.contentWindow.postMessage({

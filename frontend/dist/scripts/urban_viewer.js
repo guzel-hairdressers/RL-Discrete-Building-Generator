@@ -342,7 +342,7 @@ export function initUrbanContext(DATA) {
 
   let defaultParcelMaterial = null;
 
-  function renderSiteParcel(customPolygon) {
+  function renderSiteParcel(customPolygon, boundaryOffset) {
     while (siteGroup.children.length > 0) {
       const child = siteGroup.children.pop();
       if (child.geometry) child.geometry.dispose();
@@ -358,17 +358,34 @@ export function initUrbanContext(DATA) {
     let outPts = [];
 
     if (customPolygon && Array.isArray(customPolygon) && customPolygon.length >= 3) {
+      const dx = Number(boundaryOffset?.dx || 0);
+      const dy = Number(boundaryOffset?.dy || 0);
+      const ox = Number(boundaryOffset?.ox || 0);
+      const oy = Number(boundaryOffset?.oy || 0);
+
       const shape = new THREE.Shape();
       customPolygon.forEach((p, idx) => {
         const px = Number(p.x ?? p[0] ?? 0);
         const py = Number(p.y ?? p[1] ?? 0);
-        if (idx === 0) shape.moveTo(px, py);
-        else shape.lineTo(px, py);
+        const localX = px - dx;
+        const localY = py - dy;
+        const x3d = localX + ox;
+        const y3d = localY + oy;
+        if (idx === 0) shape.moveTo(x3d, y3d);
+        else shape.lineTo(x3d, y3d);
       });
       const extruded = new THREE.ExtrudeGeometry(shape, { depth: 0.20, bevelEnabled: false });
       extruded.rotateX(-Math.PI / 2);
       geom = extruded.toNonIndexed();
-      outPts = customPolygon.map((p) => new THREE.Vector3(Number(p.x ?? p[0] ?? 0), 0.26, -Number(p.y ?? p[1] ?? 0)));
+      outPts = customPolygon.map((p) => {
+        const px = Number(p.x ?? p[0] ?? 0);
+        const py = Number(p.y ?? p[1] ?? 0);
+        const localX = px - dx;
+        const localY = py - dy;
+        const x3d = localX + ox;
+        const y3d = localY + oy;
+        return new THREE.Vector3(x3d, 0.26, -y3d);
+      });
       outPts.push(outPts[0].clone());
     } else if (DATA.site && DATA.site.vertices && DATA.site.faces) {
       const numTriangles = DATA.site.faces.length;
@@ -482,9 +499,9 @@ export function initUrbanContext(DATA) {
       const isVisible = event.data.visible !== false;
       contextGroup.visible = isVisible;
       if (!isVisible && event.data.customPolygon) {
-        renderSiteParcel(event.data.customPolygon);
+        renderSiteParcel(event.data.customPolygon, event.data.boundaryOffset);
       } else if (isVisible) {
-        renderSiteParcel(null);
+        renderSiteParcel(null, null);
       }
       return;
     }
@@ -496,10 +513,19 @@ export function initUrbanContext(DATA) {
 
     if (event.data.type !== 'optimizer_placements') return;
     const { placements, boundaries, isReal } = event.data;
-    if (isReal === false && Array.isArray(boundaries) && boundaries.length > 0 && boundaries[0].polygon) {
-      renderSiteParcel(boundaries[0].polygon);
+    if (isReal === false && Array.isArray(boundaries) && boundaries.length > 0) {
+      const b0 = boundaries[0];
+      const poly = b0.outer || b0.polygon || b0.coords;
+      if (poly) {
+        renderSiteParcel(poly, {
+          dx: Number(b0?.offset?.x || 0),
+          dy: Number(b0?.offset?.y || 0),
+          ox: Number(b0?.originOffset?.x || 0),
+          oy: Number(b0?.originOffset?.y || 0),
+        });
+      }
     } else if (isReal === true) {
-      renderSiteParcel(null);
+      renderSiteParcel(null, null);
     }
     while (optimizerGroup.children.length > 0) {
       const child = optimizerGroup.children.pop();
