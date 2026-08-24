@@ -355,12 +355,15 @@ export const useStore = create((set, get) => ({
 
   // Execution Control: Split Training / Inference & Pause
   startTraining: () => {
-    set({
+    set((state) => ({
       mode: 'training',
       trainingWanted: true,
       phase: 'running',
+      individualPlacementsList: (state.step === 0 || state.phase === 'complete') ? [] : state.individualPlacementsList,
+      currentMergedPlacements: [],
+      completed3DPlacements: [],
       statusMessage: 'Training policy active',
-    });
+    }));
     get().sendCommand({ cmd: 'setMode', mode: 'training' });
     get().sendCommand({
       cmd: 'step',
@@ -599,6 +602,7 @@ export const useStore = create((set, get) => ({
           step: 0,
           individualPlacementsList: [],
           currentMergedPlacements: [],
+          completed3DPlacements: [],
           phase: 'running',
         });
         setTimeout(() => {
