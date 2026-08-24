@@ -333,57 +333,102 @@ export function initUrbanContext(DATA) {
   scene.add(contextGroup);
 
   // Testing Site Parcel
-  if (DATA.site && DATA.site.vertices && DATA.site.faces) {
-    const siteGroup = new THREE.Group();
-    const siteFaceColor = 0xffcccc; // 90% Lightness Soft Red // Soft Coral Red
+  const siteGroup = new THREE.Group();
+  siteGroup.name = "testingSiteParcel";
+  scene.add(siteGroup);
 
-    const geom = new THREE.BufferGeometry();
-    const pos = new Float32Array(DATA.site.faces.length * 9);
-    for (let fi = 0; fi < DATA.site.faces.length; fi++) {
-      const f = DATA.site.faces[fi];
-      for (let vi = 0; vi < 3; vi++) {
-        const v = DATA.site.vertices[f[vi]];
-        pos[fi * 9 + vi * 3 + 0] = v[0];
-        pos[fi * 9 + vi * 3 + 1] = v[2];
-        pos[fi * 9 + vi * 3 + 2] = -v[1];
+  const siteFaceColor = 0xfca5a5; // Soft Coral Red
+
+  function renderSiteParcel(customPolygon) {
+    while (siteGroup.children.length > 0) {
+      const child = siteGroup.children.pop();
+      if (child.geometry) child.geometry.dispose();
+    }
+
+    // Remove from interactiveObjects
+    for (let i = interactiveObjects.length - 1; i >= 0; i--) {
+      if (interactiveObjects[i].userData && interactiveObjects[i].userData.isSite) {
+        interactiveObjects.splice(i, 1);
       }
     }
-    geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    geom.computeVertexNormals();
 
-    const baseMat = new THREE.MeshLambertMaterial({
-      color: new THREE.Color(siteFaceColor),
-      emissive: new THREE.Color(siteFaceColor).multiplyScalar(0.70),
-      transparent: true,
-      opacity: 0.95,
-    });
-    const baseMesh = new THREE.Mesh(geom, baseMat);
-    baseMesh.receiveShadow = true;
-    baseMesh.userData = {
-      isSite: true,
-      area: DATA.siteArea,
-      tier: DATA.areaTier,
-      far: DATA.metrics?.far,
-      bldgs: DATA.metrics?.buildingCount,
-      maxHeight: DATA.metrics?.maxHeight,
-      avgHeight: DATA.metrics?.avgHeight,
-      maxFloors: DATA.metrics?.maxFloors,
-      avgFloors: DATA.metrics?.avgFloors,
-    };
-    siteGroup.add(baseMesh);
-    interactiveObjects.push(baseMesh);
+    if (customPolygon && Array.isArray(customPolygon) && customPolygon.length >= 3) {
+      const shape = new THREE.Shape();
+      customPolygon.forEach((p, idx) => {
+        const px = Number(p.x ?? p[0] ?? 0);
+        const py = Number(p.y ?? p[1] ?? 0);
+        if (idx === 0) shape.moveTo(px, py);
+        else shape.lineTo(px, py);
+      });
 
-    // Site Perimeter Boundary Line (Solid Red Line)
-    if (DATA.sitePerimeter && DATA.sitePerimeter.length >= 3) {
-      const outPts = DATA.sitePerimeter.map((p) => new THREE.Vector3(p[0], 0.26, -p[1]));
+      const geom = new THREE.ExtrudeGeometry(shape, { depth: 0.20, bevelEnabled: false });
+      geom.rotateX(-Math.PI / 2);
+
+      const baseMat = new THREE.MeshLambertMaterial({
+        color: new THREE.Color(siteFaceColor),
+        emissive: new THREE.Color(siteFaceColor).multiplyScalar(0.55),
+        transparent: true,
+        opacity: 0.92,
+      });
+      const baseMesh = new THREE.Mesh(geom, baseMat);
+      baseMesh.receiveShadow = true;
+      baseMesh.userData = { isSite: true, area: DATA.siteArea || 0 };
+      siteGroup.add(baseMesh);
+      interactiveObjects.push(baseMesh);
+
+      const outPts = customPolygon.map((p) => new THREE.Vector3(Number(p.x ?? p[0] ?? 0), 0.26, -Number(p.y ?? p[1] ?? 0)));
       outPts.push(outPts[0].clone());
       const siteLineGeom = new THREE.BufferGeometry().setFromPoints(outPts);
       const siteLineMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2.5 });
       siteGroup.add(new THREE.Line(siteLineGeom, siteLineMat));
-    }
+    } else if (DATA.site && DATA.site.vertices && DATA.site.faces) {
+      const geom = new THREE.BufferGeometry();
+      const pos = new Float32Array(DATA.site.faces.length * 9);
+      for (let fi = 0; fi < DATA.site.faces.length; fi++) {
+        const f = DATA.site.faces[fi];
+        for (let vi = 0; vi < 3; vi++) {
+          const v = DATA.site.vertices[f[vi]];
+          pos[fi * 9 + vi * 3 + 0] = v[0];
+          pos[fi * 9 + vi * 3 + 1] = v[2];
+          pos[fi * 9 + vi * 3 + 2] = -v[1];
+        }
+      }
+      geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geom.computeVertexNormals();
 
-    scene.add(siteGroup);
+      const baseMat = new THREE.MeshLambertMaterial({
+        color: new THREE.Color(siteFaceColor),
+        emissive: new THREE.Color(siteFaceColor).multiplyScalar(0.55),
+        transparent: true,
+        opacity: 0.92,
+      });
+      const baseMesh = new THREE.Mesh(geom, baseMat);
+      baseMesh.receiveShadow = true;
+      baseMesh.userData = {
+        isSite: true,
+        area: DATA.siteArea,
+        tier: DATA.areaTier,
+        far: DATA.metrics?.far,
+        bldgs: DATA.metrics?.buildingCount,
+        maxHeight: DATA.metrics?.maxHeight,
+        avgHeight: DATA.metrics?.avgHeight,
+        maxFloors: DATA.metrics?.maxFloors,
+        avgFloors: DATA.metrics?.avgFloors,
+      };
+      siteGroup.add(baseMesh);
+      interactiveObjects.push(baseMesh);
+
+      if (DATA.sitePerimeter && DATA.sitePerimeter.length >= 3) {
+        const outPts = DATA.sitePerimeter.map((p) => new THREE.Vector3(p[0], 0.26, -p[1]));
+        outPts.push(outPts[0].clone());
+        const siteLineGeom = new THREE.BufferGeometry().setFromPoints(outPts);
+        const siteLineMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2.5 });
+        siteGroup.add(new THREE.Line(siteLineGeom, siteLineMat));
+      }
+    }
   }
+
+  renderSiteParcel(null);
 
   // Handle Optimizer Placements and UI Messages
   window.addEventListener('message', (event) => {
@@ -392,6 +437,11 @@ export function initUrbanContext(DATA) {
     if (event.data.type === 'set_context_visibility') {
       const isVisible = event.data.visible !== false;
       contextGroup.visible = isVisible;
+      if (!isVisible && event.data.customPolygon) {
+        renderSiteParcel(event.data.customPolygon);
+      } else if (isVisible) {
+        renderSiteParcel(null);
+      }
       return;
     }
 
@@ -401,7 +451,12 @@ export function initUrbanContext(DATA) {
     }
 
     if (event.data.type !== 'optimizer_placements') return;
-    const { placements, boundaries } = event.data;
+    const { placements, boundaries, isReal } = event.data;
+    if (isReal === false && Array.isArray(boundaries) && boundaries.length > 0 && boundaries[0].polygon) {
+      renderSiteParcel(boundaries[0].polygon);
+    } else if (isReal === true) {
+      renderSiteParcel(null);
+    }
     while (optimizerGroup.children.length > 0) {
       const child = optimizerGroup.children.pop();
       if (child.geometry) child.geometry.dispose();
@@ -710,12 +765,7 @@ export function initUrbanContext(DATA) {
     const hits = raycaster.intersectObjects(interactiveObjects);
 
     if (hoveredObj) {
-      if (hoveredObj.userData.isSite) {
-        hoveredObj.material.color.setHex(0xffcccc);
-        hoveredObj.material.emissive.set(new THREE.Color(0xffcccc).multiplyScalar(0.55));
-      } else {
-        hoveredObj.material.color.setHex(0xffffff);
-      }
+      hoveredObj.material.color.setHex(hoveredObj.userData.isSite ? 0xfca5a5 : 0xffffff);
       hoveredObj = null;
     }
 
@@ -725,8 +775,7 @@ export function initUrbanContext(DATA) {
 
       if (tooltip) {
         if (obj.userData.isSite) {
-          obj.material.color.setHex(0xff9999);
-          obj.material.emissive.set(new THREE.Color(0xff9999).multiplyScalar(0.70));
+          obj.material.color.setHex(0xf87171);
           tooltip.style.display = 'block';
           tooltip.style.left = (e.clientX + 14) + 'px';
           tooltip.style.top = (e.clientY + 14) + 'px';

@@ -66,10 +66,22 @@ export const ThreeViewer = () => {
               ? currentMergedPlacements
               : []));
 
+    const isReal = settings.boundaryType === 'real';
+    const currentBoundaryPoly = (!isReal && Array.isArray(boundaries) && boundaries.length > 0 && boundaries[0].polygon)
+      ? boundaries[0].polygon
+      : null;
+
+    iframe.contentWindow.postMessage({
+      type: 'set_context_visibility',
+      visible: isReal,
+      customPolygon: currentBoundaryPoly,
+    }, '*');
+
     iframe.contentWindow.postMessage({
       type: 'optimizer_placements',
       placements: effectiveList,
       boundaries: boundaries,
+      isReal: isReal,
       colorTheme: {
         core: '#ffcccc',
         coreShadow: '#ff9999',
@@ -81,11 +93,6 @@ export const ThreeViewer = () => {
         specialShadow: '#e2e8f0',
         edge: '#000000',
       },
-    }, '*');
-
-    iframe.contentWindow.postMessage({
-      type: 'set_context_visibility',
-      visible: true,
     }, '*');
 
     try {
