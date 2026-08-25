@@ -847,3 +847,26 @@ int polygon_inside_site_translated_c(
     return result;
 }
 
+/* Batch broad phase: does `poly` overlap ANY of `placed_count` polygons laid
+ * out back-to-back in `placed_flat`?  Collapses N per-pair ctypes round-trips
+ * into one native call and lets the tight loop stay in C.  Returns 1 on the
+ * first overlap (early exit), 0 if none overlap. */
+int polygons_overlap_any_c(
+    const Point* poly,
+    int count,
+    const Point* placed_flat,
+    const int* placed_counts,
+    int placed_count
+) {
+    if (count < 3) return 0;
+    for (int index = 0; index < placed_count; ++index) {
+        int placed_n = placed_counts[index];
+        if (placed_n >= 3
+            && polygons_overlap_c(poly, count, placed_flat, placed_n)) {
+            return 1;
+        }
+        placed_flat += placed_n;
+    }
+    return 0;
+}
+

@@ -215,6 +215,13 @@ These three proposals define a *separate* algorithm version. They are explicitly
   - *One-shot graph generation* (a GNN / graph-transformer emits the whole adjacency matrix conditioned on the site) — fewer steps but harder credit assignment.
   - *Graph grammar (split-and-merge)*: start from one cell, repeatedly split cells (recursive subdivision) or merge neighbors — naturally produces hierarchical, self-similar patterns.
 
+* **Native arbitrary angles & continuous placement**:
+  Because topology-stage vertices are abstract points (no polygons yet), vertex placement is **not** restricted to a discrete anchor/rotation palette. Two action-space options:
+  - *Continuous regression*: the policy outputs a Gaussian over each vertex's $(x, y)$ position (and optionally orientation) directly — natively arbitrary angles and free placement, with no categorical candidate enumeration. This is what lets the graph-first approach escape the fixed `angleStep` rotation grid of the current polygon placer.
+  - *Discrete categorical over sampled vertices*: keep the familiar categorical action, but over a cheap sample of candidate vertex positions (frontier / void / centroid proposals) — retains hard validity masking and lower-variance training.
+
+  **Which is better is an open empirical question.** Continuous Gaussian policies are harder to train (higher variance, entropy/scale tuning), whereas categorical-over-candidates gives hard validity guarantees and stable gradients. The choice should be an A/B benchmark of *regression vs categorical* on both training stability and final plan quality — regression is **not** assumed to win. This is distinct from PROP-08: that proposal rejected continuous $(x,y,\theta)$ for the *polygon* placer because $>99\%$ of random points collide, but that objection disappears here — there are no polygons to collide during topology construction, and geometry (Voronoi) is deferred to the end.
+
 * **Reward for "repeating patterns" (the crux)** — candidate definitions:
   - (a) subgraph-isomorphism / automorphism counts over the growing graph,
   - (b) a compression objective (MDL / BPE merge size — reuse the existing `graph.bpe_merge`),

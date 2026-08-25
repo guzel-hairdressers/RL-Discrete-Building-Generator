@@ -68,3 +68,21 @@ Evaluated under official user settings (`siteAreaTier="ANY"`, `boundaryType="fre
 **Findings**:
 - **Speed**: Throughput is essentially invariant to buffer size (~767 to 786 ms/ep) because mini-batch PPO execution takes <15ms per update.
 - **Convergence Rate**: Buffer = 1 performs 500 gradient update steps (vs 125 for Buffer=4 and 62 for Buffer=8), achieving faster and higher convergence (+24.55 pts).
+
+---
+
+## Headless / Visuals-Off Benchmark (v0.9.0-alpha, 2026-08-25)
+
+Acceptance test for the browser+server visuals toggle (`visuals_enabled` flag, `setVisuals`/`getState` WS commands). Two isolated runs (`visuals_enabled=True` vs `False`) of the same fixed-seed config (`seed=42`, `siteAreaTier=ANY`, `boundaryType=mixed`, 4 parallel envs, 120 modules, `PYTHONHASHSEED=0`), 120 episodes each. Run: `PYTHONPATH=src python3 benchmarks/benchmark_visuals_off.py --episodes 120`
+
+| Metric | visuals ON | visuals OFF | Delta | Verdict |
+| :--- | :---: | :---: | :---: | :---: |
+| **Result identity** | — | — | **bit-identical** (120 ep × 6 fields) | PASS |
+| Mean event payload (serialized) | 16.99 KB | 7.12 KB | **−58.1%** | PASS |
+| JSON serialization time | 0.459 s | 0.187 s | **−59.2%** | PASS |
+| Median episode time | 0.395 s | 0.387 s | 1.03× faster | PASS (±5% noise) |
+| Peak RSS | 1025.3 MB | 1026.7 MB | +1.4 MB (noise) | PASS (±10% noise) |
+
+**Honest conclusion**: generation stays **bit-identical** when visuals are off (display-only formatting consumes no seeded RNG). The server-side savings are real but modest (serialization −59%, shipped payload −58%) because display formatting is only a few ms/episode. The **dominant wall-clock win is client-side** — the browser stops rebuilding `ExtrudeGeometry` + shadow-mapped renders every step — which an in-process benchmark cannot see but appears in the live UI. Peak RSS is process-noise dominated (PyTorch/geometry caches); the dropped per-episode lists are small relative to that.
+
+**Client-side wiring (React)**: the toggle is implemented in the **live React + Vite app** (`frontend/` → served as `frontend/dist`), not the legacy `public/`. `urban_viewer.js` freezes the `renderer.render` loop + geometry rebuild on `set_visuals_enabled`; the store's `setVisualsEnabled` flips the flag and re-syncs via `getState`. End-to-end WebSocket contract verified against the running server: a live step while visuals-OFF ships `placements=[]`/`mergedPlacements=[]` but keeps `metrics.score` (monitoring continues), and `getState` while OFF returns the **full** geometry snapshot (`boundaries=9 placements=14 mergedPlacements=14 dictionary=6`) so re-enabling repaints with **no reload**. `cd frontend && npm run build` produces the served bundle. Remaining the visual browser check (open `http://localhost:8000`, click `3D On`→`3D Off`).

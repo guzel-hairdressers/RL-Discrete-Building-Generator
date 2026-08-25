@@ -118,6 +118,7 @@ export const useStore = create((set, get) => ({
 
   // 3D & 2D View Controls
   viewMode: 'axonometric',
+  visualsEnabled: true, // headless/visuals toggle — default visuals ON; OFF stops the browser render loop + display formatting (monitoring continues)
   maximizedPane: null,
   hoveredModuleId: null,
 
@@ -137,6 +138,18 @@ export const useStore = create((set, get) => ({
   },
   setResetConfirmOpen: (open) => set({ resetConfirmOpen: open }),
   setViewMode: (mode) => set({ viewMode: mode }),
+  setVisualsEnabled: (enabled) => {
+    const flag = !!enabled;
+    set({ visualsEnabled: flag });
+    get().sendCommand({ cmd: 'setVisuals', enabled: flag });
+    if (flag) {
+      // Re-enabling without a reload / weight reload: while visuals were OFF the
+      // server stopped shipping geometry, so pull a full fresh snapshot (getState
+      // still builds the complete payload) so the 3D+2D scenes repaint from the
+      // live optimizer state rather than a stale client cache.
+      get().sendCommand({ cmd: 'getState' });
+    }
+  },
   setMaximizedPane: (pane) => set((s) => ({ maximizedPane: s.maximizedPane === pane ? null : pane })),
   setHoveredModuleId: (id) => set({ hoveredModuleId: id }),
 
@@ -641,6 +654,30 @@ export const useStore = create((set, get) => ({
           }, 100);
         }
       }
+    } else if (type === 'sync') {
+      // Response to the `getState` command sent when visuals are re-enabled. This
+      // is a non-mutating full snapshot (placements + boundaries + dictionary +
+      // metrics) rebuilt by the server even when visuals were off, so the client
+      // can repaint the 3D/2D scenes from live state — no page reload, no weight
+      // reload. Setting the placement/merged lists here triggers ThreeViewer's
+      // extrusion-sync effect, which re-posts optimizer_placements to the iframe.
+      set({
+        boundaries: data.boundaries || [],
+        dictionary: data.dictionary || [],
+        mergedDictionary: data.mergedDictionary || [],
+        individualPlacementsList: data.placements || [],
+        currentMergedPlacements: data.mergedPlacements || [],
+        completed3DPlacements: (Array.isArray(data.mergedPlacements) && data.mergedPlacements.length > 0)
+          ? data.mergedPlacements
+          : (data.placements || []),
+        metrics: data.metrics || get().metrics,
+        diagnostics: data.diagnostics || get().diagnostics,
+        rewardHistory: data.scoreHistory || get().rewardHistory,
+        bestReward: data.bestScore ?? get().bestReward,
+        totalSiteArea: (data.boundaries || []).reduce((acc, b) => acc + (b.siteArea || 0), 0),
+        contextData: data.contextData ?? get().contextData,
+        statusMessage: 'Visuals re-enabled · scene refreshed',
+      });
     }
   },
 }));

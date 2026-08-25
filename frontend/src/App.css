@@ -319,6 +319,11 @@ body, html, #root {
   color: #ffffff;
 }
 
+/* Headless / visuals toggle: small gap between the eye icon and its label */
+.view-btn.visuals-toggle-btn {
+  gap: 4px;
+}
+
 /* Floating Centered Bottom Control Deck (Breathable 138px height) */
 .bottom-deck-floating-wrapper {
   position: absolute;

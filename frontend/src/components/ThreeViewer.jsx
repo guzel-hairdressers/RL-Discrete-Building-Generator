@@ -20,6 +20,7 @@ export const ThreeViewer = () => {
   const disableMerging = useStore((s) => s.disableMerging);
   const phase = useStore((s) => s.phase);
   const maximizedPane = useStore((s) => s.maximizedPane);
+  const visualsEnabled = useStore((s) => s.visualsEnabled);
 
   const targetSite = filteredSites[activeSiteIndex];
 
@@ -49,9 +50,16 @@ export const ThreeViewer = () => {
   const getTargetSrc = (s) => {
     if (!s) return null;
     const base = s.render_html
-      ? s.render_html.startsWith('/') ? s.render_html : '/' + s.render_html
+      ? (s.render_html.startsWith('/') ? s.render_html : '/' + s.render_html)
       : `/sites/${s.site_id}.html`;
-    return `${base}?v=v0.9.0-alpha`;
+    // Build the query robustly (custom sites already carry `?t=` cache-busters).
+    // When visuals are off, pass `&visuals=off` so the fresh iframe engine starts
+    // frozen (blank) instead of flashing the site context before our
+    // set_visuals_enabled message lands.
+    const u = new URL(base, window.location.origin);
+    u.searchParams.set('v', 'v0.9.0-alpha');
+    if (!visualsEnabled) u.searchParams.set('visuals', 'off');
+    return u.pathname + u.search;
   };
 
   const configureIframe = useCallback((iframe) => {
@@ -75,6 +83,15 @@ export const ThreeViewer = () => {
       ox: Number(firstBoundary?.originOffset?.x || 0),
       oy: Number(firstBoundary?.originOffset?.y || 0),
     } : null;
+
+    // Headless/visuals toggle: freeze/resume the shared Three.js render loop.
+    // Posted BEFORE the scene-building messages so that, on disable, the engine
+    // ignores them (no rebuild of ExtrudeGeometry on the current step), and on
+    // enable it resumes and rebuilds from the fresh placements below.
+    iframe.contentWindow.postMessage({
+      type: 'set_visuals_enabled',
+      enabled: visualsEnabled,
+    }, '*');
 
     iframe.contentWindow.postMessage({
       type: 'set_context_visibility',
@@ -142,7 +159,7 @@ export const ThreeViewer = () => {
         }
       }
     } catch (e) {}
-  }, [completed3DPlacements, boundaries, currentMergedPlacements, individualPlacementsList, disableMerging, settings.boundaryType, viewMode, maximizedPane]);
+  }, [completed3DPlacements, boundaries, currentMergedPlacements, individualPlacementsList, disableMerging, settings.boundaryType, viewMode, maximizedPane, visualsEnabled]);
 
   // Sync Gizmo Position on Pane Maximize / Restore (smooth transition on user toggle)
   useEffect(() => {
@@ -192,7 +209,7 @@ export const ThreeViewer = () => {
   // Sync 3D Building Extrusions from Optimizer into the Active Scene
   useEffect(() => {
     configureIframe(activeIframeRef.current);
-  }, [completed3DPlacements, currentMergedPlacements, individualPlacementsList, disableMerging, phase, boundaries, activeSite?.site_id, settings.boundaryType, configureIframe]);
+  }, [completed3DPlacements, currentMergedPlacements, individualPlacementsList, disableMerging, phase, boundaries, activeSite?.site_id, settings.boundaryType, visualsEnabled, configureIframe]);
 
   const handleActiveIframeLoad = () => {
     configureIframe(activeIframeRef.current);

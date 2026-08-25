@@ -692,6 +692,18 @@ button:disabled {
   border-color: #0f172a;
 }
 
+.dock-btn.active {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.dock-btn.active:hover:not(:disabled) {
+  background: #d1fae5;
+  border-color: #059669;
+  color: #064e3b;
+}
+
 .dock-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;

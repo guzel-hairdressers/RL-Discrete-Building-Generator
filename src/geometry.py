@@ -135,6 +135,15 @@ def _configure_native_library(library: ctypes.CDLL) -> None:
             ctypes.c_int,
         ]
         library.polygon_inside_site_translated_c.restype = ctypes.c_int
+    if hasattr(library, "polygons_overlap_any_c"):
+        library.polygons_overlap_any_c.argtypes = [
+            ctypes.POINTER(_CPoint),
+            ctypes.c_int,
+            ctypes.POINTER(_CPoint),
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_int,
+        ]
+        library.polygons_overlap_any_c.restype = ctypes.c_int
 
 
 
@@ -234,6 +243,42 @@ def _native_polygons_overlap(
             len(first_signature),
             second_points,
             len(second_signature),
+        )
+    )
+
+
+def _native_polygons_overlap_any(
+    poly: Sequence[dict],
+    placed_polys: Sequence[Sequence[dict]],
+) -> bool:
+    """Return whether `poly` overlaps any polygon in `placed_polys` in one call.
+
+    Batch broad-phase analogue of ``any(polygons_overlap(poly, q) for q in
+    placed)``.  Collapses N per-pair ctypes round-trips into a single native
+    call; the caller must already have narrowed `placed_polys` with a spatial
+    broad phase (bbox buckets) for this to be a win.
+    """
+    if not placed_polys:
+        return False
+    if not hasattr(_libfast_geo, "polygons_overlap_any_c"):
+        return any(polygons_overlap(poly, other) for other in placed_polys)
+    poly_signature = _native_polygon_signature(poly)
+    poly_points = _packed_polygon_from_signature(poly_signature)
+    placed_signatures = tuple(_native_polygon_signature(p) for p in placed_polys)
+    counts_array = ctypes.c_int * len(placed_signatures)
+    counts = counts_array(*(len(sig) for sig in placed_signatures))
+    flattened = tuple(pt for sig in placed_signatures for pt in sig)
+    if not flattened:
+        return False
+    placed_array = _CPoint * len(flattened)
+    placed_points = placed_array(*(_CPoint(x, y) for x, y in flattened))
+    return bool(
+        _libfast_geo.polygons_overlap_any_c(
+            poly_points,
+            len(poly_signature),
+            placed_points,
+            counts,
+            len(placed_signatures),
         )
     )
 
@@ -3622,3 +3667,18 @@ def generate_module_pool(settings: dict, rng: RNG | int | float, count: int = 48
 
 
 # Legacy latent shape synthesis removed in rl_v0.5
+
+
+def clear_geometry_caches() -> None:
+    """Clear all native-buffer caches to bound long-run memory growth.
+
+    The SE(2) geometry layer caches packed ctypes buffers keyed by polygon
+    signatures. Each cache is bounded by maxsize, but under heavy churn (e.g. a
+    freshly synthesized core shape every episode) the allocator retains freed
+    buffers and peak RSS creeps upward. Clearing periodically keeps it bounded.
+    """
+    _packed_polygon_from_signature.cache_clear()
+    _packed_holes_from_signatures.cache_clear()
+    _native_shared_overlap_pair_from_signatures.cache_clear()
+    _packed_segments_from_signature.cache_clear()
+    _cached_enumerate_parametric_proposals.cache_clear()

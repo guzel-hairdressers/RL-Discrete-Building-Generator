@@ -29,6 +29,7 @@ export const PlanCanvas2D = () => {
   const hoveredModuleId = useStore((s) => s.hoveredModuleId);
   const maximizedPane = useStore((s) => s.maximizedPane);
   const setMaximizedPane = useStore((s) => s.setMaximizedPane);
+  const visualsEnabled = useStore((s) => s.visualsEnabled);
   const isMaximized = maximizedPane === 'right';
 
   // Exact Architectural Crenellated Stepped Scale Bar (Context Generator Standard)
@@ -115,6 +116,17 @@ export const PlanCanvas2D = () => {
     if (canvas.width !== expectedW || canvas.height !== expectedH) {
       canvas.width = expectedW;
       canvas.height = expectedH;
+    }
+
+    if (!visualsEnabled) {
+      // Headless: blank the split-view pane and skip ALL drawing (the heavy 2D
+      // vector redraws), so the canvas contributes no per-step render cost. The
+      // resize above already clears on size change; this clears when unchanged.
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      return;
     }
 
     ctx.save();
@@ -411,10 +423,10 @@ export const PlanCanvas2D = () => {
     };
   }, [scheduleRender]);
 
-  // Trigger render when boundaries or placements update
+  // Trigger render when boundaries, placements, or the visuals toggle update
   useEffect(() => {
     scheduleRender();
-  }, [boundaries, individualPlacementsList, currentMergedPlacements, scheduleRender]);
+  }, [boundaries, individualPlacementsList, currentMergedPlacements, visualsEnabled, scheduleRender]);
 
   return (
     <div className={`right-2d-pane ${isMaximized ? 'pane-maximized' : ''}`}>

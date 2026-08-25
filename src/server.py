@@ -175,8 +175,12 @@ def _average_unmerged_triangle_penalty(
 
 
 def _max_cores_for_site(site_area: float) -> int:
-    """Calculate dynamic core capacity scaling with site area (1 core per ~650-800 m²)."""
-    return max(2, min(8, int(math.ceil(site_area / 650.0))))
+    """Safety cap on core count; the policy decides the actual number (via the gate).
+
+    Looser than the old 1-per-650 m² rule so the policy has headroom to choose
+    more cores, but still bounded against runaway placements.
+    """
+    return max(2, min(12, int(math.ceil(site_area / 300.0))))
 
 
 def _reused_bpe_module_summary(
@@ -1072,6 +1076,106 @@ def _public_merged_module(module: graph.MergedModule) -> dict:
     }
 
 
+def _format_individual_placements(environments, *, include_core_stacks: bool = True) -> list[dict[str, Any]]:
+    """Display-only: world-space polygons + centroids for the raw placements.
+
+    Consumed only by the browser; never by the RL algorithm, and never consumes
+    RNG, so it can be skipped wholesale in headless/visuals-off mode without
+    shifting a seeded trajectory.
+    """
+
+    formatted: list[dict[str, Any]] = []
+    for env_idx, environment in enumerate(environments):
+        dx, dy = environment.offset
+        for placement in environment.placements:
+            world_poly = G.translate_polygon(placement["poly"], dx, dy)
+            formatted_placement = {
+                "id": placement["id"],
+                "poly": world_poly,
+                "instanceIdx": env_idx,
+                "center": G.polygon_centroid(world_poly),
+                "category": placement.get("category", "room"),
+                "module": {
+                    "id": placement.get("shapeType", placement.get("moduleId", placement["id"])),
+                    "category": placement.get("category", "room"),
+                },
+            }
+            if include_core_stacks and placement.get("coreStackLocked"):
+                stack_fields = {
+                    "coreStackId": placement["coreStackId"],
+                    "coreStackLocked": True,
+                    "coreStackTriggerFloor": placement.get("coreStackTriggerFloor"),
+                    "localAnchor": dict(placement["localAnchor"]),
+                }
+                formatted_placement.update(stack_fields)
+                formatted_placement["module"].update(stack_fields)
+            formatted.append(formatted_placement)
+    return formatted
+
+
+def _format_merged_placements(layout_graphs, environments) -> list[dict[str, Any]]:
+    """Display-only: world-space polygons + centroids for BPE merged layouts."""
+
+    merged: list[dict[str, Any]] = []
+    for env_idx, layout_graph in enumerate(layout_graphs):
+        environment = environments[env_idx]
+        dx, dy = environment.offset
+        for node in layout_graph.nodes.values():
+            category = node.get("category", "room")
+            if "shapeType" in node and node["shapeType"].startswith("M_round"):
+                category = "room"
+            poly = node["poly"]
+            world_poly = G.translate_polygon(poly, dx, dy)
+
+            components_formatted = []
+            if "components" in node:
+                for comp in node["components"]:
+                    comp_world_poly = G.translate_polygon(comp["poly"], dx, dy)
+                    comp_cat = comp.get("category", "room")
+                    if comp.get("isCore") or (comp.get("id") and "core" in str(comp["id"]).lower()):
+                        comp_cat = "core"
+                    elif "shapeType" in comp and comp["shapeType"].startswith("M_round"):
+                        comp_cat = "room"
+                    components_formatted.append({
+                        "id": comp["id"],
+                        "poly": comp_world_poly,
+                        "instanceIdx": env_idx,
+                        "center": G.polygon_centroid(comp_world_poly),
+                        "category": comp_cat,
+                        "isCore": (comp_cat == "core"),
+                        "module": {
+                            "id": comp.get("shapeType", comp.get("moduleId", comp["id"])),
+                            "category": comp_cat,
+                        }
+                    })
+            else:
+                is_core = (category == "core") or (node.get("id") and "core" in str(node["id"]).lower())
+                components_formatted.append({
+                    "id": node["id"],
+                    "poly": world_poly,
+                    "instanceIdx": env_idx,
+                    "center": G.polygon_centroid(world_poly),
+                    "category": "core" if is_core else category,
+                    "isCore": is_core,
+                    "module": {
+                        "id": node.get("shapeType", node.get("moduleId", node["id"])),
+                        "category": "core" if is_core else category,
+                    }
+                })
+
+            merged.append({
+                "id": node["id"],
+                "poly": world_poly,
+                "instanceIdx": env_idx,
+                "center": G.polygon_centroid(world_poly),
+                "module": {
+                    "id": node.get("shapeType", node.get("moduleId", node["id"])),
+                    "category": category,
+                },
+                "components": components_formatted
+            })
+    return merged
+
 
 class FloorEnvironment:
     """One local floor/site sharing its dictionary and policy with its peers."""
@@ -1107,6 +1211,7 @@ class FloorEnvironment:
         self.next_attachment_id = 0
         self.filled_area = 0.0
         self.rentable_area = 0.0
+        self.core_area = 0.0
         self.repeated_uses = 0
         self.done = False
         self.last_candidate_evaluations = 0
@@ -1135,6 +1240,7 @@ class FloorEnvironment:
         self.next_attachment_id = 0
         self.filled_area = 0.0
         self.rentable_area = 0.0
+        self.core_area = 0.0
         self.repeated_uses = 0
         self.done = False
         self.last_candidate_evaluations = 0
@@ -2240,9 +2346,6 @@ class FloorEnvironment:
         if has_overlap:
             return None
 
-
-        poly = G.translate_polygon(rotation_poly, anchor_x, anchor_y)
-
         t_bounds = time.perf_counter()
         inside_site = G.polygon_inside_site(poly, self.site["outer"], self.site["holes"])
         if cg_sub_totals is not None: cg_sub_totals["cgSiteBoundary"] += time.perf_counter() - t_bounds
@@ -2309,19 +2412,9 @@ class FloorEnvironment:
         outer_exposure = G.get_shared_overlap(poly, self.site["outer"])
         if cg_sub_totals is not None:
             cg_sub_totals["cgNeighborAnalysis"] += time.perf_counter() - t_neigh
-        t_feat = time.perf_counter()
-        features = self._candidate_features(
-            effective_module,
-            rotation,
-            poly,
-            cells,
-            neighbors,
-            shared_overlap,
-            outer_exposure,
-            settings,
-            orientation_basis,
-        )
-        if cg_sub_totals is not None: cg_sub_totals["cgFeatureExtraction"] += time.perf_counter() - t_feat
+        # Features are computed later in _materialize_candidate (which also
+        # rasterizes cells for the daylight proxy). Computing them here too was
+        # pure waste: the result was always overwritten before any consumer.
         return PlacementCandidate(
             module=effective_module,
             rotation=rotation,
@@ -2330,7 +2423,7 @@ class FloorEnvironment:
             neighbors=neighbors,
             shared_overlap=shared_overlap,
             outer_exposure=outer_exposure,
-            features=features,
+            features=[],
             anchor_x=float(anchor_x),
             anchor_y=float(anchor_y),
         )
@@ -2746,6 +2839,7 @@ class FloorEnvironment:
             "next_attachment_id": self.next_attachment_id,
             "filled_area": self.filled_area,
             "rentable_area": self.rentable_area,
+            "core_area": self.core_area,
             "repeated_uses": self.repeated_uses,
             "done": self.done,
             "consecutive_proposal_failures": self.consecutive_proposal_failures,
@@ -2770,6 +2864,7 @@ class FloorEnvironment:
         self.next_attachment_id = checkpoint["next_attachment_id"]
         self.filled_area = checkpoint["filled_area"]
         self.rentable_area = checkpoint["rentable_area"]
+        self.core_area = checkpoint["core_area"]
         self.repeated_uses = checkpoint["repeated_uses"]
         self.done = checkpoint["done"]
         self.consecutive_proposal_failures = checkpoint[
@@ -2836,6 +2931,7 @@ class FloorEnvironment:
         if placement["category"] in ("room", "special"):
             self.rentable_area += placement["area"]
         if placement["category"] == "core":
+            self.core_area += placement["area"]
             self.core_ids.add(identifier)
         self._index_placement(placement)
         self._update_attachment_frontier(placement, candidate.module, candidate.neighbors)
@@ -2884,6 +2980,7 @@ class FloorEnvironment:
             "fillRatio": _safe_ratio(filled, float(self.site["exactArea"])),
             "rentableArea": rentable,
             "rentableRatio": _safe_ratio(rentable, filled),
+            "coreArea": self.core_area,
             "moduleCount": len(self.placements),
             "reuseRatio": _safe_ratio(self.repeated_uses, len(self.placements)),
             "done": self.done,
@@ -3266,6 +3363,12 @@ class ParallelTrainer:
         self.rollout_buffer: list[dict[str, Any]] = []
         self.rollout_buffer_episodes = 0
         self.rollout_buffer_target_episodes = int(self.settings.get("bufferEpisodes", 2))
+        # Runtime telemetry toggle (not a settings key): when False the trainer
+        # skips building the browser-display geometry (world-space polygons,
+        # centroids, public module dicts) and returns metrics-only events. This
+        # is purely thin-client/headless monitoring; it never touches the RL
+        # algorithm or the seeded RNG, so trajectories stay bit-identical.
+        self.visuals_enabled = True
         self._reset_episode_reward_telemetry()
 
 
@@ -4213,14 +4316,26 @@ class ParallelTrainer:
         if not common_keys:
             return []
 
-        # Sample anchor cells uniformly across the shared-floor intersection
-        # instead of always taking the highest-clearance (most central) cells,
-        # so the policy can learn non-central core placements.
+        # Sample anchor cells from the deep (high-clearance) interior so a shared
+        # core reliably fits on every floor, but shuffle a large pool per episode
+        # so the policy sees diverse anchors instead of only the dead center. The
+        # shuffle is seeded per episode so the preflight and the later
+        # re-derivation of initial core stacks agree; exploration across episodes
+        # lives in the policy gate, not the candidate set.
         key_list = list(common_keys)
-        perm = torch.randperm(len(key_list))
+
+        def clearance(cell_key: str) -> float:
+            return min(
+                float(environment.site.get("distance", {}).get(cell_key, 0.0))
+                for environment in environments
+            )
+
+        key_list.sort(key=lambda k: -clearance(k))
+        shuffle_rng = G.RNG(
+            int(self.settings["seed"]) + self.generation_id * 104729 + self.episode * 65537
+        )
         targets = []
-        for idx in perm[: min(16, len(key_list))].tolist():
-            cell_key = key_list[idx]
+        for cell_key in shuffle_rng.shuffle(key_list[:128])[:16]:
             x_text, y_text = cell_key.split(",")
             targets.append({"x": int(x_text), "y": int(y_text)})
 
@@ -4287,13 +4402,10 @@ class ParallelTrainer:
             ]
             if any(count == 0 or count >= max_cores for count in core_counts):
                 return []
-            min_current_cores = min(core_counts) if core_counts else 0
-            # Every floor must have started room placement (count >= 1), and building must have matured
+            # Every floor must have at least one room before a subsequent core is
+            # eligible; timing/count beyond that is the policy's decision (the gate
+            # chooses between deferring and placing via its None action).
             if any(count < 1 for count in room_counts):
-                return []
-            avg_rooms = sum(room_counts) / max(1, len(floors))
-            req_avg = float(SECOND_CORE_MIN_ROOMS * min_current_cores)
-            if avg_rooms < req_avg and not any(len(env.attachment_edges) == 0 for env in floors):
                 return []
 
         proposal_by_signature: dict[
@@ -4455,6 +4567,31 @@ class ParallelTrainer:
             environment._stack_commit_checkpoint()
             for environment in self.environments
         ]
+        # One building action contributes exactly one detached/recomputed
+        # policy decision, independent of floor count. Record it against the
+        # PRE-commit floor state (before the core is placed) so the value
+        # critic sees the state the action was chosen in — not the post-core
+        # floor that place() is about to produce.
+        decision_log_probs = len(self.placement_log_probs)
+        decision_count = len(self.placement_decisions)
+        decision_by_env = len(
+            self.placement_log_probs_by_environment.get(BUILDING_TRAJECTORY_INDEX, [])
+        )
+        if decision_features is None:
+            self._record_placement_log_prob(
+                BUILDING_TRAJECTORY_INDEX, log_prob.detach().cpu()
+            )
+        else:
+            self._record_placement_decision(
+                BUILDING_TRAJECTORY_INDEX,
+                decision_features,
+                decision_action_index,
+                decision_temperature,
+                log_prob,
+                positions=decision_positions,
+                angles=decision_angles,
+            )
+
         placements: list[dict] = []
         try:
             for environment, floor_candidate in zip(
@@ -4470,26 +4607,15 @@ class ParallelTrainer:
         except Exception as error:
             for environment, checkpoint in zip(self.environments, checkpoints):
                 environment._restore_stack_commit_checkpoint(checkpoint)
+            # Undo the just-recorded decision: the action never committed.
+            del self.placement_log_probs[decision_log_probs:]
+            del self.placement_decisions[decision_count:]
+            by_env = self.placement_log_probs_by_environment.get(BUILDING_TRAJECTORY_INDEX)
+            if by_env is not None:
+                del by_env[decision_by_env:]
             raise CoreStackingError(
                 f"core stack {stack_id} rolled back after commit failure"
             ) from error
-
-        # One building action contributes exactly one detached/recomputed
-        # policy decision, independent of floor count.
-        if decision_features is None:
-            self._record_placement_log_prob(
-                BUILDING_TRAJECTORY_INDEX, log_prob.detach().cpu()
-            )
-        else:
-            self._record_placement_decision(
-                BUILDING_TRAJECTORY_INDEX,
-                decision_features,
-                decision_action_index,
-                decision_temperature,
-                log_prob,
-                positions=decision_positions,
-                angles=decision_angles,
-            )
         self.core_stack_records.append(
             {
                 "id": stack_id,
@@ -4898,7 +5024,7 @@ class ParallelTrainer:
         diagnostics = self._runtime_diagnostics()
         metrics["runtimeDiagnostics"] = diagnostics
         context_data = None
-        if self.environments:
+        if self.visuals_enabled and self.environments:
             env0 = self.environments[0]
             if "contextData" in env0.site:
                 context_data = env0.site["contextData"]
@@ -4909,8 +5035,83 @@ class ParallelTrainer:
             "generationId": self.generation_id,
             "episode": self.episode,
             "device": self.device.type,
+            "boundaries": (
+                [environment.world_boundary() for environment in self.environments]
+                if self.visuals_enabled
+                else []
+            ),
+            "dictionary": (
+                [_public_module(module) for module in self.dictionary]
+                if self.visuals_enabled
+                else []
+            ),
+            "metrics": metrics,
+            "diagnostics": diagnostics,
+            "scoreHistory": list(self.score_history),
+            "bestScore": float(self.best_score),
+            "coreStacking": self._core_stacking_event(),
+            "contextData": context_data,
+        }
+
+    def set_visuals(self, enabled: bool) -> dict[str, Any]:
+        """Toggle browser-display generation for this trainer.
+
+        Pure runtime telemetry: flips a flag on/off so the trainer skips the
+        world-space-polygon formatting and _public_module serialization that only
+        the browser consumes. It never touches generation/site/weights and never
+        consumes RNG, so seeded trajectories are bit-identical regardless of the
+        flag. Re-enabling requires no reload or weight reload.
+        """
+        self.visuals_enabled = bool(enabled)
+        return {
+            "type": "ack",
+            "command": "setVisuals",
+            "visualsEnabled": self.visuals_enabled,
+            "message": "visuals enabled" if self.visuals_enabled else "visuals disabled",
+            "generationId": self.generation_id,
+            "episode": self.episode,
+        }
+
+    def current_state_event(self) -> dict[str, Any]:
+        """Non-mutating snapshot for headless re-sync when visuals are re-enabled.
+
+        While visuals are off the server stops sending geometry, so the client
+        cannot re-render from its cache. This returns the full current site +
+        dictionary + formatted placements, ALWAYS (ignoring the visuals_enabled
+        gate), so the browser can rebuild the 3D scene on demand. It consumes no
+        RNG and mutates no state, so it is safe to call at any time and never
+        shifts a seeded trajectory.
+        """
+        layout_graphs = [
+            graph.extract_layout_graph(environment.placements, idx)
+            for idx, environment in enumerate(self.environments)
+        ]
+        merged_vocab, bpe_stats = graph.bpe_merge(
+            layout_graphs,
+            min_frequency=2,
+            max_rounds=20,
+            max_vocab_size=max(0, 30 - len(self.dictionary)),
+        )
+        metrics = self._aggregate_online()
+        diagnostics = self._runtime_diagnostics()
+        metrics["runtimeDiagnostics"] = diagnostics
+        context_data = None
+        if self.environments:
+            env0 = self.environments[0]
+            if "contextData" in env0.site:
+                context_data = env0.site["contextData"]
+            elif "parameters" in env0.boundary:
+                context_data = env0.boundary.get("parameters")
+        return {
+            "type": "sync",
+            "generationId": self.generation_id,
+            "episode": self.episode,
+            "device": self.device.type,
             "boundaries": [environment.world_boundary() for environment in self.environments],
             "dictionary": [_public_module(module) for module in self.dictionary],
+            "placements": _format_individual_placements(self.environments),
+            "mergedPlacements": _format_merged_placements(layout_graphs, self.environments),
+            "mergedDictionary": [_public_merged_module(module) for module in merged_vocab],
             "metrics": metrics,
             "diagnostics": diagnostics,
             "scoreHistory": list(self.score_history),
@@ -4928,6 +5129,7 @@ class ParallelTrainer:
         filled = math.fsum(float(item["filledArea"]) for item in per_site)
         site_area = math.fsum(float(item["siteArea"]) for item in per_site)
         rentable = math.fsum(float(item["rentableArea"]) for item in per_site)
+        core_area = math.fsum(float(item.get("coreArea", 0.0)) for item in per_site)
         module_count = sum(int(item["moduleCount"]) for item in per_site)
         perimeter = math.fsum(float(item["exposedPerimeter"]) for item in per_site)
         fill_ratio = _safe_ratio(filled, site_area)
@@ -5021,6 +5223,7 @@ class ParallelTrainer:
             + 0.02 * reuse
             + 0.02 * constructibility
             + 0.01 * envelope_efficiency
+            - 0.15 * _safe_ratio(core_area, filled)
             - area_variance_penalty
             - partial_connection_penalty
             - (deep_interior_penalty / 60.0)
@@ -5090,6 +5293,7 @@ class ParallelTrainer:
         filled = float(item["filledArea"])
         site_area = float(item["siteArea"])
         rentable = float(item["rentableArea"])
+        core_area = float(item.get("coreArea", 0.0))
         perimeter = float(item["exposedPerimeter"])
         fill_ratio = _safe_ratio(filled, site_area)
         rentable_ratio = _safe_ratio(rentable, filled)
@@ -5118,6 +5322,7 @@ class ParallelTrainer:
             + 0.02 * reuse
             + 0.02 * constructibility
             + 0.01 * envelope_efficiency
+            - 0.15 * _safe_ratio(core_area, filled)
             - area_variance_penalty
             - partial_connection_penalty
             - (deep_interior_penalty / 60.0)
@@ -5379,6 +5584,12 @@ class ParallelTrainer:
         score: float,
         per_floor_scores: Sequence[float] | None = None,
     ) -> None:
+        # Advantage actor-critic: a single on-policy gradient step per episode.
+        # Placement head uses GAE advantages with an importance ratio correcting
+        # for the epsilon-greedy behaviour policy; the value critic is regressed
+        # onto bootstrapped λ-returns; the shape head uses a site-level REINFORCE
+        # baseline (it conditions only on pooled_site). No ratio clipping, no
+        # replay buffer, no multi-epoch reuse.
         normalized_score = score / 100.0
         if per_floor_scores is not None and len(per_floor_scores) == len(self.environments):
             floor_targets = [s / 100.0 for s in per_floor_scores]
@@ -5387,21 +5598,21 @@ class ParallelTrainer:
 
         gamma = 0.99
         gae_lambda = 0.95
-        clip_eps = 0.2
 
         floor_descriptors = self._site_descriptor(self.environments, self.settings)
         if not floor_descriptors:
             floor_descriptors = [[0.0] * FLOOR_DESCRIPTOR_DIM]
         floor_tensor = torch.tensor(floor_descriptors, dtype=torch.float32, device=self.device)
         pooled_site = self.model.encode_sites(floor_tensor)
-        target = torch.tensor(normalized_score, dtype=torch.float32, device=self.device)
 
         policy_loss_terms: list[torch.Tensor] = []
+        importance_weights: list[torch.Tensor] = []
         entropy_terms: list[torch.Tensor] = []
         value_preds: list[torch.Tensor] = []
-        decision_targets: list[float] = []
+        value_targets: list[torch.Tensor] = []
+        advantages: list[float] = []
 
-        # 1. Compute dynamic GAE advantages with Potential-Based Reward Shaping (PBRS)
+        # 1. GAE advantages (with PBRS) + recomputed on-policy log-probs.
         if self.placement_decisions:
             grouped_decisions: dict[int, list[PlacementPolicyDecision]] = {}
             for decision in self.placement_decisions:
@@ -5442,130 +5653,99 @@ class ParallelTrainer:
 
                     delta = step_reward + gamma * v_next - env_v_vals[t]
                     gae = delta + gamma * gae_lambda * gae
-                    self.rollout_buffer.append({
-                        "features": d.features,
-                        "positions": d.positions,
-                        "angles": d.angles,
-                        "action_index": d.action_index,
-                        "temperature": d.temperature,
-                        "old_log_prob": d.old_log_prob,
-                        "placed_tokens": d.placed_tokens,
-                        "placed_positions": d.placed_positions,
-                        "placed_angles": d.placed_angles,
-                        "macro_state": d.macro_state,
-                        "pooled_site": pooled_site.detach().cpu(),
-                        "advantage": gae,
-                        "target_value": env_v_vals[t] + gae,
-                    })
+                    advantages.append(gae)
 
-        self.rollout_buffer_episodes += 1
+                    features = d.features.to(self.device)
+                    positions = d.positions.to(self.device) if d.positions is not None else None
+                    angles = d.angles.to(self.device) if d.angles is not None else None
+                    group_logits = (
+                        torch.nan_to_num(
+                            self.model.placement_logits(features, positions, angles),
+                            nan=0.0,
+                            posinf=20.0,
+                            neginf=-20.0,
+                        ).clamp(-30.0, 30.0)
+                        / d.temperature
+                    )
+                    count = int(features.shape[0])
+                    group_log_probs = F.log_softmax(group_logits, dim=0)
+                    selected_log_prob = group_log_probs[d.action_index]
+                    old_log_prob = torch.tensor(d.old_log_prob, dtype=torch.float32, device=self.device)
+                    # Detached importance ratio π(a)/μ(a) — corrects for the
+                    # epsilon-greedy behaviour policy without clipping.
+                    importance_weights.append(torch.exp(selected_log_prob.detach() - old_log_prob))
+                    policy_loss_terms.append(selected_log_prob)
 
-        v_pred_init = float(self.model.value(pooled_site).detach().cpu().item())
-        self.last_advantage = float(normalized_score - v_pred_init)
-        self.baseline = 0.90 * self.baseline + 0.10 * normalized_score
+                    if count > 1:
+                        probs = group_log_probs.exp()
+                        entropy_terms.append(-(probs * group_log_probs).sum() / math.log(count))
 
-        # 2. Mini-Batch PPO optimization when buffer is ready
-        if self.rollout_buffer_episodes >= self.rollout_buffer_target_episodes and self.rollout_buffer:
-            all_advs = torch.tensor([item["advantage"] for item in self.rollout_buffer], dtype=torch.float32, device=self.device)
-            if len(all_advs) > 1 and float(all_advs.std().item()) > 1.0e-6:
-                norm_advs = (all_advs - all_advs.mean()) / (all_advs.std() + 1.0e-8)
+                    tok = d.placed_tokens.to(self.device) if d.placed_tokens is not None else None
+                    mac = d.macro_state.to(self.device) if d.macro_state is not None else None
+                    pos = d.placed_positions.to(self.device) if d.placed_positions is not None else None
+                    ang = d.placed_angles.to(self.device) if d.placed_angles is not None else None
+                    value_preds.append(self.model.value(pooled_site, tok, mac, pos, ang).reshape(-1))
+                    value_targets.append(
+                        torch.tensor(env_v_vals[t] + gae, dtype=torch.float32, device=self.device)
+                    )
+
+        # 2. Actor loss: importance-weighted REINFORCE with normalized advantages.
+        if advantages:
+            raw_adv = torch.tensor(advantages, dtype=torch.float32, device=self.device)
+            self.last_advantage = float(raw_adv.mean().detach().cpu().item())
+            if len(raw_adv) > 1 and float(raw_adv.std().item()) > 1.0e-6:
+                norm_adv = (raw_adv - raw_adv.mean()) / (raw_adv.std() + 1.0e-8)
             else:
-                norm_advs = all_advs
+                norm_adv = raw_adv
+            weighted = torch.stack(importance_weights) * norm_adv
+            actor_loss = -(weighted * torch.stack(policy_loss_terms)).mean()
+        else:
+            self.last_advantage = 0.0
+            actor_loss = torch.zeros((), dtype=torch.float32, device=self.device)
 
-            batch_size = 64
-            for _epoch in range(2):
-                indices = torch.randperm(len(self.rollout_buffer)).tolist()
-                for start_idx in range(0, len(indices), batch_size):
-                    batch_idx = indices[start_idx : start_idx + batch_size]
-                    policy_loss_terms: list[torch.Tensor] = []
-                    entropy_terms: list[torch.Tensor] = []
-                    val_preds: list[torch.Tensor] = []
-                    val_targets: list[float] = []
+        # 3. Shape head: REINFORCE with a site-level value baseline, applied to
+        #    every shape decision this episode (no mixed-in empty-state scalar).
+        site_value = float(self.model.value(pooled_site).detach().cpu().item())
+        shape_advantage = normalized_score - site_value
+        building_shape_ids = {id(log_probability) for log_probability in self.building_shape_log_probs}
+        floor_shape_log_probs = [
+            log_probability
+            for log_probability in self.shape_log_probs
+            if id(log_probability) not in building_shape_ids
+        ]
+        if floor_shape_log_probs:
+            actor_loss = actor_loss - (
+                0.8
+                * shape_advantage
+                * torch.stack(floor_shape_log_probs).sum()
+                / max(1, len(self.environments))
+            )
+        if self.building_shape_log_probs:
+            actor_loss = actor_loss - (
+                0.8
+                * shape_advantage
+                * torch.stack(self.building_shape_log_probs).sum()
+            )
 
-                    for idx in batch_idx:
-                        item = self.rollout_buffer[idx]
-                        features = item["features"].to(self.device)
-                        positions = item["positions"].to(self.device) if item["positions"] is not None else None
-                        angles = item["angles"].to(self.device) if item["angles"] is not None else None
-                        pooled = item["pooled_site"].to(self.device)
-                        tok = item["placed_tokens"].to(self.device) if item["placed_tokens"] is not None else None
-                        mac = item["macro_state"].to(self.device) if item["macro_state"] is not None else None
-                        placed_pos = item["placed_positions"].to(self.device) if item.get("placed_positions") is not None else None
-                        placed_ang = item["placed_angles"].to(self.device) if item.get("placed_angles") is not None else None
+        # 4. Value loss + entropy + single gradient step.
+        if value_preds:
+            value_loss = F.smooth_l1_loss(torch.cat(value_preds), torch.stack(value_targets))
+        else:
+            value_loss = torch.zeros((), dtype=torch.float32, device=self.device)
+        entropy = torch.stack(entropy_terms).mean() if entropy_terms else torch.zeros((), dtype=torch.float32, device=self.device)
 
-                        group_logits = (
-                            torch.nan_to_num(
-                                self.model.placement_logits(features, positions, angles),
-                                nan=0.0,
-                                posinf=20.0,
-                                neginf=-20.0,
-                            ).clamp(-30.0, 30.0)
-                            / item["temperature"]
-                        )
-                        count = int(features.shape[0])
-                        group_log_probs = F.log_softmax(group_logits, dim=0)
-                        selected_log_prob = group_log_probs[item["action_index"]]
-                        old_log_prob = torch.tensor(item["old_log_prob"], dtype=torch.float32, device=self.device)
+        loss = actor_loss + 0.5 * value_loss - 0.01 * entropy
+        self.optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        gradient_norm = nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
+        self.optimizer.step()
 
-                        ratio = torch.exp(selected_log_prob - old_log_prob)
-                        adv = norm_advs[idx]
-                        surr1 = ratio * adv
-                        surr2 = torch.clamp(ratio, 1.0 - clip_eps, 1.0 + clip_eps) * adv
-                        policy_loss_terms.append(-torch.min(surr1, surr2))
-
-                        if count > 1:
-                            probs = group_log_probs.exp()
-                            entropy_terms.append(-(probs * group_log_probs).sum() / math.log(count))
-
-                        vp = self.model.value(pooled, tok, mac, placed_pos, placed_ang)
-                        val_preds.append(vp.reshape(-1))
-                        val_targets.append(item["target_value"])
-
-                    actor_loss = torch.stack(policy_loss_terms).mean() if policy_loss_terms else torch.zeros((), dtype=torch.float32, device=self.device)
-
-                    if _epoch == 0 and start_idx == 0:
-                        building_shape_ids = {
-                            id(log_probability)
-                            for log_probability in self.building_shape_log_probs
-                        }
-                        floor_shape_log_probs = [
-                            log_probability
-                            for log_probability in self.shape_log_probs
-                            if id(log_probability) not in building_shape_ids
-                        ]
-                        if floor_shape_log_probs:
-                            actor_loss = actor_loss - (
-                                0.8
-                                * (normalized_score - v_pred_init)
-                                * torch.stack(floor_shape_log_probs).sum()
-                                / max(1, len(self.environments))
-                            )
-                        if self.building_shape_log_probs:
-                            actor_loss = actor_loss - (
-                                0.8
-                                * (normalized_score - v_pred_init)
-                                * torch.stack(self.building_shape_log_probs).sum()
-                            )
-
-                    v_pred_tensor = torch.cat(val_preds) if val_preds else torch.zeros(1, device=self.device)
-                    v_target_tensor = torch.tensor(val_targets, dtype=torch.float32, device=self.device)
-                    value_loss = F.smooth_l1_loss(v_pred_tensor, v_target_tensor)
-                    entropy = torch.stack(entropy_terms).mean() if entropy_terms else torch.zeros((), dtype=torch.float32, device=self.device)
-
-                    loss = actor_loss + 0.5 * value_loss - 0.01 * entropy
-                    self.optimizer.zero_grad(set_to_none=True)
-                    loss.backward()
-                    gradient_norm = nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
-                    self.optimizer.step()
-
-                    self.last_loss = float(loss.detach().cpu().item())
-                    self.last_actor_loss = float(actor_loss.detach().cpu().item())
-                    self.last_value_loss = float(value_loss.detach().cpu().item())
-                    self.last_entropy = float(entropy.detach().cpu().item())
-                    self.last_gradient_norm = float(torch.as_tensor(gradient_norm).detach().cpu().item())
-
-            self.rollout_buffer.clear()
-            self.rollout_buffer_episodes = 0
+        self.last_loss = float(loss.detach().cpu().item())
+        self.last_actor_loss = float(actor_loss.detach().cpu().item())
+        self.last_value_loss = float(value_loss.detach().cpu().item())
+        self.last_entropy = float(entropy.detach().cpu().item())
+        self.last_gradient_norm = float(torch.as_tensor(gradient_norm).detach().cpu().item())
+        self.baseline = 0.90 * self.baseline + 0.10 * normalized_score
 
     def _finish_episode(self) -> dict[str, Any]:
         episode_start_time = getattr(self, "episode_start_time", time.perf_counter())
@@ -5705,7 +5885,7 @@ class ParallelTrainer:
             metrics["gradientNorm"] = self.last_gradient_norm
             metrics["advantage"] = self.last_advantage
             metrics["learningRate"] = float(self.optimizer.param_groups[0]["lr"])
-            metrics["learningAlgorithm"] = "ppo_gae"
+            metrics["learningAlgorithm"] = "a2c_gae"
         else:
             metrics["policyLoss"] = 0.0
             metrics["actorLoss"] = 0.0
@@ -5720,39 +5900,34 @@ class ParallelTrainer:
         self.score_history.append(score)
         self.best_score = max(self.best_score, score)
 
+        # Always build the full display payload when a downstream consumer needs
+        # it (inference writes trajectories; recordTrajectories writes the event
+        # to the dataset). Otherwise, drop it in headless/visuals-off mode so we
+        # skip the world-space formatting + JSON serialization entirely.
+        build_full_payload = (
+            self.visuals_enabled
+            or getattr(self, "mode", "training") == "inference"
+            or bool(self.settings.get("recordTrajectories", False))
+        )
         episode_formatting_start = time.perf_counter()
-        completed_dictionary_formatted = [
-            _public_module(module) for module in self.dictionary
-        ]
-        individual_placements_formatted = []
-        for env_idx, environment in enumerate(self.environments):
-            dx, dy = environment.offset
-            for placement in environment.placements:
-                world_poly = G.translate_polygon(placement["poly"], dx, dy)
-                formatted_placement = {
-                    "id": placement["id"],
-                    "poly": world_poly,
-                    "instanceIdx": env_idx,
-                    "center": G.polygon_centroid(world_poly),
-                    "category": placement.get("category", "room"),
-                    "module": {
-                        "id": placement.get("shapeType", placement.get("moduleId", placement["id"])),
-                        "category": placement.get("category", "room"),
-                    },
-                }
-                if placement.get("coreStackLocked"):
-                    stack_fields = {
-                        "coreStackId": placement["coreStackId"],
-                        "coreStackLocked": True,
-                        "coreStackTriggerFloor": placement.get("coreStackTriggerFloor"),
-                        "localAnchor": dict(placement["localAnchor"]),
-                    }
-                    formatted_placement.update(stack_fields)
-                    formatted_placement["module"].update(stack_fields)
-                individual_placements_formatted.append(formatted_placement)
+        completed_dictionary_formatted = (
+            [_public_module(module) for module in self.dictionary]
+            if build_full_payload
+            else []
+        )
+        individual_placements_formatted = (
+            _format_individual_placements(self.environments)
+            if build_full_payload
+            else []
+        )
         self.step_profiler.record("episodeFormatting", time.perf_counter() - episode_formatting_start)
 
         self.episode += 1
+        # Bound long-run RSS: the geometry layer's packed-buffer caches churn
+        # heavily when the core shape is re-sampled every episode, so clear them
+        # periodically to keep peak memory from creeping up across a long run.
+        if self.episode % 50 == 0:
+            G.clear_geometry_caches()
         dict_synthesis_start = time.perf_counter()
         next_initial_stacks: list[CoreStackCandidate] = []
         next_basis = (
@@ -5777,6 +5952,15 @@ class ParallelTrainer:
                 ),
                 None,
             )
+            proven_transform = None
+            if self.core_stack_records:
+                record = self.core_stack_records[0]
+                anchor = record.get("localAnchor", {})
+                proven_transform = (
+                    float(anchor.get("x", 0.0)),
+                    float(anchor.get("y", 0.0)),
+                    float(record.get("rotation", 0.0)),
+                )
             next_dictionary, next_shape_logs = self._synthesize_dictionary(
                 self.settings, self.environments, self.generation_id, self.episode
             )
@@ -5812,12 +5996,38 @@ class ParallelTrainer:
                 next_shape_logs = []
                 for empty in empty_floors:
                     empty.reset(next_dictionary)
-                preflight = self._shared_core_stack_candidates(
-                    next_basis,
-                    environments=empty_floors,
-                    dictionary=next_dictionary,
-                    settings=self.settings,
-                )
+                # Reuse the proven core's exact last transform first, then fall
+                # back to cell sampling only if that unexpectedly fails.
+                preflight = []
+                if proven_transform is not None:
+                    anchor_x, anchor_y, rotation_angle = proven_transform
+                    rotation = next(
+                        (
+                            rot
+                            for rot in primary_core.get("rotations", ())
+                            if abs(float(rot.get("angle", 0.0)) - rotation_angle) < 1.0e-6
+                        ),
+                        None,
+                    )
+                    if rotation is not None:
+                        candidate = self._core_stack_at_transform(
+                            empty_floors,
+                            primary_core,
+                            rotation,
+                            anchor_x,
+                            anchor_y,
+                            self.settings,
+                            next_basis,
+                        )
+                        if candidate is not None:
+                            preflight = [candidate]
+                if not preflight:
+                    preflight = self._shared_core_stack_candidates(
+                        next_basis,
+                        environments=empty_floors,
+                        dictionary=next_dictionary,
+                        settings=self.settings,
+                    )
                 if not preflight:
                     raise CoreStackingError(
                         "the proven core failed empty-floor prevalidation for the next episode"
@@ -5838,7 +6048,11 @@ class ParallelTrainer:
         for environment in self.environments:
             environment.reset(next_dictionary)
         if not bool(self.settings["singleFloor"]) and len(self.environments) > 1:
-            next_initial_stacks = self._shared_core_stack_candidates(next_basis)
+            # Reuse the preflight result (which already fell back to the proven
+            # core's exact transform when the fresh core had no shared transform)
+            # instead of re-deriving candidates from the fresh core, which can
+            # come back empty and drop the episode.
+            next_initial_stacks = list(preflight)
             if not next_initial_stacks:
                 raise CoreStackingError("next episode lost its prevalidated core transforms")
             self.core_stacking_metadata = {
@@ -5861,64 +6075,11 @@ class ParallelTrainer:
             
         # 4. Format merged placements for rendering
         episode_formatting_start2 = time.perf_counter()
-        merged_placements_formatted = []
-        for env_idx, layout_graph in enumerate(layout_graphs):
-            environment = self.environments[env_idx]
-            dx, dy = environment.offset
-            for node in layout_graph.nodes.values():
-                category = node.get("category", "room")
-                if "shapeType" in node and node["shapeType"].startswith("M_round"):
-                    category = "room"
-                poly = node["poly"]
-                world_poly = G.translate_polygon(poly, dx, dy)
-                
-                components_formatted = []
-                if "components" in node:
-                    for comp in node["components"]:
-                        comp_world_poly = G.translate_polygon(comp["poly"], dx, dy)
-                        comp_cat = comp.get("category", "room")
-                        if comp.get("isCore") or (comp.get("id") and "core" in str(comp["id"]).lower()):
-                            comp_cat = "core"
-                        elif "shapeType" in comp and comp["shapeType"].startswith("M_round"):
-                            comp_cat = "room"
-                        components_formatted.append({
-                            "id": comp["id"],
-                            "poly": comp_world_poly,
-                            "instanceIdx": env_idx,
-                            "center": G.polygon_centroid(comp_world_poly),
-                            "category": comp_cat,
-                            "isCore": (comp_cat == "core"),
-                            "module": {
-                                "id": comp.get("shapeType", comp.get("moduleId", comp["id"])),
-                                "category": comp_cat,
-                            }
-                        })
-                else:
-                    is_core = (category == "core") or (node.get("id") and "core" in str(node["id"]).lower())
-                    components_formatted.append({
-                        "id": node["id"],
-                        "poly": world_poly,
-                        "instanceIdx": env_idx,
-                        "center": G.polygon_centroid(world_poly),
-                        "category": "core" if is_core else category,
-                        "isCore": is_core,
-                        "module": {
-                            "id": node.get("shapeType", node.get("moduleId", node["id"])),
-                            "category": "core" if is_core else category,
-                        }
-                    })
-                    
-                merged_placements_formatted.append({
-                    "id": node["id"],
-                    "poly": world_poly,
-                    "instanceIdx": env_idx,
-                    "center": G.polygon_centroid(world_poly),
-                    "module": {
-                        "id": node.get("shapeType", node.get("moduleId", node["id"])),
-                        "category": category,
-                    },
-                    "components": components_formatted
-                })
+        merged_placements_formatted = (
+            _format_merged_placements(layout_graphs, self.environments)
+            if build_full_payload
+            else []
+        )
         self.step_profiler.record("episodeFormatting", time.perf_counter() - episode_formatting_start2)
 
         self.step_profiler.record("episodeTotal", time.perf_counter() - episode_start_time)
@@ -5938,8 +6099,16 @@ class ParallelTrainer:
             "scoreHistory": list(self.score_history),
             "bestScore": self.best_score,
             "dictionary": completed_dictionary_formatted,
-            "nextDictionary": [_public_module(module) for module in next_dictionary],
-            "mergedDictionary": [_public_merged_module(module) for module in merged_vocab],
+            "nextDictionary": (
+                [_public_module(module) for module in next_dictionary]
+                if build_full_payload
+                else []
+            ),
+            "mergedDictionary": (
+                [_public_merged_module(module) for module in merged_vocab]
+                if build_full_payload
+                else []
+            ),
             "placements": individual_placements_formatted,
             "mergedPlacements": merged_placements_formatted,
             "coreStacking": completed_core_stacking,
@@ -6359,12 +6528,18 @@ class ParallelTrainer:
             "generationId": self.generation_id,
             "episode": self.episode,
             "step": self.step_number,
-            "placements": placements,
-            "mergedPlacements": merged_placements_formatted,
-            "mergedDictionary": [
-                _public_merged_module(module) for module in merged_vocab
-            ],
-            "dictionary": [_public_module(module) for module in self.dictionary],
+            "placements": placements if self.visuals_enabled else [],
+            "mergedPlacements": merged_placements_formatted if self.visuals_enabled else [],
+            "mergedDictionary": (
+                [_public_merged_module(module) for module in merged_vocab]
+                if self.visuals_enabled
+                else []
+            ),
+            "dictionary": (
+                [_public_module(module) for module in self.dictionary]
+                if self.visuals_enabled
+                else []
+            ),
             "metrics": metrics,
             "coreStacking": self._core_stacking_event(),
             "diagnostics": diagnostics,
@@ -6436,82 +6611,18 @@ class ParallelTrainer:
         metrics["runtimeDiagnostics"] = diagnostics
         
         # 4. Format BPE merged placements for rendering
-        merged_placements_formatted = []
-        for env_idx, layout_graph in enumerate(layout_graphs):
-            environment = self.environments[env_idx]
-            dx, dy = environment.offset
-            for node in layout_graph.nodes.values():
-                category = node.get("category", "room")
-                if "shapeType" in node and node["shapeType"].startswith("M_round"):
-                    category = "room"
-                poly = node["poly"]
-                world_poly = G.translate_polygon(poly, dx, dy)
-                
-                components_formatted = []
-                if "components" in node:
-                    for comp in node["components"]:
-                        comp_world_poly = G.translate_polygon(comp["poly"], dx, dy)
-                        comp_cat = comp.get("category", "room")
-                        if comp.get("isCore") or (comp.get("id") and "core" in str(comp["id"]).lower()):
-                            comp_cat = "core"
-                        elif "shapeType" in comp and comp["shapeType"].startswith("M_round"):
-                            comp_cat = "room"
-                        components_formatted.append({
-                            "id": comp["id"],
-                            "poly": comp_world_poly,
-                            "instanceIdx": env_idx,
-                            "center": G.polygon_centroid(comp_world_poly),
-                            "category": comp_cat,
-                            "isCore": (comp_cat == "core"),
-                            "module": {
-                                "id": comp.get("shapeType", comp.get("moduleId", comp["id"])),
-                                "category": comp_cat,
-                            }
-                        })
-                else:
-                    is_core = (category == "core") or (node.get("id") and "core" in str(node["id"]).lower())
-                    components_formatted.append({
-                        "id": node["id"],
-                        "poly": world_poly,
-                        "instanceIdx": env_idx,
-                        "center": G.polygon_centroid(world_poly),
-                        "category": "core" if is_core else category,
-                        "isCore": is_core,
-                        "module": {
-                            "id": node.get("shapeType", node.get("moduleId", node["id"])),
-                            "category": "core" if is_core else category,
-                        }
-                    })
-                    
-                merged_placements_formatted.append({
-                    "id": node["id"],
-                    "poly": world_poly,
-                    "instanceIdx": env_idx,
-                    "center": G.polygon_centroid(world_poly),
-                    "module": {
-                        "id": node.get("shapeType", node.get("moduleId", node["id"])),
-                        "category": category,
-                    },
-                    "components": components_formatted
-                })
-                
+        merged_placements_formatted = (
+            _format_merged_placements(layout_graphs, self.environments)
+            if self.visuals_enabled
+            else []
+        )
+
         # Format individual placements
-        placements = []
-        for env_idx, environment in enumerate(self.environments):
-            dx, dy = environment.offset
-            for placement in environment.placements:
-                poly = placement["poly"]
-                world_poly = G.translate_polygon(poly, dx, dy)
-                placements.append({
-                    "id": placement["id"],
-                    "poly": world_poly,
-                    "instanceIdx": env_idx,
-                    "center": G.polygon_centroid(world_poly),
-                    "module": {
-                        "id": placement.get("shapeType", placement.get("moduleId", placement["id"])),
-                        "category": placement.get("category", "room"),
-                    }
-                })
+        placements = (
+            _format_individual_placements(self.environments, include_core_stacks=False)
+            if self.visuals_enabled
+            else []
+        )
 
         return {
             "type": "placements",
@@ -6521,8 +6632,16 @@ class ParallelTrainer:
             "step": self.step_number,
             "placements": placements,
             "mergedPlacements": merged_placements_formatted,
-            "mergedDictionary": [_public_merged_module(module) for module in merged_vocab],
-            "dictionary": [_public_module(module) for module in self.dictionary],
+            "mergedDictionary": (
+                [_public_merged_module(module) for module in merged_vocab]
+                if self.visuals_enabled
+                else []
+            ),
+            "dictionary": (
+                [_public_module(module) for module in self.dictionary]
+                if self.visuals_enabled
+                else []
+            ),
             "metrics": metrics,
             "coreStacking": self._core_stacking_event(),
             "diagnostics": diagnostics,
@@ -7142,6 +7261,12 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     event = await asyncio.to_thread(
                         trainer.evaluate, message.get("generationId"), message.get("episode")
                     )
+                    await _send_json(websocket, event)
+                elif command == "setVisuals":
+                    ack = await asyncio.to_thread(trainer.set_visuals, bool(message.get("enabled", True)))
+                    await _send_json(websocket, ack)
+                elif command == "getState":
+                    event = await asyncio.to_thread(trainer.current_state_event)
                     await _send_json(websocket, event)
                 else:
                     await _send_json(

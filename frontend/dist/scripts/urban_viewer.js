@@ -491,9 +491,36 @@ export function initUrbanContext(DATA) {
 
   renderSiteParcel(null);
 
+  // Headless / visuals toggle: when false the rAF render loop stays alive (so it
+  // resumes without a restart) but skips the expensive shadow-mapped
+  // renderer.render + drawGizmo, and geometry rebuilds are skipped. The host (the
+  // React ThreeViewer) drives it via a `set_visuals_enabled` postMessage, AND the
+  // initial state is read from the URL (`?visuals=off`) so a freshly loaded iframe
+  // (e.g. an auto site switch while headless) stays blank from the very first frame
+  // instead of flashing the site context before the host's message arrives.
+  let visualsEnabled = new URLSearchParams(window.location.search).get('visuals') !== 'off';
+  // If this iframe was born headless (site switch while 3D off), paint the canvas
+  // white immediately so the pane never flashes the (dark) raw WebGL buffer.
+  if (!visualsEnabled) {
+    renderer.setClearColor(0xffffff, 1);
+    renderer.clear(true, true, true);
+  }
+
   // Handle Optimizer Placements and UI Messages
   window.addEventListener('message', (event) => {
     if (!event.data) return;
+
+    // Resume/freeze the render loop (always honoured, even while visuals are off).
+    // Disabling just freezes the last rendered frame (no black canvas); a fresh
+    // headless iframe is painted white at init below.
+    if (event.data.type === 'set_visuals_enabled') {
+      visualsEnabled = event.data.enabled !== false;
+      return;
+    }
+
+    // While headless, ignore ALL scene-building messages so no geometry is rebuilt
+    // and no frame is drawn. Only the set_visuals_enabled above is processed.
+    if (!visualsEnabled) return;
 
     if (event.data.type === 'set_context_visibility') {
       const isVisible = event.data.visible !== false;
@@ -895,6 +922,10 @@ export function initUrbanContext(DATA) {
   // Animation Loop
   function animate() {
     requestAnimationFrame(animate);
+
+    // Headless: keep rescheduling (so the loop resumes on re-enable with no
+    // restart) but skip the expensive shadow-mapped render + gizmo redraw.
+    if (!visualsEnabled) return;
 
     if (isAnimatingCamera) {
       const now = performance.now();

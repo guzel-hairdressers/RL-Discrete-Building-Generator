@@ -137,6 +137,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     speed: document.getElementById('speed'),
     speedNum: document.getElementById('speedNum'),
     toggleMergingBtn: document.getElementById('toggleMergingBtn'),
+    btnVisuals: document.getElementById('btnVisuals'),
     perfTimingsCard: document.getElementById('perfTimingsCard'),
     perfTimingsDetails: document.getElementById('perfTimingsDetails'),
     modeTrainingBtn: document.getElementById('modeTrainingBtn'),
@@ -223,6 +224,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     placementRevision: 0,
     disableMerging: false,
     autoChangeSites: true,
+    visualsEnabled: true,
     showSDFGrid: false,
     hoveredModuleId: null,
     lastHoveredModuleId: null,
@@ -273,6 +275,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     window.state = state;
     window.dom = dom;
     window.threeState = threeState;
+    window.setVisualsEnabled = setVisualsEnabled;
     try { setupControlPairs(); } catch(e) { console.error('setupControlPairs failed:', e); window._initError = 'setupControlPairs: ' + e.stack; }
     try { setupSettingsEvents(); } catch(e) { console.error('setupSettingsEvents failed:', e); window._initError = 'setupSettingsEvents: ' + e.stack; }
     try { setupActionEvents(); } catch(e) { console.error('setupActionEvents failed:', e); window._initError = 'setupActionEvents: ' + e.stack; }
@@ -492,6 +495,11 @@ window.onerror = function(message, source, lineno, colno, error) {
     }
     if (dom.toggleMergingBtn) {
       dom.toggleMergingBtn.addEventListener('click', toggleMerging);
+    }
+    if (dom.btnVisuals) {
+      dom.btnVisuals.addEventListener('click', () => {
+        setVisualsEnabled(!state.visualsEnabled);
+      });
     }
     if (dom.btnAxonometric) {
       dom.btnAxonometric.addEventListener('click', () => setCameraMode(true));
@@ -798,6 +806,8 @@ window.onerror = function(message, source, lineno, colno, error) {
       }
     } else if (event.code === 'KeyM' || key === 'm' || key === 'ь') {
       toggleMerging();
+    } else if (event.code === 'KeyV' || key === 'v' || key === 'м') {
+      setVisualsEnabled(!state.visualsEnabled);
     } else if (key === 'r' || key === 'к') {
       resetPolicy();
     } else if (key === 's' || key === 'ы') {
@@ -1269,6 +1279,9 @@ window.onerror = function(message, source, lineno, colno, error) {
       case 'episodeDone':
         handleEpisodeDoneEvent(data);
         break;
+      case 'sync':
+        handleSyncEvent(data);
+        break;
       case 'ack':
         handleAckEvent(data);
         break;
@@ -1596,6 +1609,67 @@ window.onerror = function(message, source, lineno, colno, error) {
       if (state.trainingWanted && state.hasSite) scheduleNextStep(80);
       else if (!state.trainingWanted && state.hasSite) enterPausedState();
       else showCanvasMessage('Optimizer error', message, 'error');
+    }
+  }
+
+  function handleSyncEvent(data) {
+    // Full snapshot from `getState` — repopulates the scene so visuals can be
+    // re-enabled without a page reload or reloading model weights. The trainer
+    // keeps its weights/dictionary/placements server-side throughout, so this
+    // is purely a client state rebuild; it mutates no server state.
+    if (Array.isArray(data.boundaries)) {
+      state.boundaries = normalizeBoundaries(data.boundaries);
+      state.boundaryByInstance = new Map(state.boundaries.map((boundary) => [String(boundary.instanceIdx), boundary]));
+      state.totalSiteArea = state.boundaries.reduce((total, boundary) => total + boundary.siteArea, 0);
+    }
+    if (Array.isArray(data.dictionary)) state.dictionary = data.dictionary;
+    if (Array.isArray(data.mergedDictionary)) state.mergedDictionary = data.mergedDictionary;
+
+    state.individualPlacementsList = Array.isArray(data.placements) ? data.placements : [];
+    state.currentMergedPlacements = Array.isArray(data.mergedPlacements) ? data.mergedPlacements : [];
+
+    clearPlacementState();
+    const useMerged = !state.disableMerging && state.currentMergedPlacements.length > 0;
+    for (const placement of (useMerged ? state.currentMergedPlacements : state.individualPlacementsList)) {
+      upsertPlacement(placement);
+    }
+
+    if (Array.isArray(data.scoreHistory)) state.scoreHistory = boundedScoreHistory(data.scoreHistory);
+    if (data.bestScore !== undefined) state.bestScore = Number(data.bestScore) || 0;
+    state.serverMetrics = data.metrics || {};
+    state.contextData = data.contextData || state.contextData;
+    state.device = typeof data.device === 'string' ? data.device : state.device;
+    if (data.generationId !== undefined && data.generationId !== null) state.generationId = data.generationId;
+    if (data.episode !== undefined && data.episode !== null) state.episode = data.episode;
+
+    syncBuildingExtrusions3D(state.individualPlacementsList);
+    updateMetricsUI();
+    updateDictionaryUI();
+    drawHistory();
+    scheduleAccessibleSiteMetrics();
+    requestRender();
+    setProtocolStatus('Visuals re-enabled · model re-synced');
+  }
+
+  function setVisualsEnabled(enabled) {
+    const next = Boolean(enabled);
+    if (next === state.visualsEnabled) return;
+    state.visualsEnabled = next;
+    sendCommand({ cmd: 'setVisuals', enabled: next });
+
+    updateVisualsButton();
+
+    if (next) {
+      // Re-enable: ask the server for a full snapshot; the render loop is already
+      // scheduled by animateThree (it only skips the actual draw while off), so no
+      // restart is needed.
+      sendCommand({ cmd: 'getState' });
+      setProtocolStatus('Visuals enabled · re-syncing model');
+    } else {
+      // Disable: freeze the 3D scene and the 2D plan; monitoring keeps running.
+      // The animateThree loop stays scheduled (no-op ticks) so re-enabling is live.
+      view.renderFrame = null;
+      setProtocolStatus('Visuals disabled · monitoring only');
     }
   }
 
@@ -3031,7 +3105,11 @@ window.onerror = function(message, source, lineno, colno, error) {
 
       // Animation Loop
       function animateThree() {
+        // Always keep the loop scheduled so re-enabling visuals needs no restart.
+        // When visuals are off, skip the expensive work (controls update + render)
+        // — the residual no-op rAF tick is negligible next to the render it skips.
         threeState.animFrameId = requestAnimationFrame(animateThree);
+        if (!state.visualsEnabled) return;
         if (threeState.controls) threeState.controls.update();
         if (threeState.renderer && threeState.scene && threeState.camera) {
           threeState.renderer.render(threeState.scene, threeState.camera);
@@ -3333,6 +3411,7 @@ window.onerror = function(message, source, lineno, colno, error) {
   }
 
   function syncBuildingExtrusions3D(placementsList) {
+    if (!state.visualsEnabled) return;
     if (!threeState.buildingGroup) return;
 
     // Clear old building extrusions
@@ -3666,7 +3745,10 @@ window.onerror = function(message, source, lineno, colno, error) {
 
   function renderCanvas() {
     view.renderFrame = null;
-    
+    // Headless/visuals-off mode: skip the 2D plan redraw; monitoring (metrics,
+    // charts, debug) runs via its own paths that bypass this.
+    if (!state.visualsEnabled) return;
+
     // Smooth 1s transition animation for dimming highlight
     const now = performance.now();
     const dt = state.lastFrameTime ? (now - state.lastFrameTime) / 1000.0 : 0.016;
@@ -4773,6 +4855,14 @@ window.onerror = function(message, source, lineno, colno, error) {
       dom.toggleMergingBtn.classList.remove('dock-btn-primary');
       if (span) span.textContent = 'Disable Merging (M)';
     }
+  }
+
+  function updateVisualsButton() {
+    if (!dom.btnVisuals) return;
+    dom.btnVisuals.classList.toggle('active', state.visualsEnabled);
+    dom.btnVisuals.setAttribute('aria-pressed', String(state.visualsEnabled));
+    const label = document.getElementById('btnVisualsTitle');
+    if (label) label.textContent = state.visualsEnabled ? 'Visuals Off' : 'Visuals On';
   }
 
   function clamp(value, min, max) {

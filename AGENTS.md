@@ -98,3 +98,27 @@ Before staging, committing, or proposing a push:
 
 ### 3. Explicit User Approval Rule
 - **NEVER execute `git push` autonomously**. Always present a concise summary of changes and ask for explicit user consent before pushing to remote branches.
+
+---
+
+## 6. Memory & Session Conventions (All Agents)
+
+These apply to every agent that works here (`Deep-1`, `Deep-2`, …). Contexts remain isolated per agent unless the user explicitly asks to cross them.
+
+### 6.1 Agent Namespace
+
+- Each agent writes memories only to files prefixed `deep-<N>-*` in the project memory directory (`MEMORY.md` lives alongside them).
+- Each agent indexes only under its own `## Deep-<N>` heading in `MEMORY.md`.
+- Do **not** read another agent's memory files unless the user explicitly instructs it.
+
+### 6.2 Write Memories for Resumption
+
+- Memories exist primarily so the user can continue after accidentally exiting the terminal — write for a fresh session with zero context.
+- Use absolute dates and the branch name; state outcomes (what changed / result / what's next / what's blocked), not the reasoning trail. Dead ends and false starts belong in `agent_notes/`, not in memory.
+
+### 6.3 Cross-Agent Conversation List
+
+- Maintain the `## Conversations` section at the top of `MEMORY.md` — the shared, cross-agent list of session short descriptions.
+- One line per session: `[cs-N · <agent> · YYYY-MM-DD] — <short description>. → [[memory-to-load]]`. Add a line whenever a session does something worth resuming.
+- Maintain your own lines only; never edit another agent's.
+- On "list previous conversations", show the short descriptions and let the user pick. Resume one by loading its linked memories in the owning agent's context; start a new session by spinning up a fresh agent (its own namespace).
