@@ -12,6 +12,7 @@ This directory contains categorized, reproducible benchmark datasets, execution 
 agent_notes/benchmarks/
 ├── README.md                                          # Central Directory Index & Usage Guide (this file)
 ├── BENCHMARK_SUMMARY.md                                # Performance Comparison Matrix & Speedup Metrics
+├── v0.9.0-alpha_rl_refactor_2026-08-25.md             # RL refactor comparison (A2C vs PPO), v0.9.0-alpha
 ├── 26-08-10_v0.6c-legacy-baseline/                    # Baseline v0.6-c Python SAT benchmark datasets (Seed 808)
 │   ├── historical_v0.6c_seed808_10ep.csv
 │   └── historical_v0.6c_seed808_10ep.json
@@ -21,9 +22,10 @@ agent_notes/benchmarks/
 ├── 26-08-10_v0.8.0-stress-test-130modules/            # High-capacity workload evaluation (130 modules, Seed 123)
 │   ├── v0.8.0_seed123_10ep.csv
 │   └── v0.8.0_seed123_10ep.json
-└── 26-08-11_v0.8.0-visual-grid-evaluations/           # Visual layout rendering grids & JSON floor plan layouts
-    ├── v0.8.0_seed123_first3_grid.json
-    └── v0.8.0_seed123_first3_grid.png
+├── 26-08-11_v0.8.0-visual-grid-evaluations/           # Visual layout rendering grids & JSON floor plan layouts
+│   ├── v0.8.0_seed123_first3_grid.json
+│   └── v0.8.0_seed123_first3_grid.png
+└── 26-08-14_v0.8.0-roadmap-execution/                 # Phase 3–7 roadmap-execution benchmark runs
 ```
 
 ---

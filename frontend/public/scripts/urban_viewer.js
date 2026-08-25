@@ -216,7 +216,9 @@ export function initUrbanContext(DATA) {
 
       const dot = faceNormal.dot(sunVector);
       const isSunFacing = (isRoad || dot > 0.05);
-      const c = pureColor;
+      // Away-from-sun faces on context buildings are *slightly* darker than
+      // sun-facing ones (subtle directional cue). Roads/greenspaces stay uniform.
+      const c = isSunFacing ? pureColor : pureColor.clone().multiplyScalar(0.90);
 
       for (let vi = 0; vi < 3; vi++) {
         const v = verts[f[vi]];
@@ -887,7 +889,7 @@ export function initUrbanContext(DATA) {
             <div style="color:#334155;"><b style="color:#0f172a;">Context Storeys:</b> ${obj.userData.avgFloors || 5} | ${obj.userData.maxFloors || 10}</div>
           `;
         } else if (obj.userData.isBuilding) {
-          obj.material.color.setHex(0xdbeafe);
+          obj.material.color.setHex(0xf2f2f2); // neutral just-slightly-darker hover (was blue 0xdbeafe)
           tooltip.style.display = 'block';
           tooltip.style.left = (e.clientX + 14) + 'px';
           tooltip.style.top = (e.clientY + 14) + 'px';

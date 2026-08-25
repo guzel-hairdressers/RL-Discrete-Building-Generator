@@ -232,6 +232,17 @@ This document defines the master development plan for the **RL-Discrete-Building
 
 ---
 
+### Phase 7.5: Merge & Release — `v0.9.0` → `main`
+* **Target Objective**: *Fast-forward `version/v0.9.0-alpha` into `main` as the authoritative `v0.9.0` release*
+* **Status**: `[IN PREP / BRANCH: version/v0.9.0-alpha]`
+* **Steps**:
+  1. **Version Branding**: Unify scattered version strings (`v0.9.0-alpha`, `v0.8.6-b`, `v0.8.0`) to `v0.9.0` across frontend + server; rebuild `frontend/dist`.
+  2. **Test Blocker**: Resolve the 4 failing tests (RL-refactor regressions) so the merged `main` suite passes 100% per AGENTS.md governance.
+  3. **Doc Sync**: Update `historical_approaches.md`, `issues.md`, `roadmap.md`, `benchmarks/`, `guides/`, and `agent_notes/README.md` index for the release.
+  4. **Merge**: Fast-forward `main` to the `v0.9.0` state (main sits at the merge-base, so the merge is zero-conflict).
+
+---
+
 ### Phase 8: Release `version/v0.9.1-alpha` — Dynamic Parametric Shape Generator Merge & Co-Evolving Policy Cores
 * **Target Objective**: *Merge v0.9.0-alpha Real Context Engine with Dynamic Parametric Shapes ($k=3,4$) & Policy-Guided Vertical Circulation*
 * **Status**: `[PLANNED ROADMAP / BRANCH: version/v0.9.1-alpha]`

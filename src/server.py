@@ -1,4 +1,4 @@
-"""Module Lab v0.8.6-b PyTorch training and WebSocket server.
+"""Module Lab v0.9.0 PyTorch training and WebSocket server.
 
 Each WebSocket owns a completely independent :class:`ParallelTrainer`.  Within
 that trainer all floor environments share one policy and one optimizer.  Shape
@@ -6932,7 +6932,7 @@ class ParallelTrainer:
 
 
 
-app = FastAPI(title="Module Lab v0.8.6-b")
+app = FastAPI(title="Module Lab v0.9.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -7320,6 +7320,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
 
 if __name__ == "__main__":
-    print(f"Module Lab v0.8.6-b policy device: {select_device().type}")
+    print(f"Module Lab v0.9.0 policy device: {select_device().type}")
     port = int(os.environ.get("PORT", "8000"))
     uvicorn.run(app, host="127.0.0.1", port=port)

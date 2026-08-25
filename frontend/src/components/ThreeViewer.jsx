@@ -57,7 +57,7 @@ export const ThreeViewer = () => {
     // frozen (blank) instead of flashing the site context before our
     // set_visuals_enabled message lands.
     const u = new URL(base, window.location.origin);
-    u.searchParams.set('v', 'v0.9.0-alpha');
+    u.searchParams.set('v', 'v0.9.0');
     if (!visualsEnabled) u.searchParams.set('visuals', 'off');
     return u.pathname + u.search;
   };

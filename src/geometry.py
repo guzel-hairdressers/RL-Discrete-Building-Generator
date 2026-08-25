@@ -1,4 +1,4 @@
-"""Deterministic vector geometry for Module Lab v0.8.0.
+"""Deterministic vector geometry for Module Lab v0.9.0.
 
 The kernel deliberately keeps topology decisions in vector space.  Raster cells
 are only a placement acceleration structure; they are never used as a substitute

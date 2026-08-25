@@ -14,7 +14,9 @@ It explicitly records **what was achieved** by successful approaches and **which
   * **Split-Screen 3D Urban Context Viewer**: 50/50 stage split featuring Three.js WebGL rendering of real urban context buildings with soft shadows, axonometric/perspective cameras, glassmorphic site cards, and real-time rising 3D module extrusions.
   * **Policy-Based Core Placements**: Unified multi-floor vertical circulation core placement into the spatial PyTorch Actor–Critic policy. The policy network directly evaluates candidate core stack spatial positions \((x, y)\), angles \(\theta\), and composite features, backpropagating building-level GAE returns into the neural policy.
   * **Batch Multi-Floor Training (`batchSize = 9`)**: Default 9 parallel stories with 100% exact vertical shaft alignment and 2-episode rollout buffer for stable PPO convergence.
-  * **170 Unit Tests Passing ($100\%$)**.
+  * **RL Refactor: A2C over PPO** ([benchmark](benchmarks/v0.9.0-alpha_rl_refactor_2026-08-25.md)): Dropped PPO ratio-clipping for a lightweight A2C update; best at `lr=0.001` (beats PPO at the same LR, and PPO@0.003, on the standard user settings — Site Area Tier "ANY", Boundary "FREE", Auto-Changing Sites).
+  * **Headless / Visuals-Off Toggle** ([guide](guides/visuals_off_guide.md)): `visuals_enabled` gate + `setVisuals`/`getState` WebSocket commands + React `ViewToggle` button + URL-param iframe init. Benchmark-proven bit-identical trajectories with payload −58% and JSON serialization −59%; browser-verified freeze (no black canvas) on `3D Off`.
+  * **170 Unit Tests** — 166 passing / **4 under active resolution** from the in-progress RL refactor (A2C-vs-PPO comparison, `_max_cores_for_site_scaling`, and 2 optimizer/edge-case errors; tracked in [`issues.md`](issues.md)).
 
 ### `v0.8.6` — Minimum $45^\circ$ Exterior Clearance, Deep Daylight & Facade Chasm Penalties
 * **Key Achievements**:

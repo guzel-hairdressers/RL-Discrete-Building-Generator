@@ -1,4 +1,4 @@
-# Agent Instructions & Project Architecture — Module Lab v0.8.0
+# Agent Instructions & Project Architecture — Module Lab v0.9.0
 
 Welcome to the **RL-Discrete-Building-Generator** (Module Lab) codebase.
 
@@ -8,6 +8,7 @@ Welcome to the **RL-Discrete-Building-Generator** (Module Lab) codebase.
 
 - **`main` Branch**: Authoritative **`v0.8.0`** release at root — Exact Multi-Floor 4–8 Story Core Shaft Stacking Optimizer.
 - **`version/v0.8.1` Branch**: **`v0.8.1`** release — Dynamic Parametric Shape ($k=3,4$) Generator with 5.92x speedup and hidden debug console (`Ctrl+Shift+D`).
+- **`version/v0.9.0-alpha` Branch**: **`v0.9.0`** (pre-merge) — Real Urban OSM Context Integration, Policy-Based Core Placements, RL refactor (A2C over PPO), and Headless/Visuals-Off toggle. Merging to `main` as the authoritative **`v0.9.0`** release.
 - **Legacy Variant Branches**:
   - `version/v0.6-a`: Alternative candidate placement anchor search.
   - `version/v0.6-b`: Dynamic palette & parametric proposals variant.
@@ -19,7 +20,7 @@ Welcome to the **RL-Discrete-Building-Generator** (Module Lab) codebase.
 
 ---
 
-## 2. Key Architecture Components (v0.8.0)
+## 2. Key Architecture Components (v0.9.0)
 
 - **`src/server.py`**: FastAPI & WebSocket backend. Manages multi-floor building transactions, core shaft alignment across 4–8 stories (`FloorEnvironment`), PyTorch Actor–Critic policy training (`ParallelTrainer`), and WebSocket telemetry streaming.
 - **`src/geometry.py`**: Vector geometry kernel. Contains Python SAT overlap checks, `_LazyRotationDict` on-demand cell rasterization, and `ctypes` bindings to `src/c/fast_geometry.c`.

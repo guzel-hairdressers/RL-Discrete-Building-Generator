@@ -257,3 +257,28 @@ This document is the master tracking log for active bugs, regressive side effect
   3. **Universal Point & Polygon Extraction (`toPt`)**: In `public/app.js`, implemented `toPt(p)` to handle both `{x, y}` objects and `[x, y]` arrays seamlessly. Updated `syncBuildingExtrusions3D` to resolve `placement.poly` and center each floor extrusion by its floor boundary centroid, achieving 100% vertical stacking alignment in the 3D scene.
   4. **Direct 3D Polyhedron Mesh Rendering**: Constructed native `THREE.BufferGeometry` instances with soft shadows and semi-transparent depth for surrounding context buildings, enabling live bird's-eye visibility of the rising multi-floor building.
 
+---
+
+### 4 Failing Tests from the In-Progress RL Refactor (Merge Blocker)
+* **Status**: `Open (26-08-26) / Blocks the v0.9.0 → main merge`
+* **Issue**: The `version/v0.9.0-alpha` RL refactor (PPO → A2C) leaves the test suite at **166/170 passing**. Four failures/errors, all in existing-on-`main` tests that the refactor broke (behavioral regression, not test changes — only `tests/test_dynamic_cores_and_hops.py` differs from main):
+  1. `test_max_cores_for_site_scaling` — `FAIL`
+  2. `test_terminal_learning_updates_actor_shape_policy_and_critic` — `FAIL` (A2C-vs-PPO comparison)
+  3. `test_empty_terminal_episode_trains_finite_critic` — `ERROR` (optimizer / empty-episode path)
+  4. `test_dictionary_limit_breach_squared_penalty` — `ERROR`
+* **Resolution**: Not yet resolved. AGENTS.md mandates 100% passing on `main`, so these must be fixed (or the affected assertions/setup updated with justification) **before** the fast-forward merge. Tracked as the Phase 7.5 merge blocker in [`roadmap.md`](roadmap.md).
+
+---
+
+### Headless / Visuals-Off Toggle Bugs (Freeze Leak, Black Canvas, Over-Dark Shading)
+* **Status**: `Solved (26-08-26, browser-verified in headless Chrome)`
+* **Issue**:
+  1. **Freeze leak on episode/site change**: While `3D Off`, the rAF freeze held per-step, but a fresh iframe loaded on site change defaulted its engine to `visualsEnabled=true` and rendered the site context before the host's `set_visuals_enabled` message landed — so the 3D visibly "updated" on every episode change despite being Off.
+  2. **Black canvas on disable**: The `renderer.clear(true,true,true)` on disable left a black canvas over the white iframe body.
+  3. **Over-dark shading experiment**: A normal-direction darkening experiment (non-sun-facing faces × 0.62, roomShadow `#aebccd`) made unlit faces too dark; reverted per user preference to the original subtle look.
+* **Resolution**:
+  1. **URL-param init**: The engine now reads its initial state from `&visuals=off` in the iframe URL (`new URLSearchParams(location.search).get('visuals') !== 'off'`), and `ThreeViewer.getTargetSrc` appends it via `new URL()`. Fresh iframes start frozen from the first frame — zero renders across site changes while Off.
+  2. **Freeze instead of black**: Removed the clear on disable → toggling Off now freezes the last frame; born-headless iframes paint white at init.
+  3. **Shading reverted** to uniform context color + `#e2e8f0` roomShadow.
+  * **Verified**: Off freezes (std≈32, not black), site-switch-while-Off → white, re-enable repaints identically (std≈34) via `getState`/`sync`. Benchmark (`benchmark_visuals_off.py`, 120-ep fixed seed): generation bit-identical, payload −58%, serialization −59%.
+
