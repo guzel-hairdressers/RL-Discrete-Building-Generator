@@ -238,9 +238,9 @@ This document defines the master development plan for the **RL-Discrete-Building
 * **Steps**:
   1. **Version Branding**: Unify scattered version strings (`v0.9.0-alpha`, `v0.8.6-b`, `v0.8.0`) to `v0.9.0` across frontend + server; rebuild `frontend/dist`. `[DONE]`
   2. **Test Blocker**: Resolve the 4 failing tests (RL-refactor regressions) so the merged `main` suite passes 100% per AGENTS.md governance. `[DONE 26-08-26]` — real empty-episode `loss.backward()` crash fixed; stale `ppo_gae`/`_max_cores_for_site` assertions updated with justification; suite is now 170 OK (skipped=2).
-  3. **Ship the verified LR fold**: commit the default `learningRate` flip (0.003 → 0.001) + `lrSchedule`/`ratioClip`/candidate-cap settings so `main` does NOT ship the known-collapse 0.003 default. `[PENDING — uncommitted working-tree state]`
-  3. **Doc Sync**: Update `historical_approaches.md`, `issues.md`, `roadmap.md`, `benchmarks/`, `guides/`, and `agent_notes/README.md` index for the release.
-  4. **Merge**: Fast-forward `main` to the `v0.9.0` state (main sits at the merge-base, so the merge is zero-conflict).
+  3. **Ship the verified LR fold**: commit the default `learningRate` flip (0.003 → 0.001) + `lrSchedule`/`ratioClip`/candidate-cap settings so `main` does NOT ship the known-collapse 0.003 default. `[DONE 26-08-26]` — committed as `2a937227` (fold + empty-episode gradient-crash fix + test updates + benchmark scripts; 170 OK, skipped=2).
+  4. **Doc Sync**: Update `historical_approaches.md`, `issues.md`, `roadmap.md`, `benchmarks/`, `guides/`, and `agent_notes/README.md` index for the release. `[DONE 26-08-26]` — historical/issues/benchmarks updated in `2a937227`; roadmap status above; README index verified, no change required.
+  5. **Merge**: Fast-forward `main` to the `v0.9.0` state (main sits at the merge-base, so the merge is zero-conflict). `[PENDING — requires explicit user approval before any git push]`
 
 ---
 
