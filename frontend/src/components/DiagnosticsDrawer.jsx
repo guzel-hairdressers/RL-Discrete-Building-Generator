@@ -197,7 +197,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
     ctx.restore();
   }, [rewardHistory, metrics.score]);
 
-  // Reward & Penalty Decomposition (Full Canonical Module Lab v0.8 Specification)
+  // Reward & Penalty Decomposition (Canonical Module Lab reward function)
   const fillRatio = safeNum(metrics.fillRatio || debugTelemetry.fillRatio, 0);
   const rentableRatio = safeNum(metrics.rentableRatio || debugTelemetry.rentableRatio, 0);
   const daylight = safeNum(metrics.daylightRatio || debugTelemetry.daylightRatio, 0.85);
@@ -405,7 +405,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           <span className="developer-kicker">Bounded Live RL Telemetry</span>
           <span className="drawer-title">DEVELOPER & RL DIAGNOSTICS</span>
           <span className="drawer-subtitle">
-            Device: {String(device).toUpperCase()} · Native Geometry: C (SAT + Raycast) · Core Shafts: 100% Exact
+            Device: {String(device).toUpperCase()} · Native Geometry: C (SAT + Raycast)
           </span>
         </div>
         <button className="drawer-close-btn" onClick={onClose} title="Close Diagnostics Panel">
@@ -431,7 +431,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
         {/* Card 2: Terminal Rewards & Penalties (Dual Column Grid) */}
         <section className="diag-v08-card diag-col-span-2">
           <div className="diag-card-top">
-            <span className="diag-section-title">Terminal Rewards & Penalties (v0.8 Decomposed)</span>
+            <span className="diag-section-title">Terminal Rewards & Penalties</span>
             <span className="diag-badge-live">Live PBRS</span>
           </div>
           <div className="reward-breakdown-dual-grid">
@@ -482,24 +482,23 @@ export const DiagnosticsDrawer = ({ onClose }) => {
             <div><dt>Device</dt><dd>{String(device).toUpperCase()}</dd></div>
             <div><dt>Native Engine</dt><dd>C Extension (Active)</dd></div>
             <div><dt>Action Space |A|</dt><dd>{safeNum(diagnostics.actionSpaceSize, 184)}</dd></div>
-            <div><dt>Shaft Stacking</dt><dd style={{ color: '#059669' }}>100% Aligned</dd></div>
             <div><dt>Memory Usage</dt><dd>142 MB</dd></div>
             <div><dt>Parallel Batch</dt><dd>{safeNum(metrics.parallelFloors, 9)} floors</dd></div>
           </dl>
         </section>
 
-        {/* Card 4: Monte Carlo Actor-Critic / PPO Signal */}
+        {/* Card 4: Monte Carlo Actor-Critic / A2C Signal */}
         <section className="diag-v08-card">
           <div className="diag-card-top">
             <span className="diag-section-title">Monte Carlo Training Signal</span>
           </div>
           <dl className="diag-dl-grid">
-            <div><dt>Algorithm</dt><dd>PPO + PBRS</dd></div>
-            <div><dt>Critic Loss (L_V)</dt><dd>{formatNum(diagnostics.criticLoss, 4, '0.0142')}</dd></div>
-            <div><dt>Policy Loss (L_π)</dt><dd>{formatNum(diagnostics.policyLoss, 4, '-0.0089')}</dd></div>
-            <div><dt>Entropy Bonus</dt><dd>{formatNum(diagnostics.entropy, 3, '1.842')}</dd></div>
-            <div><dt>Learning Rate</dt><dd>0.003</dd></div>
-            <div><dt>Advantage (A)</dt><dd>{formatNum(debugTelemetry.advantage, 4, '0.4120')}</dd></div>
+            <div><dt>Algorithm</dt><dd>{metrics.learningAlgorithm === 'inference_only' ? 'Inference Only' : 'A2C + GAE'}</dd></div>
+            <div><dt>Critic Loss (L_V)</dt><dd>{formatNum(metrics.valueLoss, 4, '—')}</dd></div>
+            <div><dt>Policy Loss (L_π)</dt><dd>{formatNum(metrics.policyLoss, 4, '—')}</dd></div>
+            <div><dt>Entropy Bonus</dt><dd>{formatNum(metrics.policyEntropy, 3, '—')}</dd></div>
+            <div><dt>Learning Rate</dt><dd>{typeof metrics.learningRate === 'number' ? metrics.learningRate.toFixed(4) : '0.0010'}</dd></div>
+            <div><dt>Advantage (A)</dt><dd>{formatNum(metrics.advantage, 4, '—')}</dd></div>
           </dl>
         </section>
 

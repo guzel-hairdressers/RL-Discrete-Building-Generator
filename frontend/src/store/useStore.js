@@ -37,7 +37,7 @@ export const DEFAULT_SETTINGS = {
   publicMode: false,
   parallelEnvironments: 9,
   maxModules: 130,
-  learningRate: 0.003,
+  learningRate: 0.001,
   minEdge: 3.0,
   maxEdge: 9.0,
   dictCap: 10,

@@ -174,10 +174,10 @@ export const BottomControlDeck = () => {
                       min="0.0005"
                       max="0.01"
                       step="0.0005"
-                      value={settings.learningRate || 0.003}
+                      value={settings.learningRate || 0.001}
                       onChange={(e) => updateSettings({ learningRate: parseFloat(e.target.value) })}
                     />
-                    <span className="val-tag">{settings.learningRate || 0.003}</span>
+                    <span className="val-tag">{settings.learningRate || 0.001}</span>
                   </div>
                 </div>
               </div>

@@ -905,7 +905,7 @@ body, html, #root {
   text-align: left;
 }
 
-/* Comprehensive Diagnostics Grid (v0.8 Standard) */
+/* Comprehensive Diagnostics Grid (v0.9) */
 .diagnostics-v08-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
