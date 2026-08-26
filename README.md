@@ -1,47 +1,25 @@
-# Module Lab v0.8.0
+# Module Lab v0.9.0
 
-`v0.8.0` is the exact multi-floor core-stacking variant of Module Lab. It carries the building-level intent of the genuine v0.6-c experiment onto the optimized vector-geometry and actor–critic kernel: a core is selected once for the building and committed at the same local transform on every floor, or no floor changes.
+`v0.9.0` is the real-urban-context release of Module Lab — the RL-Discrete-Building-Generator. It embeds each training site in its real-world OpenStreetMap neighborhood, moves multi-floor vertical-circulation **core placement inside the neural policy**, and retrains with a lightweight **A2C** actor–critic update instead of PPO.
 
-The recommended range is 4–8 floors. `parallelEnvironments` remains configurable from 1 to 16 for compatibility, and can be changed through an atomic settings update between generations. The count is fixed within an episode; it is not randomized automatically.
+The recommended range is 4–8 stories with exact vertical shaft alignment across every floor. `parallelEnvironments` (default `batchSize = 9`) is configurable from 1 to 16 and changes atomically between generations; the count is fixed within an episode.
 
-A matched 10-episode CPU comparison against the genuine archived v0.6-c implementation measured 5.3411565833899655 seconds per episode for v0.6-c and 0.8167754751979374 seconds for v0.8.0: a **6.539320468817443x** speed-up. Mean action-step time improved by **14.069987717848928x**, while score, fill, and rentable ratio also increased in that run. Exact provenance, semantic caveats, timing, quality, and memory data are in [OPTIMIZATION_REPORT.md](OPTIMIZATION_REPORT.md).
+## What's new in v0.9.0
 
-## Visual results
+- **Real Urban OSM Context Integration** — 1,547 real-world OpenStreetMap parcels harvested across 8 cities (New York, London, Tokyo, Singapore, Barcelona, Chicago, Paris, Hong Kong) with neighbor building heights and road meshes from the Context Generator.
+- **Split-Screen 3D Urban Context Viewer** — a 50/50 stage split with Three.js WebGL rendering of the real neighborhood (soft shadows, axonometric/perspective cameras, glassmorphic site cards) and live rising 3D module extrusions.
+- **Policy-Based Core Placements** — the core stack is no longer a hardcoded pre-step. The Actor–Critic policy evaluates candidate core positions \((x, y)\), angles \(\theta\), and composite features directly, backpropagating building-level GAE returns into the network.
+- **RL Refactor: A2C over PPO** — importance-weighted REINFORCE + GAE with a learned value baseline. The default `learningRate` is **0.001** (0.003 is a known A2C mid-run collapse). Optional `lrSchedule` (constant/cosine/linear) + PPO-style `ratioClip` are enableable settings, value-neutral at defaults.
+- **Headless / Visuals-Off Toggle** — a `3D Off` control stops the WebSocket payload from carrying display geometry and freezes the renderer, while the RL trajectory stays **bit-identical** (payload −58%, JSON serialization −59%).
+- **React 18 + Zustand frontend** — the live UI lives in `frontend/` (Vite-built to `frontend/dist/`); the legacy `public/` canvas app is no longer served.
 
-The [seed-123 PNG contact sheet](visual_results/v0.8.0_seed123_first3_grid.png) renders the actual individual pre-BPE polygons from the first three deterministic episodes as three rows by four floors. Red modules are the exact locked core stack; the matching [JSON manifest](visual_results/v0.8.0_seed123_first3_grid.json) preserves its boundaries, placements, metrics, stack IDs, and alignment audit.
+## Architecture
 
-## Core-stacking contract
-
-The exact building signature is:
-
-```text
-(module id, rotation angle, local anchor x, local anchor y)
-```
-
-Canvas offsets are excluded. The module, rotation, anchor, and local polygon must match on every floor.
-
-- Before a multi-floor site is published, the first learned core is prevalidated against every floor with normal containment, collision, core-spacing, shared-wall, and raster predicates.
-- If there is no common transform, the entire group of floor sites is rejected and resampled. Every floor keeps the requested irregular boundary family; no site is enlarged or replaced with a permissive rectangle.
-- The first core is a mandatory building action. It creates one placement per floor but exactly one policy decision and one log-probability term.
-- Later floor-local candidate lists cannot contain cores. An optional second building core becomes eligible only after every floor has one core and at least six rooms; the policy may then choose a shared stack or a no-stack gate.
-- A selected stack is revalidated immediately before mutation. If any floor placement fails, targeted placement-owned checkpoints restore every floor and no stack record or policy term is retained.
-- The proven primary core persists across episodes on the same site. A new site or relevant settings generation prepares a new whole-building transaction.
-
-See [core_stacking_guide.md](core_stacking_guide.md) for invariants and WebSocket protocol fields.
-
-## Optimization parity
-
-v0.8.0 shares the v0.8.1 optimization kernel while adding building transactions:
-
-- optional ABI-3 C acceleration for polygon overlap, concave-site containment, shared overlap, tolerant segment overlap, and wall distance, with deterministic Python fallback;
-- cached rotation/site bounds, spatial buckets, early AABB rejection, and deferred candidate rasterization;
-- bounded per-category proposal quotas and a rotating, stratified 12-edge exposed-frontier view;
-- concurrent candidate generation across active floors and one batched policy-scoring call;
-- terminal or explicit paused-evaluation BPE, rather than a full graph rebuild after every placement;
-- Monte Carlo actor–critic with summed per-trajectory log-probabilities, a learned value baseline, entropy regularization, and gradient clipping; and
-- hardware wall time as telemetry only, never as a reward input.
-
-The raw graph proposal was evaluated but not integrated. The existing residual-edge/angle index was faster, and v0.8.0 implements the evaluation's rotating-stratified sampling follow-up. See [GRAPH_EVALUATION.md](GRAPH_EVALUATION.md).
+- **`src/server.py`** — FastAPI + WebSocket backend. Manages multi-floor building transactions, core shaft alignment across 4–8 stories (`FloorEnvironment`), PyTorch Actor–Critic training (`ParallelTrainer`), and WebSocket telemetry streaming.
+- **`src/geometry.py`** — vector geometry kernel: Python SAT overlap checks, `_LazyRotationDict` on-demand cell rasterization, and `ctypes` bindings to `src/c/fast_geometry.c`.
+- **`src/c/fast_geometry.c`** — native C extension for SAT polygon overlap (`polygons_overlap_c`), point-in-polygon containment, and wall-segment clearance.
+- **`src/graph.py`** — BPE polygon merging, adjacency detection, and layout extraction.
+- **`frontend/`** — React 18 + Zustand + Vite UI: Three.js 3D viewer (`ThreeViewer`), 2D plan canvas (`PlanCanvas2D`), HUD metrics, and live placement steps.
 
 ## Install and run
 
@@ -49,82 +27,79 @@ From this directory:
 
 ```bash
 python3 -m pip install -r requirements.txt
-python3 build_native.py
-python3 server.py
+python3 src/c/build_native.py
+python3 src/server.py
 ```
 
-Open <http://127.0.0.1:8000>. Set `PORT` to choose another port.
+Open <http://localhost:8000>. Set `PORT` to choose another port.
 
-The native build is optional. `build_native.py` emits `libfast_geometry.dylib` on macOS or `libfast_geometry.so` on Linux, verifies ABI 3, and atomically installs it. It respects `CC` when set.
+The native build is optional. `build_native.py` emits `libfast_geometry.dylib` on macOS or `libfast_geometry.so` on Linux, verifies ABI 3, and atomically installs it. It respects `CC` when set:
 
 ```bash
-python3 build_native.py --debug
-python3 build_native.py --clean
-MODULE_LAB_DISABLE_NATIVE_GEOMETRY=1 python3 server.py
+python3 src/c/build_native.py --debug
+python3 src/c/build_native.py --clean
+MODULE_LAB_DISABLE_NATIVE_GEOMETRY=1 python3 src/server.py
 ```
 
 If the library is absent, incompatible, disabled, or unsupported, the Python geometry reference remains active. Runtime diagnostics report availability, enabled state, ABI, path, and load errors.
+
+### Frontend build
+
+The live UI is a React + Vite app served from `frontend/dist/`. A prebuilt `dist/` is committed; to rebuild after editing `frontend/src/`:
+
+```bash
+cd frontend
+npm install
+npm run build
+```
 
 ## CPU, MPS, and CUDA
 
 `MODULE_LAB_DEVICE` accepts `auto`, `cpu`, `mps`, `cuda`, or `cuda:N`. `auto` chooses CUDA when available and otherwise CPU. Apple MPS is an explicit override because the policy batches are small:
 
 ```bash
-MODULE_LAB_DEVICE=mps python3 server.py
+MODULE_LAB_DEVICE=mps python3 src/server.py
 ```
 
-Geometry and proposal generation stay on CPU/native code even when Torch uses an accelerator, so GPU speed must be measured rather than assumed. A single trainer uses one device. Two GPUs can run independent policies on separate ports:
+Geometry and proposal generation stay on CPU/native code even when Torch uses an accelerator. A single trainer uses one device. `MODULE_LAB_TORCH_THREADS` controls CPU intra-op threads and defaults to `1`.
 
-```bash
-MODULE_LAB_DEVICE=cuda:0 PORT=8000 python3 server.py
-MODULE_LAB_DEVICE=cuda:1 PORT=8001 python3 server.py
-```
+## Visuals-off / headless training
 
-These are independent experiments, not distributed training. Both working from this directory share `outputs/checkpoint.pt`; copy or rename a checkpoint before the other process saves, or use separate working copies. `MODULE_LAB_TORCH_THREADS` controls CPU intra-op threads and defaults to `1`.
+The **`3D Off`** toggle (server flag `visuals_enabled`, WebSocket `setVisuals`/`getState` commands, React `ViewToggle` button, and the `&visuals=off` URL param) disables display-geometry transfer and rendering while keeping the RL algorithm, seeded RNG, and trajectory **bit-identical**. It is the foundation for faster, memory-lighter batch runs. See [`agent_notes/guides/visuals_off_guide.md`](agent_notes/guides/visuals_off_guide.md).
 
 ## Diagnostics and protocol
 
-Press `Ctrl+Shift+D` or `Cmd+Shift+D` to open the hidden diagnostics panel. It shows the last 120 scores, reward components, candidate counts, native-kernel state, process/accelerator memory, actor/value/entropy/gradient telemetry, and major phase timings. Values update only while the panel is open.
+Press `Ctrl+Shift+D` / `Cmd+Shift+D` to open the hidden diagnostics panel: last-120 scores, reward components, candidate counts, native-kernel state, process/accelerator memory, and actor/value/entropy/gradient telemetry.
 
-`site`, `placements`, paused evaluation, and `episodeDone` events expose a `coreStacking` audit object. Episode completion also supplies `nextCoreStacking`. Important fields include:
-
-- `enabled`, `status`, `mode`, `floorCount`, and `boundaryPolicy`;
-- `siteResampleAttempts` and `initialCandidateCount`;
-- `stackCount`, `lockedCoreCount`, `exactLocalAlignment`, and `violations`; and
-- stack module, rotation, local anchor, floor/placement IDs, `decisionScope: "building"`, and `logProbTerms: 1`.
-
-Locked placements expose `coreStackId`, `coreStackLocked`, `coreStackTriggerFloor`, and `localAnchor`. `singleFloor: true` reports `disabled-single-floor` and retains floor-local room generation without core stacks.
-
-Checkpoint upload requires PyTorch 2.6 or newer and fails closed on older runtimes because their weights-only loader is affected by [CVE-2025-32434](https://github.com/pytorch/pytorch/security/advisories/GHSA-53q9-r3pm-6pq6). Browser WebSockets are restricted to localhost origins, decoded checkpoints are capped at 64 MiB, and model, strict Adam moment/group, scalar, reward-reference, RNG, and core-generation state is validated before an atomic commit. Saving uses temporary-file replacement and removes partial files after write or replace failures.
+`site`, `placements`, and `episodeDone` events expose a `coreStacking` audit object, including `exactLocalAlignment`, `stackCount`, `violations`, and per-stack `decisionScope: "building"` / `logProbTerms: 1`. Checkpoint upload requires PyTorch 2.6+ (fails closed on older runtimes affected by CVE-2025-32434), is capped at 64 MiB, and is atomically committed after full state validation.
 
 ## Tests
 
 ```bash
-python3 build_native.py
-python3 -m unittest \
-  tests.test_benchmark tests.test_bpe_merge tests.test_core_stacking \
-  tests.test_frontend_contract tests.test_geometry tests.test_graph_evaluation \
-  tests.test_learned_policy tests.test_native_geometry tests.test_optimization \
-  tests.test_trainer tests.test_v06b_dynamic tests.test_v06d_custom
+python3 src/c/build_native.py
+python3 -m unittest discover -s tests -p "test_*.py"
 ```
 
-This verified non-WebSocket suite completed 157 tests with 2 intentional legacy skips after rebuilding native ABI 3.
+The suite is **170 tests, 100% passing (skipped=2)** — including exact multi-floor core stacking, the loosened `_max_cores_for_site` scaling, empty-episode gradient safety, SE(2)-equivariant policy invariance, and the A2C reframe.
 
-Focused building and optimization coverage:
+## Benchmarking (mandatory dual protocol)
+
+**1. Speed & throughput** — high-density `L`/`XL` sites (120 max modules/floor across 4–8 parallel stories, 480 total modules per episode):
 
 ```bash
-python3 -m unittest discover -s tests -p "test_core_stacking.py" -v
-python3 -m unittest discover -s tests -p "test_native_geometry.py" -v
-python3 -m unittest discover -s tests -p "test_optimization.py" -v
-python3 -m unittest discover -s tests -p "test_benchmark.py" -v
+PYTHONPATH=src python3 benchmarks/benchmark_head_to_head_comparison.py
 ```
 
-The core tests cover mandatory first stacks on four and eight floors, exact local equality, one building policy term, delayed second-core eligibility, atomic floor-count changes, induced rollback, whole-site irregular resampling, exhausted-preflight non-commit, and single-floor disabling.
+**2. Quality & RL convergence** — the standard user settings (Site Area Tier `ANY`, Boundary `FREE`, Auto-Changing Sites):
 
-In the restricted development sandbox used for this pass, in-process FastAPI/Starlette `TestClient` WebSocket tests block in `TestClient.__enter__` even for an otherwise empty FastAPI application, while direct trainer tests complete. The two WebSocket tests are therefore not included in the 157-test claim. Use a real server-process integration check there and rerun `tests/test_websocket.py` or full discovery on a normal local or CI host.
+```bash
+PYTHONPATH=src python3 benchmarks/benchmark_750_episodes_convergence_any.py
+```
 
-## Benchmark
+## Documentation
 
-The harness runs every module/seed pair in a fresh interpreter and records full episodes, p50/p95 timing, count-weighted profiler phases, RSS/tracemalloc/accelerator memory, quality, diversity, and stable action/layout/dictionary hashes.
-
-The matched current artifact is [`benchmark_results/v0.8.0_seed808_matched_v06c_10ep.json`](benchmark_results/v0.8.0_seed808_matched_v06c_10ep.json); its genuine archived counterpart is [`benchmark_results/historical_v0.6c_seed808_10ep.json`](benchmark_results/historical_v0.6c_seed808_10ep.json). A harder default-setting run is retained separately in [`benchmark_results/v0.8.0_seed123_10ep.json`](benchmark_results/v0.8.0_seed123_10ep.json). See [OPTIMIZATION_REPORT.md](OPTIMIZATION_REPORT.md) for exact configurations, commit provenance, reproduction, and limitations.
+- **Architecture & governance** — [`AGENTS.md`](AGENTS.md) (version map, branch protocol, memory conventions)
+- **Index of all notes** — [`agent_notes/README.md`](agent_notes/README.md)
+- **Guides** — `agent_notes/guides/` (core stacking, BPE merge, visuals-off, benchmarking)
+- **Benchmark data** — `agent_notes/benchmarks/` (incl. `v0.9.0-alpha_rl_refactor_2026-08-25.md` for the A2C-vs-PPO and LR-schedule/ratio-clip results)
+- **Roadmap, issues, history** — `agent_notes/roadmap.md`, `agent_notes/issues.md`, `agent_notes/historical_approaches.md`
