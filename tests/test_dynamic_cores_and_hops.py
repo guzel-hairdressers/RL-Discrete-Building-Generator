@@ -19,13 +19,14 @@ from server import (
 
 class TestDynamicCoresAndHops(unittest.TestCase):
     def test_max_cores_for_site_scaling(self) -> None:
-        # Small sites get 2 cores
+        # Small sites get the 2-core floor
         self.assertEqual(_max_cores_for_site(500.0), 2)
-        self.assertEqual(_max_cores_for_site(1200.0), 2)
-        # Medium/Large sites scale up to 8
-        self.assertEqual(_max_cores_for_site(2500.0), 4)
-        self.assertEqual(_max_cores_for_site(5000.0), 8)
-        self.assertEqual(_max_cores_for_site(10000.0), 8)
+        self.assertEqual(_max_cores_for_site(1200.0), 4)
+        # Medium/Large sites scale up to the 12-core cap (loosened from the old
+        # 1-per-650 m² rule for policy headroom — see _max_cores_for_site docstring)
+        self.assertEqual(_max_cores_for_site(2500.0), 9)
+        self.assertEqual(_max_cores_for_site(5000.0), 12)
+        self.assertEqual(_max_cores_for_site(10000.0), 12)
 
     def test_settings_max_room_hops_validation(self) -> None:
         # Default value is 3

@@ -63,7 +63,8 @@ class LearnerOptimizationTests(unittest.TestCase):
         trainer.settings["dictCap"] = 1
         event = trainer._finish_episode()
         metrics = event["metrics"]
-        self.assertEqual(metrics["learningAlgorithm"], "ppo_gae")
+        # A2C reframe (2026-08): algorithm renamed ppo_gae -> a2c_gae.
+        self.assertEqual(metrics["learningAlgorithm"], "a2c_gae")
         for key in ("policyLoss", "actorLoss", "valueLoss", "gradientNorm", "advantage"):
             self.assertTrue(math.isfinite(float(metrics[key])), key)
         self.assertGreaterEqual(metrics["valueLoss"], 0.0)

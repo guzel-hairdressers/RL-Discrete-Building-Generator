@@ -97,7 +97,11 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "parallelEnvironments": 9,
     "batchSize": 9,
     "maxModules": 130,
-    "learningRate": 0.003,
+    "learningRate": 0.001,
+    "lrSchedule": "constant",
+    "lrFloor": 0.001,
+    "lrHorizon": 500,
+    "ratioClip": 0.0,
     "minEdge": 3.0,
     "maxEdge": 9.0,
     "dictCap": 10,
@@ -208,7 +212,15 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
 
     if not isinstance(patch, dict):
         raise SettingsError("settings must be an object")
-    unknown = sorted(set(patch) - set(DEFAULT_SETTINGS) - {"maxEdges", "batchSize"})
+    # candidateCatLimit / candidateEdgeWindow are benchmark-only overrides: absent
+    # by default (dynamic int(limit) / ATTACHMENT_MATCH_LIMIT behavior), present
+    # only when a cap sweep explicitly raises them. lrSchedule/lrFloor/lrHorizon/
+    # ratioClip live in DEFAULT_SETTINGS with value-neutral defaults.
+    unknown = sorted(
+        set(patch)
+        - set(DEFAULT_SETTINGS)
+        - {"maxEdges", "batchSize", "candidateCatLimit", "candidateEdgeWindow"}
+    )
     if unknown:
         raise SettingsError(f"unknown setting: {unknown[0]}")
 
@@ -295,6 +307,34 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     merged["learningRate"] = _in_range(
         _finite_number(merged["learningRate"], "learningRate"), 0.0001, 0.05, "learningRate"
     )
+    # Override-only learning-rate schedule / ratio-clip / candidate-cap keys.
+    # DEFAULT_SETTINGS defaults are value-neutral (constant LR, no clip, no cap
+    # override), so behaviour is unchanged until explicitly enabled.
+    if "lrSchedule" in patch:
+        schedule = str(merged["lrSchedule"]).lower().strip()
+        if schedule not in ("constant", "cosine", "linear"):
+            raise SettingsError("lrSchedule must be one of constant, cosine, linear")
+        merged["lrSchedule"] = schedule
+    if "lrFloor" in patch:
+        merged["lrFloor"] = _in_range(
+            _finite_number(merged["lrFloor"], "lrFloor"), 0.0001, 0.05, "lrFloor"
+        )
+    if "lrHorizon" in patch:
+        merged["lrHorizon"] = _in_range(
+            _integer(merged["lrHorizon"], "lrHorizon"), 1, 100000, "lrHorizon"
+        )
+    if "ratioClip" in patch:
+        merged["ratioClip"] = _in_range(
+            _finite_number(merged["ratioClip"], "ratioClip"), 0.0, 1.0, "ratioClip"
+        )
+    if "candidateCatLimit" in patch:
+        merged["candidateCatLimit"] = _in_range(
+            _integer(merged["candidateCatLimit"], "candidateCatLimit"), 1, 100000, "candidateCatLimit"
+        )
+    if "candidateEdgeWindow" in patch:
+        merged["candidateEdgeWindow"] = _in_range(
+            _integer(merged["candidateEdgeWindow"], "candidateEdgeWindow"), 1, 100000, "candidateEdgeWindow"
+        )
     if not merged.get("singleFloor", False):
         basic_edge_count = 4
         maximum_core_area = (
@@ -1876,24 +1916,32 @@ class FloorEnvironment:
             anchor_y=float(anchor_y),
         )
 
-    def _sample_attachment_ids(self, identifiers: Sequence[int]) -> list[int]:
+    def _sample_attachment_ids(
+        self,
+        identifiers: Sequence[int],
+        window: int | None = None,
+    ) -> list[int]:
         """Rotate a fixed-size stratified view over an angle bucket.
 
         The frontier cap remains the main speed bound, while repeated policy
         queries eventually expose older and newer residual edges instead of
-        permanently hiding every edge after the newest twelve.
+        permanently hiding every edge after the newest twelve.  ``window``
+        overrides the static edge-window cap (settings-driven for the cap
+        sweep); None keeps the module default.
         """
 
         ordered = list(identifiers)
         count = len(ordered)
-        if count <= ATTACHMENT_MATCH_LIMIT:
+        if window is None:
+            window = ATTACHMENT_MATCH_LIMIT
+        if count <= window:
             return ordered
         offset = self.attachment_query_cursor % count
         self.attachment_query_cursor += 1
         rotated = ordered[offset:] + ordered[:offset]
         return [
-            rotated[(index * count) // ATTACHMENT_MATCH_LIMIT]
-            for index in range(ATTACHMENT_MATCH_LIMIT)
+            rotated[(index * count) // window]
+            for index in range(window)
         ]
 
     def _edge_alignment_anchors(
@@ -1901,6 +1949,7 @@ class FloorEnvironment:
         module: dict,
         rotation: dict,
         include_edge_id: bool = False,
+        window: int | None = None,
     ) -> Iterable[tuple]:
         """Yield anchors from a bounded, angle-indexed exposed-edge frontier."""
 
@@ -1937,7 +1986,7 @@ class FloorEnvironment:
 
             pref_ids.sort(reverse=True)
             norm_ids.sort(reverse=True)
-            prioritized = self._sample_attachment_ids(pref_ids + norm_ids)
+            prioritized = self._sample_attachment_ids(pref_ids + norm_ids, window=window)
             for edge_id in prioritized:
                 edge = self.attachment_edges[edge_id]
                 placed_first = edge["a"]
@@ -2223,7 +2272,8 @@ class FloorEnvironment:
         candidates: list[PlacementCandidate] = []
         # Preserve the baseline policy's per-category action capacity while
         # still terminating one-category searches once that category is full.
-        category_limit = max(8, int(limit))
+        # Settings override for the cap sweep (default == int(limit) when absent).
+        category_limit = max(8, int(settings.get("candidateCatLimit", int(limit))))
         eligible_categories = [
             category
             for category in allowed_cats
@@ -2246,7 +2296,15 @@ class FloorEnvironment:
                         for cell in rotation_cells
                     ]
                 else:
-                    anchors = list(self._edge_alignment_anchors(module, rotation, include_edge_id=True))
+                    edge_window = int(settings.get("candidateEdgeWindow", ATTACHMENT_MATCH_LIMIT))
+                    anchors = list(
+                        self._edge_alignment_anchors(
+                            module,
+                            rotation,
+                            include_edge_id=True,
+                            window=edge_window,
+                        )
+                    )
                 cg_sub_totals["cgAnchorSearch"] += time.perf_counter() - t_anchor
                 for anchor_x, anchor_y, edge_id in anchors:
                     signature = (
@@ -2501,7 +2559,8 @@ class FloorEnvironment:
         frontier = self._frontier_cells() if placing_first else []
         room_core_costs = self._room_crossing_costs_to_core() if self.core_ids else {}
 
-        cat_limit = max(8, int(limit))
+        # Settings override for the cap sweep (default == int(limit) when absent).
+        cat_limit = max(8, int(settings.get("candidateCatLimit", int(limit))))
         checked_edges = set()
         successful_edges = set()
         early_break = False
@@ -2579,7 +2638,8 @@ class FloorEnvironment:
                     pref_ids.append(eid)
                 else:
                     norm_ids.append(eid)
-            all_edge_ids = self._sample_attachment_ids(pref_ids + norm_ids)
+            edge_window = int(settings.get("candidateEdgeWindow", ATTACHMENT_MATCH_LIMIT))
+            all_edge_ids = self._sample_attachment_ids(pref_ids + norm_ids, window=edge_window)
             
             for edge_id in all_edge_ids:
                 edge = self.attachment_edges.get(edge_id)
@@ -5579,6 +5639,30 @@ class ParallelTrainer:
         return float(diversity_nats)
 
 
+    def _current_learning_rate(self) -> float:
+        """Return the scheduled learning rate for the current episode.
+
+        `constant` (the default) returns the configured `learningRate`
+        unchanged, so behaviour is identical to the pre-schedule trainer.
+        `cosine` anneals from `learningRate` down to `lrFloor` over
+        `lrHorizon` episodes; `linear` decays linearly over the same window.
+        `self.episode` is 0-indexed during learning (it is incremented at the
+        end of `_finish_episode`, after the learn step), so episode 1 runs at
+        the full configured LR. Deterministic — no RNG involved.
+        """
+        lr0 = float(self.settings["learningRate"])
+        schedule = str(self.settings.get("lrSchedule", "constant")).lower().strip()
+        if schedule == "constant":
+            return lr0
+        floor = float(self.settings.get("lrFloor", lr0))
+        horizon = max(1, int(self.settings.get("lrHorizon", 500)))
+        progress = min(float(self.episode), float(horizon)) / float(horizon)
+        if schedule == "linear":
+            return lr0 + (floor - lr0) * progress
+        if schedule == "cosine":
+            return floor + 0.5 * (lr0 - floor) * (1.0 + math.cos(math.pi * progress))
+        return lr0
+
     def _learn_from_episode(
         self,
         score: float,
@@ -5588,8 +5672,14 @@ class ParallelTrainer:
         # Placement head uses GAE advantages with an importance ratio correcting
         # for the epsilon-greedy behaviour policy; the value critic is regressed
         # onto bootstrapped λ-returns; the shape head uses a site-level REINFORCE
-        # baseline (it conditions only on pooled_site). No ratio clipping, no
-        # replay buffer, no multi-epoch reuse.
+        # baseline (it conditions only on pooled_site). Ratio clipping is
+        # optional (settings.ratioClip > 0); no replay buffer, no multi-epoch
+        # reuse.
+        # LR schedule: applied before the gradient step so every update uses the
+        # current scheduled rate. `constant` / default keys are a no-op.
+        scheduled_lr = self._current_learning_rate()
+        for group in self.optimizer.param_groups:
+            group["lr"] = scheduled_lr
         normalized_score = score / 100.0
         if per_floor_scores is not None and len(per_floor_scores) == len(self.environments):
             floor_targets = [s / 100.0 for s in per_floor_scores]
@@ -5672,8 +5762,13 @@ class ParallelTrainer:
                     selected_log_prob = group_log_probs[d.action_index]
                     old_log_prob = torch.tensor(d.old_log_prob, dtype=torch.float32, device=self.device)
                     # Detached importance ratio π(a)/μ(a) — corrects for the
-                    # epsilon-greedy behaviour policy without clipping.
-                    importance_weights.append(torch.exp(selected_log_prob.detach() - old_log_prob))
+                    # epsilon-greedy behaviour policy. Optionally clamped to
+                    # [1-ε, 1+ε] (settings.ratioClip) for a PPO-style mild clip.
+                    ratio = torch.exp(selected_log_prob.detach() - old_log_prob)
+                    ratio_clip = float(self.settings.get("ratioClip", 0.0))
+                    if ratio_clip > 0.0:
+                        ratio = ratio.clamp(1.0 - ratio_clip, 1.0 + ratio_clip)
+                    importance_weights.append(ratio)
                     policy_loss_terms.append(selected_log_prob)
 
                     if count > 1:
@@ -5735,10 +5830,18 @@ class ParallelTrainer:
         entropy = torch.stack(entropy_terms).mean() if entropy_terms else torch.zeros((), dtype=torch.float32, device=self.device)
 
         loss = actor_loss + 0.5 * value_loss - 0.01 * entropy
-        self.optimizer.zero_grad(set_to_none=True)
-        loss.backward()
-        gradient_norm = nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
-        self.optimizer.step()
+        if loss.requires_grad:
+            self.optimizer.zero_grad(set_to_none=True)
+            loss.backward()
+            gradient_norm = nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
+            self.optimizer.step()
+        else:
+            # Nothing to learn from this episode (no placements and no shape
+            # decisions): the loss is a constant tensor, so backward() would
+            # raise "element 0 does not require grad". Skip the gradient step
+            # (no gradient to apply — the optimizer state stays clean) but keep
+            # reporting the zero loss / zero gradient so the metrics are finite.
+            gradient_norm = torch.tensor(0.0, device=self.device)
 
         self.last_loss = float(loss.detach().cpu().item())
         self.last_actor_loss = float(actor_loss.detach().cpu().item())
@@ -6647,11 +6750,17 @@ class ParallelTrainer:
             "diagnostics": diagnostics,
         }
 
-    def save_checkpoint(self) -> str:
-        """Persist the complete session policy state in a portable checkpoint."""
+    def save_checkpoint(self, label: str = "") -> str:
+        """Persist the complete session policy state in a portable checkpoint.
+
+        ``label`` lets multiple checkpoints coexist (e.g. ``checkpoint_ep250.pt``)
+        instead of always overwriting ``checkpoint.pt``. Pass an empty label to
+        keep the default single-file location.
+        """
 
         os.makedirs(OUTPUT_DIR, exist_ok=True)
-        path = os.path.join(OUTPUT_DIR, "checkpoint.pt")
+        filename = f"checkpoint{('_' + label) if label else ''}.pt"
+        path = os.path.join(OUTPUT_DIR, filename)
         cpu_state = {name: tensor.detach().cpu() for name, tensor in self.model.state_dict().items()}
         payload = {
             "version": 5,

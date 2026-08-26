@@ -68,7 +68,12 @@ def _safe_get(metrics: dict, *keys, default=0.0) -> float:
     return default
 
 
-def run_benchmark(label: str, episodes: int, settings: dict) -> tuple[list[dict], dict]:
+def run_benchmark(
+    label: str,
+    episodes: int,
+    settings: dict,
+    save_checkpoint_label: str | None = None,
+) -> tuple[list[dict], dict]:
     torch.manual_seed(settings["seed"])
     random.seed(settings["seed"])
     trainer = server.ParallelTrainer(settings=settings)
@@ -163,6 +168,12 @@ def run_benchmark(label: str, episodes: int, settings: dict) -> tuple[list[dict]
                 "singleFloor",
                 "bufferEpisodes",
                 "learningRate",
+                "lrSchedule",
+                "lrFloor",
+                "lrHorizon",
+                "ratioClip",
+                "candidateCatLimit",
+                "candidateEdgeWindow",
             )
             if k in settings
         },
@@ -191,6 +202,10 @@ def run_benchmark(label: str, episodes: int, settings: dict) -> tuple[list[dict]
                     "score_25": round(statistics.mean(r["score"] for r in window), 2),
                     "fill_25": round(statistics.mean(r["fillRatio"] for r in window) * 100.0, 1),
                 }
+    if save_checkpoint_label is not None:
+        ckpt_path = trainer.save_checkpoint(label=save_checkpoint_label)
+        summary["checkpoint_path"] = ckpt_path
+        print(f"[{label}] checkpoint saved -> {ckpt_path}", flush=True)
     return records, summary
 
 
@@ -199,13 +214,40 @@ def main() -> None:
     parser.add_argument("--label", required=True)
     parser.add_argument("--episodes", type=int, default=300)
     parser.add_argument("--lr", type=float, default=None, help="Override learningRate")
+    parser.add_argument("--lr-schedule", default=None, help="constant|cosine|linear")
+    parser.add_argument("--lr-floor", type=float, default=None, help="LR schedule floor")
+    parser.add_argument("--lr-horizon", type=int, default=None, help="LR schedule horizon (eps)")
+    parser.add_argument("--ratio-clip", type=float, default=None, help="Importance-ratio clip epsilon (0 = off)")
+    parser.add_argument("--cat-limit", type=int, default=None,
+                        help="Override candidateCatLimit (per-category candidate cap; default 12)")
+    parser.add_argument("--edge-window", type=int, default=None,
+                        help="Override candidateEdgeWindow (edge-sampling window; default 12)")
+    parser.add_argument("--save-checkpoint", default=None, metavar="LABEL",
+                        help="Save the trained policy to src/outputs/checkpoint_<LABEL>.pt when the run ends")
     parser.add_argument("--out-dir", default="benchmarks/run_results")
     args = parser.parse_args()
 
     settings = default_settings()
     if args.lr is not None:
         settings["learningRate"] = args.lr
-    records, summary = run_benchmark(args.label, args.episodes, settings)
+    if args.lr_schedule is not None:
+        settings["lrSchedule"] = args.lr_schedule
+    if args.lr_floor is not None:
+        settings["lrFloor"] = args.lr_floor
+    if args.lr_horizon is not None:
+        settings["lrHorizon"] = args.lr_horizon
+    if args.ratio_clip is not None:
+        settings["ratioClip"] = args.ratio_clip
+    if args.cat_limit is not None:
+        settings["candidateCatLimit"] = args.cat_limit
+    if args.edge_window is not None:
+        settings["candidateEdgeWindow"] = args.edge_window
+    records, summary = run_benchmark(
+        args.label,
+        args.episodes,
+        settings,
+        save_checkpoint_label=args.save_checkpoint,
+    )
 
     os.makedirs(args.out_dir, exist_ok=True)
     out_path = os.path.join(args.out_dir, f"{args.label}.json")

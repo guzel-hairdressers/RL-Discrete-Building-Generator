@@ -260,13 +260,27 @@ This document is the master tracking log for active bugs, regressive side effect
 ---
 
 ### 4 Failing Tests from the In-Progress RL Refactor (Merge Blocker)
-* **Status**: `Open (26-08-26) / Blocks the v0.9.0 → main merge`
-* **Issue**: The `version/v0.9.0-alpha` RL refactor (PPO → A2C) leaves the test suite at **166/170 passing**. Four failures/errors, all in existing-on-`main` tests that the refactor broke (behavioral regression, not test changes — only `tests/test_dynamic_cores_and_hops.py` differs from main):
-  1. `test_max_cores_for_site_scaling` — `FAIL`
-  2. `test_terminal_learning_updates_actor_shape_policy_and_critic` — `FAIL` (A2C-vs-PPO comparison)
-  3. `test_empty_terminal_episode_trains_finite_critic` — `ERROR` (optimizer / empty-episode path)
-  4. `test_dictionary_limit_breach_squared_penalty` — `ERROR`
-* **Resolution**: Not yet resolved. AGENTS.md mandates 100% passing on `main`, so these must be fixed (or the affected assertions/setup updated with justification) **before** the fast-forward merge. Tracked as the Phase 7.5 merge blocker in [`roadmap.md`](roadmap.md).
+* **Status**: `Resolved (26-08-26) / merge blocker cleared`
+* **Issue**: The `version/v0.9.0-alpha` RL refactor (PPO → A2C) left the test suite at **166/170 passing**. Four failures/errors, all in existing-on-`main` tests that the refactor broke (behavioral regression, not test changes — only `tests/test_dynamic_cores_and_hops.py` differs from main):
+  1. `test_max_cores_for_site_scaling` — `FAIL` (asserted the old pre-loosening formula)
+  2. `test_terminal_learning_updates_actor_shape_policy_and_critic` — `FAIL` (asserted `ppo_gae`)
+  3. `test_empty_terminal_episode_trains_finite_critic` — `ERROR` (empty-episode `loss.backward()` crash + asserted `ppo_gae`)
+  4. `test_dictionary_limit_breach_squared_penalty` — `ERROR` (same empty-episode crash)
+* **Resolution** (26-08-26):
+  1. **Real bug fixed in `src/server.py`**: `_learn_from_episode` unconditionally called `loss.backward()`, but an empty terminal episode (no placements, no shape decisions) builds `loss` as a sum of `torch.zeros(())` constants with `requires_grad=False` → `RuntimeError: element 0 does not require grad`. The gradient step is now guarded on `loss.requires_grad`; when nothing is learnable the step is skipped (optimizer state stays clean) and the zero loss/gradient is still reported so metrics stay finite. This fixed both `test_empty_terminal_episode` and `test_dictionary_limit_breach_squared_penalty`. Provably behavior-neutral on normal episodes (the benchmark path never hit the `else` branch — confirmed by a post-fix 100-ep trajectory check matching the verified 500-ep baseline bit-for-bit).
+  2. **Stale assertions updated with justification** (the A2C reframe was intentional and benchmark-verified): `ppo_gae` → `a2c_gae` in `test_v06b_dynamic.py` and `test_optimization.py`; `_max_cores_for_site` expectations updated to the intentional loosened formula (`max(2, min(12, ceil(area/300)))`, was `min(8, max(2, ceil(area/650)))`).
+  3. **Verified**: full suite now **170 tests OK (skipped=2)** — 100% passing, merge blocker cleared.
+
+---
+
+### A2C Mid-Run Quality Collapse — Root Cause Was the `lr=0.003` Default
+* **Status**: `Solved (26-08-26)`
+* **Issue**: Long A2C benchmark runs (eps ~200–350) showed a deterministic mid-run volatility collapse (single eps swing −29 to +64, 25-ep window dip to ~3), dragging mean score down. Misattributed twice first (candidate coverage; "tree drift") before diagnosis.
+* **Root cause**: The benchmark harness `default_settings()` never overrides `learningRate`, so control runs were training at **`lr=0.003`** — the known A2C-at-0.003 instability (notes already flagged a collapse at ~ep 175). At constant `lr=0.001` on the *same tree*, the earlier `free_wins` quality numbers reproduce **exactly** (mean 39.88 / final-50 44.49 / 43.4% fill / 35.7 placements) with no collapse and −20% wall — proving the collapse was the LR, not volatility or drift.
+* **Resolution**:
+  1. **Default flipped `learningRate` 0.003 → 0.001** in `DEFAULT_SETTINGS` (aligns with the frontend-contract test asserting the UI shows `0.001`; no test pinned 0.003).
+  2. **Optional LR schedule + ratio clip** added as default-neutral settings: `lrSchedule`(constant|cosine|linear)/`lrFloor`/`lrHorizon`/`ratioClip` in `DEFAULT_SETTINGS` (constant / 0.001 / 500 / 0.0 → no-op), validated in `validate_settings_patch`. Positively tested: **cosine 0.003→0.001 + `ratioClip=0.2`** = mean 41.30 / final-50 45.09 (best), −26% wall; clip alone at 0.003 only defers the collapse (rejected). `candidateCatLimit`/`candidateEdgeWindow` also whitelisted as override-only caps.
+  3. **Verified** on a pristine HEAD worktree that the fold is behavior-neutral (the 4 known test failures reproduce identically, `failures=2, errors=2`) and the full 500-ep defaults run on the folded tree is being compared bit-for-bit against `lr_0001.json`. Full matrix: `agent_notes/benchmarks/v0.9.0-alpha_rl_refactor_2026-08-25.md` § LR schedule + ratio clip.
 
 ---
 

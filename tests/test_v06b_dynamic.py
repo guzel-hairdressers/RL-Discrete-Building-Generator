@@ -240,8 +240,9 @@ class DynamicPaletteTests(unittest.TestCase):
                 break
         self.assertEqual(event["type"], "episodeDone")
         self.assertNotEqual(event["metrics"]["policyLoss"], 0.0)
+        # A2C reframe (2026-08): algorithm renamed ppo_gae -> a2c_gae.
         self.assertEqual(
-            event["metrics"]["learningAlgorithm"], "ppo_gae"
+            event["metrics"]["learningAlgorithm"], "a2c_gae"
         )
         self.assertGreaterEqual(event["metrics"]["valueLoss"], 0.0)
         self.assertTrue(math.isfinite(event["metrics"]["gradientNorm"]))

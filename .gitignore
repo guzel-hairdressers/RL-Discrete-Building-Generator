@@ -8,3 +8,8 @@ cache/
 *.dylib
 *.so
 build/
+outputs/
+**/outputs/
+src/outputs/
+benchmarks/run_results/
+presentation/
