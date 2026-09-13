@@ -73,6 +73,19 @@ export const BottomControlDeck = () => {
               <div className="settings-section">
                 <h4 className="section-title">Morphology & Multi-Floor</h4>
                 <div className="setting-row">
+                  <label>Generator Engine</label>
+                  <div className="input-with-val">
+                    <select
+                      className="filter-select-clean"
+                      value={settings.generatorEngine || 'graph_voronoi'}
+                      onChange={(e) => updateSettings({ generatorEngine: e.target.value })}
+                    >
+                      <option value="graph_voronoi">Graph & Voronoi (v0.10.0)</option>
+                      <option value="discrete_polygon">Discrete Polygon (v0.8.0)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="setting-row">
                   <label>Parallel Floors (Batch Size)</label>
                   <div className="input-with-val">
                     <input

@@ -268,3 +268,15 @@ This document defines the master development plan for the **RL-Discrete-Building
        - $r_f = 35\% \implies -16.88\,\text{pts}$ (Steeper barrier).
        - $r_f = 40\% \implies -30.00\,\text{pts}$ (Target penalty matching design spec).
        - $r_f \ge 45.82\% \implies -50.00\,\text{pts}$ (Capped maximum penalty).
+
+---
+
+### Phase 9: Release `version/v0.10.0-alpha` — Hierarchical Graph Sampling, Continuous SE(2) Voronoi Realization & Factored Multi-Story Stacking
+* **Target Objective**: *Eliminate discrete tile placement bottlenecks via continuous graph-seed proposals (PROP-16), typed 3D/2D cells with auto-propagating core shafts (PROP-17), and Green's theorem PCA orientation priors (PROP-18)*
+* **Status**: `[IN PROGRESS / ACTIVE BRANCH: version/v0.10.0-alpha]`
+* **Key Deliverables**:
+  1. **Frontier-Relative Normal Vector Propagation**: Generates candidate seed proposals that naturally sample and reproduce non-modular and diagonal spans ($\sqrt{5}, \sqrt{2}$) and equilateral/45° triangle closures without discrete raster constraints.
+  2. **Continuous $\text{SE}(2)$ Motif Matcher & Voronoi Realizer**: Recognizes star-graph congruence at arbitrary continuous rotation angles $\phi \in [0, 2\pi)$. Closed interior Voronoi cells act as master room templates that dictate geometry and classification to open perimeter cells.
+  3. **Factored Multi-Story Architecture**: Shared building-level core circulation skeleton ($E_{\text{vert}}$) auto-propagates across stories, while floors run factored 2D graphs ($E_{\text{horiz}}$) preserving sample efficiency and full batch size.
+  4. **Live 2D and 3D Graph Lattice Visualization**: Emits `graphState` telemetry step-by-step, rendering colored nodes and edges in 2D canvas and 3D WebGL viewer before transitioning to realized Voronoi extruded geometries.
+  5. **10x Step Throughput**: Eliminates 2D polygon SAT overlap loops during step exploration, lowering step times to $< 0.5\,\text{ms}$ and full building rollout times to $< 30\,\text{ms}$.

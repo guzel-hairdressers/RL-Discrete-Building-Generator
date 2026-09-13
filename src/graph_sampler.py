@@ -46,6 +46,46 @@ class GraphSeedSampler:
 
         # Case 2: Frontier-Relative Vector Propagation (preserves non-modular spans like sqrt(5))
         frontier_edges = self._extract_frontier_edges(graph, floor_index)
+
+        # Propose from all existing nodes along site PCA axes and diagonal modular spans
+        axes = site_pca_axes or (((1.0, 0.0), (0.0, 1.0)))
+        u_axis, v_axis = axes[0], axes[1]
+        for node in existing_nodes:
+            # Orthogonal bay propagation along principal axes
+            for axis, a_tag in [(u_axis, "pca_axis_u"), (v_axis, "pca_axis_v")]:
+                for dist in self.default_bay_depths:
+                    for s in (1.0, -1.0):
+                        c_pt = (node.x + axis[0] * s * dist, node.y + axis[1] * s * dist)
+                        if self._is_valid_candidate(c_pt, seen_points, site_boundary, existing_nodes):
+                            seen_points.append(c_pt)
+                            candidates.append({
+                                "x": round(c_pt[0], 2),
+                                "y": round(c_pt[1], 2),
+                                "anchor_node": node.node_id,
+                                "source": "radial_pca_expansion",
+                                "tag": a_tag,
+                                "span": dist,
+                            })
+
+            # Diagonal span sampling: sqrt(5) (3m x 6m) and sqrt(2) (3m x 3m / 6m x 6m)
+            for su in (1.0, -1.0):
+                for sv in (1.0, -1.0):
+                    # 3m x 6m diagonal -> sqrt(3^2 + 6^2) = 3*sqrt(5) ~ 6.71m
+                    c_diag_sqrt5 = (
+                        node.x + u_axis[0] * su * 6.0 + v_axis[0] * sv * 3.0,
+                        node.y + u_axis[1] * su * 6.0 + v_axis[1] * sv * 3.0,
+                    )
+                    if self._is_valid_candidate(c_diag_sqrt5, seen_points, site_boundary, existing_nodes):
+                        seen_points.append(c_diag_sqrt5)
+                        candidates.append({
+                            "x": round(c_diag_sqrt5[0], 2),
+                            "y": round(c_diag_sqrt5[1], 2),
+                            "anchor_node": node.node_id,
+                            "source": "vector_propagation",
+                            "tag": "diagonal_bay_sqrt5",
+                            "span": math.sqrt(45.0),
+                        })
+
         for u_id, v_id in frontier_edges:
             u_node = graph.nodes[u_id]
             v_node = graph.nodes[v_id]
@@ -79,15 +119,14 @@ class GraphSeedSampler:
                         if self._is_valid_candidate(pt, seen_points, site_boundary, existing_nodes):
                             seen_points.append(pt)
                             candidates.append({
-                                "x": pt[0],
-                                "y": pt[1],
+                                "x": round(pt[0], 2),
+                                "y": round(pt[1], 2),
+                                "anchor_node": u_id,
                                 "anchor_edge": (u_id, v_id),
                                 "source": "vector_propagation",
                                 "tag": tag,
                                 "span": edge_len,
                             })
-                            if len(candidates) >= max_proposals:
-                                return candidates
 
         # Case 3: Polygon Closures (Triangles with sqrt(5), sqrt(2), equilateral apexes)
         for u_id, v_id in frontier_edges:
@@ -109,37 +148,47 @@ class GraphSeedSampler:
                     if self._is_valid_candidate(c_apex, seen_points, site_boundary, existing_nodes):
                         seen_points.append(c_apex)
                         candidates.append({
-                            "x": c_apex[0],
-                            "y": c_apex[1],
+                            "x": round(c_apex[0], 2),
+                            "y": round(c_apex[1], 2),
+                            "anchor_node": u_id,
                             "anchor_edge": (u_id, v_id),
                             "source": "polygon_closure",
                             "tag": tag,
                             "span": math.hypot(c_apex[0] - u.x, c_apex[1] - u.y),
                         })
-                        if len(candidates) >= max_proposals:
-                            return candidates
 
         # Case 4: Active Motif Stamping
         if active_motif_bank:
             for motif in active_motif_bank:
                 offsets = motif.get("relative_offsets", [])
                 for node in existing_nodes:
-                    # Anchor motif at node and orient along site axis
                     for ox, oy in offsets:
                         pt = (node.x + ox, node.y + oy)
                         if self._is_valid_candidate(pt, seen_points, site_boundary, existing_nodes):
                             seen_points.append(pt)
                             candidates.append({
-                                "x": pt[0],
-                                "y": pt[1],
+                                "x": round(pt[0], 2),
+                                "y": round(pt[1], 2),
                                 "anchor_node": node.node_id,
                                 "source": "motif_stamp",
                                 "motif_id": motif.get("id"),
                             })
-                            if len(candidates) >= max_proposals:
-                                return candidates
 
-        return candidates
+        # Rank candidates for compact, balanced 2D expansion around site centroid / core
+        pts = [(float(p[0]), float(p[1])) if isinstance(p, (list, tuple)) else (float(p['x']), float(p['y'])) for p in site_boundary]
+        cx = sum(p[0] for p in pts) / len(pts)
+        cy = sum(p[1] for p in pts) / len(pts)
+
+        def candidate_score(c: dict) -> float:
+            dist_center = math.hypot(c["x"] - cx, c["y"] - cy)
+            local_support = sum(
+                1 for en in existing_nodes if math.hypot(c["x"] - en.x, c["y"] - en.y) <= 7.0
+            )
+            # Prefer compact growth close to center and well-supported by existing structure
+            return dist_center - (local_support * 2.5)
+
+        candidates.sort(key=candidate_score)
+        return candidates[:max_proposals]
 
     def _generate_initial_seeds(
         self,

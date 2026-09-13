@@ -112,7 +112,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "bufferEpisodes": 1,
     "realSiteId": "",
     "autoChangeEpisodes": 1,
-    "generatorEngine": "graph_voronoi",
+    "generatorEngine": "discrete_polygon",
 }
 
 BOUNDARY_TYPES = {
@@ -1097,6 +1097,7 @@ def _public_module(module: dict) -> dict:
         "regularity": float(module.get("regularity", 0.5)),
         "minWidth": float(module.get("minWidth", G.min_polygon_width(module["poly"]))),
         "parameters": module.get("parameters", {}),
+        "uses": int(module.get("uses", 1)),
     }
 
 
@@ -1294,17 +1295,22 @@ class FloorEnvironment:
         self.building_graph = typed_cell.BuildingGraph(num_floors=1)
         self.seed_sampler = graph_sampler.GraphSeedSampler()
         self.voronoi_realizer = voronoi_realizer.VoronoiRealizer()
-        self.site_orientation_prior = G.get_site_orientation_prior(self.boundary.get("polygon", []))
+        poly_for_prior = self.site.get("outer") or self.boundary.get("outer") or self.boundary.get("polygon", [])
+        self.site_orientation_prior = G.get_site_orientation_prior(poly_for_prior)
 
-    def realize_graph_voronoi_placements(self) -> list[dict]:
+    def realize_graph_voronoi_placements(self, graph: typed_cell.BuildingGraph | None = None) -> list[dict]:
         """Convert the current building_graph nodes into realized 2D/3D Voronoi room placements."""
-        poly_pts = self.boundary.get("polygon", [])
+        poly_pts = self.site.get("outer") or self.boundary.get("outer") or self.boundary.get("polygon", [])
         if not poly_pts:
             return []
 
+        active_graph = graph if graph is not None else getattr(self, "building_graph", None)
+        if active_graph is None:
+            return []
+
         realized_rooms = self.voronoi_realizer.realize_floor(
-            graph=self.building_graph,
-            floor_index=0,
+            graph=active_graph,
+            floor_index=self.index,
             site_boundary=poly_pts,
             site_pca_angle_rad=self.site_orientation_prior.get("angle_rad", 0.0),
         )
@@ -1316,15 +1322,27 @@ class FloorEnvironment:
                 continue
             poly_dicts = [{"x": float(p[0]), "y": float(p[1])} for p in coords]
             c_type = room.get("cell_type", "room")
+            area = float(room.get("area", 0.0))
+            if area <= 0.0:
+                area = abs(G.polygon_area(poly_dicts))
+            cells = G.rasterize_polygon(poly_dicts)
+            center = G.polygon_centroid(poly_dicts)
             p_record = {
                 "id": f"p_v10_{self.index}_{idx:03d}",
                 "moduleId": room.get("module_id", f"mod_{idx}"),
                 "category": c_type,
                 "floor": self.index,
+                "instanceIdx": self.index,
                 "poly": poly_dicts,
+                "cells": cells,
+                "center": center,
                 "position": {"x": 0.0, "y": 0.0},
                 "rotation": 0.0,
-                "area": room.get("area", 0.0),
+                "area": area,
+                "regularity": 0.85,
+                "triangle": False,
+                "outerExposure": 0.0,
+                "neighbors": [],
                 "is_master_template": room.get("is_master_template", False),
             }
             placements.append(p_record)
@@ -6266,6 +6284,216 @@ class ParallelTrainer:
 
         return event
 
+    def _build_canonical_voronoi_dictionary(self, placements: list[dict]) -> list[dict]:
+        """Group realized Voronoi room placements into a canonical repeatable module dictionary."""
+        groups: dict[str, list[dict]] = {}
+        for p in placements:
+            poly = p.get("poly", [])
+            if len(poly) < 3:
+                continue
+            mid = p.get("moduleId") or "mod_unknown"
+            groups.setdefault(mid, []).append(p)
+
+        canonical_modules = []
+        for mid, plist in groups.items():
+            first = plist[0]
+            poly = first.get("poly", [])
+            # Center the polygon coordinates at (0, 0) for clean swatch rendering
+            cx = sum(pt["x"] for pt in poly) / len(poly)
+            cy = sum(pt["y"] for pt in poly) / len(poly)
+            centered_poly = [{"x": round(pt["x"] - cx, 2), "y": round(pt["y"] - cy, 2)} for pt in poly]
+            is_core = first.get("category") == "core" or "core" in str(mid).lower()
+            area = round(float(first.get("area", 0.0)), 1)
+            name = f"Core ({int(round(area))} m²)" if is_core else f"Module {mid.replace('mod_', '')} ({int(round(area))} m²)"
+            canonical_modules.append({
+                "id": mid,
+                "name": name,
+                "category": "core" if is_core else "room",
+                "area": area,
+                "poly": centered_poly,
+                "uses": len(plist),
+                "rotations": [{"poly": centered_poly, "rotation": 0.0}],
+            })
+        canonical_modules.sort(key=lambda m: (-m["uses"], m["category"] != "core"))
+        return canonical_modules
+
+    def _step_graph_voronoi(self, generation_id: int, episode: int, step_start_time: float) -> dict[str, Any]:
+        """Advance the hierarchical building graph (PROP-16, PROP-17, PROP-18)."""
+        num_floors = len(self.environments)
+
+        if not hasattr(self, "building_graph") or self.building_graph is None or self.step_number == 0:
+            self.building_graph = typed_cell.BuildingGraph(num_floors=num_floors)
+            self.graph_step_count = 0
+            env0 = self.environments[0]
+            poly_pts = env0.site.get("outer") or env0.boundary.get("outer") or env0.boundary.get("polygon", [])
+            if not poly_pts:
+                poly_pts = [(0.0, 0.0), (30.0, 0.0), (30.0, 30.0), (0.0, 30.0)]
+            pts_for_area = [{"x": float(p["x"] if isinstance(p, dict) else p[0]), "y": float(p["y"] if isinstance(p, dict) else p[1])} for p in poly_pts]
+            site_area = abs(G.polygon_area(pts_for_area))
+            self.max_graph_seeds = max(10, min(36, int(site_area / 36.0)))
+
+            # Step 0: Place shared vertical circulation core at the centroid
+            cx = sum(float(p["x"]) if isinstance(p, dict) and "x" in p else float(p[0]) for p in poly_pts) / len(poly_pts)
+            cy = sum(float(p["y"]) if isinstance(p, dict) and "y" in p else float(p[1]) for p in poly_pts) / len(poly_pts)
+
+            # Place Core at floor 0 with MULTI_FLOOR scope -> automatically propagates to all floors!
+            self.building_graph.add_node(
+                node_id="core_0",
+                x=cx,
+                y=cy,
+                floor_index=0,
+                cell_type=typed_cell.CellType.CORE,
+                scope=typed_cell.VerticalScope.MULTI_FLOOR,
+                area=36.0,
+            )
+
+        active_envs = [env for env in self.environments if not env.done]
+        new_nodes_added = 0
+
+        for env in active_envs:
+            f = env.index
+            site_poly = env.site.get("outer") or env.boundary.get("outer") or env.boundary.get("polygon", [])
+            pca_axes = env.site_orientation_prior.get("axis_u"), env.site_orientation_prior.get("axis_v")
+
+            candidates = env.seed_sampler.generate_candidates(
+                graph=self.building_graph,
+                floor_index=f,
+                site_boundary=site_poly,
+                site_pca_axes=pca_axes,
+                max_proposals=8,
+            )
+
+            if candidates:
+                cand = candidates[0]
+                node_id = f"node_{f}_{len(self.building_graph.nodes)}"
+                c_type = (
+                    typed_cell.CellType.VOID
+                    if (len(self.building_graph.nodes) % 6 == 3)
+                    else typed_cell.CellType.ROOM
+                )
+                self.building_graph.add_node(
+                    node_id=node_id,
+                    x=cand["x"],
+                    y=cand["y"],
+                    floor_index=f,
+                    cell_type=c_type,
+                    scope=typed_cell.VerticalScope.INDEPENDENT,
+                )
+
+                # Incrementally grow connections for this newly placed node (Voronoi party walls, no grid triangulation)
+                anchor_id = cand.get("anchor_node")
+                if not anchor_id and "anchor_edge" in cand and isinstance(cand["anchor_edge"], (list, tuple)):
+                    anchor_id = cand["anchor_edge"][0]
+                pca_angle = env.site_orientation_prior.get("pca_angle_rad", 0.0)
+                self.building_graph.grow_node_connections(
+                    node_id=node_id,
+                    anchor_id=anchor_id,
+                    site_boundary=site_poly,
+                    site_pca_angle_rad=pca_angle,
+                    max_dist=12.0,
+                )
+                new_nodes_added += 1
+
+        self.graph_step_count += 1
+        self.step_number += 1
+        is_complete = (self.graph_step_count >= self.max_graph_seeds) or (new_nodes_added == 0)
+
+        all_placements: list[dict[str, Any]] = []
+        if is_complete:
+            for env in self.environments:
+                realized = env.realize_graph_voronoi_placements(self.building_graph)
+                env.placements = realized
+                env.placement_by_id = {p["id"]: p for p in realized}
+                env.core_ids = {p["id"] for p in realized if p["category"] == "core"}
+                env.adjacency_map = {p["id"]: set() for p in realized}
+                env.occupied = {
+                    f"{c['x']},{c['y']}": p["id"]
+                    for p in realized
+                    for c in p.get("cells", [])
+                }
+                env.filled_area = sum(p["area"] for p in realized)
+                env.rentable_area = sum(p["area"] for p in realized if p["category"] in ("room", "special"))
+                env.core_area = sum(p["area"] for p in realized if p["category"] == "core")
+                env.done = True
+                all_placements.extend(realized)
+            if all_placements:
+                self.dictionary = self._build_canonical_voronoi_dictionary(all_placements)
+
+        graph_state = {
+            "step": self.step_number,
+            "isComplete": is_complete,
+            "nodes": [
+                {
+                    "id": n.node_id,
+                    "x": round(n.x, 2),
+                    "y": round(n.y, 2),
+                    "z": round(n.z, 2),
+                    "world_x": round(n.x + (self.environments[n.floor_index].offset[0] if n.floor_index < len(self.environments) else 0.0), 2),
+                    "world_y": round(n.y + (self.environments[n.floor_index].offset[1] if n.floor_index < len(self.environments) else 0.0), 2),
+                    "type": n.cell_type.value,
+                    "floor": n.floor_index,
+                }
+                for n in self.building_graph.nodes.values()
+            ],
+            "edgesHoriz": [
+                {
+                    "u": e.u,
+                    "v": e.v,
+                    "floor": self.building_graph.nodes[e.u].floor_index,
+                    "p1": [round(self.building_graph.nodes[e.u].x, 2), round(self.building_graph.nodes[e.u].y, 2), round(self.building_graph.nodes[e.u].z, 2)],
+                    "p2": [round(self.building_graph.nodes[e.v].x, 2), round(self.building_graph.nodes[e.v].y, 2), round(self.building_graph.nodes[e.v].z, 2)],
+                    "world_p1": [
+                        round(self.building_graph.nodes[e.u].x + self.environments[self.building_graph.nodes[e.u].floor_index].offset[0], 2),
+                        round(self.building_graph.nodes[e.u].y + self.environments[self.building_graph.nodes[e.u].floor_index].offset[1], 2),
+                    ],
+                    "world_p2": [
+                        round(self.building_graph.nodes[e.v].x + self.environments[self.building_graph.nodes[e.v].floor_index].offset[0], 2),
+                        round(self.building_graph.nodes[e.v].y + self.environments[self.building_graph.nodes[e.v].floor_index].offset[1], 2),
+                    ],
+                }
+                for e in self.building_graph.edges_horiz
+                if e.u in self.building_graph.nodes and e.v in self.building_graph.nodes
+            ],
+            "edgesVert": [
+                {
+                    "u": e.u,
+                    "v": e.v,
+                    "p1": [round(self.building_graph.nodes[e.u].x, 2), round(self.building_graph.nodes[e.u].y, 2), round(self.building_graph.nodes[e.u].z, 2)],
+                    "p2": [round(self.building_graph.nodes[e.v].x, 2), round(self.building_graph.nodes[e.v].y, 2), round(self.building_graph.nodes[e.v].z, 2)],
+                }
+                for e in self.building_graph.edges_vert
+                if e.u in self.building_graph.nodes and e.v in self.building_graph.nodes
+            ],
+        }
+
+        if is_complete:
+            ep_event = self._finish_episode()
+            ep_event["graphState"] = graph_state
+            if all_placements:
+                ep_event["placements"] = all_placements
+                ep_event["dictionary"] = [_public_module(m) for m in self.dictionary]
+                ep_event["mergedDictionary"] = [_public_module(m) for m in self.dictionary]
+            self.building_graph = None
+            return ep_event
+
+        event = {
+            "type": "placements",
+            "generationId": self.generation_id,
+            "episode": self.episode,
+            "step": self.step_number,
+            "placements": all_placements,
+            "graphState": graph_state,
+            "metrics": {
+                "score": round(self.best_score + len(self.building_graph.nodes) * 0.5, 2),
+                "fillRatio": round(min(1.0, len(self.building_graph.nodes) / float(self.max_graph_seeds)), 2),
+                "graphNodes": len(self.building_graph.nodes),
+                "graphEdgesHoriz": len(self.building_graph.edges_horiz),
+                "graphEdgesVert": len(self.building_graph.edges_vert),
+            },
+            "diagnostics": self._runtime_diagnostics(),
+        }
+        return event
+
     def step(self, generation_id: Any, episode: Any) -> dict[str, Any]:
         """Advance active floors while keeping cores as one building action."""
 
@@ -6289,6 +6517,9 @@ class ParallelTrainer:
             raise RuntimeError("create a site before stepping")
         if all(environment.done for environment in self.environments):
             return self._finish_episode()
+
+        if self.settings.get("generatorEngine") == "graph_voronoi":
+            return self._step_graph_voronoi(generation_id, episode, step_start_time)
 
         angle_step = float(self.settings["angleStep"])
         orientation_basis = (
@@ -6695,6 +6926,30 @@ class ParallelTrainer:
         if generation_id != self.generation_id or episode != self.episode:
             raise StaleStepError("evaluation is stale")
 
+        # In graph_voronoi mode, realize placements from active building_graph if mid-generation
+        if self.settings.get("generatorEngine") == "graph_voronoi":
+            all_realized = []
+            if getattr(self, "building_graph", None) is not None:
+                for env in self.environments:
+                    realized = env.realize_graph_voronoi_placements(self.building_graph)
+                    env.placements = realized
+                    env.placement_by_id = {p["id"]: p for p in realized}
+                    env.core_ids = {p["id"] for p in realized if p["category"] == "core"}
+                    env.adjacency_map = {p["id"]: set() for p in realized}
+                    env.occupied = {
+                        f"{c['x']},{c['y']}": p["id"]
+                        for p in realized
+                        for c in p.get("cells", [])
+                    }
+                    env.filled_area = sum(p["area"] for p in realized)
+                    env.rentable_area = sum(p["area"] for p in realized if p["category"] in ("room", "special"))
+                    env.core_area = sum(p["area"] for p in realized if p["category"] == "core")
+                    all_realized.extend(realized)
+            else:
+                all_realized = [p for env in self.environments for p in env.placements]
+            if all_realized:
+                self.dictionary = self._build_canonical_voronoi_dictionary(all_realized)
+
         # 1. Compute BPE merges
         layout_graphs = []
         for idx, environment in enumerate(self.environments):
@@ -6776,11 +7031,11 @@ class ParallelTrainer:
             "episode": self.episode,
             "step": self.step_number,
             "placements": placements,
-            "mergedPlacements": merged_placements_formatted,
+            "mergedPlacements": merged_placements_formatted if merged_placements_formatted else placements,
             "mergedDictionary": (
                 [_public_merged_module(module) for module in merged_vocab]
-                if self.visuals_enabled
-                else []
+                if (self.visuals_enabled and merged_vocab)
+                else ([_public_module(module) for module in self.dictionary] if self.visuals_enabled else [])
             ),
             "dictionary": (
                 [_public_module(module) for module in self.dictionary]

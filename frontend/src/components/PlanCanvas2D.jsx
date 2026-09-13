@@ -24,6 +24,7 @@ export const PlanCanvas2D = () => {
   const individualPlacementsList = useStore((s) => s.individualPlacementsList);
   const currentMergedPlacements = useStore((s) => s.currentMergedPlacements);
   const completed3DPlacements = useStore((s) => s.completed3DPlacements);
+  const graphState = useStore((s) => s.graphState);
   const phase = useStore((s) => s.phase);
   const disableMerging = useStore((s) => s.disableMerging);
   const hoveredModuleId = useStore((s) => s.hoveredModuleId);
@@ -174,6 +175,57 @@ export const PlanCanvas2D = () => {
       ctx.fillText(floorLabel, minX, maxY + 2.5 / zoom);
     });
 
+    // 1b. Draw Graph Lattice (Nodes & Edges in 2D) during graph exploration / generation
+    if (graphState && Array.isArray(graphState.nodes) && graphState.nodes.length > 0) {
+      // Draw Horizontal Edges
+      if (Array.isArray(graphState.edgesHoriz) && graphState.edgesHoriz.length > 0) {
+        ctx.save();
+        ctx.strokeStyle = '#0284c7';
+        ctx.lineWidth = 1.8 / zoom;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        graphState.edgesHoriz.forEach((edge) => {
+          const wp1 = edge.world_p1;
+          const wp2 = edge.world_p2;
+          if (!wp1 || !wp2) return;
+          ctx.moveTo(wp1[0], -wp1[1]);
+          ctx.lineTo(wp2[0], -wp2[1]);
+        });
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Draw Graph Nodes (Halos + Solid Core)
+      graphState.nodes.forEach((node) => {
+        const floorBoundary = boundaries[node.floor] || { offset: { x: 0, y: 0 } };
+        const fdx = Number(floorBoundary?.offset?.x || 0);
+        const fdy = Number(floorBoundary?.offset?.y || 0);
+        const nx = node.world_x ?? (node.x + fdx);
+        const ny = -(node.world_y ?? (node.y + fdy));
+
+        const isCore = node.type === 'core';
+        const isVoid = node.type === 'void';
+        const isBalcony = node.type === 'balcony';
+        const mainColor = isCore ? '#dc2626' : (isVoid ? '#059669' : (isBalcony ? '#d97706' : '#2563eb'));
+        const haloColor = isCore ? 'rgba(239, 68, 68, 0.25)' : (isVoid ? 'rgba(16, 185, 129, 0.25)' : 'rgba(37, 99, 235, 0.25)');
+
+        // Outer halo
+        ctx.beginPath();
+        ctx.arc(nx, ny, 4.5 / zoom, 0, Math.PI * 2);
+        ctx.fillStyle = haloColor;
+        ctx.fill();
+
+        // Inner solid node
+        ctx.beginPath();
+        ctx.arc(nx, ny, 2.2 / zoom, 0, Math.PI * 2);
+        ctx.fillStyle = mainColor;
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 0.8 / zoom;
+        ctx.stroke();
+      });
+    }
+
     // 2. Draw Placed Building Modules (Red Core, White Normal Blocks, Black Outlines)
     const isRunning = phase === 'running';
     const effectivePlacements = (isRunning || disableMerging)
@@ -185,7 +237,11 @@ export const PlanCanvas2D = () => {
               : individualPlacementsList));
 
     effectivePlacements.forEach((placement) => {
-      const isHovered = hoveredModuleId && placement.id === hoveredModuleId;
+      const isHovered = hoveredModuleId && (
+        placement.id === hoveredModuleId ||
+        placement.moduleId === hoveredModuleId ||
+        (placement.module && placement.module.id === hoveredModuleId)
+      );
       const components = placement.components;
 
       if (Array.isArray(components) && components.length > 1) {

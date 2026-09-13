@@ -19,6 +19,7 @@ export const ThreeViewer = () => {
   const currentMergedPlacements = useStore((s) => s.currentMergedPlacements);
   const disableMerging = useStore((s) => s.disableMerging);
   const phase = useStore((s) => s.phase);
+  const graphState = useStore((s) => s.graphState);
   const maximizedPane = useStore((s) => s.maximizedPane);
   const visualsEnabled = useStore((s) => s.visualsEnabled);
 
@@ -116,6 +117,12 @@ export const ThreeViewer = () => {
       },
     }, '*');
 
+    iframe.contentWindow.postMessage({
+      type: 'optimizer_graph',
+      graphState: graphState,
+      boundaries: boundaries,
+    }, '*');
+
     try {
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       // 1. Inject override style to permanently hide internal site UI elements
@@ -207,7 +214,7 @@ export const ThreeViewer = () => {
   // Sync 3D Building Extrusions from Optimizer into the Active Scene
   useEffect(() => {
     configureIframe(activeIframeRef.current);
-  }, [completed3DPlacements, currentMergedPlacements, individualPlacementsList, disableMerging, phase, boundaries, activeSite?.site_id, settings.boundaryType, visualsEnabled, configureIframe]);
+  }, [graphState, completed3DPlacements, currentMergedPlacements, individualPlacementsList, disableMerging, phase, boundaries, activeSite?.site_id, settings.boundaryType, visualsEnabled, configureIframe]);
 
   const handleActiveIframeLoad = () => {
     configureIframe(activeIframeRef.current);

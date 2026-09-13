@@ -1,0 +1,76 @@
+[
+  {
+    "site_id": "custom_m_1787768191",
+    "is_custom": true,
+    "city_code": "custom",
+    "city_name": "Turin",
+    "lat": 45.095889,
+    "lon": 7.67215,
+    "area_tier": "M",
+    "site_area_m2": 1582.86,
+    "avg_height_m": 15.0,
+    "max_height_m": 15.0,
+    "building_count": 67,
+    "far": 0.7,
+    "render_html": "sites/custom_m_1787768191.html",
+    "polygon": [
+      {
+        "x": -34.62,
+        "y": 40.76
+      },
+      {
+        "x": 13.75,
+        "y": -39.97
+      },
+      {
+        "x": 33.56,
+        "y": -28.59
+      },
+      {
+        "x": -25.77,
+        "y": 46.66
+      },
+      {
+        "x": -34.62,
+        "y": 40.76
+      }
+    ]
+  },
+  {
+    "site_id": "custom_s_1787768129",
+    "is_custom": true,
+    "city_code": "custom",
+    "city_name": "Turin",
+    "lat": 45.096037,
+    "lon": 7.671996,
+    "area_tier": "S",
+    "site_area_m2": 935.33,
+    "avg_height_m": 15.0,
+    "max_height_m": 15.0,
+    "building_count": 66,
+    "far": 0.78,
+    "render_html": "sites/custom_s_1787768129.html",
+    "polygon": [
+      {
+        "x": -22.52,
+        "y": 24.29
+      },
+      {
+        "x": 5.31,
+        "y": -27.14
+      },
+      {
+        "x": 23.64,
+        "y": -16.6
+      },
+      {
+        "x": -13.66,
+        "y": 30.19
+      },
+      {
+        "x": -22.52,
+        "y": 24.29
+      }
+    ]
+  }
+]

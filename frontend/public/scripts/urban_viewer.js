@@ -59,6 +59,12 @@ export function initUrbanContext(DATA) {
   scene.add(optimizerGroup);
   window.optimizerGroup = optimizerGroup;
 
+  // Global Building Graph Lattice Group (PROP-16, PROP-17, PROP-18)
+  const graphGroup = new THREE.Group();
+  graphGroup.name = "graphGroup";
+  scene.add(graphGroup);
+  window.graphGroup = graphGroup;
+
   // Camera State Persistence with Dynamic Scale Adaptation
   try {
     const savedState = localStorage.getItem('context_generator_camera_view');
@@ -555,6 +561,88 @@ export function initUrbanContext(DATA) {
       return;
     }
 
+    if (event.data.type === 'optimizer_graph') {
+      const { graphState, boundaries } = event.data;
+      while (graphGroup.children.length > 0) {
+        const child = graphGroup.children.pop();
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+          if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+          else child.material.dispose();
+        }
+      }
+      if (!graphState || !Array.isArray(graphState.nodes) || graphState.nodes.length === 0) return;
+
+      const floorBoundary = (Array.isArray(boundaries) && boundaries.length > 0) ? boundaries[0] : null;
+      const ox = Number(floorBoundary?.originOffset?.x || 0);
+      const oy = Number(floorBoundary?.originOffset?.y || 0);
+
+      // 1. Horizontal Edges (Glowing cyan line segments)
+      if (Array.isArray(graphState.edgesHoriz) && graphState.edgesHoriz.length > 0) {
+        const horizPositions = [];
+        graphState.edgesHoriz.forEach(edge => {
+          const p1 = edge.p1;
+          const p2 = edge.p2;
+          if (!p1 || !p2) return;
+          horizPositions.push(
+            p1[0] + ox, p1[2] + 1.75, -(p1[1] + oy),
+            p2[0] + ox, p2[2] + 1.75, -(p2[1] + oy)
+          );
+        });
+        if (horizPositions.length > 0) {
+          const hGeom = new THREE.BufferGeometry();
+          hGeom.setAttribute('position', new THREE.Float32BufferAttribute(horizPositions, 3));
+          const hMat = new THREE.LineBasicMaterial({ color: 0x0284c7, linewidth: 2.5, transparent: true, opacity: 0.85 });
+          const hLines = new THREE.LineSegments(hGeom, hMat);
+          graphGroup.add(hLines);
+        }
+      }
+
+      // 2. Vertical Edges (Rising vertical shaft columns)
+      if (Array.isArray(graphState.edgesVert) && graphState.edgesVert.length > 0) {
+        const vertPositions = [];
+        graphState.edgesVert.forEach(edge => {
+          const p1 = edge.p1;
+          const p2 = edge.p2;
+          if (!p1 || !p2) return;
+          vertPositions.push(
+            p1[0] + ox, p1[2] + 1.75, -(p1[1] + oy),
+            p2[0] + ox, p2[2] + 1.75, -(p2[1] + oy)
+          );
+        });
+        if (vertPositions.length > 0) {
+          const vGeom = new THREE.BufferGeometry();
+          vGeom.setAttribute('position', new THREE.Float32BufferAttribute(vertPositions, 3));
+          const vMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 3.5, transparent: true, opacity: 0.9 });
+          const vLines = new THREE.LineSegments(vGeom, vMat);
+          graphGroup.add(vLines);
+        }
+      }
+
+      // 3. Nodes (Spheres with halo)
+      const sphereGeom = new THREE.SphereGeometry(0.85, 14, 14);
+      const coreMat = new THREE.MeshLambertMaterial({ color: 0xef4444, emissive: 0x330000 });
+      const roomMat = new THREE.MeshLambertMaterial({ color: 0x0284c7, emissive: 0x001a33 });
+      const voidMat = new THREE.MeshLambertMaterial({ color: 0x10b981, emissive: 0x002611 });
+      const balconyMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b, emissive: 0x331a00 });
+
+      graphState.nodes.forEach(node => {
+        const nodeX = Number(node.x) + ox;
+        const nodeY = Number(node.z) + 1.75;
+        const nodeZ = -(Number(node.y) + oy);
+
+        let mat = roomMat;
+        if (node.type === 'core') mat = coreMat;
+        else if (node.type === 'void') mat = voidMat;
+        else if (node.type === 'balcony') mat = balconyMat;
+
+        const nodeMesh = new THREE.Mesh(sphereGeom, mat);
+        nodeMesh.position.set(nodeX, nodeY, nodeZ);
+        graphGroup.add(nodeMesh);
+      });
+      return;
+    }
+
     if (event.data.type !== 'optimizer_placements') return;
     const { placements, boundaries, isReal } = event.data;
     const hasUrbanContext = !!(DATA.buildings && DATA.buildings.length > 0);
@@ -576,6 +664,12 @@ export function initUrbanContext(DATA) {
     while (optimizerGroup.children.length > 0) {
       const child = optimizerGroup.children.pop();
       if (child.geometry) child.geometry.dispose();
+    }
+    if (Array.isArray(placements) && placements.length > 0) {
+      while (graphGroup.children.length > 0) {
+        const child = graphGroup.children.pop();
+        if (child.geometry) child.geometry.dispose();
+      }
     }
     if (!Array.isArray(placements) || placements.length === 0) return;
 

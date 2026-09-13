@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Critic Value Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#f7f9fc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --faint:#e8edf4;
+  --line:#cbd5e1; --input:#0284c7; --reward:#059669; --penalty:#e11d48;
+  --shadow:rgba(15,23,42,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1220; --card:#101a2c; --ink:#e6edf3; --muted:#94a3b8; --faint:#1e293b;
+    --line:#334155; --input:#38bdf8; --reward:#34d399; --penalty:#fb7185;
+    --shadow:rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1220; --card:#101a2c; --ink:#e6edf3; --muted:#94a3b8; --faint:#1e293b;
+  --line:#334155; --input:#38bdf8; --reward:#34d399; --penalty:#fb7185;
+  --shadow:rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+  line-height:1.5;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:40px 28px 72px}
+.eyebrow{
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+  color:var(--reward);margin:0 0 8px;
+}
+h1{font-size:30px;margin:0 0 10px;text-wrap:balance;font-weight:700;letter-spacing:-.01em}
+.lede{font-size:15.5px;color:var(--muted);max-width:62ch;margin:0 0 26px}
+
+/* diagram card */
+figure{background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:20px 18px;margin:0 0 22px;box-shadow:0 10px 30px var(--shadow)}
+.diagram-title{font-size:14px;font-weight:600;margin:4px 4px 10px;display:flex;align-items:center;gap:8px}
+.diagram-title::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--reward);display:inline-block}
+figure svg{display:block;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.5}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 26px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.dot{width:11px;height:11px;border-radius:4px;display:inline-block}
+.dot.input{background:var(--input)}
+.dot.reward{background:var(--reward)}
+.dot.penalty{background:var(--penalty)}
+.dot.hidden{background:var(--line)}
+
+/* reading guide */
+.guide{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:0 0 30px}
+.guide .g{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.g .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--input);margin-bottom:6px}
+.g p{margin:0;font-size:13.5px;color:var(--muted)}
+.g .k.r{color:var(--reward)} .g .k.p{color:var(--penalty)}
+
+/* nano-banana prompt */
+.prompt h2{font-size:16px;font-weight:700;margin:0 0 4px}
+.prompt p{font-size:13.5px;color:var(--muted);margin:0 0 12px}
+.promptbox{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.promptbox .bar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;
+  border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.promptbox .bar .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.05em}
+.copy{font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;color:var(--ink);
+  background:var(--faint);border:1px solid var(--line);border-radius:8px;padding:5px 12px;cursor:pointer}
+.copy:hover{filter:brightness(.97)}
+.copy:active{transform:translateY(1px)}
+pre{margin:0;padding:16px 18px;overflow-x:auto;font-family:'JetBrains Mono',monospace;
+  font-size:12.3px;line-height:1.6;color:var(--ink);white-space:pre-wrap}
+
+.note{font-size:12.5px;color:var(--muted);margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Module Lab v0.9.0</p>
+  <h1>The Critic's Value Network</h1>
+  <p class="lede">A simplified view of how the critic looks at a partially built building and predicts its final score — the number every placement is rewarded against. The real model is a set-transformer over hundreds of candidate placements; this is the picture for a first read.</p>
+
+  <figure>
+    <div class="diagram-title">Critic architecture — inputs in, one predicted score out</div>
+    <svg viewBox="0 0 1480 780" width="100%" role="img" aria-label="Simplified critic value network: inputs and design state pass through cross-connected hidden layers, become reward and penalty coefficients, and sum to a predicted score" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="mesh-arrow"/></marker>
+</defs>
+<g id="edges"><line class="mesh" x1="360" y1="170" x2="545" y2="230" />
+<line class="mesh" x1="360" y1="170" x2="545" y2="295" />
+<line class="mesh" x1="360" y1="170" x2="545" y2="360" />
+<line class="mesh" x1="360" y1="170" x2="545" y2="425" />
+<line class="mesh" x1="360" y1="170" x2="545" y2="490" />
+<line class="mesh" x1="360" y1="300" x2="545" y2="230" />
+<line class="mesh" x1="360" y1="300" x2="545" y2="295" />
+<line class="mesh" x1="360" y1="300" x2="545" y2="360" />
+<line class="mesh" x1="360" y1="300" x2="545" y2="425" />
+<line class="mesh" x1="360" y1="300" x2="545" y2="490" />
+<line class="mesh" x1="360" y1="430" x2="545" y2="230" />
+<line class="mesh" x1="360" y1="430" x2="545" y2="295" />
+<line class="mesh" x1="360" y1="430" x2="545" y2="360" />
+<line class="mesh" x1="360" y1="430" x2="545" y2="425" />
+<line class="mesh" x1="360" y1="430" x2="545" y2="490" />
+<line class="mesh" x1="360" y1="560" x2="545" y2="230" />
+<line class="mesh" x1="360" y1="560" x2="545" y2="295" />
+<line class="mesh" x1="360" y1="560" x2="545" y2="360" />
+<line class="mesh" x1="360" y1="560" x2="545" y2="425" />
+<line class="mesh" x1="360" y1="560" x2="545" y2="490" />
+<line class="mesh" x1="575" y1="230" x2="705" y2="230" />
+<line class="mesh" x1="735" y1="230" x2="865" y2="230" />
+<line class="mesh" x1="575" y1="230" x2="705" y2="295" />
+<line class="mesh" x1="735" y1="230" x2="865" y2="295" />
+<line class="mesh" x1="575" y1="230" x2="705" y2="360" />
+<line class="mesh" x1="735" y1="230" x2="865" y2="360" />
+<line class="mesh" x1="575" y1="230" x2="705" y2="425" />
+<line class="mesh" x1="735" y1="230" x2="865" y2="425" />
+<line class="mesh" x1="575" y1="230" x2="705" y2="490" />
+<line class="mesh" x1="735" y1="230" x2="865" y2="490" />
+<line class="mesh" x1="575" y1="295" x2="705" y2="230" />
+<line class="mesh" x1="735" y1="295" x2="865" y2="230" />
+<line class="mesh" x1="575" y1="295" x2="705" y2="295" />
+<line class="mesh" x1="735" y1="295" x2="865" y2="295" />
+<line class="mesh" x1="575" y1="295" x2="705" y2="360" />
+<line class="mesh" x1="735" y1="295" x2="865" y2="360" />
+<line class="mesh" x1="575" y1="295" x2="705" y2="425" />
+<line class="mesh" x1="735" y1="295" x2="865" y2="425" />
+<line class="mesh" x1="575" y1="295" x2="705" y2="490" />
+<line class="mesh" x1="735" y1="295" x2="865" y2="490" />
+<line class="mesh" x1="575" y1="360" x2="705" y2="230" />
+<line class="mesh" x1="735" y1="360" x2="865" y2="230" />
+<line class="mesh" x1="575" y1="360" x2="705" y2="295" />
+<line class="mesh" x1="735" y1="360" x2="865" y2="295" />
+<line class="mesh" x1="575" y1="360" x2="705" y2="360" />
+<line class="mesh" x1="735" y1="360" x2="865" y2="360" />
+<line class="mesh" x1="575" y1="360" x2="705" y2="425" />
+<line class="mesh" x1="735" y1="360" x2="865" y2="425" />
+<line class="mesh" x1="575" y1="360" x2="705" y2="490" />
+<line class="mesh" x1="735" y1="360" x2="865" y2="490" />
+<line class="mesh" x1="575" y1="425" x2="705" y2="230" />
+<line class="mesh" x1="735" y1="425" x2="865" y2="230" />
+<line class="mesh" x1="575" y1="425" x2="705" y2="295" />
+<line class="mesh" x1="735" y1="425" x2="865" y2="295" />
+<line class="mesh" x1="575" y1="425" x2="705" y2="360" />
+<line class="mesh" x1="735" y1="425" x2="865" y2="360" />
+<line class="mesh" x1="575" y1="425" x2="705" y2="425" />
+<line class="mesh" x1="735" y1="425" x2="865" y2="425" />
+<line class="mesh" x1="575" y1="425" x2="705" y2="490" />
+<line class="mesh" x1="735" y1="425" x2="865" y2="490" />
+<line class="mesh" x1="575" y1="490" x2="705" y2="230" />
+<line class="mesh" x1="735" y1="490" x2="865" y2="230" />
+<line class="mesh" x1="575" y1="490" x2="705" y2="295" />
+<line class="mesh" x1="735" y1="490" x2="865" y2="295" />
+<line class="mesh" x1="575" y1="490" x2="705" y2="360" />
+<line class="mesh" x1="735" y1="490" x2="865" y2="360" />
+<line class="mesh" x1="575" y1="490" x2="705" y2="425" />
+<line class="mesh" x1="735" y1="490" x2="865" y2="425" />
+<line class="mesh" x1="575" y1="490" x2="705" y2="490" />
+<line class="mesh" x1="735" y1="490" x2="865" y2="490" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="150" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="204" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="258" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="313" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="367" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="421" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="476" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="530" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="585" />
+<line class="mesh" x1="895" y1="230" x2="1020" y2="639" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="150" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="204" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="258" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="313" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="367" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="421" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="476" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="530" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="585" />
+<line class="mesh" x1="895" y1="295" x2="1020" y2="639" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="150" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="204" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="258" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="313" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="367" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="421" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="476" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="530" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="585" />
+<line class="mesh" x1="895" y1="360" x2="1020" y2="639" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="150" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="204" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="258" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="313" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="367" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="421" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="476" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="530" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="585" />
+<line class="mesh" x1="895" y1="425" x2="1020" y2="639" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="150" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="204" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="258" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="313" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="367" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="421" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="476" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="530" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="585" />
+<line class="mesh" x1="895" y1="490" x2="1020" y2="639" />
+<line class="mesh" x1="1170" y1="150" x2="1278" y2="365" marker-end="url(#arrow)" />
+<line class="mesh" x1="1170" y1="204" x2="1278" y2="365" marker-end="url(#arrow)" />
+<line class="mesh" x1="1170" y1="258" x2="1278" y2="365" marker-end="url(#arrow)" />
+<line class="mesh" x1="1170" y1="313" x2="1278" y2="365" marker-end="url(#arrow)" />
+<line class="mesh" x1="1170" y1="367" x2="1278" y2="365" marker-end="url(#arrow)" />
+<line class="mesh" x1="1170" y1="421" x2="1278" y2="365" marker-end="url(#arrow)" />
+<line class="mesh" x1="1170" y1="476" x2="1278" y2="365" marker-end="url(#arrow)" />
+<line class="mesh" x1="1170" y1="530" x2="1278" y2="365" marker-end="url(#arrow)" />
+<line class="mesh" x1="1170" y1="585" x2="1278" y2="365" marker-end="url(#arrow)" />
+<line class="mesh" x1="1170" y1="639" x2="1278" y2="365" marker-end="url(#arrow)" /></g>
+<g class="band">
+<rect x="40" y="138.0" width="320" height="64" rx="14" class="input-box" />
+<text class="input-title" x="60" y="164">Neighborhood &amp; site context</text>
+<text class="input-sub" x="60" y="188">OSM embedding</text>
+</g>
+<g class="band">
+<rect x="40" y="268.0" width="320" height="64" rx="14" class="input-box" />
+<text class="input-title" x="60" y="294">Design state</text>
+<text class="input-sub" x="60" y="318">floors · episode progress</text>
+</g>
+<g class="band">
+<rect x="40" y="398.0" width="320" height="64" rx="14" class="input-box" />
+<text class="input-title" x="60" y="424">Candidate placements</text>
+<text class="input-sub" x="60" y="448">position · angle · area · dist-to-core</text>
+</g>
+<g class="band">
+<rect x="40" y="528.0" width="320" height="64" rx="14" class="input-box" />
+<text class="input-title" x="60" y="554">Module shape</text>
+<text class="input-sub" x="60" y="578">BPE reuse</text>
+</g>
+<circle class="hidden-node hidden-node-0" cx="560" cy="230" r="15" />
+<circle class="hidden-node hidden-node-0" cx="560" cy="295" r="15" />
+<circle class="hidden-node hidden-node-0" cx="560" cy="360" r="15" />
+<circle class="hidden-node hidden-node-0" cx="560" cy="425" r="15" />
+<circle class="hidden-node hidden-node-0" cx="560" cy="490" r="15" />
+<circle class="hidden-node hidden-node-1" cx="720" cy="230" r="15" />
+<circle class="hidden-node hidden-node-1" cx="720" cy="295" r="15" />
+<circle class="hidden-node hidden-node-1" cx="720" cy="360" r="15" />
+<circle class="hidden-node hidden-node-1" cx="720" cy="425" r="15" />
+<circle class="hidden-node hidden-node-1" cx="720" cy="490" r="15" />
+<circle class="hidden-node hidden-node-2" cx="880" cy="230" r="15" />
+<circle class="hidden-node hidden-node-2" cx="880" cy="295" r="15" />
+<circle class="hidden-node hidden-node-2" cx="880" cy="360" r="15" />
+<circle class="hidden-node hidden-node-2" cx="880" cy="425" r="15" />
+<circle class="hidden-node hidden-node-2" cx="880" cy="490" r="15" />
+<g class="coeff coeff-reward">
+<rect x="1020" y="128" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="151">Space Fill</text>
+<text class="coeff-val" x="1158" y="155" text-anchor="end">0.80</text>
+</g>
+<g class="coeff coeff-reward">
+<rect x="1020" y="182" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="205">Rentable Area</text>
+<text class="coeff-val" x="1158" y="209" text-anchor="end">0.15</text>
+</g>
+<g class="coeff coeff-reward">
+<rect x="1020" y="236" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="259">Daylight</text>
+<text class="coeff-val" x="1158" y="263" text-anchor="end">0.25</text>
+</g>
+<g class="coeff coeff-reward">
+<rect x="1020" y="291" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="314">Vocabulary Reuse</text>
+<text class="coeff-val" x="1158" y="318" text-anchor="end">0.02</text>
+</g>
+<g class="coeff coeff-reward">
+<rect x="1020" y="345" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="368">Constructibility</text>
+<text class="coeff-val" x="1158" y="372" text-anchor="end">0.02</text>
+</g>
+<g class="coeff coeff-reward">
+<rect x="1020" y="399" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="422">Envelope Efficiency</text>
+<text class="coeff-val" x="1158" y="426" text-anchor="end">0.01</text>
+</g>
+<g class="coeff coeff-penalty">
+<rect x="1020" y="454" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="477">Topology Violation</text>
+<text class="coeff-val" x="1158" y="481" text-anchor="end">− 50</text>
+</g>
+<g class="coeff coeff-penalty">
+<rect x="1020" y="508" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="531">Premature Underfill</text>
+<text class="coeff-val" x="1158" y="535" text-anchor="end">− 35</text>
+</g>
+<g class="coeff coeff-penalty">
+<rect x="1020" y="563" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="586">Area Variance</text>
+<text class="coeff-val" x="1158" y="590" text-anchor="end">−</text>
+</g>
+<g class="coeff coeff-penalty">
+<rect x="1020" y="617" width="150" height="44" rx="11" class="coeff-box" />
+<text class="coeff-name" x="1032" y="640">Facade Chasm</text>
+<text class="coeff-val" x="1158" y="644" text-anchor="end">−</text>
+</g>
+<g class="output">
+<rect x="1278" y="313" width="104" height="104" rx="16" class="output-box" />
+<text class="output-lab" x="1330" y="341" text-anchor="middle">V(s)</text>
+<text class="output-score" x="1330" y="385" text-anchor="middle">≈ 78.4</text>
+</g>
+<text class="col-lab" x="200" y="96" text-anchor="middle">INPUTS · the critic reads</text>
+<text class="col-lab" x="720" y="96" text-anchor="middle">cross-connected hidden layers</text>
+<text class="col-lab" x="1095" y="96" text-anchor="middle">last layer · reward / penalty coefficients</text>
+<text class="col-lab" x="1330" y="96" text-anchor="middle">predicted score</text>
+</svg>
+    <figcaption>
+      <b>How to read it:</b> the critic reads the site's context, the design state, and the candidate placements (left),
+      runs them through cross-connected hidden layers (middle), turns them into the reward and penalty coefficients the
+      terminal score is built from (right), and outputs a single value <b>V(s)</b> — a prediction of the building's score.
+      The arrows show a forward pass: nothing here is hand-specified, every path is learned.
+    </figcaption>
+  </figure>
+
+  <div class="legend">
+    <span><i class="dot input"></i> input to the critic</span>
+    <span><i class="dot reward"></i> reward coefficient (incentive)</span>
+    <span><i class="dot penalty"></i> penalty coefficient (cost)</span>
+    <span><i class="dot hidden"></i> hidden neuron (unnamed)</span>
+  </div>
+
+  <div class="guide">
+    <div class="g"><div class="k">Inputs</div><p>Four things the critic can see at any step: the neighborhood's urban context, the building's state so far, the set of candidate placements, and the module vocabulary it can reuse.</p></div>
+    <div class="g"><div class="k r">Reward terms</div><p>Positively weighted design goals — how much of the site is filled, how rentable the floor plan is, how much daylight rooms get, and how well modules are reused across floors.</p></div>
+    <div class="g"><div class="k p">Penalty terms</div><p>Negatively weighted costs — broken topology, an under-filled site, uneven room sizes, and deep interior rooms trapped away from the facade.</p></div>
+  </div>
+
+  <div class="prompt">
+    <h2>Prompt for nano-banana</h2>
+    <p>Paste this into nano-banana to regenerate the diagram in the same look. It names the inputs, the last-hidden-layer text, and the exact style.</p>
+    <div class="promptbox">
+      <div class="bar"><span class="lbl">NANO-BANANA PROMPT</span><button class="copy" onclick="copyPrompt(this)">Copy</button></div>
+      <pre id="prompt">Diagrams are one of the things you make that make people *see*. Welcome to your craft: a simplified architecture diagram of a reinforcement-learning "critic" — the neural network in Module Lab (an AI that designs building floor plans) that looks at a partially-built building and predicts its final architectural score.
+
+GOAL
+Produce a clean, minimal, left-to-right machine-learning architecture diagram that a university architecture professor can grasp in under 10 seconds. It is SLIM, not exhaustive: strip the real 200-neuron set-transformer down to the basic structure.
+
+CANVAS & STYLE (most important — match this exactly)
+White background, very light and airy graphics. Soft, gentle palette. Thin 1px light-gray connector lines (a pale slate / cool gray, e.g. #cbd5e1) with rounded, flat, modern nodes and subtle drop shadows. Large clear sans-serif labels. Small monospace numerals. Generous whitespace. No photorealism, no gradients unless soft, no heavy 3D, no clutter, no background grid noise. Think "clean textbook figure, modern design-tool aesthetic." The vibe: a sleek AI/RL paper figure on white.
+
+LAYOUT — four columns left to right, with a subtle "→" flow implied by the connectors:
+
+COLUMN 1 — INPUTS (left side, a vertical stack of 4 soft rounded rectangles, sky-blue tint, sky-blue border). Each box has a bold label and a lighter sub-label beneath:
+1. "Neighborhood & site context" / sub-label "OSM embedding"
+2. "Design state" / "floors · episode progress"
+3. "Candidate placements" / "position · angle · area · dist-to-core"
+4. "Module shape" / "BPE reuse"
+Above this column write a small uppercase eyebrow: "INPUTS · the critic reads".
+
+COLUMN 2 — HIDDEN LAYERS (middle-left). Three vertical clusters of small filled circles (5 dots each, all the same pale-gray fill, NO labels/words inside — they must be anonymous). Connect every dot of each cluster to every dot of the next cluster with many thin light-gray lines to show they are fully cross-connected (a dense but tidy web). Above this column: "cross-connected hidden layers".
+
+COLUMN 3 — LAST HIDDEN LAYER — THE PAYLOAD (middle-right). A single vertical column of 10 rounded neuron boxes, each holding a REWARD/PENALTY coefficient name (names on the left) and a small numeric weight (right). EMBOLDEN / make the professor's eye land here. Color-code: the first 6 (reward, incentives) in soft emerald green (#059669 tint), the last 4 (penalties, costs) in soft rose red (#e11d48 tint). The 10 labels, top to bottom:
+Space Fill — 0.80
+Rentable Area — 0.15
+Daylight — 0.25
+Vocabulary Reuse — 0.02
+Constructibility — 0.02
+Envelope Efficiency — 0.01
+Topology Violation — −50
+Premature Underfill — −35
+Area Variance — −
+Facade Chasm — −
+Above this column: "last layer · reward / penalty coefficients".
+
+COLUMN 4 — OUTPUT (right end). One prominent node, emerald border: bold "V(s)" and a large number "≈ 78.4" beneath it (the predicted score). Above it: "predicted score".
+
+CONNECTORS
+- Thin light-gray lines, rounded, subtle.
+- Draw the feed-forward arrows from the input boxes into the first hidden cluster, between hidden clusters (fully connected), from the last hidden cluster into the 10 coefficient boxes, and then 10 thin lines converging into the single output node. This shows data flowing left → right.
+- Style the converging lines so the output reads as "all the coefficients sum into one number".
+
+DO
+- White background; flat, rounded, glassy-soft nodes; restrained emerald/rose accents; sans-serif anatomy with monospace numbers.
+- Keep it uncluttered and legible; generous margins; use a clean light-gray line for connectors so nothing is noisy.
+- Make the reward/penalty coefficient column clearly the informational heart of the figure.
+
+DON'T
+- No words written inside the hidden-layer dots (they are unnamed on purpose).
+- No dense text, no caption paragraphs inside the image itself, no drop shadows that are heavy, no dark background.
+- Don't imply the whole reality of the transformer — just this simplified skeleton.</pre>
+    </div>
+  </div>
+
+  <p class="note">Real weights are 100·(0.80·fill + 0.15·rentable + 0.25·daylight + 0.02·reuse + 0.02·constructibility + 0.01·envelope) − penalties, clamped to 0–100. The "78.4" is illustrative — an actual mid-run prediction, not a guarantee.</p>
+</div>
+
+<script>
+function copyPrompt(btn){
+  const txt = document.getElementById('prompt').textContent;
+  const done = () => { const old = btn.textContent; btn.textContent = 'Copied'; setTimeout(()=>btn.textContent=old, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done);
+  } else {
+    const r = document.createRange(); r.selectNodeContents(document.getElementById('prompt'));
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    document.execCommand('copy'); s.removeAllRanges(); done();
+  }
+}
+</script>
+</body>
+</html>

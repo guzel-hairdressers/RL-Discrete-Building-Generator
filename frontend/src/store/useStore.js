@@ -49,6 +49,7 @@ export const DEFAULT_SETTINGS = {
   allowStop: true,
   lookaheadSteps: 3,
   autoChangeEpisodes: 1, // 1 to 20, or 21 (displayed as '∞' / 'Never')
+  generatorEngine: 'graph_voronoi',
 };
 
 const DEFAULT_FILTERS = {
@@ -112,6 +113,7 @@ export const useStore = create((set, get) => ({
   individualPlacementsList: [],
   currentMergedPlacements: [],
   completed3DPlacements: [], // Only updated when an episode finishes
+  graphState: null,
   dictionary: [],
   mergedDictionary: [],
   contextData: null,
@@ -328,6 +330,7 @@ export const useStore = create((set, get) => ({
         individualPlacementsList: [],
         currentMergedPlacements: [],
         completed3DPlacements: [],
+        graphState: null,
       });
       const site = filteredSites[index];
       get().syncSiteWithOptimizer(site);
@@ -377,6 +380,7 @@ export const useStore = create((set, get) => ({
       individualPlacementsList: (state.step === 0 || state.phase === 'complete') ? [] : state.individualPlacementsList,
       currentMergedPlacements: [],
       completed3DPlacements: [],
+      graphState: (state.step === 0 || state.phase === 'complete') ? null : state.graphState,
       statusMessage: 'Training policy active',
     }));
     get().sendCommand({ cmd: 'setMode', mode: 'training' });
@@ -395,6 +399,7 @@ export const useStore = create((set, get) => ({
       phase: 'running',
       completed3DPlacements: [],
       currentMergedPlacements: [],
+      graphState: null,
       statusMessage: 'Generating building plan (Inference)...',
     });
     get().sendCommand({ cmd: 'setMode', mode: 'inference' });
@@ -434,6 +439,7 @@ export const useStore = create((set, get) => ({
       individualPlacementsList: [],
       currentMergedPlacements: [],
       completed3DPlacements: [],
+      graphState: null,
     });
     if (settings.boundaryType === 'real') {
       get().navigateCarousel(1);
@@ -514,6 +520,7 @@ export const useStore = create((set, get) => ({
         individualPlacementsList: [],
         currentMergedPlacements: [],
         completed3DPlacements: [],
+        graphState: null,
         dictionary: data.dictionary || [],
         device: data.device ? data.device.toUpperCase() : 'CPU',
         metrics: data.metrics || get().metrics,
@@ -521,6 +528,15 @@ export const useStore = create((set, get) => ({
         bestReward: data.bestScore ?? get().bestReward,
         statusMessage: `Site ready · ${bList.length} floors`,
       });
+
+      if (typeof window !== 'undefined' && window.location && window.location.search) {
+        if (window.location.search.includes('diagnostics')) {
+          set({ activeBottomDrawer: 'diagnostics' });
+        }
+        if (window.location.search.includes('autostart') && !get().trainingWanted) {
+          setTimeout(() => get().startTraining(), 400);
+        }
+      }
 
       if (get().trainingWanted) {
         get().sendCommand({ cmd: 'step', generationId: data.generationId, episode: data.episode ?? 0, step: 0 });
@@ -547,6 +563,7 @@ export const useStore = create((set, get) => ({
           step: data.step ?? state.step + 1,
           episode: data.episode ?? state.episode,
           individualPlacementsList: nextList,
+          graphState: data.graphState || (data.step != null && data.step <= 1 ? null : state.graphState),
           currentMergedPlacements: incomingMerged || ((data.step != null && data.step <= 1) ? [] : state.currentMergedPlacements),
           dictionary: data.dictionary || state.dictionary,
           mergedDictionary: data.mergedDictionary || state.mergedDictionary,
@@ -557,6 +574,12 @@ export const useStore = create((set, get) => ({
       });
 
       if (get().trainingWanted) {
+        // When running Graph & Voronoi with visuals enabled, add a smooth visual observation delay
+        // so the user can visibly watch the node/edge lattice growing in 2D and 3D
+        const stepDelay = (get().visualsEnabled && get().settings.generatorEngine === 'graph_voronoi')
+          ? (get().mode === 'inference' ? 260 : 190)
+          : 0;
+
         setTimeout(() => {
           get().sendCommand({
             cmd: 'step',
@@ -564,7 +587,7 @@ export const useStore = create((set, get) => ({
             episode: Number(data.episode ?? get().episode),
             step: Number(data.step ?? get().step),
           });
-        }, 0);
+        }, stepDelay);
       }
     } else if (type === 'error') {
       console.warn('Server error received:', data);
@@ -599,6 +622,7 @@ export const useStore = create((set, get) => ({
         episode: data.completedEpisode,
         completed3DPlacements: finalized,
         currentMergedPlacements: finalized,
+        graphState: data.graphState || null,
         metrics: effectiveMetrics,
         rewardHistory: data.scoreHistory || state.rewardHistory,
         fillHistory: [...state.fillHistory, currentFillPct],
@@ -627,12 +651,13 @@ export const useStore = create((set, get) => ({
                 individualPlacementsList: [],
                 currentMergedPlacements: [],
                 completed3DPlacements: [],
+                graphState: null,
                 phase: 'running',
               });
               get().requestNewSite();
             }
           }, 400);
-        } else {
+          const epDelay = (get().visualsEnabled && get().settings.generatorEngine === 'graph_voronoi') ? 750 : 100;
           setTimeout(() => {
             if (get().trainingWanted) {
               set({
@@ -642,6 +667,7 @@ export const useStore = create((set, get) => ({
                 individualPlacementsList: [],
                 currentMergedPlacements: [],
                 completed3DPlacements: [],
+                graphState: null,
                 phase: 'running',
               });
               get().sendCommand({
@@ -651,7 +677,7 @@ export const useStore = create((set, get) => ({
                 step: 0,
               });
             }
-          }, 100);
+          }, epDelay);
         }
       }
     } else if (type === 'sync') {
@@ -670,6 +696,7 @@ export const useStore = create((set, get) => ({
         completed3DPlacements: (Array.isArray(data.mergedPlacements) && data.mergedPlacements.length > 0)
           ? data.mergedPlacements
           : (data.placements || []),
+        graphState: data.graphState || null,
         metrics: data.metrics || get().metrics,
         diagnostics: data.diagnostics || get().diagnostics,
         rewardHistory: data.scoreHistory || get().rewardHistory,

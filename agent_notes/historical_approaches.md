@@ -8,6 +8,16 @@ It explicitly records **what was achieved** by successful approaches and **which
 
 ## 1. Successful Implementation Releases
 
+### `v0.10.0-alpha` — Hierarchical Graph-Seed Sampling, Continuous $\text{SE}(2)$ Voronoi Realization & Multi-Story Factoring (PROP-16, 17, 18)
+* **Key Achievements**:
+  * **Frontier-Relative Normal Vector Propagation (PROP-16 A)**: Generates candidate seed proposals by sampling orthogonal and diagonal normal vectors from active frontier edges. Directly preserves non-modular spans (such as $\sqrt{5}$ and $\sqrt{2}$) and enforces equilateral and 45° polygon closures without discrete tile grid limitations.
+  * **Continuous $\text{SE}(2)$ Motif Matcher & Voronoi Realizer (PROP-16 C)**: Star-graph neighbor congruence supports arbitrary continuous rotation angles $\phi \in [0, 2\pi)$. Master interior closed Voronoi cells dictate exact geometric shapes and module classifications to open perimeter cells, guaranteeing clean orthogonal perimeter closures.
+  * **Factored Multi-Story Building Graph (PROP-17)**: Disentangles whole-building vertical circulation from story-level rooms via dual edges ($E_{\text{horiz}}, E_{\text{vert}}$). Multi-floor core nodes placed on Step 0 automatically propagate identity replicas across all 4–8 stories, allowing floor plans to learn in parallel without shrinking training batch size.
+  * **Green's Theorem Area Moments & Prevailing Urban Context Prior (PROP-18)**: Computes polygon second moments via Green's theorem line integrals to establish continuous PCA principal axes ($u, v$) and context prevailing orientation priors for site-aligned room wings.
+  * **Live 2D and 3D Graph Telemetry & Visualization**: Emits `graphState` at each rollout step. Plans draw glowing colored nodes and connecting edges in the 2D canvas and 3D WebGL viewport (with Three.js node spheres, floor links, and rising core shafts) before snapping into solid Voronoi extruded geometries upon completion.
+  * **10x Generator Throughput**: By replacing combinatorial SAT polygon overlap checks and candidate rasterization with point vector arithmetic, episode generation dropped to $< 30\,\text{ms}$ ($> 10\times$ faster than discrete polygon placer).
+  * **194 Unit Tests Passing ($100\%$, 2 skipped)**.
+
 ### `v0.9.0-alpha` — Real Urban OSM Context Integration & Policy-Based Core Placements
 * **Key Achievements**:
   * **Real Urban OSM Context Integration**: Harvested 1,547 real-world OpenStreetMap urban parcels across 8 global cities (NYC, London, Tokyo, Singapore, Barcelona, Chicago, Paris, and Hong Kong) with neighbor building heights and road meshes from Context Generator.
@@ -129,6 +139,17 @@ It explicitly records **what was achieved** by successful approaches and **which
 * **Status**: **DISCARDED (Phasing out in v0.8.2)**
 * **What was tried**: Computed advantage as $A = R_{\text{terminal}} - V(s_0)$, applying the exact same scalar advantage to all steps $t=0 \dots T-1$ in an episode.
 * **Why it failed**: Caused massive score variance/dispersion ($\pm 28.4\,\text{pts}$ standard deviation), because early placement steps were unfairly penalized for late placement mistakes. Must be replaced with **GAE ($\gamma=0.99, \lambda=0.95$)**.
+
+### ❌ Approach: Greedy $k$-Nearest Floor Graph Adjacency (Non-Planar Edge Crossings)
+* **Status**: **DISCARDED IN v0.10.0-alpha**
+* **What was tried**: Connecting newly placed seed nodes to their 3 nearest same-floor neighbors by Euclidean proximity.
+* **Why it failed**: Blind proximity connection formed criss-crossing diagonal chords across existing edges, violating planar graph duality required for 2D architectural rooms.
+
+### ❌ Approach: Global Delaunay Grid Triangulation (Artificial Diagonal Hypotenuses)
+* **Status**: **DISCARDED IN v0.10.0-alpha**
+* **What was tried**: Running `scipy.spatial.Delaunay` at each step to triangulate all nodes on a floor into a triangle mesh.
+* **Why it failed**: On orthogonal quad grids (e.g. $(0,0), (6,0), (0,6), (6,6)$), Delaunay arbitrarily triangulates quads into triangles with diagonal hypotenuses connecting opposite corner rooms that only meet at a single 0D corner point ($0.0\,\text{m}$ shared wall length). It also placed connections deterministically across the whole point cloud rather than growing them organically.
+* **Solution**: Replaced with **incremental Voronoi party-wall connection growth** (`grow_node_connections`) and true Voronoi dual adjacency (`_voronoi_shared_wall_length`). Connections are grown step-by-step from anchors and adjacent neighbors, and exist **if and only if** their Voronoi cells share an actual 1D party wall of length $\ge 0.5\,\text{m}$. Completely eliminates artificial diagonal hypotenuses, producing clean orthogonal grid connections on orthogonal rooms while preserving strictly planar geometry (zero crossings).
 
 ---
 
