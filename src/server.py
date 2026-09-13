@@ -1,16 +1,7 @@
-"""Module Lab v0.9.0 PyTorch training and WebSocket server.
+"""Module Lab v0.10.0-alpha PyTorch training and WebSocket server.
 
-Each WebSocket owns a completely independent :class:`ParallelTrainer`.  Within
-that trainer all floor environments share one policy and one optimizer.  Shape
-dictionary selection and placement selection are both stochastic policy
-actions, so terminal aggregate reward trains the complete design policy.
-
-Vector geometry is authoritative for containment, overlap, adjacency, exposed
-walls, perimeter, and terminal daylight.  Integer cells are used only as a
-candidate-search acceleration structure.
-
-Multi-floor cores are exact building-level transactions: one learned action
-selects a shared module, rotation, and local anchor for every floor.
+Combines hierarchical graph-first Voronoi placement (PROP-16, PROP-17, PROP-18)
+with exact multi-floor core continuity across 4-8 stories.
 """
 
 from __future__ import annotations
@@ -46,6 +37,9 @@ import uvicorn
 
 import geometry as G
 import graph
+import typed_cell
+import graph_sampler
+import voronoi_realizer
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -118,6 +112,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "bufferEpisodes": 1,
     "realSiteId": "",
     "autoChangeEpisodes": 1,
+    "generatorEngine": "graph_voronoi",
 }
 
 BOUNDARY_TYPES = {
@@ -127,6 +122,7 @@ BOUNDARY_TYPES = {
 }
 SITE_AREA_TIERS = {"ANY", "XS", "S", "M", "L", "XL"}
 ATRIUM_POLICIES = {"central", "none"}
+GENERATOR_ENGINES = {"graph_voronoi", "discrete_polygon"}
 
 
 class SettingsError(ValueError):
@@ -254,6 +250,10 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     atrium_policy = merged["atriumPolicy"]
     if not isinstance(atrium_policy, str) or atrium_policy not in ATRIUM_POLICIES:
         raise SettingsError("atriumPolicy is not supported")
+    engine = str(merged.get("generatorEngine", "graph_voronoi")).lower().strip()
+    if engine not in GENERATOR_ENGINES:
+        raise SettingsError(f"generatorEngine must be one of {sorted(GENERATOR_ENGINES)}")
+    merged["generatorEngine"] = engine
     for key in ("singleFloor", "publicMode", "allowCorridors", "allowStop", "recordTrajectories"):
         if key in merged and type(merged[key]) is not bool:
             raise SettingsError(f"{key} must be a boolean")
@@ -1258,6 +1258,10 @@ class FloorEnvironment:
         self.last_unique_frontier_count = 0
         self.consecutive_proposal_failures = 0
         self.attachment_query_cursor = 0
+        self.building_graph = typed_cell.BuildingGraph(num_floors=1)
+        self.seed_sampler = graph_sampler.GraphSeedSampler()
+        self.voronoi_realizer = voronoi_realizer.VoronoiRealizer()
+        self.site_orientation_prior = G.get_site_orientation_prior(self.boundary.get("polygon", []))
 
     def reset(self, dictionary: Sequence[dict]) -> None:
         """Reset episode state while retaining the exact same local site."""
@@ -1287,6 +1291,44 @@ class FloorEnvironment:
         self.last_unique_frontier_count = 0
         self.consecutive_proposal_failures = 0
         self.attachment_query_cursor = 0
+        self.building_graph = typed_cell.BuildingGraph(num_floors=1)
+        self.seed_sampler = graph_sampler.GraphSeedSampler()
+        self.voronoi_realizer = voronoi_realizer.VoronoiRealizer()
+        self.site_orientation_prior = G.get_site_orientation_prior(self.boundary.get("polygon", []))
+
+    def realize_graph_voronoi_placements(self) -> list[dict]:
+        """Convert the current building_graph nodes into realized 2D/3D Voronoi room placements."""
+        poly_pts = self.boundary.get("polygon", [])
+        if not poly_pts:
+            return []
+
+        realized_rooms = self.voronoi_realizer.realize_floor(
+            graph=self.building_graph,
+            floor_index=0,
+            site_boundary=poly_pts,
+            site_pca_angle_rad=self.site_orientation_prior.get("angle_rad", 0.0),
+        )
+
+        placements = []
+        for idx, room in enumerate(realized_rooms):
+            coords = room.get("polygon", [])
+            if not coords:
+                continue
+            poly_dicts = [{"x": float(p[0]), "y": float(p[1])} for p in coords]
+            c_type = room.get("cell_type", "room")
+            p_record = {
+                "id": f"p_v10_{self.index}_{idx:03d}",
+                "moduleId": room.get("module_id", f"mod_{idx}"),
+                "category": c_type,
+                "floor": self.index,
+                "poly": poly_dicts,
+                "position": {"x": 0.0, "y": 0.0},
+                "rotation": 0.0,
+                "area": room.get("area", 0.0),
+                "is_master_template": room.get("is_master_template", False),
+            }
+            placements.append(p_record)
+        return placements
 
     @classmethod
     def _build_slot_index(cls, dictionary: list[dict]) -> dict[int, list[dict]]:

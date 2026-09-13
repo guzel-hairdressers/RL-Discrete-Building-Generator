@@ -3682,3 +3682,188 @@ def clear_geometry_caches() -> None:
     _native_shared_overlap_pair_from_signatures.cache_clear()
     _packed_segments_from_signature.cache_clear()
     _cached_enumerate_parametric_proposals.cache_clear()
+
+
+def compute_polygon_second_moments(vertices: Sequence[dict | Sequence[float]]) -> dict | None:
+    """Compute polygon area moments of inertia and principal axes using Green's Theorem (PROP-18).
+
+    Unlike simple vertex PCA, this integrates across the polygon's continuous interior area,
+    making it mathematically invariant to non-uniform vertex sampling (e.g. curved OSM street edges).
+
+    Returns:
+      - area: float (positive polygon area)
+      - centroid: (cx, cy)
+      - aspect_ratio: float (sqrt(lambda1 / lambda2) >= 1.0; 1.0 for square/circle)
+      - angle_rad: float (dominant axis angle in [-pi/2, pi/2])
+      - angle_deg: float (dominant axis angle in [-90, 90])
+      - axis_u: tuple[float, float] (unit vector along dominant axis)
+      - axis_v: tuple[float, float] (unit vector along transverse axis)
+      - eigenvalues: (lambda1, lambda2)
+    """
+    if not vertices or len(vertices) < 3:
+        return None
+
+    pts: list[tuple[float, float]] = []
+    for p in vertices:
+        if isinstance(p, dict):
+            pts.append((float(p.get("x", 0.0)), float(p.get("y", 0.0))))
+        else:
+            pts.append((float(p[0]), float(p[1])))
+
+    if len(pts) < 3:
+        return None
+    if pts[0] == pts[-1]:
+        pts = pts[:-1]
+    n = len(pts)
+    if n < 3:
+        return None
+
+    a_total = 0.0
+    cx_term = 0.0
+    cy_term = 0.0
+    ixx = 0.0
+    iyy = 0.0
+    ixy = 0.0
+
+    for i in range(n):
+        x0, y0 = pts[i]
+        x1, y1 = pts[(i + 1) % n]
+        a = x0 * y1 - x1 * y0
+        a_total += a
+        cx_term += (x0 + x1) * a
+        cy_term += (y0 + y1) * a
+        iyy += (x0**2 + x0 * x1 + x1**2) * a
+        ixx += (y0**2 + y0 * y1 + y1**2) * a
+        ixy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * a
+
+    if abs(a_total) < 1e-6:
+        return None
+
+    area = abs(a_total / 2.0)
+    cx = cx_term / (3.0 * a_total)
+    cy = cy_term / (3.0 * a_total)
+
+    var_x = (iyy / 6.0) / a_total - cx**2
+    var_y = (ixx / 6.0) / a_total - cy**2
+    cov_xy = (ixy / 12.0) / a_total - cx * cy
+
+    trace = var_x + var_y
+    det = var_x * var_y - cov_xy**2
+    disc = max(0.0, (trace / 2.0)**2 - det)
+    sqrt_disc = math.sqrt(disc)
+
+    lambda1 = trace / 2.0 + sqrt_disc
+    lambda2 = max(0.0, trace / 2.0 - sqrt_disc)
+
+    aspect = math.sqrt(lambda1 / max(lambda2, 1e-9))
+    angle = 0.5 * math.atan2(2.0 * cov_xy, var_x - var_y)
+
+    u_x = math.cos(angle)
+    u_y = math.sin(angle)
+    v_x = -math.sin(angle)
+    v_y = math.cos(angle)
+
+    return {
+        "area": area,
+        "centroid": (cx, cy),
+        "aspect_ratio": aspect,
+        "angle_rad": angle,
+        "angle_deg": math.degrees(angle),
+        "axis_u": (u_x, u_y),
+        "axis_v": (v_x, v_y),
+        "eigenvalues": (lambda1, lambda2),
+    }
+
+
+def compute_prevailing_context_orientation(
+    context_buildings: Sequence[dict] | None,
+    fallback_angle: float = 0.0,
+    min_building_aspect: float = 1.15,
+) -> float:
+    """Compute circular weighted mode orientation of surrounding context buildings (PROP-18).
+
+    Angles are folded modulo pi/2 (orthogonal architectural alignment) so that
+    buildings oriented along street blocks or perpendicular cross streets
+    reinforce the same urban grid angle.
+    """
+    if not context_buildings:
+        return fallback_angle
+
+    sin_sum = 0.0
+    cos_sum = 0.0
+    total_weight = 0.0
+
+    for b in context_buildings:
+        verts = b.get("vertices_2d", b.get("vertices", []))
+        res = compute_polygon_second_moments(verts)
+        if not res or res["area"] < 1.0 or res["aspect_ratio"] < min_building_aspect:
+            continue
+        angle = res["angle_rad"]
+        weight = res["area"]
+        sin_sum += weight * math.sin(4.0 * angle)
+        cos_sum += weight * math.cos(4.0 * angle)
+        total_weight += weight
+
+    if total_weight <= 0.0:
+        return fallback_angle
+
+    prevailing_4 = math.atan2(sin_sum, cos_sum)
+    prevailing = (prevailing_4 / 4.0) % (math.pi / 2.0)
+    return prevailing
+
+
+def get_site_orientation_prior(
+    site_polygon: Sequence[dict | Sequence[float]],
+    context_buildings: Sequence[dict] | None = None,
+    min_anisotropy_threshold: float = 1.15,
+    fallback_angle: float = 0.0,
+) -> dict:
+    """Determine the optimal orientation prior for a site parcel (PROP-18).
+
+    If the site's own aspect ratio is >= min_anisotropy_threshold, its dominant
+    principal axis is used directly. If the site is near-square (anisotropy < 1.15)
+    and context buildings are provided, it falls back to the prevailing urban
+    fabric orientation of surrounding buildings.
+    """
+    res = compute_polygon_second_moments(site_polygon)
+    if not res:
+        angle = fallback_angle
+        u_x, u_y = math.cos(angle), math.sin(angle)
+        return {
+            "angle_rad": angle,
+            "angle_deg": math.degrees(angle),
+            "aspect_ratio": 1.0,
+            "axis_u": (u_x, u_y),
+            "axis_v": (-u_y, u_x),
+            "centroid": (0.0, 0.0),
+            "area": 0.0,
+            "source": "fallback",
+        }
+
+    if res["aspect_ratio"] >= min_anisotropy_threshold:
+        res["source"] = "site_pca"
+        return res
+
+    # Low anisotropy site: consult surrounding urban context
+    if context_buildings:
+        context_angle = compute_prevailing_context_orientation(
+            context_buildings,
+            fallback_angle=res["angle_rad"],
+            min_building_aspect=min_anisotropy_threshold,
+        )
+        u_x = math.cos(context_angle)
+        u_y = math.sin(context_angle)
+        return {
+            "angle_rad": context_angle,
+            "angle_deg": math.degrees(context_angle),
+            "aspect_ratio": res["aspect_ratio"],
+            "axis_u": (u_x, u_y),
+            "axis_v": (-u_y, u_x),
+            "centroid": res["centroid"],
+            "area": res["area"],
+            "eigenvalues": res["eigenvalues"],
+            "source": "context_buildings",
+        }
+
+    res["source"] = "site_pca_low_anisotropy"
+    return res
