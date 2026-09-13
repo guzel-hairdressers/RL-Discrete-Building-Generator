@@ -7053,7 +7053,10 @@ app.add_middleware(
 
 @app.get("/")
 async def get_index() -> FileResponse:
-    return FileResponse(os.path.join(PUBLIC_DIR, "index.html"))
+    return FileResponse(
+        os.path.join(PUBLIC_DIR, "index.html"),
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"}
+    )
 
 
 @app.get("/app.js")
@@ -7164,6 +7167,20 @@ async def get_site_file(file_path: str):
         try:
             with open(target, "r", encoding="utf-8", errors="replace") as f:
                 html_content = f.read()
+
+            # Ensure importmap for Three.js module resolution is ALWAYS present
+            if "<script type=\"importmap\">" not in html_content:
+                importmap_tag = """<script type="importmap">
+{
+  "imports": {
+    "three": "/vendor/three/build/three.module.js",
+    "three/addons/": "/vendor/three/examples/jsm/"
+  }
+}
+</script>
+</head>"""
+                html_content = html_content.replace("</head>", importmap_tag)
+
             # Rewrite slow CDN dependencies to ultra-fast local server route
             html_content = html_content.replace(
                 "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
@@ -7171,6 +7188,12 @@ async def get_site_file(file_path: str):
             ).replace(
                 "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
                 "/vendor/three/examples/jsm/",
+            ).replace(
+                "/scripts/urban_viewer.js",
+                f"/scripts/urban_viewer.js?t={int(time.time())}",
+            ).replace(
+                "/styles/urban_viewer.css",
+                f"/styles/urban_viewer.css?t={int(time.time())}",
             )
             return Response(
                 content=html_content,
@@ -7185,6 +7208,16 @@ async def get_site_file(file_path: str):
             pass
 
     return FileResponse(target, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+
+
+@app.post("/api/client-log")
+async def api_client_log(request: Request):
+    try:
+        data = await request.json()
+        print(f"\n[CLIENT BROWSER LOG]: {json.dumps(data, indent=2)}", flush=True)
+    except Exception as e:
+        print(f"[CLIENT LOG ERROR]: {e}", flush=True)
+    return JSONResponse({"status": "ok"})
 
 
 @app.post("/api/fetch-custom-site")
@@ -7244,7 +7277,10 @@ def _error_event(
 
 
 async def _send_json(websocket: WebSocket, event: dict[str, Any]) -> None:
-    await websocket.send_text(json.dumps(event, allow_nan=False, separators=(",", ":")))
+    try:
+        await websocket.send_text(json.dumps(event, allow_nan=False, separators=(",", ":")))
+    except Exception:
+        pass
 
 
 def _allowed_websocket_origin(origin: str | None) -> bool:

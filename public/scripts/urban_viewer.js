@@ -11,6 +11,16 @@ export function initUrbanContext(DATA) {
   const aspect = window.innerWidth / window.innerHeight;
   const R = DATA.radius || 150;
 
+  console.log('[UrbanViewer] Initialized context with:', {
+    cityName: DATA.cityName,
+    radius: R,
+    buildings: DATA.buildings ? DATA.buildings.length : 0,
+    roads: DATA.roads ? DATA.roads.length : 0,
+    siteArea: DATA.siteArea,
+    hasSite: !!DATA.site,
+  });
+
+
   // Orthographic Camera (Axonometric) - DEFAULT
   const orthoSize = R * 1.45;
   const cameraOrtho = new THREE.OrthographicCamera(
@@ -49,7 +59,7 @@ export function initUrbanContext(DATA) {
   scene.add(optimizerGroup);
   window.optimizerGroup = optimizerGroup;
 
-  // Camera State Persistence
+  // Camera State Persistence with Dynamic Scale Adaptation
   try {
     const savedState = localStorage.getItem('context_generator_camera_view');
     if (savedState) {
@@ -60,20 +70,24 @@ export function initUrbanContext(DATA) {
         Array.isArray(view.pos) &&
         !isNaN(view.pos[0]) &&
         !isNaN(view.pos[1]) &&
-        !isNaN(view.pos[2]) &&
-        (Math.abs(view.pos[0]) > 0.001 || Math.abs(view.pos[1]) > 0.001 || Math.abs(view.pos[2]) > 0.001) &&
-        view.target &&
-        Array.isArray(view.target) &&
-        !isNaN(view.target[0]) &&
-        !isNaN(view.target[1]) &&
-        !isNaN(view.target[2])
+        !isNaN(view.pos[2])
       ) {
-        cameraOrtho.position.set(view.pos[0], view.pos[1], view.pos[2]);
-        cameraPersp.position.set(view.pos[0], view.pos[1], view.pos[2]);
-        if (view.zoom && !isNaN(view.zoom)) cameraOrtho.zoom = view.zoom;
+        const savedPos = new THREE.Vector3(view.pos[0], view.pos[1], view.pos[2]);
+        const savedTarget = (view.target && Array.isArray(view.target) && !isNaN(view.target[0]))
+          ? new THREE.Vector3(view.target[0], view.target[1], view.target[2])
+          : new THREE.Vector3(0, (DATA.maxHeight || 40) * 0.08, 0);
+
+        // Preserve viewing angle, scale camera distance to fit current site's radius R
+        const offset = new THREE.Vector3().subVectors(savedPos, savedTarget);
+        if (offset.length() > 1.0) {
+          offset.normalize().multiplyScalar(camDist);
+          cameraOrtho.position.copy(savedTarget).add(offset);
+          cameraPersp.position.copy(savedTarget).add(offset);
+        }
+        cameraOrtho.zoom = 1.0;
         cameraOrtho.updateProjectionMatrix();
         cameraPersp.updateProjectionMatrix();
-        controls.target.set(view.target[0], view.target[1], view.target[2]);
+        controls.target.copy(savedTarget);
         if (view.isPersp) {
           activeCamera = cameraPersp;
           controls.object = cameraPersp;
@@ -216,7 +230,9 @@ export function initUrbanContext(DATA) {
 
       const dot = faceNormal.dot(sunVector);
       const isSunFacing = (isRoad || dot > 0.05);
-      const c = pureColor;
+      // Away-from-sun faces on context buildings are *slightly* darker than
+      // sun-facing ones (subtle directional cue). Roads/greenspaces stay uniform.
+      const c = isSunFacing ? pureColor : pureColor.clone().multiplyScalar(0.90);
 
       for (let vi = 0; vi < 3; vi++) {
         const v = verts[f[vi]];
@@ -491,12 +507,40 @@ export function initUrbanContext(DATA) {
 
   renderSiteParcel(null);
 
+  // Headless / visuals toggle: when false the rAF render loop stays alive (so it
+  // resumes without a restart) but skips the expensive shadow-mapped
+  // renderer.render + drawGizmo, and geometry rebuilds are skipped. The host (the
+  // React ThreeViewer) drives it via a `set_visuals_enabled` postMessage, AND the
+  // initial state is read from the URL (`?visuals=off`) so a freshly loaded iframe
+  // (e.g. an auto site switch while headless) stays blank from the very first frame
+  // instead of flashing the site context before the host's message arrives.
+  let visualsEnabled = new URLSearchParams(window.location.search).get('visuals') !== 'off';
+  // If this iframe was born headless (site switch while 3D off), paint the canvas
+  // white immediately so the pane never flashes the (dark) raw WebGL buffer.
+  if (!visualsEnabled) {
+    renderer.setClearColor(0xffffff, 1);
+    renderer.clear(true, true, true);
+  }
+
   // Handle Optimizer Placements and UI Messages
   window.addEventListener('message', (event) => {
     if (!event.data) return;
 
+    // Resume/freeze the render loop (always honoured, even while visuals are off).
+    // Disabling just freezes the last rendered frame (no black canvas); a fresh
+    // headless iframe is painted white at init below.
+    if (event.data.type === 'set_visuals_enabled') {
+      visualsEnabled = event.data.enabled !== false;
+      return;
+    }
+
+    // While headless, ignore ALL scene-building messages so no geometry is rebuilt
+    // and no frame is drawn. Only the set_visuals_enabled above is processed.
+    if (!visualsEnabled) return;
+
     if (event.data.type === 'set_context_visibility') {
-      const isVisible = event.data.visible !== false;
+      const hasUrbanContext = !!(DATA.buildings && DATA.buildings.length > 0);
+      const isVisible = hasUrbanContext || event.data.visible !== false;
       contextGroup.visible = isVisible;
       if (!isVisible && event.data.customPolygon) {
         renderSiteParcel(event.data.customPolygon, event.data.boundaryOffset);
@@ -513,7 +557,9 @@ export function initUrbanContext(DATA) {
 
     if (event.data.type !== 'optimizer_placements') return;
     const { placements, boundaries, isReal } = event.data;
-    if (isReal === false && Array.isArray(boundaries) && boundaries.length > 0) {
+    const hasUrbanContext = !!(DATA.buildings && DATA.buildings.length > 0);
+    const treatAsReal = hasUrbanContext || isReal === true;
+    if (!treatAsReal && Array.isArray(boundaries) && boundaries.length > 0) {
       const b0 = boundaries[0];
       const poly = b0.outer || b0.polygon || b0.coords;
       if (poly) {
@@ -524,7 +570,7 @@ export function initUrbanContext(DATA) {
           oy: Number(b0?.originOffset?.y || 0),
         });
       }
-    } else if (isReal === true) {
+    } else {
       renderSiteParcel(null, null);
     }
     while (optimizerGroup.children.length > 0) {
@@ -860,7 +906,7 @@ export function initUrbanContext(DATA) {
             <div style="color:#334155;"><b style="color:#0f172a;">Context Storeys:</b> ${obj.userData.avgFloors || 5} | ${obj.userData.maxFloors || 10}</div>
           `;
         } else if (obj.userData.isBuilding) {
-          obj.material.color.setHex(0xdbeafe);
+          obj.material.color.setHex(0xf2f2f2); // neutral just-slightly-darker hover (was blue 0xdbeafe)
           tooltip.style.display = 'block';
           tooltip.style.left = (e.clientX + 14) + 'px';
           tooltip.style.top = (e.clientY + 14) + 'px';
@@ -895,6 +941,10 @@ export function initUrbanContext(DATA) {
   // Animation Loop
   function animate() {
     requestAnimationFrame(animate);
+
+    // Headless: keep rescheduling (so the loop resumes on re-enable with no
+    // restart) but skip the expensive shadow-mapped render + gizmo redraw.
+    if (!visualsEnabled) return;
 
     if (isAnimatingCamera) {
       const now = performance.now();

@@ -11,6 +11,16 @@ export function initUrbanContext(DATA) {
   const aspect = window.innerWidth / window.innerHeight;
   const R = DATA.radius || 150;
 
+  console.log('[UrbanViewer] Initialized context with:', {
+    cityName: DATA.cityName,
+    radius: R,
+    buildings: DATA.buildings ? DATA.buildings.length : 0,
+    roads: DATA.roads ? DATA.roads.length : 0,
+    siteArea: DATA.siteArea,
+    hasSite: !!DATA.site,
+  });
+
+
   // Orthographic Camera (Axonometric) - DEFAULT
   const orthoSize = R * 1.45;
   const cameraOrtho = new THREE.OrthographicCamera(
@@ -49,7 +59,7 @@ export function initUrbanContext(DATA) {
   scene.add(optimizerGroup);
   window.optimizerGroup = optimizerGroup;
 
-  // Camera State Persistence
+  // Camera State Persistence with Dynamic Scale Adaptation
   try {
     const savedState = localStorage.getItem('context_generator_camera_view');
     if (savedState) {
@@ -60,20 +70,24 @@ export function initUrbanContext(DATA) {
         Array.isArray(view.pos) &&
         !isNaN(view.pos[0]) &&
         !isNaN(view.pos[1]) &&
-        !isNaN(view.pos[2]) &&
-        (Math.abs(view.pos[0]) > 0.001 || Math.abs(view.pos[1]) > 0.001 || Math.abs(view.pos[2]) > 0.001) &&
-        view.target &&
-        Array.isArray(view.target) &&
-        !isNaN(view.target[0]) &&
-        !isNaN(view.target[1]) &&
-        !isNaN(view.target[2])
+        !isNaN(view.pos[2])
       ) {
-        cameraOrtho.position.set(view.pos[0], view.pos[1], view.pos[2]);
-        cameraPersp.position.set(view.pos[0], view.pos[1], view.pos[2]);
-        if (view.zoom && !isNaN(view.zoom)) cameraOrtho.zoom = view.zoom;
+        const savedPos = new THREE.Vector3(view.pos[0], view.pos[1], view.pos[2]);
+        const savedTarget = (view.target && Array.isArray(view.target) && !isNaN(view.target[0]))
+          ? new THREE.Vector3(view.target[0], view.target[1], view.target[2])
+          : new THREE.Vector3(0, (DATA.maxHeight || 40) * 0.08, 0);
+
+        // Preserve viewing angle, scale camera distance to fit current site's radius R
+        const offset = new THREE.Vector3().subVectors(savedPos, savedTarget);
+        if (offset.length() > 1.0) {
+          offset.normalize().multiplyScalar(camDist);
+          cameraOrtho.position.copy(savedTarget).add(offset);
+          cameraPersp.position.copy(savedTarget).add(offset);
+        }
+        cameraOrtho.zoom = 1.0;
         cameraOrtho.updateProjectionMatrix();
         cameraPersp.updateProjectionMatrix();
-        controls.target.set(view.target[0], view.target[1], view.target[2]);
+        controls.target.copy(savedTarget);
         if (view.isPersp) {
           activeCamera = cameraPersp;
           controls.object = cameraPersp;
@@ -525,7 +539,8 @@ export function initUrbanContext(DATA) {
     if (!visualsEnabled) return;
 
     if (event.data.type === 'set_context_visibility') {
-      const isVisible = event.data.visible !== false;
+      const hasUrbanContext = !!(DATA.buildings && DATA.buildings.length > 0);
+      const isVisible = hasUrbanContext || event.data.visible !== false;
       contextGroup.visible = isVisible;
       if (!isVisible && event.data.customPolygon) {
         renderSiteParcel(event.data.customPolygon, event.data.boundaryOffset);
@@ -542,7 +557,9 @@ export function initUrbanContext(DATA) {
 
     if (event.data.type !== 'optimizer_placements') return;
     const { placements, boundaries, isReal } = event.data;
-    if (isReal === false && Array.isArray(boundaries) && boundaries.length > 0) {
+    const hasUrbanContext = !!(DATA.buildings && DATA.buildings.length > 0);
+    const treatAsReal = hasUrbanContext || isReal === true;
+    if (!treatAsReal && Array.isArray(boundaries) && boundaries.length > 0) {
       const b0 = boundaries[0];
       const poly = b0.outer || b0.polygon || b0.coords;
       if (poly) {
@@ -553,7 +570,7 @@ export function initUrbanContext(DATA) {
           oy: Number(b0?.originOffset?.y || 0),
         });
       }
-    } else if (isReal === true) {
+    } else {
       renderSiteParcel(null, null);
     }
     while (optimizerGroup.children.length > 0) {

@@ -26,7 +26,8 @@ from geometry_3d import (
     local_meters_to_latlon,
     compute_urban_metrics
 )
-from visualizer import create_3d_context_visualization, compute_area_tier
+from visualizer import create_3d_context_visualization, compute_area_tier, _clean_to_shapely
+from fetch_all_osm import parse_osm_data
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 SITES_DIR = os.path.join(PROJECT_ROOT, "frontend", "public", "sites")
 DIST_SITES_DIR = os.path.join(PROJECT_ROOT, "frontend", "dist", "sites")
@@ -184,11 +185,11 @@ def fetch_custom_site(lat: float, lon: float, custom_name: str = "Custom Site", 
     ]
 
     query = f"""
-    [out:json][timeout:12];
+    [out:json][timeout:15];
     (
-      way["building"](around:140, {lat}, {lon});
-      relation["building"](around:140, {lat}, {lon});
-      way["highway"](around:140, {lat}, {lon});
+      way["building"](around:250, {lat}, {lon});
+      relation["building"](around:250, {lat}, {lon});
+      way["highway"](around:250, {lat}, {lon});
     );
     out body;
     >;
@@ -258,13 +259,17 @@ def fetch_custom_site(lat: float, lon: float, custom_name: str = "Custom Site", 
     if custom_shapely_poly and not custom_shapely_poly.is_valid:
         custom_shapely_poly = custom_shapely_poly.buffer(0)
 
+    # Dynamic context radius based on site size (ensures ample context around any site size)
+    site_extent = math.sqrt(max(100.0, site_area_m2))
+    context_radius = max(150.0, round(site_extent * 2.2, 0))
+
     # Shift buildings relative to target site parcel centroid
     shifted_bldgs = []
     for b in parsed_bldgs:
         if site_b_id and b['id'] == site_b_id:
             continue
         dist = math.hypot(b['centroid'][0] - scx, b['centroid'][1] - scy)
-        if dist <= 100.0:  # 100m radius context box
+        if dist <= context_radius:
             v_list = [[round(v[0] - scx, 2), round(v[1] - scy, 2)] for v in b['vertices']]
             if custom_shapely_poly and len(v_list) >= 3:
                 try:
@@ -320,19 +325,21 @@ def fetch_custom_site(lat: float, lon: float, custom_name: str = "Custom Site", 
         'context_buildings': shifted_bldgs,
         'roads': shifted_roads,
         'metrics': metrics,
-        'radius_m': 100.0,
+        'radius_m': context_radius,
         'debugLayers': debug_layers
     }
 
     html_name = f"{site_id}.html"
     public_out_path = os.path.join(SITES_DIR, html_name)
     dist_out_path = os.path.join(DIST_SITES_DIR, html_name)
+    legacy_public_out_path = os.path.join(PROJECT_ROOT, "public", "sites", html_name)
 
     create_3d_context_visualization(scene_data, public_out_path)
-    if os.path.exists(DIST_SITES_DIR) and public_out_path != dist_out_path:
+    for alt_path in [dist_out_path, legacy_public_out_path]:
         try:
+            os.makedirs(os.path.dirname(alt_path), exist_ok=True)
             import shutil
-            shutil.copy2(public_out_path, dist_out_path)
+            shutil.copy2(public_out_path, alt_path)
         except Exception:
             pass
 
@@ -372,12 +379,14 @@ def fetch_custom_site(lat: float, lon: float, custom_name: str = "Custom Site", 
 
     custom_dataset.insert(0, custom_record)
 
-    with open(CUSTOM_DS_PATH, 'w') as f:
-        json.dump(custom_dataset, f, indent=2)
-
-    if os.path.exists(os.path.dirname(DIST_CUSTOM_DS_PATH)):
+    for ds_p in [
+        CUSTOM_DS_PATH,
+        DIST_CUSTOM_DS_PATH,
+        os.path.join(PROJECT_ROOT, "public", "data", "custom_sites_dataset.json")
+    ]:
         try:
-            with open(DIST_CUSTOM_DS_PATH, 'w') as f:
+            os.makedirs(os.path.dirname(ds_p), exist_ok=True)
+            with open(ds_p, 'w') as f:
                 json.dump(custom_dataset, f, indent=2)
         except Exception:
             pass

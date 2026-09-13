@@ -72,7 +72,8 @@ export const ThreeViewer = () => {
           ? currentMergedPlacements
           : (Array.isArray(individualPlacementsList) ? individualPlacementsList : []));
 
-    const isReal = settings.boundaryType === 'real';
+    const isCustom = !!(activeSite?.is_custom || targetSite?.is_custom || (activeSite?.site_id && activeSite.site_id.startsWith('custom_')));
+    const isReal = isCustom || settings.boundaryType === 'real' || settings.boundaryType === 'mixed' || settings.boundaryType === 'osm' || !settings.boundaryType || settings.boundaryType === 'free';
     const firstBoundary = Array.isArray(boundaries) && boundaries.length > 0 ? boundaries[0] : null;
     const currentBoundaryPoly = (!isReal && firstBoundary)
       ? (firstBoundary.outer || firstBoundary.polygon || firstBoundary.coords || null)
@@ -85,9 +86,6 @@ export const ThreeViewer = () => {
     } : null;
 
     // Headless/visuals toggle: freeze/resume the shared Three.js render loop.
-    // Posted BEFORE the scene-building messages so that, on disable, the engine
-    // ignores them (no rebuild of ExtrudeGeometry on the current step), and on
-    // enable it resumes and rebuilds from the fresh placements below.
     iframe.contentWindow.postMessage({
       type: 'set_visuals_enabled',
       enabled: visualsEnabled,

@@ -411,6 +411,14 @@ def _generate_architectural_threejs_html(scene_data_json):
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Urban Context Architectural Diagram</title>
 <link rel="stylesheet" href="/styles/urban_viewer.css">
+<script type="importmap">
+{{
+  "imports": {{
+    "three": "/vendor/three/build/three.module.js",
+    "three/addons/": "/vendor/three/examples/jsm/"
+  }}
+}}
+</script>
 </head>
 <body>
 
