@@ -139,3 +139,9 @@ It explicitly records **what was achieved** by successful approaches and **which
 * **What was done**: Consolidated redundant double calls (`_max_shared_overlap` followed by `G.get_shared_overlap`) into a single-pass `G.get_shared_overlap` in `_candidate_from_anchor` (`src/server.py`).
 * **Observed Advantage**: Slight $-2.61\%$ wall time reduction ($-119.5\,\text{ms}$ per 50-episode run) with zero score/action divergence ($41.628 \to 41.628$).
 * **Reversion Note**: Because the performance gain is modest, if any edge-case boundary overlap or reachability regression emerges in complex multi-core scenarios, this optimization is flagged as a primary candidate to revert back to the legacy two-stage check.
+
+## 2026-10-22 — v0.9.0 public README and presentation showcase
+
+Expanded the release README with original interface/diagnostics screenshots, three generated massing examples, an original-versus-AI-edited material comparison, and the presentation recording as H.264 MP4 plus GIF preview. Public assets live in `docs/media/` because `presentation/` is Git-ignored.
+
+Checked the architecture, policy dimensions, A2C-style update, floor defaults, native fallback, and WebSocket descriptions against v0.9.0 (`73f473aa`). Removed stale parcel/test counts and unqualified speedup claims. No alpha features or application changes are included. The native release suite passed: 170 tests, skipped=2. See `guides/readme_showcase_guide.md` for validation and `docs/media/README.md` for provenance.

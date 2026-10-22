@@ -37,6 +37,8 @@ agent_notes/
 
 ## Quick Navigation Links
 
+* **Public README & showcase maintenance**: [`guides/readme_showcase_guide.md`](guides/readme_showcase_guide.md)
+
 * 📜 **Historical Ledger & Failed Approaches**: [`historical_approaches.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/historical_approaches.md)
 * 🗺️ **Master Roadmap**: [`roadmap.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/roadmap.md)
 * 📊 **Across-Phase Benchmarking Guide**: [`guides/benchmarking_guide.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/guides/benchmarking_guide.md)
