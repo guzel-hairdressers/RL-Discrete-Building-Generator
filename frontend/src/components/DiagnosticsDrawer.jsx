@@ -205,8 +205,8 @@ export const DiagnosticsDrawer = ({ onClose }) => {
   const constructibility = safeNum(metrics.constructibilityScore ?? debugTelemetry.constructibilityScore, 0);
   const envelopeEfficiency = safeNum(metrics.envelopeEfficiency ?? debugTelemetry.envelopeEfficiency, 0);
   const bpeBonus = safeNum(metrics.bpeBonus ?? debugTelemetry.bpeBonus, 0);
-  const utilizationEntropy = safeNum(metrics.utilizationEntropyBonus || debugTelemetry.utilizationEntropyBonus, 1.4);
-  const relativeFrontier = safeNum(metrics.relativeTimeReward || debugTelemetry.relativeTimeReward, 0.8);
+  const utilizationEntropy = safeNum(metrics.utilizationEntropyBonus ?? debugTelemetry.utilizationEntropyBonus, 0);
+  const relativeFrontier = safeNum(metrics.relativeTimeReward ?? debugTelemetry.relativeTimeReward, 0);
 
   const deepPenalty = safeNum(metrics.deepInteriorPenalty || debugTelemetry.deepInteriorPenalty, 0);
   const chasmPenalty = safeNum(metrics.facadeChasmPenalty || debugTelemetry.facadeChasmPenalty, 0);
@@ -216,7 +216,11 @@ export const DiagnosticsDrawer = ({ onClose }) => {
   const trianglePenalty = safeNum(metrics.unmergedTrianglePenalty || debugTelemetry.unmergedTrianglePenalty, 0);
   const areaVariancePenalty = safeNum(metrics.areaVariancePenalty || debugTelemetry.areaVariancePenalty, 0);
 
-  const positiveRewards = [
+  const graphMode = settings.generatorEngine === 'graph_voronoi';
+  const positiveRewards = graphMode ? [
+    { label: 'Estimated fill (0.80x)', val: Math.min(1, fillRatio) * 80 },
+    { label: 'Rentable area (0.15x)', val: rentableRatio * 15 },
+  ] : [
     { label: 'Space Fill (1.05x)', val: fillRatio * 105.0 },
     { label: 'Rentable Area (0.15x)', val: rentableRatio * 15.0 },
     { label: 'Daylight Depth (0.10x)', val: daylight * 10.0 },
@@ -228,7 +232,12 @@ export const DiagnosticsDrawer = ({ onClose }) => {
     { label: 'Frontier Growth Reward', val: relativeFrontier },
   ];
 
-  const negativePenalties = [
+  const negativePenalties = graphMode ? [
+    { label: 'Underfill', val: -underfillPenalty },
+    { label: 'Access disconnected', val: -topologyPenalty },
+    { label: 'Soft dictionary budget', val: -dictBreachPenalty },
+    { label: 'Singleton prototypes', val: -safeNum(metrics.singletonPenalty, 0) },
+  ] : [
     { label: 'Deep Interior Daylight', val: -deepPenalty },
     { label: 'Narrow Chasm (<5.0m)', val: -chasmPenalty },
     { label: 'Premature Underfill', val: -underfillPenalty },
@@ -424,7 +433,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           <div className="diag-summary-strip">
             <span>Latest: <strong>{formatNum(metrics.score, 2)}</strong></span>
             <span>Best: <strong>{formatNum(debugTelemetry.bestScore || metrics.score, 2)}</strong></span>
-            <span>Throughput: <strong>{safeNum(diagnostics.throughputStepsPerSec, 240)} stp/s</strong></span>
+            <span>Throughput: <strong>{stepTotalAvg > 0 ? (1000 / stepTotalAvg).toFixed(1) : '—'} stp/s</strong></span>
           </div>
         </section>
 
@@ -480,10 +489,10 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           </div>
           <dl className="diag-dl-grid">
             <div><dt>Device</dt><dd>{String(device).toUpperCase()}</dd></div>
-            <div><dt>Native Engine</dt><dd>C Extension (Active)</dd></div>
-            <div><dt>Action Space |A|</dt><dd>{safeNum(diagnostics.actionSpaceSize, 184)}</dd></div>
-            <div><dt>Memory Usage</dt><dd>142 MB</dd></div>
-            <div><dt>Parallel Batch</dt><dd>{safeNum(metrics.parallelFloors, 9)} floors</dd></div>
+            <div><dt>Native Engine</dt><dd>{settings.generatorEngine === 'graph_voronoi' ? 'Graph constraints + GEOS validation' : (diagnostics.nativeGeometry?.enabled ? 'Native geometry' : 'Python geometry')}</dd></div>
+            <div><dt>Action Space |A|</dt><dd>{safeNum(metrics.graphCandidateCount ?? diagnostics.actionSpaceSize, 0)}</dd></div>
+            <div><dt>Memory Usage</dt><dd>{diagnostics.processPeakRssBytes ? `${Math.round(diagnostics.processPeakRssBytes / 1048576)} MB peak` : '—'}</dd></div>
+            <div><dt>Parallel Batch</dt><dd>{safeNum(metrics.parallelFloors ?? settings.parallelEnvironments, 0)} floors</dd></div>
           </dl>
         </section>
 
@@ -493,7 +502,10 @@ export const DiagnosticsDrawer = ({ onClose }) => {
             <span className="diag-section-title">Monte Carlo Training Signal</span>
           </div>
           <dl className="diag-dl-grid">
-            <div><dt>Algorithm</dt><dd>{metrics.learningAlgorithm === 'inference_only' ? 'Inference Only' : 'A2C + GAE'}</dd></div>
+            <div><dt>Algorithm</dt><dd>{({graph_actor_critic_experimental: 'Graph actor–critic (experimental)', graph_inference: 'Graph inference', graph_reference_search: 'Reference search', inference_only: 'Inference only', a2c_gae: 'A2C + GAE'})[metrics.learningAlgorithm] || 'Waiting for episode'}</dd></div>
+            <div><dt>Graph weight updates</dt><dd>{metrics.policyUpdateCount ?? '—'}</dd></div>
+            <div><dt>Episode decisions</dt><dd>{metrics.policyDecisionCount ?? '—'}</dd></div>
+            <div><dt>Geometry validated</dt><dd>{typeof metrics.geometryValid === 'boolean' ? (metrics.geometryValid ? 'Yes' : 'No') : '—'}</dd></div>
             <div><dt>Critic Loss (L_V)</dt><dd>{formatNum(metrics.valueLoss, 4, '—')}</dd></div>
             <div><dt>Policy Loss (L_π)</dt><dd>{formatNum(metrics.policyLoss, 4, '—')}</dd></div>
             <div><dt>Entropy Bonus</dt><dd>{formatNum(metrics.policyEntropy, 3, '—')}</dd></div>

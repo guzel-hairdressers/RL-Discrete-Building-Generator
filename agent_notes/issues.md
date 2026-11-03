@@ -332,3 +332,7 @@ This document is the master tracking log for active bugs, regressive side effect
 ### 2026-11-03 — v0.10.0 graph-first correctness rewrite
 
 Replaced budget-driven label welding, wrong-direction template copying, floor-local multi-floor geometry, undefined-hull fallback area calculation, and void-traversing reward connectivity. Added independent completed geometry validation and explicit uncalibrated/missing metric states. Diagnostic fallback percentages were removed. Legacy graph tests asserting fixed 36 m² cores, timing limits, mock integer equivalence, and clipped fill ratios were revised for the new contracts. See `guides/shared_graph_v010.md` for implementation limits and remaining research gates. No throughput or convergence result is claimed.
+
+### 2026-11-04 — neural demo and audit fixes
+
+Completion was clearing `building_graph` before publishing its audit. Capture the completed audit before teardown and use the same audit for experimental training outcomes and client validation. Floating-point rotated party walls required a micrometre-scale independent contact tolerance; a 1 mm gap remains non-contact. Repeated rotation/constraint evidence is deduplicated and local solves memoized. Removed hardcoded diagnostic throughput, candidate count, memory and bonus defaults; retain real completed learning signals during subsequent graph growth.

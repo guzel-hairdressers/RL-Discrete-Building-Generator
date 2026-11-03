@@ -114,6 +114,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "autoChangeEpisodes": 1,
     "generatorEngine": "discrete_polygon",
     "graphSearchMode": "balanced",
+    "graphController": "neural",
     "graphPriorRadius": 4.5,
     "graphMinArea": 1.0,
     "graphMaxArea": 80.0,
@@ -258,6 +259,8 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     if engine not in GENERATOR_ENGINES:
         raise SettingsError(f"generatorEngine must be one of {sorted(GENERATOR_ENGINES)}")
     merged["generatorEngine"] = engine
+    if merged.get('graphController','neural') not in ('neural','reference'):
+        raise SettingsError('graphController must be neural or reference')
     if merged.get('graphSearchMode','balanced') not in ('balanced','alternatives'):
         raise SettingsError('graphSearchMode must be balanced or alternatives')
     from shared_modules import SizePrior
@@ -3473,6 +3476,8 @@ class ParallelTrainer:
         _configure_torch_runtime(self.device)
         self.model = PolicyModel().to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=float(self.settings["learningRate"]))
+        from graph_policy import GraphLearner
+        self.graph_learner=GraphLearner(self.device,int(self.settings['seed']),float(self.settings['learningRate']))
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
         self.mode: str = "training"
         self.generation_id = 0
@@ -5002,6 +5007,9 @@ class ParallelTrainer:
         self.placement_decisions = []
         self.step_number = 0
         self.step_profiler.reset()
+        self.graph_learner.clear_episode()
+        for group in self.graph_learner.optimizer.param_groups:
+            group['lr']=float(settings['learningRate'])
         self._reset_episode_reward_telemetry()
         for group in self.optimizer.param_groups:
             group["lr"] = float(settings["learningRate"])
@@ -5073,6 +5081,8 @@ class ParallelTrainer:
             self.optimizer = old_optimizer
             self.episode = old_episode
             raise
+        from graph_policy import GraphLearner
+        self.graph_learner=GraphLearner(self.device,int(self.settings['seed']),float(self.settings['learningRate']))
         self.baseline = 0.35
         self.score_history = []
         self.best_score = 0.0
@@ -5097,6 +5107,8 @@ class ParallelTrainer:
         """Switch between training and inference modes."""
         if mode not in ("training", "inference"):
             raise ValueError(f"unsupported mode: {mode}")
+        if mode!=self.mode:
+            self.graph_learner.clear_episode()
         self.mode = mode
         return {
             "type": "ack",
@@ -6023,11 +6035,27 @@ class ParallelTrainer:
             metrics["averageUnmergedTriangles"] = 0.0
             metrics["unmergedTrianglePenalty"] = 0.0
             metrics.update(frontier_metrics)
+            metrics.update(relativeTimeReward=0.,utilizationEntropyBonus=0.)
+            for key in ('singletonPenalty','underfillPenalty','topologyPenalty'):
+                metrics[key]=_mean([float(ps.get(key,0.)) for ps in per_site])
 
             metrics['perFloorScores']=[float(ps['score']) for ps in per_site]
             self.baseline=.90*self.baseline+.10*(score/100.)
             metrics.update(policyLoss=0.,actorLoss=0.,valueLoss=0.,policyEntropy=0.,gradientNorm=0.,
                            advantage=0.,learningRate=0.,learningAlgorithm='graph_reference_search')
+            if self.settings.get('graphController','neural')=='neural':
+                audit=getattr(self.building_graph,'realization_audit',{})
+                valid=bool(audit.get('valid',False))
+                # Explicit failure outcome, with raw proxy score and validation retained.
+                reward=score/100. if valid else -1.
+                stats=self.graph_learner.finish(reward,training=self.mode=='training')
+                metrics.update(stats)
+                self.last_loss=stats['policyLoss']; self.last_actor_loss=stats['actorLoss']
+                self.last_value_loss=stats['valueLoss']; self.last_entropy=stats['policyEntropy']
+                self.last_gradient_norm=stats['gradientNorm']; self.last_advantage=stats['advantage']
+                metrics['trainingObjective']='experimental_graph_score_with_invalid_completion_minus_one'
+                metrics['geometryValid']=valid
+
             self.placement_decisions=[]
             self.shape_log_probs=[]
             self.building_shape_log_probs=[]
@@ -6579,6 +6607,8 @@ class ParallelTrainer:
             )
 
             if candidates:
+                pts=[{'x':p['x'],'y':p['y']} if isinstance(p,dict) else {'x':p[0],'y':p[1]} for p in site_poly]
+                site_area=abs(G.polygon_area(pts))
                 # Reproducible one-action lookahead reference search. No claim of learning.
                 from shared_modules import infer, area, missing_required_contacts
                 choices=[]
@@ -6589,7 +6619,13 @@ class ParallelTrainer:
                         candidate_id=f"node_{f}_{len(trial.nodes)}"
                         trial.add_node(candidate_id,candidate['x'],candidate['y'],floor_index=f,
                             scope=candidate_scope,cell_type=typed_cell.CellType.ROOM)
+                        if any(sum(n.floor_index==floor for n in trial.nodes.values())>int(self.settings['maxModules'])
+                               for floor in range(trial.num_floors)):
+                            continue
                         trial.add_edge(candidate_id,candidate['anchor_node'],properties={'relation':'construction'})
+                        for n in list(trial.nodes.values()):
+                            if n.node_id==candidate_id or n.metadata.get('root_id')==candidate_id:
+                                trial.grow_node_connections(n.node_id,site_boundary=trial.site_boundaries[n.floor_index])
                         solution=infer(trial)
                         if solution.unresolved or missing_required_contacts(solution): continue
                         fits=True
@@ -6610,10 +6646,28 @@ class ParallelTrainer:
                         objective=size-10*excess**2-5*reuse['singletonCount']
                         # Alternatives mode changes exploration/tie selection only.
                         tie=ci if self.settings.get('graphSearchMode')=='balanced' else -ci
-                        choices.append((objective,tie,trial,candidate_id,candidate,candidate_scope))
+                        node=trial.nodes[candidate_id]
+                        nearest_core=min((math.hypot(node.x-n.x,node.y-n.y) for n in trial.nodes.values()
+                                          if n.floor_index==f and n.cell_type==typed_cell.CellType.CORE),default=0.)
+                        radius=trial.size_prior.radius
+                        candidate['_policy_features']=[float(candidate_scope==typed_cell.VerticalScope.MULTI_FLOOR),
+                            candidate.get('span',0.)/(2*radius),nearest_core/(10*radius),
+                            typed_cell.BuildingGraph._min_distance_to_boundary((node.x,node.y),site_poly)/(2*radius),
+                            reuse['prototypeCount']/max(1,int(self.settings.get('dictCap',10))),
+                            reuse['singletonCount']/max(1,reuse['independentOccurrences']),
+                            size/max(1.,site_area*trial.num_floors),f/max(1,trial.num_floors-1),
+                            sum(p.prior_boundary for p in solution.prototypes.values())/max(1,len(solution.prototypes)),
+                            len(trial.nodes)/max(1,self.max_graph_seeds*trial.num_floors)]
+                        # Scope alternatives own their feature rows, not a shared mutable proposal.
+                        choices.append((objective,tie,trial,candidate_id,dict(candidate),candidate_scope))
                 if not choices: continue
+                self.last_graph_candidate_count=len(choices)
                 best=max(row[0] for row in choices)
-                if self.settings.get('graphSearchMode')=='alternatives':
+                if self.settings.get('graphController','neural')=='neural':
+                    selected=self.graph_learner.choose(self.building_graph,
+                        [row[4]['_policy_features'] for row in choices],training=self.mode=='training')
+                    chosen=choices[selected]
+                elif self.settings.get('graphSearchMode')=='alternatives':
                     eligible=[row for row in choices if row[0]>=best-max(1.,abs(best)*.05)]
                     chosen=eligible[self.graph_step_count%len(eligible)]
                 else:
@@ -6796,6 +6850,8 @@ class ParallelTrainer:
             self.step_profiler.record("graphMetricsEvaluation", time.perf_counter() - eval_metrics_start)
 
         agg_metrics = self._aggregate_terminal(per_floor_metrics, update_state=False)
+        for key in ('score','dictBreachPenalty','singletonPenalty','underfillPenalty','topologyPenalty'):
+            agg_metrics[key]=_mean([float(m.get(key,0.)) for m in per_floor_metrics])
 
         curr_potential = float(agg_metrics.get("score", 0.0))
         prev_potential = getattr(self, "_prev_graph_potential", curr_potential)
@@ -6804,12 +6860,13 @@ class ParallelTrainer:
 
         if is_complete:
             self.step_profiler.record("stepTotal",time.perf_counter()-step_start_time)
+            completed_audit=copy.deepcopy(getattr(self.building_graph,'realization_audit',{}))
             ep_event = self._finish_episode(
                 graph_per_site=per_floor_metrics,
                 post_eval_start=post_eval_start,
             )
             ep_event["graphState"] = graph_state
-            audit=getattr(self.building_graph,'realization_audit',{})
+            audit=completed_audit
             ep_event['validation']=audit
             ep_event['predictionErrors']={str(m['floorIndex']):{
                 'filledArea':m['filledArea']-audit.get('perFloor',{}).get(m['floorIndex'],{}).get('filledArea',0.)}
@@ -6828,7 +6885,7 @@ class ParallelTrainer:
 
         dict_cap = int(self.settings.get("dictCap", 10))
         dict_limit_breach = max(0, len(self.dictionary) - dict_cap)
-        dict_breach_penalty = min(80.0, float(dict_limit_breach ** 2) * 1.0)
+        dict_breach_penalty = float(agg_metrics.get("dictBreachPenalty",0.))
 
         diag = self._runtime_diagnostics()
         diag["stepTimeMs"] = round(step_duration * 1000.0, 2)
@@ -6839,8 +6896,17 @@ class ParallelTrainer:
             "episode": self.episode,
             "step": self.step_number,
             "placements": all_placements,
+            "dictionary": [_public_module(m) for m in self.dictionary] if self.visuals_enabled else [],
             "graphState": graph_state,
             "metrics": {
+                **(self.graph_learner.last if self.settings.get('graphController','neural')=='neural' else {}),
+                "learningAlgorithm": ('graph_actor_critic_experimental' if self.mode=='training' else 'graph_inference')
+                    if self.settings.get('graphController','neural')=='neural' else 'graph_reference_search',
+                "policyUpdateCount": self.graph_learner.updates,
+                "parallelFloors": len(self.environments),
+                "graphCandidateCount": getattr(self,'last_graph_candidate_count',0),
+                "singletonPenalty": float(agg_metrics.get("singletonPenalty",0.)),
+                "estimateStatus": "uncalibrated",
                 "score": round(float(agg_metrics.get("score", 0.0)), 2),
                 "fillRatio": round(float(agg_metrics.get("fillRatio", 0.0)), 3),
                 "rentableRatio": round(float(agg_metrics.get("rentableRatio", 0.0)), 3),
@@ -7605,6 +7671,7 @@ class ParallelTrainer:
         cpu_state = {name: tensor.detach().cpu() for name, tensor in self.model.state_dict().items()}
         payload = {
             "version": 5,
+            "graphLearner": self.graph_learner.state(),
             "model": cpu_state,
             "optimizer": self.optimizer.state_dict(),
             "settings": dict(self.settings),
@@ -7797,6 +7864,12 @@ class ParallelTrainer:
                         "legacy checkpoint has incompatible policy parameters: "
                         f"missing={unsupported_missing}, unexpected={unexpected}"
                     )
+            from graph_policy import GraphLearner
+            graph_candidate=GraphLearner(self.device,int(self.settings['seed']),float(self.settings['learningRate']))
+            if 'graphLearner' in checkpoint:
+                validate_safe_state(checkpoint['graphLearner'],'graphLearner')
+                graph_candidate.load(checkpoint['graphLearner'])
+                _validate_adam_state_shapes(graph_candidate.optimizer,float(graph_candidate.optimizer.param_groups[0]['lr']))
             self.settings = _validated_checkpoint_settings(
                 checkpoint.get("settings", {}), checkpoint_version
             )
@@ -7836,6 +7909,7 @@ class ParallelTrainer:
             )
             self._commit_generation(self.settings, generation, *prepared)
             event = self.site_event()
+            self.graph_learner=graph_candidate
         except Exception:
             # Restore original state if anything failed
             self.model.load_state_dict(old_model_state)
@@ -8244,6 +8318,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     if message.get('generationId')!=trainer.generation_id or message.get('episode')!=trainer.episode:
                         raise ValueError('stale graph action')
                     from graph_actions import apply_action
+                    trainer.graph_learner.clear_episode()
                     await asyncio.to_thread(apply_action,trainer.building_graph,message.get('action',{}))
                     await _send_json(websocket,trainer.current_state_event())
                 elif command == "step":

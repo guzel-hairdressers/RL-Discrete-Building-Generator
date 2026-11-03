@@ -290,3 +290,10 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [GATED] Learned graph policy integration until evaluator correctness/calibration is established.
 - [PROPOSED] Cross-floor access/duplex circulation with explicit stair connections; full-height alignment alone is not traversal.
 - [PROPOSED] Concave and multi-part module realization through the replaceable adapter.
+
+### 2026-11-04 — trainable demo
+
+- [IMPLEMENTED] Experimental graph actor-critic, browser demo preset, real weight-update telemetry, frozen inference, and resumable graph checkpoints.
+- [IMPLEMENTED] Numeric contact-tolerance regression and completion-audit handoff fix.
+- [ACTIVE] Compare alternative ML architectures on common held-out configurations; retain raw measurements and reject unsupported quality/convergence claims.
+- [PENDING] Calibrated architectural objectives and automatic multi-action core/void planning.

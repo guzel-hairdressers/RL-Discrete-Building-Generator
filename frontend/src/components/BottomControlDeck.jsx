@@ -85,7 +85,23 @@ export const BottomControlDeck = () => {
                     </select>
                   </div>
                 </div>
+                <div className="setting-row">
+                  <button className="filter-select-clean" onClick={() => updateSettings({
+                    generatorEngine: 'graph_voronoi', graphController: 'neural', boundaryType: 'rect',
+                    siteAreaTier: 'M', parallelEnvironments: 4, maxModules: 16, autoChangeEpisodes: 1,
+                  })}>Trainable graph demo preset</button>
+                </div>
                 {settings.generatorEngine === 'graph_voronoi' && (
+                  <div className="setting-row">
+                    <label>Graph controller</label>
+                    <select className="filter-select-clean" value={settings.graphController || 'neural'}
+                      onChange={(e) => updateSettings({ graphController: e.target.value })}>
+                      <option value="neural">Trainable graph actor–critic</option>
+                      <option value="reference">Reference search</option>
+                    </select>
+                  </div>
+                )}
+                {settings.generatorEngine === 'graph_voronoi' && settings.graphController === 'reference' && (
                   <div className="setting-row">
                     <label>Graph search (estimates uncalibrated)</label>
                     <select className="filter-select-clean" value={settings.graphSearchMode || 'balanced'}

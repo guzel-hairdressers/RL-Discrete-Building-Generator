@@ -53,3 +53,7 @@ Completed graph events include `validation` and `predictionErrors`. Prototype ID
 Do not cite the earlier desktop manifesto's speedups, convergence, daylight percentages, or forced vocabulary compliance as validation of this implementation.
 
 Verification: [v0.10.0 validation record](../reports/v010_shared_graph_validation.md).
+
+## 2026-11-04 — experimental trainable demo override
+
+At the user's explicit request for a trainable demo, a graph actor-critic is now integrated behind `graphController: neural` (the graph-engine default). `reference` preserves the earlier search controller. This permits experimental learning before calibration, with clearly labeled provisional outcomes; it does not lift the gate on architectural-quality or convergence claims. See [trainable graph demo](trainable_graph_demo.md).

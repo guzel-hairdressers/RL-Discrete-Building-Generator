@@ -37,6 +37,8 @@ agent_notes/
 
 ## Quick Navigation Links
 
+* **Trainable v0.10.0 graph demo**: [run and inspect training](guides/trainable_graph_demo.md)
+
 * **v0.10.0 shared graph implementation and research gates**: [shared graph guide](guides/shared_graph_v010.md)
 
 * 📜 **Historical Ledger & Failed Approaches**: [`historical_approaches.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/historical_approaches.md)

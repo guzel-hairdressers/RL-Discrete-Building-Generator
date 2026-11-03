@@ -164,3 +164,7 @@ It explicitly records **what was achieved** by successful approaches and **which
 ### 2026-11-03 — v0.10.0 shared prototype constraints
 
 Implemented a building-wide convex constraint inference kernel, independent geometry oracle, rotation-only matching, full-height occurrence grouping, transactional graph actions, continuous reference proposals, soft dictionary/singleton costs, and separate evidence estimators. Replaced forced same-degree module folding and per-instance geometry deformation. Learning, global partition backtracking, automatic hole/core planning, and held-out environmental calibration remain gated; see `guides/shared_graph_v010.md`. Earlier graph speed/quality claims are not adopted as evidence.
+
+### 2026-11-04 — experimental graph actor-critic demo
+
+Integrated a separate message-passing graph actor, value baseline and Adam learner over feasible growth actions. User-requested neural demo now trains on an explicitly provisional graph objective with invalid completion reported separately. Verified actual parameter updates and frozen inference rather than interpreting a reference heuristic's score as learning. Architecture comparisons and held-out generalization remain unproven; see `guides/trainable_graph_demo.md`.

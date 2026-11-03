@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import math
 from collections import Counter
+from functools import lru_cache
 
 
 def turn(p, a):
@@ -103,6 +104,20 @@ def _groups(graph):
     return {k:Occurrence(k, sorted(v,key=lambda n:n.floor_index)) for k,v in groups.items()}
 
 
+@lru_cache(maxsize=8192)
+def _bounded_polygon(constraints,required,prior):
+    if any(b<=0 for n,b in constraints): return None
+    poly=[(prior.radius*math.cos(2*math.pi*i/prior.directions),
+           prior.radius*math.sin(2*math.pi*i/prior.directions)) for i in range(prior.directions)]
+    for n,b in constraints:
+        if b>=prior.radius: continue
+        poly=clip(poly,n,b)
+        if len(poly)<3:return None
+    if not prior.min_area<=area(poly)<=prior.max_area:return None
+    if any(face_length(poly,n,b)<prior.min_contact for n,b in required):return None
+    return poly
+
+
 def infer(graph, prior=None):
     """Pool compatible evidence, including partial stars, across the building.
 
@@ -122,9 +137,14 @@ def infer(graph, prior=None):
                 if d<1e-8:
                     o.constraints.append(((1.,0.),-1.))
                     continue
+                # Beyond twice the explicit radius, a bisector cannot cut the
+                # prior-bounded prototype. Required distant contacts still fail.
+                if d>2*prior.radius and not graph.has_edge(n.node_id,other.node_id):
+                    continue
                 constraint=((dx/d,dy/d),d/2)
-                o.constraints.append(constraint)
-                if graph.has_edge(n.node_id,other.node_id): o.required.append(constraint)
+                if constraint not in o.constraints: o.constraints.append(constraint)
+                if graph.has_edge(n.node_id,other.node_id) and constraint not in o.required:
+                    o.required.append(constraint)
         directions=[math.atan2(n[1],n[0]) for n,b in o.required or o.constraints]
         # An intrinsic frame, with no global orthogonal preference.
         o.angle=min(directions,key=lambda a:tuple(sorted(round((v-a)%(2*math.pi),8) for v in directions))) if directions else o.nodes[0].orientation
@@ -133,15 +153,8 @@ def infer(graph, prior=None):
         return [(turn(n,-a),b) for n,b in o.constraints],[(turn(n,-a),b) for n,b in o.required]
 
     def build(constraints,required):
-        if any(b <= 0 for n,b in constraints): return None
-        # Isotropic size prior, explicitly reported; never called measured geometry.
-        poly=[(prior.radius*math.cos(2*math.pi*i/prior.directions),prior.radius*math.sin(2*math.pi*i/prior.directions)) for i in range(prior.directions)]
-        for n,b in constraints:
-            poly=clip(poly,n,b)
-            if len(poly)<3: return None
-        if not prior.min_area<=area(poly)<=prior.max_area: return None
-        if any(face_length(poly,n,b)<prior.min_contact for n,b in required): return None
-        return poly
+        # Pure memoized local inference. Exact inputs retained; no coordinate snapping.
+        return _bounded_polygon(tuple(sorted(set(constraints))),tuple(sorted(set(required))),prior)
 
     # Degree/signature ordering does not use supplied node labels.
     def signature(o):
@@ -165,7 +178,7 @@ def infer(graph, prior=None):
                 for cn,cb in target:
                     if abs(b-cb)<1e-6:
                         angles.append(math.atan2(n[1],n[0])-math.atan2(cn[1],cn[0]))
-            for a in angles:
+            for a in sorted({round(a % (2*math.pi),10) for a in angles}):
                 cs,rs=evidence(o,a)
                 # Require actual shared evidence, not merely a feasible smaller shape.
                 if not any(math.dist(n,cn)<1e-6 and abs(b-cb)<1e-6 for n,b in (rs or cs) for cn,cb in target): continue
@@ -175,7 +188,15 @@ def infer(graph, prior=None):
             if selected: break
         if selected:
             j,a,p,cs,rs=selected; c=classes[j]
-            c['polygon']=p; c['constraints']+=cs; c['required']+=rs
+            c['polygon']=p
+            def unique(rows):
+                seen=set();out=[]
+                for n,b in rows:
+                    key=(round(n[0],10),round(n[1],10),round(b,10))
+                    if key not in seen: seen.add(key);out.append((n,b))
+                return out
+            c['constraints']=unique(c['constraints']+cs)
+            c['required']=unique(c['required']+rs)
             c['members'].append(o.id); o.angle=a
         else:
             classes.append(dict(polygon=own,constraints=own_c,required=own_r,members=[o.id]))
@@ -243,7 +264,9 @@ def contact_pairs(result):
     for i,(n,p) in enumerate(rows):
         for m,q in rows[i+1:]:
             if n.floor_index!=m.floor_index: continue
-            if p.boundary.intersection(q.boundary).length>=result.prior.min_contact-1e-7:
+            # Micrometre tolerance accommodates rigid-transform floating point noise.
+            # A point contact contributes only O(tolerance), far below min_contact.
+            if p.boundary.buffer(1e-6).intersection(q.boundary).length>=result.prior.min_contact-1e-7:
                 contacts.append((n.node_id,m.node_id))
                 if n.cell_type.value!='void' and m.cell_type.value!='void': access.append((n.node_id,m.node_id))
     return contacts,access

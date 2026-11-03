@@ -50,6 +50,7 @@ export const DEFAULT_SETTINGS = {
   lookaheadSteps: 3,
   autoChangeEpisodes: 1, // 1 to 20, or 21 (displayed as '∞' / 'Never')
   generatorEngine: 'graph_voronoi',
+  graphController: 'neural',
 };
 
 const DEFAULT_FILTERS = {
