@@ -160,3 +160,7 @@ It explicitly records **what was achieved** by successful approaches and **which
 * **What was done**: Consolidated redundant double calls (`_max_shared_overlap` followed by `G.get_shared_overlap`) into a single-pass `G.get_shared_overlap` in `_candidate_from_anchor` (`src/server.py`).
 * **Observed Advantage**: Slight $-2.61\%$ wall time reduction ($-119.5\,\text{ms}$ per 50-episode run) with zero score/action divergence ($41.628 \to 41.628$).
 * **Reversion Note**: Because the performance gain is modest, if any edge-case boundary overlap or reachability regression emerges in complex multi-core scenarios, this optimization is flagged as a primary candidate to revert back to the legacy two-stage check.
+
+### 2026-11-03 — v0.10.0 shared prototype constraints
+
+Implemented a building-wide convex constraint inference kernel, independent geometry oracle, rotation-only matching, full-height occurrence grouping, transactional graph actions, continuous reference proposals, soft dictionary/singleton costs, and separate evidence estimators. Replaced forced same-degree module folding and per-instance geometry deformation. Learning, global partition backtracking, automatic hole/core planning, and held-out environmental calibration remain gated; see `guides/shared_graph_v010.md`. Earlier graph speed/quality claims are not adopted as evidence.

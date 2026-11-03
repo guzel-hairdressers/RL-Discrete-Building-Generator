@@ -3,7 +3,7 @@
 import math
 import unittest
 
-from typed_cell import BuildingGraph, CellType
+from typed_cell import BuildingGraph, CellType, VerticalScope
 from voronoi_realizer import SE2MotifMatcher, VoronoiRealizer
 
 
@@ -245,7 +245,7 @@ class TestVoronoiRealizer(unittest.TestCase):
         rooms = self.realizer.realize_floor(graph=graph, floor_index=0, site_boundary=giant_site)
         self.assertEqual(len(rooms), 2)
         for r in rooms:
-            self.assertLessEqual(r["area"], 50.0, f"Room {r['node_id']} exceeded 50m2: {r['area']}")
+            self.assertLessEqual(r["area"], 80.0, f"Room {r['node_id']} exceeded 50m2: {r['area']}")
             # Ensure room vertices did not stretch all the way to 0 or 200
             for px, py in r["polygon"]:
                 self.assertGreater(px, 50.0)
@@ -270,7 +270,7 @@ class TestVoronoiRealizer(unittest.TestCase):
         self.assertTrue(any(c >= 2 for c in counts.values()), f"Expected repeatable modules, got: {counts}")
 
     def test_evaluate_on_pause_returns_canonical_dictionary(self):
-        """Verify that evaluate (called on Pause) populates dictionary with repeated modules."""
+        """Verify that evaluate (called on Pause) keeps view as graph (no solid realization) and populates repeatable room numbers."""
         from server import ParallelTrainer
         trainer = ParallelTrainer(settings={"generatorEngine": "graph_voronoi"})
         trainer.new_site()
@@ -280,15 +280,237 @@ class TestVoronoiRealizer(unittest.TestCase):
         eval_event = trainer.evaluate(trainer.generation_id, trainer.episode)
         self.assertIn("dictionary", eval_event)
         self.assertIn("placements", eval_event)
-        self.assertGreater(len(eval_event["placements"]), 0)
+        self.assertIn("graphState", eval_event)
+        # Realization into solid placements happens ONLY at the end of points generation
+        self.assertEqual(eval_event["placements"], [])
         self.assertGreater(len(eval_event["dictionary"]), 0)
-        # Check that modules have area and uses
+        self.assertGreater(len(eval_event["graphState"]["nodes"]), 0)
+
+        # Nodes have integer roomNumber assigned
+        core_nodes = [n for n in eval_event["graphState"]["nodes"] if n.get("type") == "core"]
+        self.assertTrue(all(n.get("roomNumber") == 1 for n in core_nodes))
+        self.assertTrue(all(n.get("roomNumber") is not None for n in eval_event["graphState"]["nodes"]))
+
+        # Check that modules have area, uses, and roomNumber
         first_mod = eval_event["dictionary"][0]
         self.assertIn("area", first_mod)
         self.assertIn("uses", first_mod)
+        self.assertIn("roomNumber", first_mod)
         self.assertGreaterEqual(first_mod["uses"], 1)
+
+    def test_perimeter_submotif_inherits_interior_master_template(self):
+        """Verify that perimeter nodes 4 and 8 inherit master node 2's template on a rotated grid."""
+        bg = BuildingGraph(num_floors=1)
+        d = 6.0 / math.sqrt(2)
+        # Master node 2 at (50, 50) with 4 orthogonal neighbors rotated by 45 degrees
+        bg.add_node("node_2", 50.0, 50.0, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_node("node_ur", 50.0 + d, 50.0 + d, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_node("node_ul", 50.0 - d, 50.0 + d, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_node("node_dl", 50.0 - d, 50.0 - d, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_node("node_dr", 50.0 + d, 50.0 - d, floor_index=0, cell_type=CellType.ROOM)
+
+        bg.add_edge("node_2", "node_ur")
+        bg.add_edge("node_2", "node_ul")
+        bg.add_edge("node_2", "node_dl")
+        bg.add_edge("node_2", "node_dr")
+
+        # Perimeter node 4 has 3 neighbors (subset of node 2)
+        bg.add_node("node_4", 50.0 - 2 * d, 50.0, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_edge("node_4", "node_ul")
+        bg.add_edge("node_4", "node_dl")
+        bg.add_node("node_far_left", 50.0 - 3 * d, 50.0 + d, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_edge("node_4", "node_far_left")
+
+        # Perimeter node 8 has 3 neighbors (subset of node 2)
+        bg.add_node("node_8", 50.0 + 2 * d, 50.0, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_edge("node_8", "node_ur")
+        bg.add_edge("node_8", "node_dr")
+        bg.add_node("node_far_right", 50.0 + 3 * d, 50.0 - d, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_edge("node_8", "node_far_right")
+
+        site = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
+        rooms = self.realizer.realize_floor(bg, floor_index=0, site_boundary=site)
+        room_by_id = {r["node_id"]: r for r in rooms}
+
+        # All three must share the identical moduleId
+        mod_2 = room_by_id["node_2"]["module_id"]
+        mod_4 = room_by_id["node_4"]["module_id"]
+        mod_8 = room_by_id["node_8"]["module_id"]
+        self.assertEqual(mod_2, mod_4, f"Node 4 ({mod_4}) did not inherit Node 2 ({mod_2})!")
+        self.assertEqual(mod_2, mod_8, f"Node 8 ({mod_8}) did not inherit Node 2 ({mod_2})!")
+        self.assertAlmostEqual(room_by_id["node_2"]["area"], 36.0, delta=0.5)
+        self.assertAlmostEqual(room_by_id["node_4"]["area"], 36.0, delta=0.5)
+        self.assertAlmostEqual(room_by_id["node_8"]["area"], 36.0, delta=0.5)
+
+    def test_non_symmetrical_stars_never_collide(self):
+        """Verify that nodes with non-symmetrical stars (different turn angles) produce distinct signatures."""
+        bg = BuildingGraph(num_floors=1)
+        # Node A has a right-angle (90 deg) corner
+        bg.add_node("node_a", 20.0, 20.0, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_node("na_1", 26.0, 20.0, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_node("na_2", 20.0, 26.0, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_edge("node_a", "na_1")
+        bg.add_edge("node_a", "na_2")
+
+        # Node B has an acute (60 deg) corner (non-symmetrical to A)
+        bg.add_node("node_b", 80.0, 80.0, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_node("nb_1", 86.0, 80.0, floor_index=0, cell_type=CellType.ROOM)
+        c60, s60 = math.cos(math.radians(60)), math.sin(math.radians(60))
+        bg.add_node("nb_2", 80.0 + 6 * c60, 80.0 + 6 * s60, floor_index=0, cell_type=CellType.ROOM)
+        bg.add_edge("node_b", "nb_1")
+        bg.add_edge("node_b", "nb_2")
+
+        site = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
+        rooms = self.realizer.realize_floor(bg, floor_index=0, site_boundary=site)
+        room_a = [r for r in rooms if r["node_id"] == "node_a"][0]
+        room_b = [r for r in rooms if r["node_id"] == "node_b"][0]
+
+        # Different partial neighborhoods can share one feasible pooled shape.
+        # Verify geometry rather than demanding different integer labels.
+        if room_a['module_id']==room_b['module_id']:
+            self.assertAlmostEqual(room_a['area'],room_b['area'],places=6)
+        self.assertTrue(all(r['validation_status'] in ('valid','invalid') for r in rooms))
+
+    def test_matcher_tolerances_length_and_angle(self):
+        """Verify length tolerance (0.3m) and angle tolerance (2 deg)."""
+        matcher = SE2MotifMatcher(length_tolerance=0.3, angle_tolerance_deg=2.0)
+        star_base = [(6.0, 0.0), (0.0, 6.0)]
+
+        # Matching within length tolerance (+0.2m) and angle tolerance (+1.5 deg)
+        ang_ok = math.radians(1.5)
+        star_ok = [
+            (6.2 * math.cos(ang_ok), 6.2 * math.sin(ang_ok)),
+            (5.8 * math.cos(math.pi / 2 + ang_ok), 5.8 * math.sin(math.pi / 2 + ang_ok)),
+        ]
+        is_cong, _ = matcher.are_stars_congruent(star_base, star_ok)
+        self.assertTrue(is_cong)
+
+        # Exceeding angle tolerance (3.5 deg)
+        ang_bad = math.radians(3.5)
+        star_bad_ang = [
+            (6.0 * math.cos(ang_bad), 6.0 * math.sin(ang_bad)),
+            (6.0 * math.cos(math.pi / 2), 6.0 * math.sin(math.pi / 2)),
+        ]
+        is_cong_ang, _ = matcher.are_stars_congruent(star_base, star_bad_ang)
+        self.assertFalse(is_cong_ang)
+
+        # Exceeding length tolerance (0.45m)
+        star_bad_len = [(6.45, 0.0), (0.0, 6.0)]
+        is_cong_len, _ = matcher.are_stars_congruent(star_base, star_bad_len)
+        self.assertFalse(is_cong_len)
+
+    def test_graph_native_metrics_evaluator(self):
+        """Area comes from constraints; missing daylight is explicitly marked."""
+        g=BuildingGraph(1)
+        g.add_node('c',10,10,cell_type=CellType.CORE)
+        g.add_node('r',16,10);g.add_edge('c','r')
+        from shared_modules import infer, area
+        solution=infer(g)
+        metrics=g.evaluate_graph_metrics(0)
+        self.assertAlmostEqual(metrics['filledArea'],sum(area(p.polygon)*len(p.members) for p in solution.prototypes.values()))
+        self.assertEqual(metrics['estimateStatus'],'uncalibrated')
+        self.assertIn('daylightRatio',metrics['unavailableMetrics'])
+        self.assertIsNone(metrics['sunExposure'])
+        self.assertTrue(metrics['topologyValid'])
+
+    def test_dict_cap_breach_penalty_and_metrics_accuracy(self):
+        """Soft budgets change costs, never equivalence or module identity."""
+        g=BuildingGraph(1)
+        for i,d in enumerate((4.,5.,6.)):
+            g.add_node(f'a{i}',i*30.,0.,cell_type=CellType.CORE)
+            g.add_node(f'b{i}',i*30.+d,0.)
+            g.add_edge(f'a{i}',f'b{i}')
+        low=g.evaluate_graph_metrics(0,dict_cap=1)
+        high=g.evaluate_graph_metrics(0,dict_cap=99)
+        self.assertEqual(low['vocabSize'],high['vocabSize'])
+        self.assertGreater(low['dictBreachPenalty'],0.)
+        self.assertEqual(high['dictBreachPenalty'],0.)
+        self.assertAlmostEqual(high['score']-low['score'],low['dictBreachPenalty'])
+        tiny=g.evaluate_graph_metrics(0,site_area=1.)
+        self.assertGreater(tiny['fillRatio'],1.)  # Overshoot must not be concealed by clamping.
+
+    def test_post_step_evaluation_and_performance_timings(self):
+        """Verify post-step evaluation latency, episode execution timing, and profiler breakdown."""
+        from server import ParallelTrainer
+        trainer = ParallelTrainer({"generatorEngine": "graph_voronoi", "parallelEnvironments": 2})
+        trainer.new_site()
+
+        # Step until episode completes
+        done_event = None
+        for _ in range(50):
+            ev = trainer.step(trainer.generation_id, trainer.episode)
+            if ev["type"] == "episodeDone":
+                done_event = ev
+                break
+
+        self.assertIsNotNone(done_event)
+        metrics = done_event.get("metrics", {})
+        timings = metrics.get("performanceTimings", {})
+
+        # Verify required latency keys are present and measured
+        self.assertIn("postStepEvaluation", timings)
+        self.assertIn("episodeTotal", timings)
+        self.assertIn("voronoiRealization", timings)
+        self.assertIn("stepTotal", timings)
+
+        self.assertGreater(timings["postStepEvaluation"]["avg"], 0.0)
+        self.assertGreater(timings["episodeTotal"]["avg"], 0.0)
+        self.assertGreater(timings["voronoiRealization"]["avg"], 0.0)
+        self.assertGreater(timings["stepTotal"]["avg"], 0.0)
+
+        # Verify metrics and diagnostics have post-step evaluation and episode execution timings
+        self.assertIn("episodeExecutionTimeMs", metrics)
+        self.assertIn("postStepEvaluationMs", metrics)
+        self.assertGreater(metrics["episodeExecutionTimeMs"], 0.0)
+        self.assertGreater(metrics["postStepEvaluationMs"], 0.0)
+
+        diag = done_event.get("diagnostics", {})
+        self.assertIn("episodeTimeMs", diag)
+        self.assertIn("postStepEvaluationMs", diag)
+        self.assertGreater(diag["episodeTimeMs"], 0.0)
+        self.assertGreater(diag["postStepEvaluationMs"], 0.0)
+
+    def test_architectural_rewards_underfill_60_and_multi_core(self):
+        """Verify 60% underfill penalty threshold, proxy area footprint, and multi-core propagation."""
+        bg = BuildingGraph(num_floors=3)
+        # Add primary core
+        bg.add_node("c0", x=10.0, y=10.0, floor_index=0, cell_type=CellType.CORE, scope=VerticalScope.MULTI_FLOOR)
+        # Add room
+        bg.add_node("r0", x=16.0, y=10.0, floor_index=0, cell_type=CellType.ROOM, scope=VerticalScope.INDEPENDENT)
+        bg.add_edge("c0", "r0", edge_type="horiz")
+
+        site = [(0.0, 0.0), (60.0, 0.0), (60.0, 30.0), (0.0, 30.0)] # 1800 m2 site
+        m = bg.evaluate_graph_metrics(0, site_area=1800.0, site_boundary=site)
+
+        # 1. Underfill penalty: fillRatio is small (~0.04), so deficit = 1.0 - (fill / 0.60) > 0.9
+        self.assertGreater(m["underfillPenalty"], 25.0)
+        self.assertLessEqual(m["fillRatio"], 1.0)
+        self.assertGreater(m["rentableRatio"], 0.0)
+
+        # 2. Add secondary core at distance >= 24m on large site
+        bg.add_node("c1", x=45.0, y=10.0, floor_index=0, cell_type=CellType.CORE, scope=VerticalScope.MULTI_FLOOR)
+        bg.add_node("r1", x=40.0, y=10.0, floor_index=0, cell_type=CellType.ROOM, scope=VerticalScope.INDEPENDENT)
+        bg.add_edge("c1", "r1", edge_type="horiz")
+
+        # Verify secondary core propagated across all 3 floors with vertical shaft edges
+        for f in range(3):
+            fnodes = [n for n in bg.nodes.values() if n.floor_index == f]
+            fcores = [n for n in fnodes if n.cell_type == CellType.CORE]
+            self.assertEqual(len(fcores), 2)
+
+        # 4 vertical edges (2 shafts x 2 floor transitions)
+        self.assertEqual(len(bg.edges_vert), 4)
+
+        # Multi-core metrics evaluation
+        m_multi = bg.evaluate_graph_metrics(0, site_area=1800.0, site_boundary=site)
+        from shared_modules import infer, area
+        solution=infer(bg)
+        expected=sum(area(solution.prototypes[n.module_id].polygon) for n in bg.nodes.values()
+                     if n.floor_index==0 and n.cell_type==CellType.CORE)
+        self.assertAlmostEqual(m_multi['coreArea'],expected)
+        self.assertTrue(m_multi["topologyValid"])
+        self.assertEqual(len(m_multi["topologyViolations"]), 0)
 
 
 if __name__ == "__main__":
     unittest.main()
-

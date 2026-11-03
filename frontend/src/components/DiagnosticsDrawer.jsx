@@ -200,11 +200,11 @@ export const DiagnosticsDrawer = ({ onClose }) => {
   // Reward & Penalty Decomposition (Canonical Module Lab reward function)
   const fillRatio = safeNum(metrics.fillRatio || debugTelemetry.fillRatio, 0);
   const rentableRatio = safeNum(metrics.rentableRatio || debugTelemetry.rentableRatio, 0);
-  const daylight = safeNum(metrics.daylightRatio || debugTelemetry.daylightRatio, 0.85);
-  const reuse = safeNum(metrics.reuseRatio || debugTelemetry.reuseRatio, 0.6);
-  const constructibility = safeNum(metrics.constructibilityScore || debugTelemetry.constructibilityScore, 0.9);
-  const envelopeEfficiency = safeNum(metrics.envelopeEfficiency || debugTelemetry.envelopeEfficiency, 0.75);
-  const bpeBonus = safeNum(metrics.bpeBonus || debugTelemetry.bpeBonus, 2.5);
+  const daylight = safeNum(metrics.daylightRatio ?? debugTelemetry.daylightRatio, 0);
+  const reuse = safeNum(metrics.reuseRatio ?? debugTelemetry.reuseRatio, 0);
+  const constructibility = safeNum(metrics.constructibilityScore ?? debugTelemetry.constructibilityScore, 0);
+  const envelopeEfficiency = safeNum(metrics.envelopeEfficiency ?? debugTelemetry.envelopeEfficiency, 0);
+  const bpeBonus = safeNum(metrics.bpeBonus ?? debugTelemetry.bpeBonus, 0);
   const utilizationEntropy = safeNum(metrics.utilizationEntropyBonus || debugTelemetry.utilizationEntropyBonus, 1.4);
   const relativeFrontier = safeNum(metrics.relativeTimeReward || debugTelemetry.relativeTimeReward, 0.8);
 
@@ -221,7 +221,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
     { label: 'Rentable Area (0.15x)', val: rentableRatio * 15.0 },
     { label: 'Daylight Depth (0.10x)', val: daylight * 10.0 },
     { label: 'Vocabulary Reuse (0.02x)', val: reuse * 2.0 },
-    { label: 'Grid Snapping / Regularity', val: constructibility * 2.0 },
+    { label: 'Regularity (unavailable in graph mode)', val: constructibility * 2.0 },
     { label: 'Envelope Efficiency', val: envelopeEfficiency * 1.0 },
     { label: 'BPE Merge Bonus', val: bpeBonus },
     { label: 'Utilization Entropy', val: utilizationEntropy },

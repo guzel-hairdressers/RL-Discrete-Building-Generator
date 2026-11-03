@@ -280,3 +280,13 @@ This document defines the master development plan for the **RL-Discrete-Building
   3. **Factored Multi-Story Architecture**: Shared building-level core circulation skeleton ($E_{\text{vert}}$) auto-propagates across stories, while floors run factored 2D graphs ($E_{\text{horiz}}$) preserving sample efficiency and full batch size.
   4. **Live 2D and 3D Graph Lattice Visualization**: Emits `graphState` telemetry step-by-step, rendering colored nodes and edges in 2D canvas and 3D WebGL viewer before transitioning to realized Voronoi extruded geometries.
   5. **10x Step Throughput**: Eliminates 2D polygon SAT overlap loops during step exploration, lowering step times to $< 0.5\,\text{ms}$ and full building rollout times to $< 30\,\text{ms}$.
+
+### v0.10.0 correctness gates — 2026-11-03
+
+- [IMPLEMENTED] Shared convex prototype inference, full-height grouped footprints, rollback-safe action interface, independent geometry validation, continuous reference proposals, and explicit missing/uncalibrated telemetry.
+- [IMPLEMENTED] Held-out area replay/evaluation tooling; no accuracy claim without a real corpus.
+- [PENDING] Global partition backtracking/beam search and automatic multi-action hole/core planning.
+- [PENDING] Genuine held-out proxy calibration, full evaluation failure-rate study, and protocol-compliant throughput measurements.
+- [GATED] Learned graph policy integration until evaluator correctness/calibration is established.
+- [PROPOSED] Cross-floor access/duplex circulation with explicit stair connections; full-height alignment alone is not traversal.
+- [PROPOSED] Concave and multi-part module realization through the replaceable adapter.

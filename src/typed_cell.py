@@ -46,6 +46,7 @@ class GraphNode:
     scope: VerticalScope = VerticalScope.INDEPENDENT
     module_id: str | None = None
     void_category: VoidCategory | None = None
+    orientation: float = 0.0
     area: float = 0.0
     polygon: list[tuple[float, float]] | None = None
     metadata: dict = field(default_factory=dict)
@@ -90,6 +91,7 @@ class BuildingGraph:
         cell_type: CellType = CellType.ROOM,
         scope: VerticalScope = VerticalScope.INDEPENDENT,
         module_id: str | None = None,
+        void_category: VoidCategory | None = None,
         area: float = 0.0,
         polygon: list[tuple[float, float]] | None = None,
         metadata: dict | None = None,
@@ -105,6 +107,7 @@ class BuildingGraph:
             cell_type=cell_type,
             scope=scope,
             module_id=module_id,
+            void_category=void_category,
             area=area,
             polygon=polygon,
             metadata=metadata or {},
@@ -138,6 +141,7 @@ class BuildingGraph:
                 cell_type=root_node.cell_type,
                 scope=VerticalScope.MULTI_FLOOR,
                 module_id=root_node.module_id,
+                void_category=root_node.void_category,
                 area=root_node.area,
                 polygon=root_node.polygon,
                 metadata={"_is_propagated_replica": True, "root_id": base_id},
@@ -192,8 +196,7 @@ class BuildingGraph:
     ) -> dict[str, Any]:
         """Compute bounded Voronoi cells for nodes on floor_index using half-plane bisector clipping."""
         try:
-            from shapely.geometry import Polygon, box
-            from shapely.affinity import rotate
+            from shapely.geometry import Point, Polygon
         except ImportError:
             return {}
 
@@ -215,10 +218,8 @@ class BuildingGraph:
 
         cells: dict[str, Any] = {}
         for i, ni in enumerate(floor_nodes):
-            env_box = box(ni.x - max_radius, ni.y - max_radius, ni.x + max_radius, ni.y + max_radius)
-            if abs(site_pca_angle_rad) > 1e-4:
-                env_box = rotate(env_box, math.degrees(site_pca_angle_rad), origin=(ni.x, ni.y))
-            cell = env_box.intersection(site_poly) if site_poly is not None else env_box
+            disc = Point(ni.x, ni.y).buffer(max_radius, resolution=16)
+            cell = disc.intersection(site_poly) if site_poly is not None else disc
 
             for j, nj in enumerate(floor_nodes):
                 if i == j:
@@ -299,7 +300,6 @@ class BuildingGraph:
         if len(floor_nodes) < 2:
             return []
 
-        cells = self.compute_floor_voronoi_cells(f, site_boundary, site_pca_angle_rad)
         new_edges: list[GraphEdge] = []
 
         def segments_cross(p1, p2, p3, p4, eps=1e-5):
@@ -314,74 +314,21 @@ class BuildingGraph:
             return ((o1 > eps and o2 < -eps) or (o1 < -eps and o2 > eps)) and \
                    ((o3 > eps and o4 < -eps) or (o3 < -eps and o4 > eps))
 
-        # 1. First priority: Grow connection to anchor node if provided
-        if anchor_id and anchor_id in self.nodes and anchor_id != node_id:
-            anc_node = self.nodes[anchor_id]
-            if anc_node.floor_index == f:
-                d = math.hypot(target_node.x - anc_node.x, target_node.y - anc_node.y)
-                if d <= max_dist:
-                    p1 = (target_node.x, target_node.y)
-                    p2 = (anc_node.x, anc_node.y)
-                    crosses = any(
-                        segments_cross(p1, p2, (self.nodes[e.u].x, self.nodes[e.u].y), (self.nodes[e.v].x, self.nodes[e.v].y))
-                        for e in self.edges_horiz
-                        if self.nodes[e.u].floor_index == f and self.nodes[e.v].floor_index == f
-                    )
-                    if not crosses and not self.has_edge(node_id, anchor_id, "horiz"):
-                        c_new = cells.get(node_id)
-                        c_anc = cells.get(anchor_id)
-                        wall_len = self._voronoi_shared_wall_length(c_new, c_anc) if (c_new and c_anc) else d
-                        edge = self.add_edge(node_id, anchor_id, edge_type="horiz", shared_length=max(wall_len, 0.5))
-                        new_edges.append(edge)
-
-        # 2. Grow connections to any neighbor that shares a Voronoi wall >= min_wall_len
-        target_cell = cells.get(node_id)
-        if target_cell is not None and not target_cell.is_empty:
-            for other_node in floor_nodes:
-                other_id = other_node.node_id
-                if other_id == node_id or self.has_edge(node_id, other_id, "horiz"):
-                    continue
-
-                dist = math.hypot(target_node.x - other_node.x, target_node.y - other_node.y)
-                if dist > max_dist:
-                    continue
-
-                other_cell = cells.get(other_id)
-                if other_cell is None or other_cell.is_empty:
-                    continue
-
-                wall_len = self._voronoi_shared_wall_length(target_cell, other_cell)
-                # CRITICAL: Edge exists ONLY if shared party wall length >= min_wall_len!
-                # If they only touch at a single point (corner of quad grid), wall_len < 0.1m -> REJECTED!
-                if wall_len >= min_wall_len:
-                    p1 = (target_node.x, target_node.y)
-                    p2 = (other_node.x, other_node.y)
-                    crosses = any(
-                        segments_cross(p1, p2, (self.nodes[e.u].x, self.nodes[e.u].y), (self.nodes[e.v].x, self.nodes[e.v].y))
-                        for e in self.edges_horiz
-                        if self.nodes[e.u].floor_index == f and self.nodes[e.v].floor_index == f
-                    )
-                    if not crosses:
-                        edge = self.add_edge(node_id, other_id, edge_type="horiz", shared_length=wall_len)
-                        new_edges.append(edge)
-
-        # 3. Clean up historical edges on this floor if the newly inserted node broke their shared wall
-        floor_node_ids = {n.node_id for n in floor_nodes}
-        to_prune: list[GraphEdge] = []
-        for e in self.edges_horiz:
-            if e.u in floor_node_ids and e.v in floor_node_ids:
-                cu, cv = cells.get(e.u), cells.get(e.v)
-                if cu is not None and cv is not None:
-                    if self._voronoi_shared_wall_length(cu, cv) < min_wall_len:
-                        to_prune.append(e)
-
-        if to_prune:
-            prune_pairs = {(e.u, e.v) for e in to_prune} | {(e.v, e.u) for e in to_prune}
-            self.edges_horiz = [e for e in self.edges_horiz if (e.u, e.v) not in prune_pairs]
-            for u, v in prune_pairs:
-                if u in self._adj_horiz and v in self._adj_horiz[u]:
-                    self._adj_horiz[u].discard(v)
-
+        # Algebraic local candidate contacts (Gabriel condition). These are
+        # construction intents, never claimed to be validated physical walls.
+        for other in floor_nodes:
+            if other.node_id == node_id:
+                continue
+            dx, dy = other.x-target_node.x, other.y-target_node.y
+            d2 = dx*dx+dy*dy
+            if d2 < 1e-10 or d2 > max_dist*max_dist:
+                continue
+            mx, my = (other.x+target_node.x)/2, (other.y+target_node.y)/2
+            blocked = any((q.x-mx)**2+(q.y-my)**2 <= d2/4+1e-9
+                          for q in floor_nodes if q.node_id not in (node_id,other.node_id))
+            if not blocked and not self.has_edge(node_id, other.node_id):
+                new_edges.append(self.add_edge(node_id,other.node_id,
+                    properties={"relation":"construction","validated":False}))
         return new_edges
 
     def update_floor_planar_edges(
@@ -500,7 +447,7 @@ class BuildingGraph:
                     # Voids only act as circulation traversable if they are atriums/courtyards
                     is_traversable = (
                         neighbor.cell_type in (CellType.CORE, CellType.ROOM, CellType.BALCONY)
-                        or (neighbor.cell_type == CellType.VOID and neighbor.void_category == VoidCategory.ATRIUM)
+
                     )
                     if is_traversable and neighbor.node_id not in visited:
                         visited.add(neighbor.node_id)
@@ -579,3 +526,68 @@ class BuildingGraph:
                 dist = math.hypot(px - proj_x, py - proj_y)
             min_d = min(min_d, dist)
         return min_d
+
+    def get_node_span(self, node_id: str, default: float = 6.0) -> float:
+        """Compute average horizontal incident edge span for a node."""
+        if node_id not in self.nodes:
+            return default
+        n = self.nodes[node_id]
+        nbrs = [nbr for nbr in self._adj_horiz.get(node_id, ()) if nbr in self.nodes and self.nodes[nbr].floor_index == n.floor_index]
+        if not nbrs:
+            return default
+        return sum(math.hypot(n.x - self.nodes[nbr].x, n.y - self.nodes[nbr].y) for nbr in nbrs) / len(nbrs)
+
+    def reassign_functions(self, changes: dict[str, CellType], require_access: bool = True) -> None:
+        """Atomically reassign whole occurrences; support joint core relocation."""
+        old = {nid:n.cell_type for nid,n in self.nodes.items()}
+        try:
+            for nid, function in changes.items():
+                if nid not in self.nodes:
+                    raise KeyError(nid)
+                root=self.nodes[nid].metadata.get('root_id',nid)
+                for n in self.nodes.values():
+                    if n.node_id==root or n.metadata.get('root_id')==root:
+                        n.cell_type=CellType(function)
+            if require_access and not self.validate_circulation_connectivity():
+                raise ValueError('function change breaks same-floor access')
+        except Exception:
+            for nid,f in old.items(): self.nodes[nid].cell_type=f
+            raise
+
+    def evaluate_graph_metrics(self, floor_index, site_area=1000., site_pca_angle_rad=0.,
+                               star_motif_matcher=None, dict_cap=10, site_boundary=None):
+        """Uncalibrated estimates from shared constraints, never sunlight claims."""
+        from shared_modules import infer, area
+        result=infer(self)
+        from graph_evidence import daylight_accessibility
+        daylight=daylight_accessibility(self,result,floor_index)
+        nodes=[n for n in self.nodes.values() if n.floor_index==floor_index]
+        built=[n for n in nodes if n.cell_type!=CellType.VOID]
+        node_areas={n.node_id:area(result.prototypes[n.module_id].polygon)
+                    if n.module_id in result.prototypes else 0. for n in nodes}
+        filled=sum(node_areas[n.node_id] for n in built)
+        rentable=sum(node_areas[n.node_id] for n in built if n.cell_type==CellType.ROOM)
+        core=sum(node_areas[n.node_id] for n in built if n.cell_type==CellType.CORE)
+        # Count independent placement groups, not vertical replicas, for reuse.
+        reuse=result.reuse(); k=reuse['prototypeCount']
+        excess=max(0,k-dict_cap)
+        budget_cost=10.*(excess/max(1,dict_cap))**2
+        singleton_cost=5.*reuse['singletonCount']/max(1,reuse['independentOccurrences'])
+        ratio=filled/max(1.,site_area)
+        underfill=35.*max(0.,1-ratio/.6)**2
+        topology=self.validate_circulation_connectivity(floor_index)
+        score=80.*min(1.,ratio)+15.*rentable/max(1.,filled)-budget_cost-singleton_cost-underfill-(0 if topology else 20)
+        return dict(instanceIdx=floor_index,floorIndex=floor_index,filledArea=filled,siteArea=site_area,
+            rentableArea=rentable,coreArea=core,moduleCount=len(nodes),exposedPerimeter=0.,
+            fillRatio=ratio,rentableRatio=rentable/max(1.,filled),daylightRatio=0.,
+            envelopeDaylightRatio=0.,reuseRatio=reuse['confirmedReuseRatio'],
+            constructibilityScore=0.,envelopeEfficiency=0.,exteriorCorridorRatio=0.,triangleRatio=0.,
+            topologyValid=topology,topologyViolations=[] if topology else ['same_floor_access'],
+            totalPartialLength=0.,deepRoomCount=0,depthPenaltyScore=0.,facadeChasmOccludedLength=0.,
+            areaVariancePenalty=0.,rawScore=score+underfill,underfillPenalty=underfill,
+            topologyPenalty=0. if topology else 20.,facadeChasmPenalty=0.,vocabSize=k,
+            dictLimitBreach=excess,dictBreachPenalty=budget_cost,singletonPenalty=singleton_cost,
+            score=score,estimateStatus='uncalibrated',sunExposure=None,daylightAccessibility=daylight,
+            unavailableMetrics=['daylightRatio','constructibilityScore','envelopeEfficiency'],
+            uncertainty={'priorDerivedPrototypes':sum(p.prior_boundary for p in result.prototypes.values()),
+                         'unresolvedOccurrences':len(result.unresolved)},reuseAudit=reuse)

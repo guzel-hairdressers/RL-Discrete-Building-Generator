@@ -85,6 +85,16 @@ export const BottomControlDeck = () => {
                     </select>
                   </div>
                 </div>
+                {settings.generatorEngine === 'graph_voronoi' && (
+                  <div className="setting-row">
+                    <label>Graph search (estimates uncalibrated)</label>
+                    <select className="filter-select-clean" value={settings.graphSearchMode || 'balanced'}
+                      onChange={(e) => updateSettings({ graphSearchMode: e.target.value })}>
+                      <option value="balanced">Balanced</option>
+                      <option value="alternatives">Explore alternatives</option>
+                    </select>
+                  </div>
+                )}
                 <div className="setting-row">
                   <label>Parallel Floors (Batch Size)</label>
                   <div className="input-with-val">
