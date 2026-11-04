@@ -243,3 +243,31 @@ class ArchitectureServerLifecycleTests(unittest.TestCase):
         self.assertEqual(event['metrics']['architecture'],'candidate_attention')
         self.assertGreater(event['metrics']['policyUpdateCount'],0)
         self.assertGreater(event['metrics']['gradientNorm'],0)
+
+class CheckpointSiteAliasTests(unittest.TestCase):
+    def test_legacy_alias_migrates_without_overriding_canonical_site(self):
+        from server import _validated_checkpoint_settings,DEFAULT_SETTINGS
+        settings=_validated_checkpoint_settings(dict(DEFAULT_SETTINGS,siteId='legacy'),5)
+        self.assertNotIn('siteId',settings)
+        self.assertEqual(settings['realSiteId'],'legacy')
+        settings=_validated_checkpoint_settings(dict(DEFAULT_SETTINGS,siteId='legacy',realSiteId='canonical'),5)
+        self.assertEqual(settings['realSiteId'],'canonical')
+
+    def test_checkpoint_from_ui_site_switch_loads(self):
+        from server import ParallelTrainer
+        from pathlib import Path
+        t=ParallelTrainer(dict(generatorEngine='graph_voronoi',boundaryType='rect',siteAreaTier='L',parallelEnvironments=4))
+        restored=ParallelTrainer(dict(generatorEngine='graph_voronoi'))
+        try:
+            t.new_site();t.settings['siteId']='legacy_ui_alias'
+            with tempfile.TemporaryDirectory() as directory:
+                with patch('server.OUTPUT_DIR',directory):path=t.save_checkpoint()
+                event=restored.load_checkpoint_data(Path(path).read_bytes())
+            self.assertEqual(event['settings']['boundaryType'],'rect')
+            self.assertEqual(event['settings']['realSiteId'],'legacy_ui_alias')
+            self.assertNotIn('siteId',restored.settings)
+            self.assertEqual(restored.settings['realSiteId'],'legacy_ui_alias')
+            for k,v in t.graph_learner.model.state_dict().items():
+                self.assertTrue(torch.equal(v,restored.graph_learner.model.state_dict()[k]))
+        finally:
+            t.executor.shutdown(wait=True);restored.executor.shutdown(wait=True)

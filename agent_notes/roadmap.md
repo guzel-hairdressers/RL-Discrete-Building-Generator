@@ -312,3 +312,5 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [IMPLEMENTED] Pooled full-height contact checks, local contact refresh, conservative site/hole masks, real gradient and preview-isolation regressions.
 - [EXPERIMENTAL] Area quadrature and provisional dictionary descriptors; complementary evidence equivalence with the exact solver is incomplete.
 - [OPEN] Trainable pose/function/void planning, calibrated proxy errors, held-out quality improvement, untouched architecture confirmation. No architecture promoted.
+
+- [IMPLEMENTED, 2026-11-04] One-layout graph inference review and migration of UI-created checkpoint site aliases; 266 tests passing (2 skipped).

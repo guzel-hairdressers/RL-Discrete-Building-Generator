@@ -526,7 +526,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           </div>
           <dl className="diag-dl-grid">
             <div><dt>Device</dt><dd>{String(device).toUpperCase()}</dd></div>
-            <div><dt>Native Engine</dt><dd>{settings.generatorEngine === 'graph_voronoi' ? 'Graph constraints + GEOS validation' : (diagnostics.nativeGeometry?.enabled ? 'Native geometry' : 'Python geometry')}</dd></div>
+            <div><dt>Native Engine</dt><dd>{settings.generatorEngine === 'graph_voronoi' ? (graphState?.realized ? 'Convex realization + independent checks' : 'Graph constraints · no realization') : (diagnostics.nativeGeometry?.enabled ? 'Native geometry' : 'Python geometry')}</dd></div>
             <div><dt>Action Space |A|</dt><dd>{safeNum(metrics.graphCandidateCount ?? diagnostics.actionSpaceSize, 0)}</dd></div>
             <div><dt>Memory Usage</dt><dd>{diagnostics.processPeakRssBytes ? `${Math.round(diagnostics.processPeakRssBytes / 1048576)} MB peak` : '—'}</dd></div>
             <div><dt>Parallel Batch</dt><dd>{safeNum(metrics.parallelFloors ?? settings.parallelEnvironments, 0)} floors</dd></div>
@@ -540,10 +540,10 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           </div>
           <dl className="diag-dl-grid">
             <div><dt>Algorithm</dt><dd>{({graph_actor_critic_experimental: 'Graph actor–critic (experimental)', graph_inference: 'Graph inference', graph_reference_search: 'Reference search', inference_only: 'Inference only', a2c_gae: 'A2C + GAE'})[metrics.learningAlgorithm] || 'Waiting for episode'}</dd></div>
-            <div><dt>Module identities</dt><dd>{metrics.moduleIdentityStatus === 'provisional' ? 'Provisional · realize on pause/end in inference' : (graphState?.realized ? 'Realized · see validity' : '—')}</dd></div>
+            <div><dt>Module identities</dt><dd>{metrics.moduleIdentityStatus === 'provisional' ? 'Provisional · preview or inference completion' : (graphState?.realized ? 'Realized · see validity' : '—')}</dd></div>
             <div><dt>Graph weight updates</dt><dd>{metrics.policyUpdateCount ?? '—'}</dd></div>
             <div><dt>Episode decisions</dt><dd>{metrics.policyDecisionCount ?? '—'}</dd></div>
-            <div><dt>Geometry validated</dt><dd>{typeof metrics.geometryValid === 'boolean' ? (metrics.geometryValid ? 'Yes' : 'No') : '—'}</dd></div>
+            <div><dt>Last completed geometry</dt><dd>{typeof metrics.geometryValid === 'boolean' ? (metrics.geometryValid ? 'Yes' : 'No') : '—'}</dd></div>
             <div><dt>Critic Loss (L_V)</dt><dd>{formatNum(metrics.valueLoss, 4, '—')}</dd></div>
             <div><dt>Policy Loss (L_π)</dt><dd>{formatNum(metrics.policyLoss, 4, '—')}</dd></div>
             <div><dt>Entropy Bonus</dt><dd>{formatNum(metrics.policyEntropy, 3, '—')}</dd></div>

@@ -396,6 +396,7 @@ export const useStore = create((set, get) => ({
   startInference: () => {
     set({
       mode: 'inference',
+      autoGenerate: get().settings.generatorEngine === 'graph_voronoi' ? false : get().autoGenerate,
       trainingWanted: true,
       phase: 'running',
       completed3DPlacements: [],
@@ -512,6 +513,7 @@ export const useStore = create((set, get) => ({
       const totalArea = bList.reduce((acc, b) => acc + (b.siteArea || 0), 0);
       set({
         hasSite: true,
+        settings: data.settings || get().settings,
         generationId: data.generationId,
         episode: data.episode ?? 0,
         step: 0,

@@ -1,6 +1,6 @@
 # v0.10.0 trainable graph demo — 2026-11-04
 
-Run `.venv/bin/python src/server.py`, open http://localhost:8000, select the graph engine and neural controller, and use Train or Inference. Training and inference share learned weights. Architecture selection is available through the `graphPolicyArchitecture` setting/API; the message-passing baseline remains the default.
+Run `.venv/bin/python src/server.py`, open http://localhost:8000, select the graph engine and neural controller, and use Train or Inference. Training and inference share learned weights. Graph inference stops after one realized layout for inspection; training continues across episodes. Architecture selection is available through the `graphPolicyArchitecture` setting/API; the message-passing baseline remains the default.
 
 ## Training versus realization
 
@@ -22,6 +22,6 @@ Realization solves the building once, shares that result across floors, and vali
 
 ## Lifecycle and evidence
 
-Site/settings changes discard incomplete tapes and preserve weights. Mode switches discard incomplete tapes. Reset Weights resets both learners. Save/Load retains graph model, Adam state, architecture, update count and sampler RNG. Schema-1 graph checkpoints load as the baseline; invalid loads roll back atomically.
+Site/settings changes discard incomplete tapes and preserve weights. Mode switches discard incomplete tapes. Reset Weights resets both learners. Save/Load retains graph model, Adam state, architecture, update count and sampler RNG. Schema-1 graph checkpoints load as the baseline; invalid loads roll back atomically. Checkpoints from UI site switching accept the historical `siteId` alias and migrate it to canonical `realSiteId`. Site events synchronize the restored configuration with the UI controls.
 
 The suite checks zero realization through an entire training episode, real gradients, frozen inference, pause/preview isolation, checkpoint replay, full-height evidence, contact occlusion and static-hole containment. Wiring tests do not demonstrate convergence. See [architecture evaluation](graph_architecture_evaluation.md) and [graph-only runtime validation](../reports/v010_graph_only_validation.md). No architecture winner or calibrated graph/geometry correlation is claimed.

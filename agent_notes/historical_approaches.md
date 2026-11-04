@@ -176,3 +176,7 @@ Implemented and tested candidate-local GNN and candidate-conditioned attention a
 ### 2026-11-04 — removed geometry lookahead from graph training
 
 Discarded per-candidate graph deepcopy and full prototype polygon inference as a training hot path. The replacement evaluates numeric implicit constraints and performs graph-only episode updates; polygon realization and independent validation run on explicit preview or inference completion. Retained the convex shared-prototype adapter as a separate check, including joint contact-interval validation. Provisional dictionary hypotheses and quadrature estimates are not presented as confirmed fabrication reuse or calibrated geometry. This improves the execution contract, not evidence of learned design quality.
+
+### 2026-11-04 — inspect one inference result
+
+Graph inference generates one realized layout and stops, preserving weights for further training. Removed the implicit auto-loop for this review flow. Old UI site aliases migrate when loading checkpoints; canonical site settings take precedence.

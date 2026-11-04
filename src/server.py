@@ -374,6 +374,11 @@ def _validated_checkpoint_settings(settings: Any, version: int) -> dict[str, Any
     if not isinstance(settings, dict):
         raise SettingsError("checkpoint settings must be an object")
     migrated = dict(settings)
+    # UI site switching historically persisted both aliases. Keep the canonical
+    # setting while accepting checkpoints saved by that path.
+    legacy_site_id=migrated.pop('siteId',None)
+    if legacy_site_id is not None and not migrated.get('realSiteId'):
+        migrated['realSiteId']=legacy_site_id
     if version < 4:
         if "learningRate" in migrated:
             legacy_rate = _finite_number(migrated["learningRate"], "learningRate")
@@ -5076,7 +5081,6 @@ class ParallelTrainer:
         new_settings["boundaryType"] = "real"
         if site_id:
             new_settings["realSiteId"] = site_id
-            new_settings["siteId"] = site_id
             dataset = G.load_real_sites_dataset()
             if site_id not in dataset.get("sites", {}):
                 G._REAL_SITES_CACHE = None
@@ -5231,6 +5235,7 @@ class ParallelTrainer:
                 context_data = env0.boundary.get("parameters")
         return {
             "type": "site",
+            "settings": dict(self.settings),
             "generationId": self.generation_id,
             "episode": self.episode,
             "device": self.device.type,
