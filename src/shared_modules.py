@@ -141,6 +141,8 @@ def infer(graph, prior=None):
     constraints. Dictionary budgets never participate in geometric equivalence.
     Full-height occurrences contribute evidence from every floor to one shape.
     """
+    if getattr(graph,'module_bank',None) is not None:
+        return graph.module_bank.inference(graph)
     prior=prior or getattr(graph,"size_prior",None) or SizePrior()
     occ=_groups(graph)
     node_to_occ={n.node_id:k for k,o in occ.items() for n in o.nodes}

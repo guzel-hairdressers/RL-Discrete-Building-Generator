@@ -7,6 +7,7 @@ import { ViewToggle } from './ViewToggle';
 export const ThreeViewer = () => {
   const activeIframeRef = useRef(null);
   const incomingIframeRef = useRef(null);
+  const frameSetups = useRef(new WeakMap());
 
   const filteredSites = useStore((s) => s.filteredSites);
   const activeSiteIndex = useStore((s) => s.activeSiteIndex);
@@ -86,6 +87,15 @@ export const ThreeViewer = () => {
       oy: Number(firstBoundary?.originOffset?.y || 0),
     } : null;
 
+    let frameDocument = null;
+    try { frameDocument = iframe.contentDocument; } catch (e) {}
+    const previous = frameSetups.current.get(iframe);
+    const graphOnly = Boolean(graphState && !graphState.realized);
+    const setupChanged = !previous || previous.doc !== frameDocument || previous.boundaries !== boundaries
+      || previous.boundaryType !== settings.boundaryType || previous.viewMode !== viewMode
+      || previous.maximizedPane !== maximizedPane || previous.visualsEnabled !== visualsEnabled;
+
+    if (setupChanged) {
     // Headless/visuals toggle: freeze/resume the shared Three.js render loop.
     iframe.contentWindow.postMessage({
       type: 'set_visuals_enabled',
@@ -99,11 +109,14 @@ export const ThreeViewer = () => {
       boundaryOffset: boundaryOffset,
     }, '*');
 
+    }
+    if (setupChanged || !graphOnly || previous?.graphOnly !== graphOnly) {
     iframe.contentWindow.postMessage({
       type: 'optimizer_placements',
       placements: effectiveList,
       boundaries: boundaries,
       isReal: isReal,
+      graphState: graphState,
       colorTheme: {
         core: '#ffcccc',
         coreShadow: '#ff9999',
@@ -117,18 +130,27 @@ export const ThreeViewer = () => {
       },
     }, '*');
 
+    }
     iframe.contentWindow.postMessage({
       type: 'optimizer_graph',
       graphState: graphState,
       boundaries: boundaries,
     }, '*');
 
+    frameSetups.current.set(iframe, { doc: frameDocument, boundaries, boundaryType: settings.boundaryType,
+      viewMode, maximizedPane, visualsEnabled, graphOnly });
+    if (!setupChanged) return;
+
     try {
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       // 1. Inject override style to permanently hide internal site UI elements
-      const hideStyle = doc.createElement('style');
+      let hideStyle = doc.getElementById('module-lab-embedded-style');
+      if (!hideStyle) {
+        hideStyle = doc.createElement('style');
+        hideStyle.id = 'module-lab-embedded-style';
+        doc.head.appendChild(hideStyle);
+      }
       hideStyle.innerHTML = '#controls-bar, #ui-container, .camera-toggle { display: none !important; visibility: hidden !important; }';
-      doc.head.appendChild(hideStyle);
 
       // 2. Position Orientation Gizmo clearly visible in top-right of the 3D pane (no fly-in animation on reload)
       const gizmo = doc.getElementById('gizmo-container');
@@ -164,7 +186,7 @@ export const ThreeViewer = () => {
         }
       }
     } catch (e) {}
-  }, [completed3DPlacements, boundaries, currentMergedPlacements, individualPlacementsList, disableMerging, settings.boundaryType, viewMode, maximizedPane, visualsEnabled]);
+  }, [graphState, completed3DPlacements, boundaries, currentMergedPlacements, individualPlacementsList, disableMerging, settings.boundaryType, viewMode, maximizedPane, visualsEnabled]);
 
   // Sync Gizmo Position on Pane Maximize / Restore (smooth transition on user toggle)
   useEffect(() => {
@@ -204,6 +226,7 @@ export const ThreeViewer = () => {
         setViewMode(e.data.mode);
       }
       if (e.data && e.data.type === 'viewer_ready') {
+        if (activeIframeRef.current) frameSetups.current.delete(activeIframeRef.current);
         configureIframe(activeIframeRef.current);
       }
     };
@@ -217,6 +240,7 @@ export const ThreeViewer = () => {
   }, [graphState, completed3DPlacements, currentMergedPlacements, individualPlacementsList, disableMerging, phase, boundaries, activeSite?.site_id, settings.boundaryType, visualsEnabled, configureIframe]);
 
   const handleActiveIframeLoad = () => {
+    if (activeIframeRef.current) frameSetups.current.delete(activeIframeRef.current);
     configureIframe(activeIframeRef.current);
   };
 

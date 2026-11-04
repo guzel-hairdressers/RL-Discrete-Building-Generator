@@ -114,3 +114,9 @@ python3 benchmarks/benchmark.py \
 - [Before hot-path profiles](2026-11-04-v010-hotpath-before/): L/XL, 120 max/floor, four floors, instrumented active steps.
 - [Intermediate after profiles](2026-11-04-v010-hotpath-after/): changed trajectories; not a matched speedup benchmark. Includes failed intermediate completions.
 - Graph-only training [run 01](2026-11-04-v010-graph-only-training-01/), [run 02](2026-11-04-v010-graph-only-training-02/), [run 03](2026-11-04-v010-graph-only-training-03/): separate source snapshots, raw failures, training and preview times; L/XL, 120 max/floor, four floors. One seed, no convergence claim.
+
+## 2026-11-04 — bounded shared dictionary latency and correctness
+
+See [the report](../reports/v010_bounded_dictionary_speed.md) for scope and actual room counts. Final `2026-11-04-v010-reuse-headless-{4,8}floors` runs use L/XL, 120 max/floor, seed 123 and frozen source snapshots; each includes one real policy update and a separately timed independent preview. `reuse-final-4floors` was measured with a browser renderer active and is retained separately. No learning/convergence claim follows from one update.
+
+`sampler-matched` compares only the proposal component on identical 480-node graphs at pinned commit `3e9ed018`, not whole episodes. `latency-audit-before/after` are instrumented profiles on different reached graph sizes, not matched throughput ratios. `bounded-dictionary-4floors` contains a failed XL overlap audit; the normalization regression fixes it. `bounded-dictionary-first` has an explicitly incomplete source snapshot. Development and corrected snapshots remain preserved. `bounded-site-audit` aborted on JSON serialization of site metadata; `bounded-site-audit-02` retains six ANY/FREE correctness smoke cases. These are not held-out convergence studies.

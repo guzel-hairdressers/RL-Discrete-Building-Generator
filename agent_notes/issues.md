@@ -352,3 +352,13 @@ The UI site-selection path persisted a `siteId` alias outside the settings schem
 ### 2026-11-04 — truthful completed-score display
 
 The graph backend emits a numeric score string at completion. A legacy HUD type check replaced it with a fabricated -40.0 fallback. Parse finite numeric values and show an unavailable marker for missing data. The graph dictionary is labeled as shared modules rather than BPE output. Verified these UI changes through production builds; the backend suite remains at 266 passing tests (2 skipped).
+
+## 2026-11-04 — v0.10.0 graph latency, type explosion and reuse learning signal
+
+Resolved repeated exhaustive proposal/dedup scans, per-floor whole-building sketch rebuilding and contact refresh. An incremental implicit shared dictionary now rejects incompatible proposals at a hard maximum of 15 types (soft target 10); it never merges by degree or relabels every neighborhood. Area comes from shared support intervals without polygon creation. WebSocket training bursts, reusable badge textures and one-time iframe setup remove repeated UI work.
+
+A development XL preview exposed two real overlaps. Rounded plane normals were not exactly unit; support-line projection pruned a needed near-parallel constraint and enlarged a prototype. Normalizing the actual equations fixes the replay; the failing raw run and regression remain. All four final L/XL cases and six seeded ANY/FREE smoke cases passed independent geometry validation. These do not establish general validity.
+
+Reuse now directly rewards additional independent occupied occurrences of compatible prototypes, excludes holes/vertical copies, and uses an undiscounted terminal design objective. No fixed architectural patterns are supplied. This changes the learning objective; no trained-quality improvement is claimed. Search can still terminate below desired fill when its compatible proposal pool is exhausted. [Evidence and limits](reports/v010_bounded_dictionary_speed.md).
+
+Final browser fixes: graph WebSocket replies now dispatch the next live graph step directly instead of passing through a zero-delay timer, which browsers can throttle in background tabs. Preview now aggregates the same per-floor objective as training rather than the legacy polygon score; its reuse bonus and total are covered by the preview-isolation regression. These changes do not feed realized scores into training.

@@ -1,7 +1,8 @@
 """Graph-only growth estimates. No polygon construction, clipping or GEOS.
 
-Module identities and areas here are provisional. Exact shared prototypes and
-physical validity are resolved on explicit preview or inference completion.
+Live generation reads the shared implicit dictionary. The legacy standalone
+star sketch remains provisional. Physical validity is independently audited
+on explicit preview or inference completion.
 """
 from collections import Counter, defaultdict
 from functools import lru_cache
@@ -131,6 +132,9 @@ def _radial_area(vectors,radius,samples):
 
 class GraphSketch:
     def __init__(self,graph):
+        if getattr(graph,'module_bank',None) is not None:
+            self.__dict__.update(graph.module_bank.view())
+            return
         self.graph=graph;self.prior=getattr(graph,'size_prior',None)
         self.radius=getattr(self.prior,'radius',4.5)
         self.spatial=SpatialNodes(graph,self.radius)
@@ -204,28 +208,37 @@ class GraphSketch:
         filled=sum(self.areas[root_id(n)] for n in nodes if n.cell_type.value!='void')
         rentable=sum(self.areas[root_id(n)] for n in nodes if n.cell_type.value=='room')
         core=sum(self.areas[root_id(n)] for n in nodes if n.cell_type.value=='core')
+        bank=getattr(self.graph,'module_bank',None)
+        if bank:budget=min(budget,bank.max_types)
         k=len(self.counts);singletons=sum(c==1 for c in self.counts.values())
         budget_cost=10.*(max(0,k-budget)/max(1,budget))**2
         singleton_cost=5.*singletons/max(1,len(self.built))
         ratio=filled/max(1.,site_area)
         underfill=35.*max(0.,1-ratio/.6)**2
         topology=self.graph.validate_circulation_connectivity(floor)
+        reuse=sum(c for c in self.counts.values() if c>1)/max(1,len(self.built))
+        # Fabricating one prototype serves its first occurrence; subsequent
+        # independently placed occurrences earn reuse. Vertical copies and holes
+        # are excluded, and legacy provisional stars earn no such credit.
+        repeat_fraction=(len(self.built)-k)/max(1,len(self.built)) if bank else 0.
+        reuse_bonus=20.*repeat_fraction
         penalty=0. if topology else 20.
-        score=80*min(1.,ratio)+15*rentable/max(1.,filled)-budget_cost-singleton_cost-underfill-penalty
+        score=80*min(1.,ratio)+15*rentable/max(1.,filled)+reuse_bonus-budget_cost-singleton_cost-underfill-penalty
         return dict(instanceIdx=floor,floorIndex=floor,filledArea=filled,siteArea=site_area,
             rentableArea=rentable,coreArea=core,moduleCount=len(nodes),exposedPerimeter=0.,
             fillRatio=ratio,rentableRatio=rentable/max(1.,filled),daylightRatio=0.,envelopeDaylightRatio=0.,
-            reuseRatio=0.,estimatedReuseRatio=sum(c for c in self.counts.values() if c>1)/max(1,len(self.built)),
+            reuseRatio=reuse if bank else 0.,estimatedReuseRatio=reuse,reuseBonus=reuse_bonus,
             constructibilityScore=0.,envelopeEfficiency=0.,exteriorCorridorRatio=0.,triangleRatio=0.,
             constraintsValid=self.constraints_valid.get(floor,True),
             topologyValid=topology,topologyViolations=[] if topology else ['provisional_same_floor_access'],
             totalPartialLength=0.,deepRoomCount=0,depthPenaltyScore=0.,facadeChasmOccludedLength=0.,
             areaVariancePenalty=0.,rawScore=score+underfill,underfillPenalty=underfill,topologyPenalty=penalty,
             facadeChasmPenalty=0.,vocabSize=k,dictLimitBreach=max(0,k-budget),dictBreachPenalty=budget_cost,
-            singletonPenalty=singleton_cost,score=score,estimateStatus='graph_proxy_uncalibrated',
-            moduleIdentityStatus='provisional',sunExposure=None,daylightAccessibility=None,
-            unavailableMetrics=['daylightRatio','constructibilityScore','envelopeEfficiency','confirmedReuseRatio'],
-            uncertainty={'allModuleIdentitiesProvisional':True,'areaQuadratureSamples':24},
+            singletonPenalty=singleton_cost,score=score,estimateStatus='implicit_shared_constraints' if bank else 'graph_proxy_uncalibrated',
+            moduleIdentityStatus='constraint_checked' if bank else 'provisional',sunExposure=None,daylightAccessibility=None,
+            unavailableMetrics=['daylightRatio','constructibilityScore','envelopeEfficiency']+([] if bank else ['confirmedReuseRatio']),
+            uncertainty=({'allModuleIdentitiesProvisional':False,'areaMethod':'support_line_integral','numericalTolerance':1e-6}
+                         if bank else {'allModuleIdentitiesProvisional':True,'areaQuadratureSamples':24}),
             reuseAudit=dict(prototypeCount=k,independentOccurrences=len(self.built),
                 verticalCopies=sum(len(self.groups[oid])-1 for oid in self.built),
-                singletonCount=singletons,confirmedReuseRatio=None))
+                singletonCount=singletons,independentRepeatFraction=repeat_fraction,confirmedReuseRatio=reuse if bank else None))

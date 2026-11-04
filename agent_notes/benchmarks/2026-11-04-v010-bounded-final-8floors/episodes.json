@@ -1,0 +1,2794 @@
+[
+  {
+    "tier": "L",
+    "settings": {
+      "generatorEngine": "graph_voronoi",
+      "graphController": "neural",
+      "boundaryType": "rect",
+      "siteAreaTier": "L",
+      "parallelEnvironments": 8,
+      "maxModules": 120,
+      "seed": 123
+    },
+    "setupSeconds": 0.12396504199932679,
+    "trainingSeconds": 2.684940374998405,
+    "previewSeconds": 0.3837286249981844,
+    "steps": [
+      {
+        "step": 0,
+        "seconds": 0.029204833001131192,
+        "nodes": 23,
+        "complete": false
+      },
+      {
+        "step": 1,
+        "seconds": 0.033637915999861434,
+        "nodes": 38,
+        "complete": false
+      },
+      {
+        "step": 2,
+        "seconds": 0.04036887500114972,
+        "nodes": 46,
+        "complete": false
+      },
+      {
+        "step": 3,
+        "seconds": 0.02441283400185057,
+        "nodes": 54,
+        "complete": false
+      },
+      {
+        "step": 4,
+        "seconds": 0.0258616669998446,
+        "nodes": 62,
+        "complete": false
+      },
+      {
+        "step": 5,
+        "seconds": 0.027344125002855435,
+        "nodes": 70,
+        "complete": false
+      },
+      {
+        "step": 6,
+        "seconds": 0.0366948750015581,
+        "nodes": 78,
+        "complete": false
+      },
+      {
+        "step": 7,
+        "seconds": 0.028123957999923732,
+        "nodes": 86,
+        "complete": false
+      },
+      {
+        "step": 8,
+        "seconds": 0.0301185410025937,
+        "nodes": 94,
+        "complete": false
+      },
+      {
+        "step": 9,
+        "seconds": 0.03611675000138348,
+        "nodes": 102,
+        "complete": false
+      },
+      {
+        "step": 10,
+        "seconds": 0.03060179099702509,
+        "nodes": 110,
+        "complete": false
+      },
+      {
+        "step": 11,
+        "seconds": 0.038151999997353414,
+        "nodes": 118,
+        "complete": false
+      },
+      {
+        "step": 12,
+        "seconds": 0.037554791997536086,
+        "nodes": 126,
+        "complete": false
+      },
+      {
+        "step": 13,
+        "seconds": 0.03742795799917076,
+        "nodes": 134,
+        "complete": false
+      },
+      {
+        "step": 14,
+        "seconds": 0.04269824999937555,
+        "nodes": 142,
+        "complete": false
+      },
+      {
+        "step": 15,
+        "seconds": 0.03389095799866482,
+        "nodes": 150,
+        "complete": false
+      },
+      {
+        "step": 16,
+        "seconds": 0.037247125001158565,
+        "nodes": 158,
+        "complete": false
+      },
+      {
+        "step": 17,
+        "seconds": 0.036743625001690816,
+        "nodes": 166,
+        "complete": false
+      },
+      {
+        "step": 18,
+        "seconds": 0.03227820800020709,
+        "nodes": 174,
+        "complete": false
+      },
+      {
+        "step": 19,
+        "seconds": 0.030559582999558188,
+        "nodes": 182,
+        "complete": false
+      },
+      {
+        "step": 20,
+        "seconds": 0.03211200000077952,
+        "nodes": 190,
+        "complete": false
+      },
+      {
+        "step": 21,
+        "seconds": 0.10384358300143504,
+        "nodes": 198,
+        "complete": false
+      },
+      {
+        "step": 22,
+        "seconds": 0.03713883299860754,
+        "nodes": 206,
+        "complete": false
+      },
+      {
+        "step": 23,
+        "seconds": 0.03702670900020166,
+        "nodes": 214,
+        "complete": false
+      },
+      {
+        "step": 24,
+        "seconds": 0.03745054099999834,
+        "nodes": 222,
+        "complete": false
+      },
+      {
+        "step": 25,
+        "seconds": 0.03502087500237394,
+        "nodes": 229,
+        "complete": false
+      },
+      {
+        "step": 26,
+        "seconds": 0.03642454200235079,
+        "nodes": 237,
+        "complete": false
+      },
+      {
+        "step": 27,
+        "seconds": 0.03772104100062279,
+        "nodes": 245,
+        "complete": false
+      },
+      {
+        "step": 28,
+        "seconds": 0.03719987499789568,
+        "nodes": 252,
+        "complete": false
+      },
+      {
+        "step": 29,
+        "seconds": 0.04038220800066483,
+        "nodes": 260,
+        "complete": false
+      },
+      {
+        "step": 30,
+        "seconds": 0.03674041699923691,
+        "nodes": 268,
+        "complete": false
+      },
+      {
+        "step": 31,
+        "seconds": 0.0370695000019623,
+        "nodes": 275,
+        "complete": false
+      },
+      {
+        "step": 32,
+        "seconds": 0.03830616699997336,
+        "nodes": 283,
+        "complete": false
+      },
+      {
+        "step": 33,
+        "seconds": 0.03902491700137034,
+        "nodes": 291,
+        "complete": false
+      },
+      {
+        "step": 34,
+        "seconds": 0.03767708400118863,
+        "nodes": 299,
+        "complete": false
+      },
+      {
+        "step": 35,
+        "seconds": 0.03933554200193612,
+        "nodes": 306,
+        "complete": false
+      },
+      {
+        "step": 36,
+        "seconds": 0.03977704099816037,
+        "nodes": 314,
+        "complete": false
+      },
+      {
+        "step": 37,
+        "seconds": 0.03728266699909,
+        "nodes": 322,
+        "complete": false
+      },
+      {
+        "step": 38,
+        "seconds": 0.03782183299699682,
+        "nodes": 330,
+        "complete": false
+      },
+      {
+        "step": 39,
+        "seconds": 0.03887945899987244,
+        "nodes": 338,
+        "complete": false
+      },
+      {
+        "step": 40,
+        "seconds": 0.034928166001918726,
+        "nodes": 345,
+        "complete": false
+      },
+      {
+        "step": 41,
+        "seconds": 0.03751900000133901,
+        "nodes": 350,
+        "complete": false
+      },
+      {
+        "step": 42,
+        "seconds": 0.036192167000990594,
+        "nodes": 356,
+        "complete": false
+      },
+      {
+        "step": 43,
+        "seconds": 0.038137915998959215,
+        "nodes": 362,
+        "complete": false
+      },
+      {
+        "step": 44,
+        "seconds": 0.03777333299876773,
+        "nodes": 367,
+        "complete": false
+      },
+      {
+        "step": 45,
+        "seconds": 0.03396437500123284,
+        "nodes": 372,
+        "complete": false
+      },
+      {
+        "step": 46,
+        "seconds": 0.03231750000122702,
+        "nodes": 376,
+        "complete": false
+      },
+      {
+        "step": 47,
+        "seconds": 0.032707041998946806,
+        "nodes": 381,
+        "complete": false
+      },
+      {
+        "step": 48,
+        "seconds": 0.03222795900001074,
+        "nodes": 384,
+        "complete": false
+      },
+      {
+        "step": 49,
+        "seconds": 0.035358541001187405,
+        "nodes": 389,
+        "complete": false
+      },
+      {
+        "step": 50,
+        "seconds": 0.0371889590023784,
+        "nodes": 393,
+        "complete": false
+      },
+      {
+        "step": 51,
+        "seconds": 0.035726375001104316,
+        "nodes": 397,
+        "complete": false
+      },
+      {
+        "step": 52,
+        "seconds": 0.031631000001652865,
+        "nodes": 400,
+        "complete": false
+      },
+      {
+        "step": 53,
+        "seconds": 0.03513220799868577,
+        "nodes": 405,
+        "complete": false
+      },
+      {
+        "step": 54,
+        "seconds": 0.03429862499979208,
+        "nodes": 408,
+        "complete": false
+      },
+      {
+        "step": 55,
+        "seconds": 0.02900829200007138,
+        "nodes": 410,
+        "complete": false
+      },
+      {
+        "step": 56,
+        "seconds": 0.03674587500063353,
+        "nodes": 414,
+        "complete": false
+      },
+      {
+        "step": 57,
+        "seconds": 0.035232707999966806,
+        "nodes": 417,
+        "complete": false
+      },
+      {
+        "step": 58,
+        "seconds": 0.028733415998431155,
+        "nodes": 420,
+        "complete": false
+      },
+      {
+        "step": 59,
+        "seconds": 0.031541500000457745,
+        "nodes": 423,
+        "complete": false
+      },
+      {
+        "step": 60,
+        "seconds": 0.03219712500140304,
+        "nodes": 425,
+        "complete": false
+      },
+      {
+        "step": 61,
+        "seconds": 0.03541104100077064,
+        "nodes": 429,
+        "complete": false
+      },
+      {
+        "step": 62,
+        "seconds": 0.10460391700326,
+        "nodes": 430,
+        "complete": false
+      },
+      {
+        "step": 63,
+        "seconds": 0.030612958998972317,
+        "nodes": 431,
+        "complete": false
+      },
+      {
+        "step": 64,
+        "seconds": 0.027679999999236315,
+        "nodes": 432,
+        "complete": false
+      },
+      {
+        "step": 65,
+        "seconds": 0.03062425000098301,
+        "nodes": 434,
+        "complete": false
+      },
+      {
+        "step": 66,
+        "seconds": 0.026844542000617366,
+        "nodes": 435,
+        "complete": false
+      },
+      {
+        "step": 67,
+        "seconds": 0.03209791599874734,
+        "nodes": 437,
+        "complete": false
+      },
+      {
+        "step": 68,
+        "seconds": 0.19317791600042256,
+        "nodes": 437,
+        "complete": true
+      }
+    ],
+    "trainingMetrics": {
+      "filledArea": 11855.680199527238,
+      "siteArea": 23994.0,
+      "fillRatio": 0.4941102025309343,
+      "averageFill": 0.4941102025309343,
+      "rentableArea": 11651.920259339833,
+      "rentableRatio": 0.9828133066379835,
+      "averageRentable": 0.9828133066379835,
+      "daylightRatio": 0.0,
+      "siteDaylightRatio": 0.0,
+      "envelopeDaylightRatio": 0.0,
+      "reuseRatio": 1.0,
+      "moduleCount": 437,
+      "dictionaryLength": 15,
+      "exposedPerimeter": 0.0,
+      "perimeters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "envelopeEfficiency": 0.0,
+      "constructibilityScore": 0.0,
+      "lightScore": 0.0,
+      "exteriorCorridorRatio": 0.0,
+      "triangleRatio": 0.0,
+      "topologyValid": true,
+      "topologyViolations": [],
+      "topologyViolationRate": 0.0,
+      "topologyPenalty": 0.0,
+      "topologyMultiplier": 0.05,
+      "nextTopologyMultiplier": 0.05,
+      "rawScore": 54.737808767641816,
+      "areaVariancePenalty": 1.2754066339724288,
+      "deepRoomRatio": 0.0,
+      "deepInteriorPenalty": 0.0,
+      "facadeChasmRatio": 0.0,
+      "facadeChasmPenalty": 0.0,
+      "underfillPenalty": 1.138597051325352,
+      "internalExposedPenalty": 0.0,
+      "partialConnectionPenalty": 0.0,
+      "score": "50.6275",
+      "perSite": [
+        {
+          "instanceIdx": 0,
+          "floorIndex": 0,
+          "filledArea": 1369.3846303273092,
+          "siteArea": 2806.0,
+          "rentableArea": 1343.9146378038836,
+          "coreArea": 25.469992523425677,
+          "moduleCount": 51,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.48802018187003177,
+          "rentableRatio": 0.9814004101117026,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 51.26262070127808,
+          "underfillPenalty": 1.2191160788742406,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 50.04350462240384,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 416,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 1,
+          "floorIndex": 1,
+          "filledArea": 1596.3860372771517,
+          "siteArea": 3344.0,
+          "rentableArea": 1570.916044753726,
+          "coreArea": 25.469992523425677,
+          "moduleCount": 61,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.47738816904221043,
+          "rentableRatio": 0.9840452171788798,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 50.45173178106003,
+          "underfillPenalty": 1.461605939385429,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 48.990125841674605,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 416,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 2,
+          "floorIndex": 2,
+          "filledArea": 1453.8034761482006,
+          "siteArea": 2968.0,
+          "rentableArea": 1428.333483624775,
+          "coreArea": 25.469992523425677,
+          "moduleCount": 54,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.48982596905262826,
+          "rentableRatio": 0.9824804432364493,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 51.42328417275701,
+          "underfillPenalty": 1.1801141620325972,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 50.24317001072441,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 416,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 3,
+          "floorIndex": 3,
+          "filledArea": 1552.8511565185815,
+          "siteArea": 2961.0,
+          "rentableArea": 1527.3811639951557,
+          "coreArea": 25.469992523425677,
+          "moduleCount": 56,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.5244347033159681,
+          "rentableRatio": 0.983597917664866,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 54.208745030250434,
+          "underfillPenalty": 0.5551499783419493,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 53.65359505190848,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 416,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 4,
+          "floorIndex": 4,
+          "filledArea": 1567.2798729871756,
+          "siteArea": 3185.0,
+          "rentableArea": 1541.8098804637498,
+          "coreArea": 25.469992523425677,
+          "moduleCount": 56,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.49208159277462343,
+          "rentableRatio": 0.9837489187716799,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 51.622761203545075,
+          "underfillPenalty": 1.1322871989782706,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 50.490474004566806,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 416,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 5,
+          "floorIndex": 5,
+          "filledArea": 1595.1509965748699,
+          "siteArea": 2989.0,
+          "rentableArea": 1569.6810040514442,
+          "coreArea": 25.469992523425677,
+          "moduleCount": 60,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.5336738028018969,
+          "rentableRatio": 0.9840328642378589,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 54.954397187719636,
+          "underfillPenalty": 0.4276965422684939,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 54.52670064545114,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 416,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 6,
+          "floorIndex": 6,
+          "filledArea": 1438.3674960316705,
+          "siteArea": 2968.0,
+          "rentableArea": 1412.8975035082449,
+          "coreArea": 25.469992523425677,
+          "moduleCount": 52,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.4846251671265736,
+          "rentableRatio": 0.9822924304159437,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 51.004399826365045,
+          "underfillPenalty": 1.2941592281110765,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 49.71024059825397,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 416,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 7,
+          "floorIndex": 7,
+          "filledArea": 1282.4565336622793,
+          "siteArea": 2773.0,
+          "rentableArea": 1256.9865411388537,
+          "coreArea": 25.469992523425677,
+          "moduleCount": 47,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.46247981740435606,
+          "rentableRatio": 0.9801396836033954,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 49.20048064639941,
+          "underfillPenalty": 1.8386472826107598,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 47.361833363788655,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 416,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        }
+      ],
+      "coreStacking": {
+        "enabled": true,
+        "status": "ready",
+        "mode": "graph-full-height",
+        "boundaryPolicy": "unchanged",
+        "siteResampleAttempts": 0,
+        "graphOrigin": [
+          20.30898697813973,
+          15.180289301439187
+        ],
+        "initialCandidateCount": 0,
+        "floorCount": 8,
+        "stackCount": 0,
+        "lockedCoreCount": 0,
+        "exactLocalAlignment": true,
+        "violations": [],
+        "stacks": []
+      },
+      "estimateStatus": "implicit_shared_constraints",
+      "moduleIdentityStatus": "constraint_checked",
+      "dictionaryMaxTypes": 15,
+      "dictionaryTargetTypes": 10,
+      "incompatibleProposalCount": 17562,
+      "sunExposure": null,
+      "unavailableMetrics": [
+        "daylightRatio",
+        "constructibilityScore",
+        "envelopeEfficiency"
+      ],
+      "dictBreachPenalty": 2.5,
+      "dictLimitBreach": 5,
+      "vocabSize": 15,
+      "totalPlacements": 437,
+      "bpeRounds": 0,
+      "reusedBpeModules": 0,
+      "bpeBonus": 0.0,
+      "utilizationEntropyBonus": 0.0,
+      "unmergedTriangles": 0,
+      "averageUnmergedTriangles": 0.0,
+      "unmergedTrianglePenalty": 0.0,
+      "generationTimeSeconds": 0.0,
+      "candidateEvaluations": 0,
+      "actionNormalizedGenerationTime": 0.0,
+      "sizeNormalizedGenerationTime": 0.0,
+      "meanModuleArea": 0.0,
+      "generationTimeReferenceUsed": 1e-09,
+      "generationTimeBaseline": 1.0000000000000003e-09,
+      "relativeGenerationTime": 0.0,
+      "frontierGrowthPotential": 0.0,
+      "frontierGrowthReferenceUsed": 1e-09,
+      "frontierGrowthBaseline": 1.0000000000000003e-09,
+      "relativeFrontierGrowth": 0.0,
+      "smallShapeRatio": 0.0,
+      "smallShapeExploitPenalty": 0.0,
+      "unblendedRelativeTimeReward": 0.0,
+      "relativeTimeReward": 0.0,
+      "baselineTransitionEpisodes": 0,
+      "singletonPenalty": 0.0,
+      "perFloorScores": [
+        50.04350462240384,
+        48.990125841674605,
+        50.24317001072441,
+        53.65359505190848,
+        50.490474004566806,
+        54.52670064545114,
+        49.71024059825397,
+        47.361833363788655
+      ],
+      "policyLoss": 0.6978915929794312,
+      "actorLoss": 0.6685627698898315,
+      "valueLoss": 0.09014955908060074,
+      "policyEntropy": 1.5745960474014282,
+      "gradientNorm": 0.23139986395835876,
+      "advantage": 0.424616277217865,
+      "learningRate": 0.001,
+      "learningAlgorithm": "graph_actor_critic_experimental",
+      "policyUpdateCount": 1,
+      "policyDecisionCount": 415,
+      "architecture": "message_passing",
+      "trainingReward": 0.4670374356423741,
+      "stochasticDecisionCount": 369,
+      "geometryValid": null,
+      "graphValid": true,
+      "trainingObjective": "shared_constraints_v3_undiscounted",
+      "baseline": 0.3656274555173465,
+      "episodeExecutionTimeMs": 2680.92,
+      "postStepEvaluationMs": 0.0,
+      "runtimeDiagnostics": {
+        "device": "cpu",
+        "nativeGeometry": {
+          "available": true,
+          "enabled": true,
+          "abiVersion": 3,
+          "library": "/Users/ruslan_faz/Desktop/Work/Thesis/src/c/libfast_geometry.dylib",
+          "loadError": null,
+          "disabledByEnvironment": false
+        },
+        "processPeakRssBytes": 718209024,
+        "acceleratorAllocatedBytes": 0,
+        "acceleratorPeakBytes": 0,
+        "torchThreads": 1,
+        "episodeTimeMs": 2680.92,
+        "postStepEvaluationMs": 0.0
+      },
+      "performanceTimings": {
+        "stepTotal": {
+          "avg": 36.34061476812981,
+          "min": 24.141917001543334,
+          "max": 104.39845900327782,
+          "count": 69
+        },
+        "graphMetricsEvaluation": {
+          "avg": 0.00875000114319846,
+          "min": 0.00875000114319846,
+          "max": 0.00875000114319846,
+          "count": 1
+        },
+        "aggregateTerminal": {
+          "avg": 0.01912500010803342,
+          "min": 0.01912500010803342,
+          "max": 0.01912500010803342,
+          "count": 1
+        },
+        "episodeFormatting": {
+          "avg": 0.02599999788799323,
+          "min": 0.02599999788799323,
+          "max": 0.02599999788799323,
+          "count": 1
+        },
+        "postStepEvaluation": {
+          "avg": 0.0004579997039400041,
+          "min": 0.0004579997039400041,
+          "max": 0.0004579997039400041,
+          "count": 1
+        },
+        "episodeTotal": {
+          "avg": 2680.9156669987715,
+          "min": 2680.9156669987715,
+          "max": 2680.9156669987715,
+          "count": 1
+        }
+      }
+    },
+    "trainingValidation": {
+      "status": "not_run",
+      "valid": null,
+      "reason": "graph_only_training",
+      "violations": [],
+      "graphValid": true
+    },
+    "previewValidation": {
+      "valid": true,
+      "violations": [],
+      "unresolved": {},
+      "perFloor": {
+        "0": {
+          "filledArea": 1316.7715307703952,
+          "exposedPerimeter": 876.6682415324833,
+          "rentableArea": 1294.0390213657806,
+          "coreArea": 22.732509404614373,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "1": {
+          "filledArea": 1512.1036095090763,
+          "exposedPerimeter": 1039.7646655413546,
+          "rentableArea": 1489.371100104462,
+          "coreArea": 22.732509404614373,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "2": {
+          "filledArea": 1384.7446695537128,
+          "exposedPerimeter": 949.1119459416605,
+          "rentableArea": 1362.0121601490985,
+          "coreArea": 22.732509404614373,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "3": {
+          "filledArea": 1483.6745540661013,
+          "exposedPerimeter": 932.1250868724735,
+          "rentableArea": 1460.942044661487,
+          "coreArea": 22.732509404614373,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "4": {
+          "filledArea": 1498.0616537830215,
+          "exposedPerimeter": 964.6011751021225,
+          "rentableArea": 1475.3291443784071,
+          "coreArea": 22.732509404614373,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "5": {
+          "filledArea": 1499.359718478297,
+          "exposedPerimeter": 1019.2472697993003,
+          "rentableArea": 1476.6272090736827,
+          "coreArea": 22.732509404614373,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "6": {
+          "filledArea": 1398.2307552259504,
+          "exposedPerimeter": 938.3453792546451,
+          "rentableArea": 1375.498245821336,
+          "coreArea": 22.732509404614373,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "7": {
+          "filledArea": 1227.8408070760265,
+          "exposedPerimeter": 812.4968648389564,
+          "rentableArea": 1205.1082976714122,
+          "coreArea": 22.732509404614373,
+          "areaMethod": "sum_disjoint_convex"
+        }
+      }
+    },
+    "previewMetrics": {
+      "policyLoss": 0.6978915929794312,
+      "actorLoss": 0.6685627698898315,
+      "valueLoss": 0.09014955908060074,
+      "policyEntropy": 1.5745960474014282,
+      "gradientNorm": 0.23139986395835876,
+      "advantage": 0.424616277217865,
+      "policyUpdateCount": 1,
+      "policyDecisionCount": 415,
+      "learningAlgorithm": "graph_actor_critic_experimental",
+      "architecture": "message_passing",
+      "learningRate": 0.001,
+      "trainingReward": 0.4670374356423741,
+      "stochasticDecisionCount": 369,
+      "geometryValid": true,
+      "graphValid": true,
+      "estimateStatus": "realized_uncalibrated_environment",
+      "moduleIdentityStatus": "confirmed",
+      "score": 51.24,
+      "fillRatio": 0.472,
+      "rentableRatio": 0.984,
+      "daylightRatio": 0.0,
+      "reuseRatio": 1.0,
+      "constructibilityScore": 0.0,
+      "envelopeEfficiency": 0.0,
+      "deepInteriorPenalty": 0.0,
+      "facadeChasmPenalty": 0.0,
+      "underfillPenalty": 1.6,
+      "topologyPenalty": 0.0,
+      "areaVariancePenalty": 1.427,
+      "vocabSize": 15,
+      "dictLimitBreach": 5,
+      "dictBreachPenalty": 2.5,
+      "graphNodes": 437,
+      "graphEdgesHoriz": 546,
+      "graphEdgesVert": 21,
+      "performanceTimings": {}
+    },
+    "predictionErrors": {
+      "0": {
+        "filledArea": 52.613099556913994,
+        "rentableArea": 49.87561643810295
+      },
+      "1": {
+        "filledArea": 84.28242776807542,
+        "rentableArea": 81.54494464926415
+      },
+      "2": {
+        "filledArea": 69.0588065944878,
+        "rentableArea": 66.32132347567654
+      },
+      "3": {
+        "filledArea": 69.17660245248021,
+        "rentableArea": 66.43911933366871
+      },
+      "4": {
+        "filledArea": 69.21821920415414,
+        "rentableArea": 66.48073608534264
+      },
+      "5": {
+        "filledArea": 95.7912780965728,
+        "rentableArea": 93.05379497776153
+      },
+      "6": {
+        "filledArea": 40.13674080572014,
+        "rentableArea": 37.39925768690887
+      },
+      "7": {
+        "filledArea": 54.61572658625278,
+        "rentableArea": 51.87824346744151
+      }
+    },
+    "terminationReason": "no_compatible_placement",
+    "dictionaryMaxTypes": 15,
+    "independentOccurrences": 416,
+    "proposalRejections": {
+      "existing_required_contact": 8086,
+      "dictionary_incompatible": 9476
+    }
+  },
+  {
+    "tier": "XL",
+    "settings": {
+      "generatorEngine": "graph_voronoi",
+      "graphController": "neural",
+      "boundaryType": "rect",
+      "siteAreaTier": "XL",
+      "parallelEnvironments": 8,
+      "maxModules": 120,
+      "seed": 123
+    },
+    "setupSeconds": 0.18502937499943073,
+    "trainingSeconds": 7.0850057499992545,
+    "previewSeconds": 1.2175677080012974,
+    "steps": [
+      {
+        "step": 0,
+        "seconds": 0.024631625001347857,
+        "nodes": 23,
+        "complete": false
+      },
+      {
+        "step": 1,
+        "seconds": 0.030666292001114925,
+        "nodes": 38,
+        "complete": false
+      },
+      {
+        "step": 2,
+        "seconds": 0.034106458002497675,
+        "nodes": 46,
+        "complete": false
+      },
+      {
+        "step": 3,
+        "seconds": 0.022476583999377908,
+        "nodes": 54,
+        "complete": false
+      },
+      {
+        "step": 4,
+        "seconds": 0.02284216699990793,
+        "nodes": 62,
+        "complete": false
+      },
+      {
+        "step": 5,
+        "seconds": 0.02594774999670335,
+        "nodes": 70,
+        "complete": false
+      },
+      {
+        "step": 6,
+        "seconds": 0.030437749999691732,
+        "nodes": 78,
+        "complete": false
+      },
+      {
+        "step": 7,
+        "seconds": 0.026937040998745942,
+        "nodes": 86,
+        "complete": false
+      },
+      {
+        "step": 8,
+        "seconds": 0.030823749999399297,
+        "nodes": 94,
+        "complete": false
+      },
+      {
+        "step": 9,
+        "seconds": 0.03538837500309455,
+        "nodes": 102,
+        "complete": false
+      },
+      {
+        "step": 10,
+        "seconds": 0.032494209001015406,
+        "nodes": 110,
+        "complete": false
+      },
+      {
+        "step": 11,
+        "seconds": 0.03586545900179772,
+        "nodes": 118,
+        "complete": false
+      },
+      {
+        "step": 12,
+        "seconds": 0.04129212499901769,
+        "nodes": 126,
+        "complete": false
+      },
+      {
+        "step": 13,
+        "seconds": 0.03459808400293696,
+        "nodes": 134,
+        "complete": false
+      },
+      {
+        "step": 14,
+        "seconds": 0.036148958999547176,
+        "nodes": 142,
+        "complete": false
+      },
+      {
+        "step": 15,
+        "seconds": 0.036383750000823056,
+        "nodes": 150,
+        "complete": false
+      },
+      {
+        "step": 16,
+        "seconds": 0.03376304199991864,
+        "nodes": 158,
+        "complete": false
+      },
+      {
+        "step": 17,
+        "seconds": 0.03440920800130698,
+        "nodes": 166,
+        "complete": false
+      },
+      {
+        "step": 18,
+        "seconds": 0.03812974999891594,
+        "nodes": 174,
+        "complete": false
+      },
+      {
+        "step": 19,
+        "seconds": 0.039364958996884525,
+        "nodes": 182,
+        "complete": false
+      },
+      {
+        "step": 20,
+        "seconds": 0.04265312499774154,
+        "nodes": 190,
+        "complete": false
+      },
+      {
+        "step": 21,
+        "seconds": 0.04218958300043596,
+        "nodes": 198,
+        "complete": false
+      },
+      {
+        "step": 22,
+        "seconds": 0.03872183400017093,
+        "nodes": 206,
+        "complete": false
+      },
+      {
+        "step": 23,
+        "seconds": 0.03898429199762177,
+        "nodes": 214,
+        "complete": false
+      },
+      {
+        "step": 24,
+        "seconds": 0.043433000002551125,
+        "nodes": 222,
+        "complete": false
+      },
+      {
+        "step": 25,
+        "seconds": 0.042876333001913736,
+        "nodes": 230,
+        "complete": false
+      },
+      {
+        "step": 26,
+        "seconds": 0.04500945800100453,
+        "nodes": 238,
+        "complete": false
+      },
+      {
+        "step": 27,
+        "seconds": 0.04252858400286641,
+        "nodes": 246,
+        "complete": false
+      },
+      {
+        "step": 28,
+        "seconds": 0.04052508299719193,
+        "nodes": 254,
+        "complete": false
+      },
+      {
+        "step": 29,
+        "seconds": 0.038200625000172295,
+        "nodes": 262,
+        "complete": false
+      },
+      {
+        "step": 30,
+        "seconds": 0.05282495799838216,
+        "nodes": 270,
+        "complete": false
+      },
+      {
+        "step": 31,
+        "seconds": 0.048262332999001956,
+        "nodes": 278,
+        "complete": false
+      },
+      {
+        "step": 32,
+        "seconds": 0.050655041999561945,
+        "nodes": 286,
+        "complete": false
+      },
+      {
+        "step": 33,
+        "seconds": 0.04529920800268883,
+        "nodes": 294,
+        "complete": false
+      },
+      {
+        "step": 34,
+        "seconds": 0.04554437499973574,
+        "nodes": 302,
+        "complete": false
+      },
+      {
+        "step": 35,
+        "seconds": 0.048220874999969965,
+        "nodes": 310,
+        "complete": false
+      },
+      {
+        "step": 36,
+        "seconds": 0.04503320799994981,
+        "nodes": 318,
+        "complete": false
+      },
+      {
+        "step": 37,
+        "seconds": 0.04444604200034519,
+        "nodes": 326,
+        "complete": false
+      },
+      {
+        "step": 38,
+        "seconds": 0.04519829200216918,
+        "nodes": 334,
+        "complete": false
+      },
+      {
+        "step": 39,
+        "seconds": 0.04854708300263155,
+        "nodes": 342,
+        "complete": false
+      },
+      {
+        "step": 40,
+        "seconds": 0.050798790998669574,
+        "nodes": 350,
+        "complete": false
+      },
+      {
+        "step": 41,
+        "seconds": 0.04782754199914052,
+        "nodes": 358,
+        "complete": false
+      },
+      {
+        "step": 42,
+        "seconds": 0.04827037499853759,
+        "nodes": 366,
+        "complete": false
+      },
+      {
+        "step": 43,
+        "seconds": 0.051939041000878206,
+        "nodes": 374,
+        "complete": false
+      },
+      {
+        "step": 44,
+        "seconds": 0.0501708330011752,
+        "nodes": 382,
+        "complete": false
+      },
+      {
+        "step": 45,
+        "seconds": 0.05154979099825141,
+        "nodes": 390,
+        "complete": false
+      },
+      {
+        "step": 46,
+        "seconds": 0.13592479200087837,
+        "nodes": 398,
+        "complete": false
+      },
+      {
+        "step": 47,
+        "seconds": 0.053362999999080785,
+        "nodes": 406,
+        "complete": false
+      },
+      {
+        "step": 48,
+        "seconds": 0.055795875003241235,
+        "nodes": 414,
+        "complete": false
+      },
+      {
+        "step": 49,
+        "seconds": 0.050831666001613485,
+        "nodes": 422,
+        "complete": false
+      },
+      {
+        "step": 50,
+        "seconds": 0.049631999998382526,
+        "nodes": 430,
+        "complete": false
+      },
+      {
+        "step": 51,
+        "seconds": 0.04664937499910593,
+        "nodes": 438,
+        "complete": false
+      },
+      {
+        "step": 52,
+        "seconds": 0.055589958999917144,
+        "nodes": 446,
+        "complete": false
+      },
+      {
+        "step": 53,
+        "seconds": 0.0552237919982872,
+        "nodes": 454,
+        "complete": false
+      },
+      {
+        "step": 54,
+        "seconds": 0.05540854199716705,
+        "nodes": 461,
+        "complete": false
+      },
+      {
+        "step": 55,
+        "seconds": 0.05473712499951944,
+        "nodes": 469,
+        "complete": false
+      },
+      {
+        "step": 56,
+        "seconds": 0.052939500001230044,
+        "nodes": 477,
+        "complete": false
+      },
+      {
+        "step": 57,
+        "seconds": 0.04609641700153588,
+        "nodes": 485,
+        "complete": false
+      },
+      {
+        "step": 58,
+        "seconds": 0.055512750001071254,
+        "nodes": 493,
+        "complete": false
+      },
+      {
+        "step": 59,
+        "seconds": 0.05601675000070827,
+        "nodes": 501,
+        "complete": false
+      },
+      {
+        "step": 60,
+        "seconds": 0.055555750001076376,
+        "nodes": 509,
+        "complete": false
+      },
+      {
+        "step": 61,
+        "seconds": 0.05468249999830732,
+        "nodes": 517,
+        "complete": false
+      },
+      {
+        "step": 62,
+        "seconds": 0.055274957998335594,
+        "nodes": 524,
+        "complete": false
+      },
+      {
+        "step": 63,
+        "seconds": 0.061058249997586245,
+        "nodes": 532,
+        "complete": false
+      },
+      {
+        "step": 64,
+        "seconds": 0.05952387499928591,
+        "nodes": 540,
+        "complete": false
+      },
+      {
+        "step": 65,
+        "seconds": 0.05455216599875712,
+        "nodes": 548,
+        "complete": false
+      },
+      {
+        "step": 66,
+        "seconds": 0.05606179200185579,
+        "nodes": 555,
+        "complete": false
+      },
+      {
+        "step": 67,
+        "seconds": 0.053377042000647634,
+        "nodes": 562,
+        "complete": false
+      },
+      {
+        "step": 68,
+        "seconds": 0.13442579199909233,
+        "nodes": 570,
+        "complete": false
+      },
+      {
+        "step": 69,
+        "seconds": 0.06184187500184635,
+        "nodes": 578,
+        "complete": false
+      },
+      {
+        "step": 70,
+        "seconds": 0.05763483400005498,
+        "nodes": 584,
+        "complete": false
+      },
+      {
+        "step": 71,
+        "seconds": 0.059437208001327235,
+        "nodes": 590,
+        "complete": false
+      },
+      {
+        "step": 72,
+        "seconds": 0.05583158399895183,
+        "nodes": 597,
+        "complete": false
+      },
+      {
+        "step": 73,
+        "seconds": 0.05385949999981676,
+        "nodes": 603,
+        "complete": false
+      },
+      {
+        "step": 74,
+        "seconds": 0.058237833000021055,
+        "nodes": 610,
+        "complete": false
+      },
+      {
+        "step": 75,
+        "seconds": 0.05257658300251933,
+        "nodes": 615,
+        "complete": false
+      },
+      {
+        "step": 76,
+        "seconds": 0.055998292002186645,
+        "nodes": 622,
+        "complete": false
+      },
+      {
+        "step": 77,
+        "seconds": 0.05598883399943588,
+        "nodes": 629,
+        "complete": false
+      },
+      {
+        "step": 78,
+        "seconds": 0.057756999998673564,
+        "nodes": 636,
+        "complete": false
+      },
+      {
+        "step": 79,
+        "seconds": 0.06597662499916623,
+        "nodes": 644,
+        "complete": false
+      },
+      {
+        "step": 80,
+        "seconds": 0.06589295900266734,
+        "nodes": 651,
+        "complete": false
+      },
+      {
+        "step": 81,
+        "seconds": 0.05276054199930513,
+        "nodes": 656,
+        "complete": false
+      },
+      {
+        "step": 82,
+        "seconds": 0.052054167001188034,
+        "nodes": 661,
+        "complete": false
+      },
+      {
+        "step": 83,
+        "seconds": 0.05360866699993494,
+        "nodes": 667,
+        "complete": false
+      },
+      {
+        "step": 84,
+        "seconds": 0.05442620800022269,
+        "nodes": 672,
+        "complete": false
+      },
+      {
+        "step": 85,
+        "seconds": 0.055241750000277534,
+        "nodes": 678,
+        "complete": false
+      },
+      {
+        "step": 86,
+        "seconds": 0.14334420800150838,
+        "nodes": 686,
+        "complete": false
+      },
+      {
+        "step": 87,
+        "seconds": 0.057577666000725,
+        "nodes": 692,
+        "complete": false
+      },
+      {
+        "step": 88,
+        "seconds": 0.055696708001050865,
+        "nodes": 698,
+        "complete": false
+      },
+      {
+        "step": 89,
+        "seconds": 0.05946395800128812,
+        "nodes": 705,
+        "complete": false
+      },
+      {
+        "step": 90,
+        "seconds": 0.058475290999922436,
+        "nodes": 712,
+        "complete": false
+      },
+      {
+        "step": 91,
+        "seconds": 0.06103504199927556,
+        "nodes": 716,
+        "complete": false
+      },
+      {
+        "step": 92,
+        "seconds": 0.15996537499813712,
+        "nodes": 723,
+        "complete": false
+      },
+      {
+        "step": 93,
+        "seconds": 0.10678779099907842,
+        "nodes": 728,
+        "complete": false
+      },
+      {
+        "step": 94,
+        "seconds": 0.05966083399835043,
+        "nodes": 731,
+        "complete": false
+      },
+      {
+        "step": 95,
+        "seconds": 0.061937832997500664,
+        "nodes": 736,
+        "complete": false
+      },
+      {
+        "step": 96,
+        "seconds": 0.052861249998386484,
+        "nodes": 739,
+        "complete": false
+      },
+      {
+        "step": 97,
+        "seconds": 0.06406404199879034,
+        "nodes": 742,
+        "complete": false
+      },
+      {
+        "step": 98,
+        "seconds": 0.0836855409979762,
+        "nodes": 746,
+        "complete": false
+      },
+      {
+        "step": 99,
+        "seconds": 0.05815883299874258,
+        "nodes": 750,
+        "complete": false
+      },
+      {
+        "step": 100,
+        "seconds": 0.1647145829992951,
+        "nodes": 756,
+        "complete": false
+      },
+      {
+        "step": 101,
+        "seconds": 0.06618937500024913,
+        "nodes": 760,
+        "complete": false
+      },
+      {
+        "step": 102,
+        "seconds": 0.05755337499795132,
+        "nodes": 763,
+        "complete": false
+      },
+      {
+        "step": 103,
+        "seconds": 0.06263737499830313,
+        "nodes": 765,
+        "complete": false
+      },
+      {
+        "step": 104,
+        "seconds": 0.05560554100156878,
+        "nodes": 767,
+        "complete": false
+      },
+      {
+        "step": 105,
+        "seconds": 0.07266300000264891,
+        "nodes": 772,
+        "complete": false
+      },
+      {
+        "step": 106,
+        "seconds": 0.04950829099834664,
+        "nodes": 773,
+        "complete": false
+      },
+      {
+        "step": 107,
+        "seconds": 0.04842041699885158,
+        "nodes": 774,
+        "complete": false
+      },
+      {
+        "step": 108,
+        "seconds": 0.058590541000739904,
+        "nodes": 778,
+        "complete": false
+      },
+      {
+        "step": 109,
+        "seconds": 0.05281545800244203,
+        "nodes": 781,
+        "complete": false
+      },
+      {
+        "step": 110,
+        "seconds": 0.046756874999118736,
+        "nodes": 782,
+        "complete": false
+      },
+      {
+        "step": 111,
+        "seconds": 0.05377758399845334,
+        "nodes": 786,
+        "complete": false
+      },
+      {
+        "step": 112,
+        "seconds": 0.053296749996661674,
+        "nodes": 790,
+        "complete": false
+      },
+      {
+        "step": 113,
+        "seconds": 0.04253754100136575,
+        "nodes": 791,
+        "complete": false
+      },
+      {
+        "step": 114,
+        "seconds": 0.06619441700240714,
+        "nodes": 796,
+        "complete": false
+      },
+      {
+        "step": 115,
+        "seconds": 0.053191791997960536,
+        "nodes": 798,
+        "complete": false
+      },
+      {
+        "step": 116,
+        "seconds": 0.04946416600068915,
+        "nodes": 801,
+        "complete": false
+      },
+      {
+        "step": 117,
+        "seconds": 0.04512441699989722,
+        "nodes": 802,
+        "complete": false
+      },
+      {
+        "step": 118,
+        "seconds": 0.05782254199948511,
+        "nodes": 805,
+        "complete": false
+      },
+      {
+        "step": 119,
+        "seconds": 0.6315245830010099,
+        "nodes": 806,
+        "complete": true
+      }
+    ],
+    "trainingMetrics": {
+      "filledArea": 22274.54937329865,
+      "siteArea": 38904.0,
+      "fillRatio": 0.5725516495295767,
+      "averageFill": 0.5725516495295767,
+      "rentableArea": 22092.23982417784,
+      "rentableRatio": 0.9918153428800964,
+      "averageRentable": 0.9918153428800964,
+      "daylightRatio": 0.0,
+      "siteDaylightRatio": 0.0,
+      "envelopeDaylightRatio": 0.0,
+      "reuseRatio": 1.0,
+      "moduleCount": 806,
+      "dictionaryLength": 15,
+      "exposedPerimeter": 0.0,
+      "perimeters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "envelopeEfficiency": 0.0,
+      "constructibilityScore": 0.0,
+      "lightScore": 0.0,
+      "exteriorCorridorRatio": 0.0,
+      "triangleRatio": 0.0,
+      "topologyValid": true,
+      "topologyViolations": [],
+      "topologyViolationRate": 0.0,
+      "topologyPenalty": 0.0,
+      "topologyMultiplier": 0.05,
+      "nextTopologyMultiplier": 0.05,
+      "rawScore": 61.36478106339678,
+      "areaVariancePenalty": 1.1938111853722522,
+      "deepRoomRatio": 0.0,
+      "deepInteriorPenalty": 0.0,
+      "facadeChasmRatio": 0.0,
+      "facadeChasmPenalty": 0.0,
+      "underfillPenalty": 0.09481541138227162,
+      "internalExposedPenalty": 0.0,
+      "partialConnectionPenalty": 0.0,
+      "score": "58.1123",
+      "perSite": [
+        {
+          "instanceIdx": 0,
+          "floorIndex": 0,
+          "filledArea": 2768.4843330636304,
+          "siteArea": 4524.0,
+          "rentableArea": 2745.695639423529,
+          "coreArea": 22.788693640101155,
+          "moduleCount": 99,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.6119549807832958,
+          "rentableRatio": 0.9917685307560028,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 61.3329264240037,
+          "underfillPenalty": 0.0,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 61.3329264240037,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 785,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 1,
+          "floorIndex": 1,
+          "filledArea": 3114.9962740419687,
+          "siteArea": 5376.0,
+          "rentableArea": 3092.2075804018673,
+          "coreArea": 22.788693640101155,
+          "moduleCount": 111,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.5794263902607829,
+          "rentableRatio": 0.9926841987484848,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 58.74437420208991,
+          "underfillPenalty": 0.041151582276545175,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 58.70322261981336,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 785,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 2,
+          "floorIndex": 2,
+          "filledArea": 2689.131354880614,
+          "siteArea": 4757.0,
+          "rentableArea": 2666.342661240513,
+          "coreArea": 22.788693640101155,
+          "moduleCount": 96,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.5652998433635934,
+          "rentableRatio": 0.9915256301635319,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 57.596871921540455,
+          "underfillPenalty": 0.11706536241858402,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 57.47980655912187,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 785,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 3,
+          "floorIndex": 3,
+          "filledArea": 2703.0832954387142,
+          "siteArea": 4740.0,
+          "rentableArea": 2680.2946017986133,
+          "coreArea": 22.788693640101155,
+          "moduleCount": 102,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.5702707374343279,
+          "rentableRatio": 0.9915693705486045,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 57.99519955297529,
+          "underfillPenalty": 0.08592782456792661,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 57.90927172840737,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 785,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 4,
+          "floorIndex": 4,
+          "filledArea": 2950.0634698285917,
+          "siteArea": 5229.0,
+          "rentableArea": 2927.2747761884907,
+          "coreArea": 22.788693640101155,
+          "moduleCount": 106,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.5641735455782352,
+          "rentableRatio": 0.9922751853059537,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 57.51801142584812,
+          "underfillPenalty": 0.12478810909782669,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 57.393223316750294,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 785,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 5,
+          "floorIndex": 5,
+          "filledArea": 2746.50377632127,
+          "siteArea": 4898.0,
+          "rentableArea": 2723.7150826811685,
+          "coreArea": 22.788693640101155,
+          "moduleCount": 98,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.5607398481668578,
+          "rentableRatio": 0.9917026534474221,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 57.23472765505996,
+          "underfillPenalty": 0.1498543979684669,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 57.084873257091495,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 785,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 6,
+          "floorIndex": 6,
+          "filledArea": 2735.074159683818,
+          "siteArea": 4896.0,
+          "rentableArea": 2712.2854660437165,
+          "coreArea": 22.788693640101155,
+          "moduleCount": 101,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.5586344280399955,
+          "rentableRatio": 0.9916679796197059,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 57.06577393749523,
+          "underfillPenalty": 0.16635796951455742,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 56.89941596798067,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 785,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        },
+        {
+          "instanceIdx": 7,
+          "floorIndex": 7,
+          "filledArea": 2567.212710040044,
+          "siteArea": 4484.0,
+          "rentableArea": 2544.4240163999425,
+          "coreArea": 22.788693640101155,
+          "moduleCount": 93,
+          "exposedPerimeter": 0.0,
+          "fillRatio": 0.5725273661998314,
+          "rentableRatio": 0.9911231766845896,
+          "daylightRatio": 0.0,
+          "envelopeDaylightRatio": 0.0,
+          "reuseRatio": 1.0,
+          "estimatedReuseRatio": 1.0,
+          "constructibilityScore": 0.0,
+          "envelopeEfficiency": 0.0,
+          "exteriorCorridorRatio": 0.0,
+          "triangleRatio": 0.0,
+          "constraintsValid": true,
+          "topologyValid": true,
+          "topologyViolations": [],
+          "totalPartialLength": 0.0,
+          "deepRoomCount": 0,
+          "depthPenaltyScore": 0.0,
+          "facadeChasmOccludedLength": 0.0,
+          "areaVariancePenalty": 0.0,
+          "rawScore": 58.16903694625535,
+          "underfillPenalty": 0.07337804521426616,
+          "topologyPenalty": 0.0,
+          "facadeChasmPenalty": 0.0,
+          "vocabSize": 15,
+          "dictLimitBreach": 5,
+          "dictBreachPenalty": 2.5,
+          "singletonPenalty": 0.0,
+          "score": 58.095658901041084,
+          "estimateStatus": "implicit_shared_constraints",
+          "moduleIdentityStatus": "constraint_checked",
+          "sunExposure": null,
+          "daylightAccessibility": null,
+          "unavailableMetrics": [
+            "daylightRatio",
+            "constructibilityScore",
+            "envelopeEfficiency",
+            "confirmedReuseRatio"
+          ],
+          "uncertainty": {
+            "allModuleIdentitiesProvisional": false,
+            "areaMethod": "support_line_integral",
+            "numericalTolerance": 1e-06
+          },
+          "reuseAudit": {
+            "prototypeCount": 15,
+            "independentOccurrences": 785,
+            "verticalCopies": 21,
+            "singletonCount": 0,
+            "confirmedReuseRatio": 1.0
+          }
+        }
+      ],
+      "coreStacking": {
+        "enabled": true,
+        "status": "ready",
+        "mode": "graph-full-height",
+        "boundaryPolicy": "unchanged",
+        "siteResampleAttempts": 0,
+        "graphOrigin": [
+          20.30898697813973,
+          15.18028930143919
+        ],
+        "initialCandidateCount": 0,
+        "floorCount": 8,
+        "stackCount": 0,
+        "lockedCoreCount": 0,
+        "exactLocalAlignment": true,
+        "violations": [],
+        "stacks": []
+      },
+      "estimateStatus": "implicit_shared_constraints",
+      "moduleIdentityStatus": "constraint_checked",
+      "dictionaryMaxTypes": 15,
+      "dictionaryTargetTypes": 10,
+      "incompatibleProposalCount": 32286,
+      "sunExposure": null,
+      "unavailableMetrics": [
+        "daylightRatio",
+        "constructibilityScore",
+        "envelopeEfficiency"
+      ],
+      "dictBreachPenalty": 2.5,
+      "dictLimitBreach": 5,
+      "vocabSize": 15,
+      "totalPlacements": 806,
+      "bpeRounds": 0,
+      "reusedBpeModules": 0,
+      "bpeBonus": 0.0,
+      "utilizationEntropyBonus": 0.0,
+      "unmergedTriangles": 0,
+      "averageUnmergedTriangles": 0.0,
+      "unmergedTrianglePenalty": 0.0,
+      "generationTimeSeconds": 0.0,
+      "candidateEvaluations": 0,
+      "actionNormalizedGenerationTime": 0.0,
+      "sizeNormalizedGenerationTime": 0.0,
+      "meanModuleArea": 0.0,
+      "generationTimeReferenceUsed": 1e-09,
+      "generationTimeBaseline": 1.0000000000000003e-09,
+      "relativeGenerationTime": 0.0,
+      "frontierGrowthPotential": 0.0,
+      "frontierGrowthReferenceUsed": 1e-09,
+      "frontierGrowthBaseline": 1.0000000000000003e-09,
+      "relativeFrontierGrowth": 0.0,
+      "smallShapeRatio": 0.0,
+      "smallShapeExploitPenalty": 0.0,
+      "unblendedRelativeTimeReward": 0.0,
+      "relativeTimeReward": 0.0,
+      "baselineTransitionEpisodes": 0,
+      "singletonPenalty": 0.0,
+      "perFloorScores": [
+        61.3329264240037,
+        58.70322261981336,
+        57.47980655912187,
+        57.90927172840737,
+        57.393223316750294,
+        57.084873257091495,
+        56.89941596798067,
+        58.095658901041084
+      ],
+      "policyLoss": 0.8262795805931091,
+      "actorLoss": 0.784699559211731,
+      "valueLoss": 0.11578213423490524,
+      "policyEntropy": 1.6311047077178955,
+      "gradientNorm": 0.26226550340652466,
+      "advantage": 0.48121118545532227,
+      "learningRate": 0.001,
+      "learningAlgorithm": "graph_actor_critic_experimental",
+      "policyUpdateCount": 1,
+      "policyDecisionCount": 784,
+      "architecture": "message_passing",
+      "trainingReward": 0.5234811692418796,
+      "stochasticDecisionCount": 700,
+      "geometryValid": null,
+      "graphValid": true,
+      "trainingObjective": "shared_constraints_v3_undiscounted",
+      "baseline": 0.37311229984677624,
+      "episodeExecutionTimeMs": 6983.08,
+      "postStepEvaluationMs": 0.0,
+      "runtimeDiagnostics": {
+        "device": "cpu",
+        "nativeGeometry": {
+          "available": true,
+          "enabled": true,
+          "abiVersion": 3,
+          "library": "/Users/ruslan_faz/Desktop/Work/Thesis/src/c/libfast_geometry.dylib",
+          "loadError": null,
+          "disabledByEnvironment": false
+        },
+        "processPeakRssBytes": 1376550912,
+        "acceleratorAllocatedBytes": 0,
+        "acceleratorPeakBytes": 0,
+        "torchThreads": 1,
+        "episodeTimeMs": 6983.08,
+        "postStepEvaluationMs": 0.0
+      },
+      "performanceTimings": {
+        "stepTotal": {
+          "avg": 53.84659132514571,
+          "min": 22.409375000279397,
+          "max": 164.1193329996895,
+          "count": 120
+        },
+        "graphMetricsEvaluation": {
+          "avg": 0.015875000826781616,
+          "min": 0.015875000826781616,
+          "max": 0.015875000826781616,
+          "count": 1
+        },
+        "aggregateTerminal": {
+          "avg": 0.023874999897088856,
+          "min": 0.023874999897088856,
+          "max": 0.023874999897088856,
+          "count": 1
+        },
+        "episodeFormatting": {
+          "avg": 0.030791998142376542,
+          "min": 0.030791998142376542,
+          "max": 0.030791998142376542,
+          "count": 1
+        },
+        "postStepEvaluation": {
+          "avg": 0.00045900014811195433,
+          "min": 0.00045900014811195433,
+          "max": 0.00045900014811195433,
+          "count": 1
+        },
+        "episodeTotal": {
+          "avg": 6983.0817080001,
+          "min": 6983.0817080001,
+          "max": 6983.0817080001,
+          "count": 1
+        }
+      }
+    },
+    "trainingValidation": {
+      "status": "not_run",
+      "valid": null,
+      "reason": "graph_only_training",
+      "violations": [],
+      "graphValid": true
+    },
+    "previewValidation": {
+      "valid": true,
+      "violations": [],
+      "unresolved": {},
+      "perFloor": {
+        "0": {
+          "filledArea": 2373.660585814293,
+          "exposedPerimeter": 1718.8960732570108,
+          "rentableArea": 2350.8718921168866,
+          "coreArea": 22.788693697406124,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "1": {
+          "filledArea": 2692.8754571327217,
+          "exposedPerimeter": 1942.8670433084426,
+          "rentableArea": 2670.086763435316,
+          "coreArea": 22.788693697406124,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "2": {
+          "filledArea": 2352.7186610362487,
+          "exposedPerimeter": 1686.2260763047047,
+          "rentableArea": 2329.9299673388423,
+          "coreArea": 22.788693697406124,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "3": {
+          "filledArea": 2375.2211739189365,
+          "exposedPerimeter": 1736.2617037543966,
+          "rentableArea": 2352.4324802215306,
+          "coreArea": 22.788693697406124,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "4": {
+          "filledArea": 2567.9982524910233,
+          "exposedPerimeter": 1829.6718659688372,
+          "rentableArea": 2545.2095587936174,
+          "coreArea": 22.788693697406124,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "5": {
+          "filledArea": 2399.91630579565,
+          "exposedPerimeter": 1745.669433031286,
+          "rentableArea": 2377.127612098244,
+          "coreArea": 22.788693697406124,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "6": {
+          "filledArea": 2361.0803160607,
+          "exposedPerimeter": 1739.546761719909,
+          "rentableArea": 2338.291622363294,
+          "coreArea": 22.788693697406124,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "7": {
+          "filledArea": 2202.862223115217,
+          "exposedPerimeter": 1612.7118222445772,
+          "rentableArea": 2180.073529417811,
+          "coreArea": 22.788693697406124,
+          "areaMethod": "sum_disjoint_convex"
+        }
+      }
+    },
+    "previewMetrics": {
+      "policyLoss": 0.8262795805931091,
+      "actorLoss": 0.784699559211731,
+      "valueLoss": 0.11578213423490524,
+      "policyEntropy": 1.6311047077178955,
+      "gradientNorm": 0.26226550340652466,
+      "advantage": 0.48121118545532227,
+      "policyUpdateCount": 1,
+      "policyDecisionCount": 784,
+      "learningAlgorithm": "graph_actor_critic_experimental",
+      "architecture": "message_passing",
+      "learningRate": 0.001,
+      "trainingReward": 0.5234811692418796,
+      "stochasticDecisionCount": 700,
+      "geometryValid": true,
+      "graphValid": true,
+      "estimateStatus": "realized_uncalibrated_environment",
+      "moduleIdentityStatus": "confirmed",
+      "score": 54.25,
+      "fillRatio": 0.497,
+      "rentableRatio": 0.991,
+      "daylightRatio": 0.0,
+      "reuseRatio": 1.0,
+      "constructibilityScore": 0.0,
+      "envelopeEfficiency": 0.0,
+      "deepInteriorPenalty": 0.0,
+      "facadeChasmPenalty": 0.0,
+      "underfillPenalty": 1.04,
+      "topologyPenalty": 0.0,
+      "areaVariancePenalty": 1.175,
+      "vocabSize": 15,
+      "dictLimitBreach": 5,
+      "dictBreachPenalty": 2.5,
+      "graphNodes": 806,
+      "graphEdgesHoriz": 1039,
+      "graphEdgesVert": 21,
+      "performanceTimings": {}
+    },
+    "predictionErrors": {
+      "0": {
+        "filledArea": 394.82374724933743,
+        "rentableArea": 394.8237473066424
+      },
+      "1": {
+        "filledArea": 422.12081690924697,
+        "rentableArea": 422.1208169665515
+      },
+      "2": {
+        "filledArea": 336.4126938443651,
+        "rentableArea": 336.41269390167054
+      },
+      "3": {
+        "filledArea": 327.8621215197777,
+        "rentableArea": 327.8621215770827
+      },
+      "4": {
+        "filledArea": 382.06521733756836,
+        "rentableArea": 382.06521739487334
+      },
+      "5": {
+        "filledArea": 346.5874705256201,
+        "rentableArea": 346.58747058292465
+      },
+      "6": {
+        "filledArea": 373.99384362311775,
+        "rentableArea": 373.9938436804223
+      },
+      "7": {
+        "filledArea": 364.3504869248268,
+        "rentableArea": 364.3504869821313
+      }
+    },
+    "terminationReason": "growth_budget",
+    "dictionaryMaxTypes": 15,
+    "independentOccurrences": 785,
+    "proposalRejections": {
+      "existing_required_contact": 15339,
+      "dictionary_incompatible": 16947
+    }
+  }
+]

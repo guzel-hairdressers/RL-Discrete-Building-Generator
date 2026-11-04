@@ -1,0 +1,25 @@
+{
+  "revision": "3e9ed01850259a98a74801c3dfc04fc7ba923090",
+  "protocol": "L/XL,120 max modules per floor,4 floors,seed123",
+  "pilotOnly": true,
+  "sourceHashes": {
+    "tools/benchmark_graph_training.py": "7cad744672f447152b0e13a98db889828957389b57a285b4ed9d05223d88d55c",
+    "src/server.py": "ce6797596283d9ed53952a36f25fa8b25e8f7b5a62607759f1a82f11467b2b8a",
+    "src/typed_cell.py": "ef02be29a5d4b6826c2dff55bee9d38738ef605d2216a28e2a464f5653bc36a3",
+    "src/graph_proxy.py": "ee4afeea0f0351749ff89ffa7b6b7b2fbc26b25bc23783a8929920fef46fd1f8",
+    "src/graph_dictionary.py": "fcddad1688cbd2f1046f6d6a59ca18f02cb67e1bb762e6658d751b3e637c4233",
+    "src/graph_sampler.py": "cbcc4f116e08803087e8c67a534e0b81b4593557e0b8f44e24e6c36c348b9882",
+    "src/graph_policy.py": "c53ec0b50ca1563afc5ddc3128d404b394b6f9e9fb4e59694e7ba5cef639e67c",
+    "src/shared_modules.py": "8bc5e8f80935f1949c596e50584384bc41efd01eb445700292ef387ae5a56d2d",
+    "src/voronoi_realizer.py": "4bfcee124bd21c4e6f001816d974c8eda8e817eee8de14188c688414306644a7"
+  },
+  "environment": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.14 (main, Jun 10 2026, 12:24:04) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "torch": "2.13.0",
+    "torchThreads": 4,
+    "processor": "arm",
+    "device": "cpu",
+    "machine": "arm64"
+  }
+}

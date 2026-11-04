@@ -184,3 +184,9 @@ Graph inference generates one realized layout and stops, preserving weights for 
 ### 2026-11-04 — removed legacy graph display fallbacks
 
 Completed graph scores are displayed from the backend value, including numeric strings; missing data is shown as unavailable. Graph inference dictionaries are identified as shared modules, not BPE merges.
+
+## 2026-11-04 — bounded shared constraints replace provisional star growth
+
+Implemented `graph_dictionary.py`: stable shared convex definitions, scalar facet/contact checks, complementary evidence pooling, compatible rotation candidates, explicit type ceiling, spatial indexing and bounded proposal work. Preview consumes the same dictionary. Added direct independent reuse reward, removed per-action terminal discount, and batched graph training snapshots. Browser scene setup and badge assets are reused.
+
+Discarded live whole-star quantized classification, repeated all-node proposal distance scans, per-floor sketch rebuilds and contact refresh. Preserved the old standalone sketch only for legacy graph fixtures. A hard type limit means proposal rejection, never forced equivalence. Motif proposals come from observed contacts, not a hardcoded pattern catalogue. Greedy bounded growth still gets stuck; global reassignment/backtracking remains open. [Report](reports/v010_bounded_dictionary_speed.md).

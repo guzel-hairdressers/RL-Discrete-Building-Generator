@@ -583,7 +583,9 @@ class BuildingGraph:
         ratio=filled/max(1.,site_area)
         underfill=35.*max(0.,1-ratio/.6)**2
         topology=self.validate_circulation_connectivity(floor_index)
-        score=80.*min(1.,ratio)+15.*rentable/max(1.,filled)-budget_cost-singleton_cost-underfill-(0 if topology else 20)
+        reuse_bonus=(20.*(reuse['independentOccurrences']-k)/max(1,reuse['independentOccurrences'])
+                     if getattr(self,'module_bank',None) is not None else 0.)
+        score=80.*min(1.,ratio)+15.*rentable/max(1.,filled)+reuse_bonus-budget_cost-singleton_cost-underfill-(0 if topology else 20)
         return dict(instanceIdx=floor_index,floorIndex=floor_index,filledArea=filled,siteArea=site_area,
             rentableArea=rentable,coreArea=core,moduleCount=len(nodes),exposedPerimeter=0.,
             fillRatio=ratio,rentableRatio=rentable/max(1.,filled),daylightRatio=0.,
@@ -593,7 +595,7 @@ class BuildingGraph:
             totalPartialLength=0.,deepRoomCount=0,depthPenaltyScore=0.,facadeChasmOccludedLength=0.,
             areaVariancePenalty=0.,rawScore=score+underfill,underfillPenalty=underfill,
             topologyPenalty=0. if topology else 20.,facadeChasmPenalty=0.,vocabSize=k,
-            dictLimitBreach=excess,dictBreachPenalty=budget_cost,singletonPenalty=singleton_cost,
+            dictLimitBreach=excess,dictBreachPenalty=budget_cost,singletonPenalty=singleton_cost,reuseBonus=reuse_bonus,
             score=score,estimateStatus='realized_uncalibrated_environment',sunExposure=None,daylightAccessibility=daylight,
             unavailableMetrics=['daylightRatio','constructibilityScore','envelopeEfficiency'],
             uncertainty={'priorDerivedPrototypes':sum(p.prior_boundary for p in result.prototypes.values()),

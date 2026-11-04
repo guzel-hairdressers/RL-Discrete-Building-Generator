@@ -1,0 +1,1 @@
+Clean and working frontend builds pass. Final clean JS asset index-Cv8yiyoL.js; source excludes unrelated local UI edits. Graph next-step dispatch bypasses background-throttled timers.

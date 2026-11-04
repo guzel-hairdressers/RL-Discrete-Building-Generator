@@ -1,0 +1,21 @@
+{
+  "purpose": "Six seeded ANY/FREE correctness smoke cases, not quality/convergence or timing evidence",
+  "sourceHashes": {
+    "src/server.py": "cee8696be60692dfb848d963ff689a831b15ee1971bbace3d53c291e8cd5194a",
+    "src/typed_cell.py": "ef02be29a5d4b6826c2dff55bee9d38738ef605d2216a28e2a464f5653bc36a3",
+    "src/graph_dictionary.py": "412e8b6fa71a39f3dcfde632362940041bdefcd34a6ae97ffb5a605d594ab2f5",
+    "src/graph_proxy.py": "ca0ea4b85e1497cbde1176da22bd9cd33fc3d3d92f777df92e283cdab397a25a",
+    "src/graph_sampler.py": "5f728cabe7ea552214157bba8d3a0b0cba0c396fe2eada7a8b774720fb04cd93",
+    "src/graph_policy.py": "c53ec0b50ca1563afc5ddc3128d404b394b6f9e9fb4e59694e7ba5cef639e67c",
+    "src/shared_modules.py": "94a2377f39fecbd044ca108efe8758dd7c928dac1d7a237b9d66d6ddc0fa79fc"
+  },
+  "environment": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.14 (main, Jun 10 2026, 12:24:04) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "torch": "2.13.0",
+    "torchThreads": 4,
+    "processor": "arm",
+    "device": "cpu",
+    "machine": "arm64"
+  }
+}

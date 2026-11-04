@@ -1,0 +1,25 @@
+{
+  "revision": "3e9ed01850259a98a74801c3dfc04fc7ba923090",
+  "protocol": "L/XL,120 max modules per floor,4 floors,seed123",
+  "pilotOnly": true,
+  "sourceHashes": {
+    "tools/benchmark_graph_training.py": "fb2e3cc2de9e5f1ce5a5155e2355d4aa9c77b024da40613a98de6b5de4021fc5",
+    "src/server.py": "a114196ca3faca68f3985026d4ea4973d46f924a32bd61ad7dbcb8b7fdf3fea7",
+    "src/typed_cell.py": "ef02be29a5d4b6826c2dff55bee9d38738ef605d2216a28e2a464f5653bc36a3",
+    "src/graph_proxy.py": "53d527d4cedcdced4792da5117efb2ee6a3b11b0f05bfe641096d6f39a0be135",
+    "src/graph_sampler.py": "cbcc4f116e08803087e8c67a534e0b81b4593557e0b8f44e24e6c36c348b9882",
+    "src/graph_policy.py": "c53ec0b50ca1563afc5ddc3128d404b394b6f9e9fb4e59694e7ba5cef639e67c",
+    "src/shared_modules.py": "8bc5e8f80935f1949c596e50584384bc41efd01eb445700292ef387ae5a56d2d",
+    "src/voronoi_realizer.py": "4bfcee124bd21c4e6f001816d974c8eda8e817eee8de14188c688414306644a7"
+  },
+  "sourceCompleteness": "development diagnostic: new graph_dictionary.py was not included in source snapshot; do not use as reproducible release benchmark",
+  "environment": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.14 (main, Jun 10 2026, 12:24:04) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "torch": "2.13.0",
+    "torchThreads": 4,
+    "processor": "arm",
+    "device": "cpu",
+    "machine": "arm64"
+  }
+}

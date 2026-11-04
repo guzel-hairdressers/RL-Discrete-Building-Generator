@@ -271,3 +271,15 @@ class CheckpointSiteAliasTests(unittest.TestCase):
                 self.assertTrue(torch.equal(v,restored.graph_learner.model.state_dict()[k]))
         finally:
             t.executor.shutdown(wait=True);restored.executor.shutdown(wait=True)
+
+class DesignReturnTests(unittest.TestCase):
+    def test_delaying_the_same_terminal_failure_does_not_improve_return(self):
+        g=BuildingGraph(1);g.add_node('core',0,0,cell_type=CellType.CORE)
+        advantages=[]
+        for length in (2,20):
+            learner=GraphLearner(seed=7)
+            with torch.no_grad():
+                for p in learner.model.critic.parameters():p.zero_()
+            for _ in range(length):learner.choose(g,[[.1]*10,[.2]*10])
+            advantages.append(learner.finish(-1.)['advantage'])
+        self.assertEqual(advantages,[-1.,-1.])

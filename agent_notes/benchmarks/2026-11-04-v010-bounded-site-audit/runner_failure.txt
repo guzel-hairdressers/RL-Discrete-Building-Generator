@@ -1,0 +1,1 @@
+Run aborted while saving first layout: site metadata contains sets and was not JSON serializable. Partial results retained. Corrected runner writes only outer/holes/area; see bounded-site-audit-02.

@@ -120,6 +120,9 @@ class GraphOnlyLifecycleTests(unittest.TestCase):
         self.assertEqual(solve.call_count,1)
         self.assertTrue(preview['graphState']['isComplete'])
         self.assertTrue(preview['graphState']['realized'])
+        self.assertTrue(preview['validation']['valid'])
+        self.assertAlmostEqual(float(e['metrics']['score']),preview['metrics']['score'],delta=.01)
+        self.assertAlmostEqual(e['metrics']['reuseBonus'],preview['metrics']['reuseBonus'],places=6)
         self.assertEqual(t.graph_learner.updates,1)
         self.assertIsNone(t.building_graph)
         for k,v in t.graph_learner.model.state_dict().items():self.assertTrue(torch.equal(v,before['model'][k]))
@@ -134,3 +137,27 @@ class GraphOnlyLifecycleTests(unittest.TestCase):
         g.add_node('occluder',2,0,floor_index=1)
         refresh_local_contacts(g,['occluder'],4.5)
         self.assertFalse(g.has_edge('stack','east')) # evidence on floor 1 changes the shared footprint on floor 0
+
+class BoundedBatchTests(unittest.TestCase):
+    def test_training_batch_is_bounded_and_inference_remains_one_step(self):
+        from server import ParallelTrainer
+        t=ParallelTrainer(dict(generatorEngine='graph_voronoi',boundaryType='rect',siteAreaTier='L',
+            parallelEnvironments=4,maxModules=10))
+        try:
+            t.new_site();e=t.step_batch(t.generation_id,t.episode,window_ms=1000)
+            self.assertGreater(e['batchSteps'],1)
+            self.assertLessEqual(e['batchSteps'],16)
+            self.assertLessEqual(len(e['dictionary']),15)
+            t.new_site();t.set_mode('inference');e=t.step_batch(t.generation_id,t.episode)
+            self.assertNotIn('batchSteps',e)
+            self.assertEqual(t.step_number,1)
+        finally:t.executor.shutdown(wait=True)
+
+    def test_restricted_dictionary_setting_remains_editable(self):
+        from server import DEFAULT_SETTINGS,validate_settings_patch,SettingsError
+        settings=validate_settings_patch(DEFAULT_SETTINGS,dict(generatorEngine='graph_voronoi',graphMaxTypes=1))
+        self.assertEqual(settings['dictCap'],1)
+        changed=validate_settings_patch(settings,dict(learningRate=.002))
+        self.assertEqual(changed['dictCap'],1)
+        with self.assertRaises(SettingsError):
+            validate_settings_patch(DEFAULT_SETTINGS,dict(graphMaxTypes=600))

@@ -47,24 +47,37 @@ class GraphSeedSampler:
                          (graph.nodes[e.v].x,graph.nodes[e.v].y))
                for e in graph.edges_horiz if graph.nodes[e.u].floor_index==floor_index]
         scale=sum(spans)/len(spans) if spans else 2*self.min_seed_distance
-        proposals=[]
-        for node in sorted(nodes,key=lambda n:(n.x,n.y)):
-            star=graph.star_graph_offsets(node.node_id)
+        # Bounded proposal work, independent of the number of already proposed
+        # points. A spatial index replaces repeated all-node distance scans.
+        width=self.min_seed_distance
+        buckets={}
+        for node in nodes:
+            key=(math.floor(node.x/width),math.floor(node.y/width))
+            buckets.setdefault(key,[]).append(node)
+        anchors=sorted(nodes,key=lambda n:(n.x,n.y));rng.shuffle(anchors)
+        proposals=[];seen=set();target=max(48,4*max_proposals)
+        for node in anchors:
+            star=sorted(graph.star_graph_offsets(node.node_id))
             displacements=list(star)+[(-x,-y) for x,y in star]
             for motif in active_motif_bank or []:
                 displacements.extend(motif.get('relative_offsets',[]))
             for _ in range(12):
-                a=rng.uniform(0,2*math.pi)
-                d=rng.uniform(.75,1.25)*scale
+                a=rng.uniform(0,2*math.pi);d=rng.uniform(.75,1.25)*scale
                 displacements.append((math.cos(a)*d,math.sin(a)*d))
             for dx,dy in displacements:
                 pt=(node.x+dx,node.y+dy)
-                if not self._point_inside_polygon(pt,site_boundary,setback=self.site_setback): continue
-                if any(math.dist(pt,(n.x,n.y))<self.min_seed_distance for n in nodes): continue
-                if any(math.dist(pt,(c['x'],c['y']))<1e-6 for c in proposals): continue
+                key=(round(pt[0],6),round(pt[1],6))
+                if key in seen:continue
+                seen.add(key)
+                gx,gy=math.floor(pt[0]/width),math.floor(pt[1]/width)
+                if any((pt[0]-n.x)**2+(pt[1]-n.y)**2<width*width
+                       for ox in (-1,0,1) for oy in (-1,0,1)
+                       for n in buckets.get((gx+ox,gy+oy),())):continue
+                if not self._point_inside_polygon(pt,site_boundary,setback=self.site_setback):continue
                 proposals.append(dict(x=pt[0],y=pt[1],anchor_node=node.node_id,
                     source='continuous_reference',span=math.hypot(dx,dy)))
-        # Equal angular opportunity; no site-axis regularity reward.
+                if len(proposals)>=target:break
+            if len(proposals)>=target:break
         rng.shuffle(proposals)
         return proposals[:max_proposals]
 

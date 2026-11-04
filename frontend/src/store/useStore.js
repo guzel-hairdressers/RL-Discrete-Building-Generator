@@ -578,6 +578,16 @@ export const useStore = create((set, get) => ({
       });
 
       if (get().trainingWanted) {
+        // WebSocket callbacks already yield to rendering. A zero-delay timer is
+        // throttled in background tabs and can dominate graph generation time.
+        if (data.graphState && !data.graphState.realized && !isEval) {
+          if (get().phase !== 'paused') get().sendCommand({
+            cmd: 'step', generationId: Number(data.generationId ?? get().generationId),
+            episode: Number(data.episode ?? get().episode), step: Number(data.step ?? get().step),
+          });
+          return;
+        }
+
         // Graph growth has no fixed visualization delay.
         const stepDelay = 0;
 

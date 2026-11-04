@@ -152,6 +152,20 @@ export const BottomControlDeck = () => {
                     <span className="val-tag">{settings.maxRoomHops || 3} hops</span>
                   </div>
                 </div>
+                <div className="setting-row">
+                  <label>Module Dictionary Target</label>
+                  <div className="input-with-val">
+                    <input
+                      type="range"
+                      min="3"
+                      max={settings.generatorEngine === 'graph_voronoi' ? (settings.graphMaxTypes || 15) : 30}
+                      step="1"
+                      value={settings.dictCap || 10}
+                      onChange={(e) => updateSettings({ dictCap: parseInt(e.target.value) })}
+                    />
+                    <span className="val-tag">{settings.dictCap || 10} target{settings.generatorEngine === 'graph_voronoi' ? ` / ${settings.graphMaxTypes || 15} max` : ''}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Column 2: Architectural Filters & Clearances */}

@@ -314,3 +314,11 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [OPEN] Trainable pose/function/void planning, calibrated proxy errors, held-out quality improvement, untouched architecture confirmation. No architecture promoted.
 
 - [IMPLEMENTED, 2026-11-04] One-layout graph inference review and migration of UI-created checkpoint site aliases; 266 tests passing (2 skipped).
+
+### 2026-11-04 — shared dictionary hot path and explicit reuse objective
+
+- [IMPLEMENTED] Stable implicit shared prototypes during training; target 10 / maximum 15, rejection instead of forced merging, cached support-line area/contact checks, indexed/bounded proposals.
+- [IMPLEMENTED] Independent occupied repeat reward, no vertical-copy/hole credit, undiscounted terminal objective; no predefined patterns.
+- [IMPLEMENTED] Bounded WebSocket training bursts and viewer setup/label caching; 279 tests pass (2 skipped), production build verified.
+- [MEASURED] Seeded L/XL 120-per-floor 4/8-floor latency smoke runs; actual counts, failed development overlap and independent previews retained. See [report](reports/v010_bounded_dictionary_speed.md). No unequal-workload speedup or learned quality claim.
+- [OPEN] Better fill with the same compatible dictionary, global reassignment/pose search, calibrated environmental estimates, multi-seed learning evidence and throughput distributions. Earlier speculative sub-millisecond/10x roadmap targets are not achieved evidence.

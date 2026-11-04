@@ -60,6 +60,7 @@ export function initUrbanContext(DATA) {
   window.optimizerGroup = optimizerGroup;
 
   // Global Building Graph Lattice Group (PROP-16, PROP-17, PROP-18)
+  const graphBadgeMaterials = new Map();
   const graphGroup = new THREE.Group();
   graphGroup.name = "graphGroup";
   scene.add(graphGroup);
@@ -565,17 +566,66 @@ export function initUrbanContext(DATA) {
       const { graphState, boundaries } = event.data;
       while (graphGroup.children.length > 0) {
         const child = graphGroup.children.pop();
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) {
-          if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
-          else child.material.dispose();
+        if (child.geometry && !child.isSprite) child.geometry.dispose();
+        if (child.material && !child.material.userData?.sharedGraphBadge) {
+          if (child.material.map) child.material.map.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => {
+              if (m.map) m.map.dispose();
+              m.dispose();
+            });
+          } else {
+            child.material.dispose();
+          }
         }
       }
-      if (!graphState || !Array.isArray(graphState.nodes) || graphState.nodes.length === 0) return;
+      if (!graphState || graphState.realized || !Array.isArray(graphState.nodes) || graphState.nodes.length === 0) return;
 
       const floorBoundary = (Array.isArray(boundaries) && boundaries.length > 0) ? boundaries[0] : null;
       const ox = Number(floorBoundary?.originOffset?.x || 0);
       const oy = Number(floorBoundary?.originOffset?.y || 0);
+
+      // Helper: Clean, flat 3D Billboard Sprite with Integer Room Number (NO outline)
+      function createNodeBadgeSprite(text, bgColor = '#2563eb') {
+        const key = `${text}|${bgColor}`;
+        const cached = graphBadgeMaterials.get(key);
+        if (cached) {
+          const sprite = new THREE.Sprite(cached);
+          sprite.renderOrder = 999; sprite.scale.set(1.2, 1.2, 1);
+          return sprite;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        // Solid circular background badge (no outline)
+        ctx.beginPath();
+        ctx.arc(64, 64, 60, 0, Math.PI * 2);
+        ctx.fillStyle = bgColor;
+        ctx.fill();
+
+        // Centered bold integer room number
+        ctx.font = 'bold 72px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(String(text), 64, 66);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.minFilter = THREE.LinearFilter;
+        const spriteMat = new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          depthTest: false,
+        });
+        spriteMat.userData.sharedGraphBadge = true;
+        graphBadgeMaterials.set(key, spriteMat);
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.renderOrder = 999;
+        sprite.scale.set(1.2, 1.2, 1);
+        return sprite;
+      }
 
       // 1. Horizontal Edges (Glowing cyan line segments)
       if (Array.isArray(graphState.edgesHoriz) && graphState.edgesHoriz.length > 0) {
@@ -619,32 +669,40 @@ export function initUrbanContext(DATA) {
         }
       }
 
-      // 3. Nodes (Spheres with halo)
-      const sphereGeom = new THREE.SphereGeometry(0.85, 14, 14);
-      const coreMat = new THREE.MeshLambertMaterial({ color: 0xef4444, emissive: 0x330000 });
-      const roomMat = new THREE.MeshLambertMaterial({ color: 0x0284c7, emissive: 0x001a33 });
-      const voidMat = new THREE.MeshLambertMaterial({ color: 0x10b981, emissive: 0x002611 });
-      const balconyMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b, emissive: 0x331a00 });
+      // 3. Nodes: either clean room number badge or unshaded compact dot (NO black spheres under numbers)
+      let dotGeom, dotCoreMat, dotRoomMat;
 
       graphState.nodes.forEach(node => {
         const nodeX = Number(node.x) + ox;
         const nodeY = Number(node.z) + 1.75;
         const nodeZ = -(Number(node.y) + oy);
 
-        let mat = roomMat;
-        if (node.type === 'core') mat = coreMat;
-        else if (node.type === 'void') mat = voidMat;
-        else if (node.type === 'balcony') mat = balconyMat;
+        const isCore = node.type === 'core';
+        const bgCol = isCore ? '#dc2626' : '#2563eb';
 
-        const nodeMesh = new THREE.Mesh(sphereGeom, mat);
-        nodeMesh.position.set(nodeX, nodeY, nodeZ);
-        graphGroup.add(nodeMesh);
+        if (node.roomNumber != null) {
+          // Evaluated pause: render ONLY the clean flat number badge directly at node position.
+          // Eliminates redundant black unlit spheres underneath.
+          const badge = createNodeBadgeSprite(node.roomNumber, bgCol);
+          badge.position.set(nodeX, nodeY, nodeZ);
+          graphGroup.add(badge);
+        } else {
+          // Live generation: compact bright unshaded dot
+          if (!dotGeom) {
+            dotGeom = new THREE.SphereGeometry(0.35, 12, 12);
+            dotCoreMat = new THREE.MeshBasicMaterial({ color: 0xdc2626 });
+            dotRoomMat = new THREE.MeshBasicMaterial({ color: 0x2563eb });
+          }
+          const nodeMesh = new THREE.Mesh(dotGeom, isCore ? dotCoreMat : dotRoomMat);
+          nodeMesh.position.set(nodeX, nodeY, nodeZ);
+          graphGroup.add(nodeMesh);
+        }
       });
       return;
     }
 
     if (event.data.type !== 'optimizer_placements') return;
-    const { placements, boundaries, isReal } = event.data;
+    const { placements, boundaries, isReal, graphState } = event.data;
     const hasUrbanContext = !!(DATA.buildings && DATA.buildings.length > 0);
     const treatAsReal = hasUrbanContext || isReal === true;
     if (!treatAsReal && Array.isArray(boundaries) && boundaries.length > 0) {
@@ -664,7 +722,12 @@ export function initUrbanContext(DATA) {
     while (optimizerGroup.children.length > 0) {
       const child = optimizerGroup.children.pop();
       if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+        else child.material.dispose();
+      }
     }
+    if (graphState && !graphState.realized) return;
     if (Array.isArray(placements) && placements.length > 0) {
       while (graphGroup.children.length > 0) {
         const child = graphGroup.children.pop();

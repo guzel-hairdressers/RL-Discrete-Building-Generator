@@ -53,3 +53,9 @@ agent_notes/
 
 - [Graph-policy architecture evaluation](guides/graph_architecture_evaluation.md) — experimental variants, paired sites, no promoted winner.
 - [Graph-only training/runtime validation](reports/v010_graph_only_validation.md) — mode split, raw runtime evidence and remaining proxy gaps.
+
+## 2026-11-04 — bounded shared dictionary latency and correctness
+
+See [the report](../reports/v010_bounded_dictionary_speed.md) for scope and actual room counts. Final `2026-11-04-v010-reuse-headless-{4,8}floors` runs use L/XL, 120 max/floor, seed 123 and frozen source snapshots; each includes one real policy update and a separately timed independent preview. `reuse-final-4floors` was measured with a browser renderer active and is retained separately. No learning/convergence claim follows from one update.
+
+`sampler-matched` compares only the proposal component on identical 480-node graphs at pinned commit `3e9ed018`, not whole episodes. `latency-audit-before/after` are instrumented profiles on different reached graph sizes, not matched throughput ratios. `bounded-dictionary-4floors` contains a failed XL overlap audit; the normalization regression fixes it. `bounded-dictionary-first` has an explicitly incomplete source snapshot. Development and corrected snapshots remain preserved. `bounded-site-audit` aborted on JSON serialization of site metadata; `bounded-site-audit-02` retains six ANY/FREE correctness smoke cases. These are not held-out convergence studies.

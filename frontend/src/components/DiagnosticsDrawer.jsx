@@ -219,9 +219,11 @@ export const DiagnosticsDrawer = ({ onClose }) => {
   const areaVariancePenalty = safeNum(metrics.areaVariancePenalty || debugTelemetry.areaVariancePenalty, 0);
 
   const graphMode = settings.generatorEngine === 'graph_voronoi';
+  const liveTypeCount = new Set((graphState?.nodes || []).map(n => n.moduleId).filter(Boolean)).size;
   const positiveRewards = graphMode ? [
     { label: 'Estimated fill (0.80x)', val: Math.min(1, fillRatio) * 80 },
     { label: 'Rentable area (0.15x)', val: rentableRatio * 15 },
+    { label: 'Independent module reuse', val: safeNum(metrics.reuseBonus, 0) },
   ] : [
     { label: 'Space Fill (1.05x)', val: fillRatio * 105.0 },
     { label: 'Rentable Area (0.15x)', val: rentableRatio * 15.0 },
@@ -540,7 +542,8 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           </div>
           <dl className="diag-dl-grid">
             <div><dt>Algorithm</dt><dd>{({graph_actor_critic_experimental: 'Graph actor–critic (experimental)', graph_inference: 'Graph inference', graph_reference_search: 'Reference search', inference_only: 'Inference only', a2c_gae: 'A2C + GAE'})[metrics.learningAlgorithm] || 'Waiting for episode'}</dd></div>
-            <div><dt>Module identities</dt><dd>{metrics.moduleIdentityStatus === 'provisional' ? 'Provisional · preview or inference completion' : (graphState?.realized ? 'Realized · see validity' : '—')}</dd></div>
+            <div><dt>Module identities</dt><dd>{metrics.moduleIdentityStatus === 'constraint_checked' ? 'Shared constraints checked' : metrics.moduleIdentityStatus === 'provisional' ? 'Provisional · preview or inference completion' : (graphState?.realized ? 'Realized · see validity' : '—')}</dd></div>
+            <div><dt>Dictionary target / max</dt><dd>{metrics.dictionaryTargetTypes ?? settings.dictCap} / {metrics.dictionaryMaxTypes ?? settings.graphMaxTypes ?? 15}</dd></div>
             <div><dt>Graph weight updates</dt><dd>{metrics.policyUpdateCount ?? '—'}</dd></div>
             <div><dt>Episode decisions</dt><dd>{metrics.policyDecisionCount ?? '—'}</dd></div>
             <div><dt>Last completed geometry</dt><dd>{typeof metrics.geometryValid === 'boolean' ? (metrics.geometryValid ? 'Yes' : 'No') : '—'}</dd></div>
@@ -589,17 +592,17 @@ export const DiagnosticsDrawer = ({ onClose }) => {
             <div className="diag-title-with-badge">
               <span className="diag-section-title">Procedural Shape Library</span>
               <span className={`diag-mode-pill ${isRunning ? 'unmerged' : 'merged'}`}>
-                {graphMode ? (graphState?.realized ? 'Shared module dictionary' : 'Provisional types') : (isRunning ? 'Primitive Dictionary (Live Episode)' : 'BPE Merged Shapes (Paused / Episode Done)')}
+                {graphMode ? (graphState?.realized ? 'Shared module dictionary' : 'Shared implicit modules') : (isRunning ? 'Primitive Dictionary (Live Episode)' : 'BPE Merged Shapes (Paused / Episode Done)')}
               </span>
             </div>
             <span className="diag-badge-live">
-              {displayShapes.length} {displayShapes.length === 1 ? 'Shape' : 'Shapes'}
+              {graphMode && !graphState?.realized ? `${liveTypeCount} types` : `${displayShapes.length} ${displayShapes.length === 1 ? 'Shape' : 'Shapes'}`}
             </span>
           </div>
 
           <div className="diag-shape-list-container">
             {displayShapes.length === 0 ? (
-              <div className="diag-empty-shapes">{graphMode && !graphState?.realized ? 'Module shapes are inferred on explicit preview or inference completion. Live type assignments are provisional.' : 'Waiting for procedural dictionary generation...'}</div>
+              <div className="diag-empty-shapes">{graphMode && !graphState?.realized ? 'Shared module constraints are checked during growth. Polygon previews are built on Pause or Inference.' : 'Waiting for procedural dictionary generation...'}</div>
             ) : (
               <div className="diag-shape-grid">
                 {displayShapes.map((shape, idx) => {

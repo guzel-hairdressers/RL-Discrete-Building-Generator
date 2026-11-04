@@ -57,3 +57,9 @@ Verification: [v0.10.0 validation record](../reports/v010_shared_graph_validatio
 ## 2026-11-04 — experimental trainable demo override
 
 At the user's explicit request for a trainable demo, a graph actor-critic is now integrated behind `graphController: neural` (the graph-engine default). `reference` preserves the earlier search controller. This permits experimental learning before calibration, with clearly labeled provisional outcomes; it does not lift the gate on architectural-quality or convergence claims. See [trainable graph demo](trainable_graph_demo.md).
+
+## 2026-11-04 — authoritative live dictionary override
+
+Live generation now uses `graph_dictionary.py` rather than re-running greedy star classification on every floor. Shared support-line constraints define stable prototypes during growth; preview converts the same prototypes to polygons. The soft target is 10 and hard maximum 15. Added observations must preserve every existing contact. Incompatible growth is rejected, including at the ceiling. Inference cannot resize instances to rescue a placement.
+
+The trainable actor selects compatible continuous-position and observed-contact proposals; no architectural patterns are pre-specified. Independent reuse has its own visible reward, with no credit for holes or vertical copies. See the current [training guide](trainable_graph_demo.md) and [latency report](../reports/v010_bounded_dictionary_speed.md), which supersede earlier provisional-star/area-quadrature descriptions for live training. Standalone legacy graph fixtures still use the older sketch/greedy inference. Manual pose/function edits are checked; adding an unregistered occurrence to a live dictionary is explicitly unresolved and rolled back rather than silently assigned.

@@ -136,7 +136,9 @@ class GraphLearner:
             architecture=self.model.architecture,
             learningRate=self.optimizer.param_groups[0]['lr'] if training else 0.,trainingReward=reward)
         if training and self.trajectory:
-            returns=torch.tensor([reward*.99**(len(self.trajectory)-1-i) for i in range(len(self.trajectory))],device=self.device)
+            # This is one completed-design objective, independent of how many
+            # decisions were used to construct it. Do not reward delaying failure.
+            returns=torch.full((len(self.trajectory),),float(reward),device=self.device)
             logs,values,entropies,counts=zip(*self.trajectory)
             values=torch.stack(values); advantages=returns-values
             # No centering across actions: constant-return episodes still train the value baseline.

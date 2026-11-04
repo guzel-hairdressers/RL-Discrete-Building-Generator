@@ -1,0 +1,4498 @@
+{
+  "revision": "3e9ed01850259a98a74801c3dfc04fc7ba923090",
+  "sourceDiff": "diff --git a/src/graph_policy.py b/src/graph_policy.py\nindex e500316b..b743315c 100644\n--- a/src/graph_policy.py\n+++ b/src/graph_policy.py\n@@ -136,7 +136,9 @@ class GraphLearner:\n             architecture=self.model.architecture,\n             learningRate=self.optimizer.param_groups[0]['lr'] if training else 0.,trainingReward=reward)\n         if training and self.trajectory:\n-            returns=torch.tensor([reward*.99**(len(self.trajectory)-1-i) for i in range(len(self.trajectory))],device=self.device)\n+            # This is one completed-design objective, independent of how many\n+            # decisions were used to construct it. Do not reward delaying failure.\n+            returns=torch.full((len(self.trajectory),),float(reward),device=self.device)\n             logs,values,entropies,counts=zip(*self.trajectory)\n             values=torch.stack(values); advantages=returns-values\n             # No centering across actions: constant-return episodes still train the value baseline.\ndiff --git a/src/graph_sampler.py b/src/graph_sampler.py\nindex 43635121..d4826b39 100644\n--- a/src/graph_sampler.py\n+++ b/src/graph_sampler.py\n@@ -47,24 +47,37 @@ class GraphSeedSampler:\n                          (graph.nodes[e.v].x,graph.nodes[e.v].y))\n                for e in graph.edges_horiz if graph.nodes[e.u].floor_index==floor_index]\n         scale=sum(spans)/len(spans) if spans else 2*self.min_seed_distance\n-        proposals=[]\n-        for node in sorted(nodes,key=lambda n:(n.x,n.y)):\n-            star=graph.star_graph_offsets(node.node_id)\n+        # Bounded proposal work, independent of the number of already proposed\n+        # points. A spatial index replaces repeated all-node distance scans.\n+        width=self.min_seed_distance\n+        buckets={}\n+        for node in nodes:\n+            key=(math.floor(node.x/width),math.floor(node.y/width))\n+            buckets.setdefault(key,[]).append(node)\n+        anchors=sorted(nodes,key=lambda n:(n.x,n.y));rng.shuffle(anchors)\n+        proposals=[];seen=set();target=max(48,4*max_proposals)\n+        for node in anchors:\n+            star=sorted(graph.star_graph_offsets(node.node_id))\n             displacements=list(star)+[(-x,-y) for x,y in star]\n             for motif in active_motif_bank or []:\n                 displacements.extend(motif.get('relative_offsets',[]))\n             for _ in range(12):\n-                a=rng.uniform(0,2*math.pi)\n-                d=rng.uniform(.75,1.25)*scale\n+                a=rng.uniform(0,2*math.pi);d=rng.uniform(.75,1.25)*scale\n                 displacements.append((math.cos(a)*d,math.sin(a)*d))\n             for dx,dy in displacements:\n                 pt=(node.x+dx,node.y+dy)\n-                if not self._point_inside_polygon(pt,site_boundary,setback=self.site_setback): continue\n-                if any(math.dist(pt,(n.x,n.y))<self.min_seed_distance for n in nodes): continue\n-                if any(math.dist(pt,(c['x'],c['y']))<1e-6 for c in proposals): continue\n+                key=(round(pt[0],6),round(pt[1],6))\n+                if key in seen:continue\n+                seen.add(key)\n+                gx,gy=math.floor(pt[0]/width),math.floor(pt[1]/width)\n+                if any((pt[0]-n.x)**2+(pt[1]-n.y)**2<width*width\n+                       for ox in (-1,0,1) for oy in (-1,0,1)\n+                       for n in buckets.get((gx+ox,gy+oy),())):continue\n+                if not self._point_inside_polygon(pt,site_boundary,setback=self.site_setback):continue\n                 proposals.append(dict(x=pt[0],y=pt[1],anchor_node=node.node_id,\n                     source='continuous_reference',span=math.hypot(dx,dy)))\n-        # Equal angular opportunity; no site-axis regularity reward.\n+                if len(proposals)>=target:break\n+            if len(proposals)>=target:break\n         rng.shuffle(proposals)\n         return proposals[:max_proposals]\n \ndiff --git a/src/server.py b/src/server.py\nindex 652f69b8..6967d9f5 100644\n--- a/src/server.py\n+++ b/src/server.py\n@@ -120,6 +120,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {\n     \"graphPriorRadius\": 4.5,\n     \"graphMinArea\": 1.0,\n     \"graphMaxArea\": 80.0,\n+    \"graphMaxTypes\": 15,\n }\n \n BOUNDARY_TYPES = {\n@@ -268,6 +269,7 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An\n         raise SettingsError('graphController must be neural or reference')\n     if merged.get('graphSearchMode','balanced') not in ('balanced','alternatives'):\n         raise SettingsError('graphSearchMode must be balanced or alternatives')\n+    merged['graphMaxTypes']=int(_in_range(_integer(merged.get('graphMaxTypes',15),'graphMaxTypes'),1,15,'graphMaxTypes'))\n     from shared_modules import SizePrior\n     try:\n         SizePrior(radius=float(merged.get('graphPriorRadius',4.5)),\n@@ -294,6 +296,8 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An\n     merged[\"dictCap\"] = int(\n         _in_range(_integer(merged[\"dictCap\"], \"dictCap\"), 3, 30, \"dictCap\")\n     )\n+    if merged['generatorEngine']=='graph_voronoi':\n+        merged['dictCap']=min(merged['dictCap'],merged['graphMaxTypes'])\n     merged[\"travelLimit\"] = int(\n         _in_range(_integer(merged[\"travelLimit\"], \"travelLimit\"), 5, 60, \"travelLimit\")\n     )\n@@ -6031,8 +6035,11 @@ class ParallelTrainer:\n             per_site = list(graph_per_site or [])\n             aggregate_terminal_start = time.perf_counter()\n             metrics = self._aggregate_terminal(per_site)\n-            metrics['estimateStatus']='graph_proxy_uncalibrated' if self.mode=='training' else 'realized_uncalibrated_environment'\n-            metrics['moduleIdentityStatus']='provisional' if self.mode=='training' else 'confirmed'\n+            metrics['estimateStatus']='implicit_shared_constraints' if self.mode=='training' else 'realized_uncalibrated_environment'\n+            metrics['moduleIdentityStatus']='constraint_checked' if self.mode=='training' else 'confirmed'\n+            metrics['dictionaryMaxTypes']=self.building_graph.module_bank.max_types\n+            metrics['dictionaryTargetTypes']=min(metrics['dictionaryMaxTypes'],int(self.settings.get('dictCap',10)))\n+            metrics['incompatibleProposalCount']=int(sum(self.building_graph.module_bank.rejections.values()))\n             metrics['sunExposure']=None\n             metrics['unavailableMetrics']=['daylightRatio','constructibilityScore','envelopeEfficiency']\n             self.step_profiler.record(\"aggregateTerminal\", time.perf_counter() - aggregate_terminal_start)\n@@ -6093,7 +6100,7 @@ class ParallelTrainer:\n                 self.last_loss=stats['policyLoss']; self.last_actor_loss=stats['actorLoss']\n                 self.last_value_loss=stats['valueLoss']; self.last_entropy=stats['policyEntropy']\n                 self.last_gradient_norm=stats['gradientNorm']; self.last_advantage=stats['advantage']\n-                metrics['trainingObjective']='experimental_graph_proxy_v2'\n+                metrics['trainingObjective']='shared_constraints_v3_undiscounted'\n \n             self.placement_decisions=[]\n             self.shape_log_probs=[]\n@@ -6625,85 +6632,63 @@ class ParallelTrainer:\n             min_area=float(self.settings.get('graphMinArea',1.)),max_area=float(self.settings.get('graphMaxArea',80.)))\n         self.building_graph.site_boundaries={env.index:env.site.get('outer') or env.boundary.get('outer') or env.boundary.get('polygon',[]) for env in self.environments}\n         self.building_graph.site_holes={env.index:env.site.get('holes',[]) for env in self.environments}\n-        active_envs = [env for env in self.environments if not env.done]\n-        new_nodes_added = 0\n-\n+        from graph_dictionary import GraphDictionary\n+        from graph_proxy import origin_fits\n+        if getattr(self.building_graph,'module_bank',None) is None:\n+            self.building_graph.module_bank=GraphDictionary(self.building_graph,int(self.settings.get('graphMaxTypes',15)))\n+        bank=self.building_graph.module_bank\n+        active_envs=[env for env in self.environments if not env.done]\n+        self.last_graph_candidate_count=0\n+        new_nodes_added=0\n+        radius=bank.prior.radius\n         for env in active_envs:\n-            f = env.index\n-            site_poly = env.site.get(\"outer\") or env.boundary.get(\"outer\") or env.boundary.get(\"polygon\", [])\n-            pca_axes = env.site_orientation_prior.get(\"axis_u\"), env.site_orientation_prior.get(\"axis_v\")\n-\n-            candidates = env.seed_sampler.generate_candidates(\n-                graph=self.building_graph,\n-                floor_index=f,\n-                site_boundary=site_poly,\n-                site_pca_axes=pca_axes,\n-                max_proposals=8,\n-            )\n-\n-            if candidates:\n-                pts=[{'x':p['x'],'y':p['y']} if isinstance(p,dict) else {'x':p[0],'y':p[1]} for p in site_poly]\n-                site_area=float(env.site.get('area',abs(G.polygon_area(pts))))\n-                # Graph-only proposals: no trial graphs, prototype polygons or GEOS.\n-                from graph_proxy import GraphSketch, refresh_local_contacts, origin_fits\n-                sketch=GraphSketch(self.building_graph)\n-                radius=sketch.radius\n-                counts=Counter(n.floor_index for n in self.building_graph.nodes.values())\n-                choices=[]\n-                for ci,candidate in enumerate(candidates):\n-                    x,y=candidate['x'],candidate['y']\n-                    anchor=self.building_graph.nodes[candidate['anchor_node']]\n-                    for candidate_scope in (typed_cell.VerticalScope.INDEPENDENT,\n-                                            typed_cell.VerticalScope.MULTI_FLOOR):\n-                        floors=range(num_floors) if candidate_scope==typed_cell.VerticalScope.MULTI_FLOOR else (f,)\n-                        if any(counts[floor]>=int(self.settings['maxModules']) for floor in floors):continue\n-                        fits=True\n-                        for floor in floors:\n-                            boundary=self.building_graph.site_boundaries[floor]\n-                            boundary=[(p['x'],p['y']) if isinstance(p,dict) else p for p in boundary]\n-                            # Sufficient scalar clearance certificate. No boundary clipping.\n-                            # Conservative near the site edge; exact validation remains terminal.\n-                            if not origin_fits((x,y),boundary,self.building_graph.site_holes[floor],radius):\n-                                fits=False;break\n-                        if not fits or not sketch.addition_feasible(x,y,floors,env.seed_sampler.min_seed_distance):continue\n-                        k,singletons,size,estimated_area=sketch.preview(f,x,y,anchor,candidate_scope.value,\n-                            site_area,int(self.settings.get('dictCap',10)))\n-                        excess=max(0,k-int(self.settings.get('dictCap',10)))\n-                        objective=size-10*excess**2-5*singletons\n-                        nearest_core=min((math.hypot(x-n.x,y-n.y) for n in self.building_graph.nodes.values()\n-                                          if n.floor_index==f and n.cell_type==typed_cell.CellType.CORE),default=0.)\n-                        features=[float(candidate_scope==typed_cell.VerticalScope.MULTI_FLOOR),\n-                            candidate.get('span',0.)/(2*radius),nearest_core/(10*radius),\n-                            typed_cell.BuildingGraph._min_distance_to_boundary((x,y),site_poly)/(2*radius),\n-                            k/max(1,int(self.settings.get('dictCap',10))),\n-                            singletons/max(1,len(sketch.built)+1),size/max(1.,site_area*num_floors),\n-                            f/max(1,num_floors-1),1.,\n+            f=env.index\n+            if len(bank.floor_nodes[f])>=int(self.settings['maxModules']):continue\n+            site_poly=self.building_graph.site_boundaries[f]\n+            motif=bank.frontier_candidates(f,24)\n+            novel=env.seed_sampler.generate_candidates(self.building_graph,f,site_poly,max_proposals=16)\n+            # Interleave module-derived contacts and continuous exploration.\n+            candidates=[]\n+            for i in range(max(len(motif),len(novel))):\n+                if i<len(motif):candidates.append(motif[i])\n+                if i<len(novel):candidates.append(novel[i])\n+            choices=[]\n+            for candidate in candidates:\n+                x,y=candidate['x'],candidate['y']\n+                for scope in ('independent','multi_floor'):\n+                    floors=range(num_floors) if scope=='multi_floor' else (f,)\n+                    if any(len(bank.floor_nodes[floor])>=int(self.settings['maxModules']) for floor in floors):continue\n+                    if not all(origin_fits((x,y),self.building_graph.site_boundaries[floor],\n+                        self.building_graph.site_holes[floor],radius) for floor in floors):continue\n+                    plans=bank.probe(x,y,f,scope,env.seed_sampler.min_seed_distance,\n+                        candidate.get('preferredPrototype'),candidate.get('preferredAngle'))\n+                    for plan in plans:\n+                        target=int(self.settings.get('dictCap',10))\n+                        objective=plan.filled-10.*(max(0,plan.type_count-target)/max(1,target))**2-5.*plan.singleton_count\n+                        nearest_core=min((math.hypot(x-n.x,y-n.y) for n in bank.floor_nodes[f]\n+                                          if n.cell_type==typed_cell.CellType.CORE),default=0.)\n+                        features=[float(scope=='multi_floor'),candidate.get('span',0.)/(2*radius),\n+                            nearest_core/(10*radius),typed_cell.BuildingGraph._min_distance_to_boundary((x,y),site_poly)/(2*radius),\n+                            plan.type_count/max(1,target),plan.singleton_count/max(1,len(bank.instances)+1),\n+                            plan.filled/max(1.,sum(e.site['area'] for e in self.environments)),\n+                            f/max(1,num_floors-1),float(plan.shapes[plan.prototype].prior_boundary),\n                             (len(self.building_graph.nodes)+len(floors))/max(1,self.max_graph_seeds*num_floors)]\n-                        proposal={**candidate,'_policy_features':features}\n-                        choices.append((objective,ci,proposal,candidate_scope))\n-                if not choices:continue\n-                self.last_graph_candidate_count=len(choices)\n-                if self.settings.get('graphController','neural')=='neural':\n-                    selected=self.graph_learner.choose(self.building_graph,\n-                        [row[2]['_policy_features'] for row in choices],training=self.mode=='training',\n-                        anchors=[row[2]['anchor_node'] for row in choices],\n-                        positions=[(row[2]['x'],row[2]['y']) for row in choices])\n-                    chosen=choices[selected]\n-                elif self.settings.get('graphSearchMode')=='alternatives':\n-                    best=max(row[0] for row in choices)\n-                    eligible=[row for row in choices if row[0]>=best-max(1.,abs(best)*.05)]\n-                    chosen=eligible[self.graph_step_count%len(eligible)]\n-                else:\n-                    chosen=max(choices,key=lambda row:(row[0],row[1]))\n-                _,_,cand,scope=chosen\n-                node_id=f\"node_{f}_{len(self.building_graph.nodes)}\"\n-                self.building_graph.add_node(node_id,cand['x'],cand['y'],floor_index=f,\n-                    scope=scope,cell_type=typed_cell.CellType.ROOM)\n-                new_ids=[n.node_id for n in self.building_graph.nodes.values()\n-                         if n.node_id==node_id or n.metadata.get('root_id')==node_id]\n-                refresh_local_contacts(self.building_graph,new_ids,radius,\n-                    self.building_graph.size_prior.min_contact)\n-                new_nodes_added += 1\n+                        choices.append((objective,candidate,plan,features))\n+                if len(choices)>=12:break\n+            if not choices:continue\n+            self.last_graph_candidate_count=len(choices)\n+            if self.settings.get('graphController','neural')=='neural':\n+                selected=self.graph_learner.choose(self.building_graph,[row[3] for row in choices],training=self.mode=='training',\n+                    anchors=[row[1]['anchor_node'] for row in choices],positions=[(row[2].x,row[2].y) for row in choices])\n+                chosen=choices[selected]\n+            elif self.settings.get('graphSearchMode')=='alternatives':\n+                best=max(row[0] for row in choices)\n+                eligible=[row for row in choices if row[0]>=best-max(1.,abs(best)*.05)]\n+                chosen=eligible[self.graph_step_count%len(eligible)]\n+            else:chosen=max(choices,key=lambda row:row[0])\n+            node_id=f\"node_{f}_{len(self.building_graph.nodes)}\"\n+            bank.commit(chosen[2],node_id)\n+            new_nodes_added+=1\n \n         self.graph_step_count += 1\n         self.step_number += 1\n@@ -6781,14 +6766,14 @@ class ParallelTrainer:\n                         n.module_id=pid\n                 active_dict.append(dict(id=pid,name=f'Provisional type #{rn}',category='room',\n                     area=sketch.areas[members[0]],uses=0,roomNumber=rn,poly=[],\n-                    estimateStatus='graph_proxy_uncalibrated',identityStatus='provisional'))\n+                    estimateStatus='implicit_shared_constraints',identityStatus='constraint_checked'))\n             self.dictionary=active_dict\n \n         graph_state = {\n             \"step\": self.step_number,\n             \"isComplete\": is_complete,\n             \"realized\": realize_now,\n-            \"moduleIdentityStatus\": 'confirmed' if realize_now else 'provisional',\n+            \"moduleIdentityStatus\": 'confirmed' if realize_now else 'constraint_checked',\n             \"nodes\": [\n                 {\n                     \"id\": n.node_id,\n@@ -6846,7 +6831,7 @@ class ParallelTrainer:\n             pca_angle = env.site_orientation_prior.get(\"angle_rad\", 0.0)\n             dict_cap = int(self.settings.get(\"dictCap\", 10))\n             fm = self.building_graph.evaluate_graph_metrics(env.index,site_area=site_area,\n-                dict_cap=dict_cap,realization=(solution,audit)) if realize_now else predicted_metrics[env.index]\n+                dict_cap=min(dict_cap,bank.max_types),realization=(solution,audit)) if realize_now else predicted_metrics[env.index]\n             per_floor_metrics.append(fm)\n \n         if is_complete:\n@@ -6874,6 +6859,8 @@ class ParallelTrainer:\n             ep_event[\"graphState\"] = graph_state\n             audit=completed_audit\n             ep_event['validation']=audit\n+            ep_event['terminationReason']=('module_limit' if all(len(bank.floor_nodes[f])>=int(self.settings['maxModules'])\n+                for f in range(num_floors)) else ('no_compatible_placement' if new_nodes_added==0 else 'growth_budget'))\n             ep_event['predictionErrors']=({str(m['floorIndex']):{\n                 'filledArea':predicted_metrics[m['floorIndex']]['filledArea']-audit.get('perFloor',{}).get(m['floorIndex'],{}).get('filledArea',0.)}\n                 for m in per_floor_metrics} if realize_now else None)\n@@ -6912,8 +6899,11 @@ class ParallelTrainer:\n                 \"parallelFloors\": len(self.environments),\n                 \"graphCandidateCount\": getattr(self,'last_graph_candidate_count',0),\n                 \"singletonPenalty\": float(agg_metrics.get(\"singletonPenalty\",0.)),\n-                \"estimateStatus\": \"graph_proxy_uncalibrated\",\n-                \"moduleIdentityStatus\": \"provisional\",\n+                \"estimateStatus\": \"implicit_shared_constraints\",\n+                \"moduleIdentityStatus\": \"constraint_checked\",\n+                \"dictionaryMaxTypes\": bank.max_types,\n+                \"dictionaryTargetTypes\": min(bank.max_types,int(self.settings.get('dictCap',10))),\n+                \"incompatibleProposalCount\": int(sum(bank.rejections.values())),\n                 \"estimatedReuseRatio\": _mean([m.get('estimatedReuseRatio',0.) for m in per_floor_metrics]),\n                 \"score\": round(float(agg_metrics.get(\"score\", 0.0)), 2),\n                 \"fillRatio\": round(float(agg_metrics.get(\"fillRatio\", 0.0)), 3),\n@@ -6940,6 +6930,18 @@ class ParallelTrainer:\n         }\n         return event\n \n+    def step_batch(self,generation_id,episode,window_ms=75.):\n+        \"\"\"Bounded training burst: UI snapshots no longer gate every graph action.\"\"\"\n+        if self.settings.get('generatorEngine')!='graph_voronoi' or self.mode!='training':\n+            return self.step(generation_id,episode)\n+        started=time.perf_counter();count=0\n+        while True:\n+            event=self.step(generation_id,episode);count+=1\n+            if event['type']=='episodeDone' or count>=16 or (time.perf_counter()-started)*1000>=window_ms:break\n+        event['batchSteps']=count\n+        event.setdefault('diagnostics',{})['batchTimeMs']=(time.perf_counter()-started)*1000\n+        return event\n+\n     def step(self, generation_id: Any, episode: Any) -> dict[str, Any]:\n         \"\"\"Advance active floors while keeping cores as one building action.\"\"\"\n \n@@ -8354,7 +8356,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:\n                     await _send_json(websocket,trainer.current_state_event())\n                 elif command == \"step\":\n                     event = await asyncio.to_thread(\n-                        trainer.step, message.get(\"generationId\"), message.get(\"episode\")\n+                        trainer.step_batch, message.get(\"generationId\"), message.get(\"episode\")\n                     )\n                     await _send_json(websocket, event)\n                 elif command == \"evaluate\":\ndiff --git a/src/shared_modules.py b/src/shared_modules.py\nindex eb5bebfc..0da4f2ed 100644\n--- a/src/shared_modules.py\n+++ b/src/shared_modules.py\n@@ -141,6 +141,8 @@ def infer(graph, prior=None):\n     constraints. Dictionary budgets never participate in geometric equivalence.\n     Full-height occurrences contribute evidence from every floor to one shape.\n     \"\"\"\n+    if getattr(graph,'module_bank',None) is not None:\n+        return graph.module_bank.inference(graph)\n     prior=prior or getattr(graph,\"size_prior\",None) or SizePrior()\n     occ=_groups(graph)\n     node_to_occ={n.node_id:k for k,o in occ.items() for n in o.nodes}\n",
+  "diagnosticOnly": true,
+  "rows": [
+    {
+      "tier": "L",
+      "settings": {
+        "generatorEngine": "graph_voronoi",
+        "graphController": "neural",
+        "boundaryType": "rect",
+        "siteAreaTier": "L",
+        "parallelEnvironments": 4,
+        "maxModules": 120,
+        "seed": 123
+      },
+      "nodesBefore": 155,
+      "nodesAfter": 159,
+      "profiledWallSeconds": 0.06744233299832558,
+      "profileTotalSeconds": 0.06731960099999999,
+      "functions": [
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6945,
+          "function": "step",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 3.4207e-05,
+          "cumulativeSeconds": 0.067346708
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6600,
+          "function": "_step_graph_voronoi",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 0.0014637040000000001,
+          "cumulativeSeconds": 0.067310042
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 201,
+          "function": "probe",
+          "primitiveCalls": 252,
+          "totalCalls": 252,
+          "selfSeconds": 0.0041491390000000005,
+          "cumulativeSeconds": 0.048456792000000005
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 94,
+          "function": "shape_with",
+          "primitiveCalls": 783,
+          "totalCalls": 783,
+          "selfSeconds": 0.001591193,
+          "cumulativeSeconds": 0.023935833
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 52,
+          "function": "make_shape",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 0.009817751000000001,
+          "cumulativeSeconds": 0.019087581000000003
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 23,
+          "function": "displacement_plane",
+          "primitiveCalls": 5509,
+          "totalCalls": 5509,
+          "selfSeconds": 0.002129446,
+          "cumulativeSeconds": 0.012510366
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 20,
+          "function": "plane_key",
+          "primitiveCalls": 6700,
+          "totalCalls": 6700,
+          "selfSeconds": 0.002723666,
+          "cumulativeSeconds": 0.009992618
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 20,
+          "function": "<genexpr>",
+          "primitiveCalls": 26800,
+          "totalCalls": 26800,
+          "selfSeconds": 0.0027701640000000003,
+          "cumulativeSeconds": 0.007268952
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 159,
+          "function": "contact",
+          "primitiveCalls": 1136,
+          "totalCalls": 1136,
+          "selfSeconds": 0.0005108770000000001,
+          "cumulativeSeconds": 0.006484456
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 155,
+          "function": "_interval",
+          "primitiveCalls": 2272,
+          "totalCalls": 2272,
+          "selfSeconds": 0.000605777,
+          "cumulativeSeconds": 0.005845144
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.round>",
+          "primitiveCalls": 26781,
+          "totalCalls": 26781,
+          "selfSeconds": 0.005821965,
+          "cumulativeSeconds": 0.005821965
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_policy.py",
+          "line": 114,
+          "function": "choose",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.000151413,
+          "cumulativeSeconds": 0.005154082
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.any>",
+          "primitiveCalls": 2246,
+          "totalCalls": 2246,
+          "selfSeconds": 0.001647996,
+          "cumulativeSeconds": 0.004845731000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_sampler.py",
+          "line": 29,
+          "function": "generate_candidates",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.001161108,
+          "cumulativeSeconds": 0.003768501
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 34,
+          "function": "near",
+          "primitiveCalls": 827,
+          "totalCalls": 827,
+          "selfSeconds": 0.002438224,
+          "cumulativeSeconds": 0.0033211670000000003
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_policy.py",
+          "line": 60,
+          "function": "encode_graph",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.001743675,
+          "cumulativeSeconds": 0.003279708
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 181,
+          "function": "frontier_candidates",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.00059084,
+          "cumulativeSeconds": 0.003162541
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 164,
+          "function": "_preserves_edges",
+          "primitiveCalls": 59,
+          "totalCalls": 59,
+          "selfSeconds": 0.000434363,
+          "cumulativeSeconds": 0.002905452
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.all>",
+          "primitiveCalls": 563,
+          "totalCalls": 563,
+          "selfSeconds": 0.000140616,
+          "cumulativeSeconds": 0.002683262
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6661,
+          "function": "<genexpr>",
+          "primitiveCalls": 983,
+          "totalCalls": 983,
+          "selfSeconds": 0.000216242,
+          "cumulativeSeconds": 0.002549312
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 14,
+          "function": "origin_fits",
+          "primitiveCalls": 673,
+          "totalCalls": 673,
+          "selfSeconds": 0.000658989,
+          "cumulativeSeconds": 0.00233307
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 15,
+          "function": "rotate",
+          "primitiveCalls": 6479,
+          "totalCalls": 6479,
+          "selfSeconds": 0.001390182,
+          "cumulativeSeconds": 0.002139602
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_sampler.py",
+          "line": 169,
+          "function": "_point_inside_polygon",
+          "primitiveCalls": 932,
+          "totalCalls": 932,
+          "selfSeconds": 0.001588793,
+          "cumulativeSeconds": 0.0020927510000000003
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 42,
+          "function": "support",
+          "primitiveCalls": 1083,
+          "totalCalls": 1083,
+          "selfSeconds": 0.0013189240000000002,
+          "cumulativeSeconds": 0.0019516980000000002
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'get' of 'dict' objects>",
+          "primitiveCalls": 22137,
+          "totalCalls": 22137,
+          "selfSeconds": 0.0017528910000000001,
+          "cumulativeSeconds": 0.0017528910000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py",
+          "line": 1774,
+          "function": "_wrapped_call_impl",
+          "primitiveCalls": 4,
+          "totalCalls": 96,
+          "selfSeconds": 4.6376000000000005e-05,
+          "cumulativeSeconds": 0.00135775
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py",
+          "line": 1782,
+          "function": "_call_impl",
+          "primitiveCalls": 4,
+          "totalCalls": 96,
+          "selfSeconds": 7.354200000000001e-05,
+          "cumulativeSeconds": 0.001352167
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_policy.py",
+          "line": 35,
+          "function": "forward",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.000186371,
+          "cumulativeSeconds": 0.0013372920000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.cos>",
+          "primitiveCalls": 23947,
+          "totalCalls": 23947,
+          "selfSeconds": 0.00126752,
+          "cumulativeSeconds": 0.00126752
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method numpy.asarray>",
+          "primitiveCalls": 605,
+          "totalCalls": 605,
+          "selfSeconds": 0.001151329,
+          "cumulativeSeconds": 0.001151329
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 66,
+          "function": "_wrapreduction",
+          "primitiveCalls": 605,
+          "totalCalls": 605,
+          "selfSeconds": 0.00038176700000000003,
+          "cumulativeSeconds": 0.0010988530000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.sorted>",
+          "primitiveCalls": 869,
+          "totalCalls": 869,
+          "selfSeconds": 0.00083148,
+          "cumulativeSeconds": 0.000979641
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+          "primitiveCalls": 871,
+          "totalCalls": 871,
+          "selfSeconds": 0.000972409,
+          "cumulativeSeconds": 0.000972409
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 3049,
+          "function": "max",
+          "primitiveCalls": 472,
+          "totalCalls": 472,
+          "selfSeconds": 0.00019423700000000002,
+          "cumulativeSeconds": 0.000951619
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.sum>",
+          "primitiveCalls": 197,
+          "totalCalls": 197,
+          "selfSeconds": 0.00028949300000000004,
+          "cumulativeSeconds": 0.000891491
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.sin>",
+          "primitiveCalls": 15435,
+          "totalCalls": 15435,
+          "selfSeconds": 0.0008858080000000001,
+          "cumulativeSeconds": 0.0008858080000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_sampler.py",
+          "line": 73,
+          "function": "<genexpr>",
+          "primitiveCalls": 1303,
+          "totalCalls": 1303,
+          "selfSeconds": 0.000557022,
+          "cumulativeSeconds": 0.000827688
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 11,
+          "function": "root_id",
+          "primitiveCalls": 3970,
+          "totalCalls": 3970,
+          "selfSeconds": 0.000518869,
+          "cumulativeSeconds": 0.0007919050000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 102,
+          "function": "<genexpr>",
+          "primitiveCalls": 3608,
+          "totalCalls": 3608,
+          "selfSeconds": 0.000779164,
+          "cumulativeSeconds": 0.000779164
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 354,
+          "function": "shuffle",
+          "primitiveCalls": 65,
+          "totalCalls": 65,
+          "selfSeconds": 0.00016788100000000001,
+          "cumulativeSeconds": 0.0007208700000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 205,
+          "function": "metrics",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 5.1754000000000006e-05,
+          "cumulativeSeconds": 0.000682251
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/container.py",
+          "line": 248,
+          "function": "forward",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 2.4167e-05,
+          "cumulativeSeconds": 0.000663039
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'add' of 'set' objects>",
+          "primitiveCalls": 6315,
+          "totalCalls": 6315,
+          "selfSeconds": 0.0006464540000000001,
+          "cumulativeSeconds": 0.0006464540000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py",
+          "line": 2598,
+          "function": "norm",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 0.000406721,
+          "cumulativeSeconds": 0.000621461
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.tensor>",
+          "primitiveCalls": 24,
+          "totalCalls": 24,
+          "selfSeconds": 0.0005531700000000001,
+          "cumulativeSeconds": 0.0005531700000000001
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 245,
+          "function": "_randbelow_with_getrandbits",
+          "primitiveCalls": 1501,
+          "totalCalls": 1501,
+          "selfSeconds": 0.00036254500000000003,
+          "cumulativeSeconds": 0.0005494040000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'append' of 'list' objects>",
+          "primitiveCalls": 7093,
+          "totalCalls": 7093,
+          "selfSeconds": 0.0004908040000000001,
+          "cumulativeSeconds": 0.0004908040000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/lib/_shape_base_impl.py",
+          "line": 607,
+          "function": "column_stack",
+          "primitiveCalls": 187,
+          "totalCalls": 187,
+          "selfSeconds": 0.000340557,
+          "cumulativeSeconds": 0.000476089
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.hypot>",
+          "primitiveCalls": 7011,
+          "totalCalls": 7011,
+          "selfSeconds": 0.000462903,
+          "cumulativeSeconds": 0.000462903
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 61,
+          "function": "<genexpr>",
+          "primitiveCalls": 9836,
+          "totalCalls": 9836,
+          "selfSeconds": 0.000442203,
+          "cumulativeSeconds": 0.000442203
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 205,
+          "function": "<genexpr>",
+          "primitiveCalls": 2823,
+          "totalCalls": 2823,
+          "selfSeconds": 0.000407075,
+          "cumulativeSeconds": 0.000407075
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.min>",
+          "primitiveCalls": 4692,
+          "totalCalls": 4692,
+          "selfSeconds": 0.00032239400000000004,
+          "cumulativeSeconds": 0.00040064800000000003
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 3187,
+          "function": "min",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 5.1339000000000004e-05,
+          "cumulativeSeconds": 0.00039281
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.max>",
+          "primitiveCalls": 6063,
+          "totalCalls": 6063,
+          "selfSeconds": 0.000391963,
+          "cumulativeSeconds": 0.000391963
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/enum.py",
+          "line": 200,
+          "function": "__get__",
+          "primitiveCalls": 2332,
+          "totalCalls": 2332,
+          "selfSeconds": 0.00026706200000000004,
+          "cumulativeSeconds": 0.00038924200000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/numeric.py",
+          "line": 97,
+          "function": "zeros_like",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 0.000304041,
+          "cumulativeSeconds": 0.00036191900000000004
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.len>",
+          "primitiveCalls": 5343,
+          "totalCalls": 5343,
+          "selfSeconds": 0.000311134,
+          "cumulativeSeconds": 0.00032880100000000004
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.abs>",
+          "primitiveCalls": 7787,
+          "totalCalls": 7787,
+          "selfSeconds": 0.00031712300000000005,
+          "cumulativeSeconds": 0.00031712300000000005
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 178,
+          "function": "_area_total",
+          "primitiveCalls": 56,
+          "totalCalls": 56,
+          "selfSeconds": 2.5789000000000003e-05,
+          "cumulativeSeconds": 0.00031324600000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 2474,
+          "function": "any",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 4.7495000000000005e-05,
+          "cumulativeSeconds": 0.000304499
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 420,
+          "function": "validate_circulation_connectivity",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.00016481900000000002,
+          "cumulativeSeconds": 0.000292125
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 32,
+          "function": "key",
+          "primitiveCalls": 831,
+          "totalCalls": 831,
+          "selfSeconds": 0.00020388600000000002,
+          "cumulativeSeconds": 0.00028943800000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/linear.py",
+          "line": 130,
+          "function": "forward",
+          "primitiveCalls": 36,
+          "totalCalls": 36,
+          "selfSeconds": 1.8708e-05,
+          "cumulativeSeconds": 0.00027175
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 502,
+          "function": "_min_distance_to_boundary",
+          "primitiveCalls": 44,
+          "totalCalls": 44,
+          "selfSeconds": 0.00019335600000000002,
+          "cumulativeSeconds": 0.00027104200000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/activation.py",
+          "line": 471,
+          "function": "forward",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 8.833e-06,
+          "cumulativeSeconds": 0.000270497
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/functional.py",
+          "line": 2423,
+          "function": "silu",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 1.2952e-05,
+          "cumulativeSeconds": 0.000261664
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 86,
+          "function": "_wrapreduction_any_all",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 7.3921e-05,
+          "cumulativeSeconds": 0.000257004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 91,
+          "function": "<genexpr>",
+          "primitiveCalls": 3058,
+          "totalCalls": 3058,
+          "selfSeconds": 0.00024794000000000004,
+          "cumulativeSeconds": 0.00024794000000000004
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._nn.silu>",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 0.000245711,
+          "cumulativeSeconds": 0.000245711
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._nn.linear>",
+          "primitiveCalls": 36,
+          "totalCalls": 36,
+          "selfSeconds": 0.00024141800000000003,
+          "cumulativeSeconds": 0.00024141800000000003
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6660,
+          "function": "<genexpr>",
+          "primitiveCalls": 1085,
+          "totalCalls": 1085,
+          "selfSeconds": 0.000195829,
+          "cumulativeSeconds": 0.000240484
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 179,
+          "function": "<genexpr>",
+          "primitiveCalls": 896,
+          "totalCalls": 896,
+          "selfSeconds": 0.00014997300000000002,
+          "cumulativeSeconds": 0.000206877
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'index_add_' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 16,
+          "totalCalls": 16,
+          "selfSeconds": 0.00018671,
+          "cumulativeSeconds": 0.00018671
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 498,
+          "function": "uniform",
+          "primitiveCalls": 888,
+          "totalCalls": 888,
+          "selfSeconds": 0.000126709,
+          "cumulativeSeconds": 0.000183861
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 81,
+          "function": "<genexpr>",
+          "primitiveCalls": 705,
+          "totalCalls": 705,
+          "selfSeconds": 0.000181902,
+          "cumulativeSeconds": 0.000181902
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.isinstance>",
+          "primitiveCalls": 3086,
+          "totalCalls": 3086,
+          "selfSeconds": 0.00017921700000000002,
+          "cumulativeSeconds": 0.00018163400000000002
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.floor>",
+          "primitiveCalls": 3132,
+          "totalCalls": 3132,
+          "selfSeconds": 0.00016422500000000002,
+          "cumulativeSeconds": 0.00016422500000000002
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 220,
+          "function": "<genexpr>",
+          "primitiveCalls": 375,
+          "totalCalls": 375,
+          "selfSeconds": 8.9981e-05,
+          "cumulativeSeconds": 0.00014041700000000002
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 194,
+          "function": "<genexpr>",
+          "primitiveCalls": 1276,
+          "totalCalls": 1276,
+          "selfSeconds": 0.000136241,
+          "cumulativeSeconds": 0.000136241
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 273,
+          "function": "commit",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 7.2088e-05,
+          "cumulativeSeconds": 0.00013433300000000002
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'items' of 'dict' objects>",
+          "primitiveCalls": 1295,
+          "totalCalls": 1295,
+          "selfSeconds": 0.000133058,
+          "cumulativeSeconds": 0.000133058
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/enum.py",
+          "line": 1339,
+          "function": "value",
+          "primitiveCalls": 2332,
+          "totalCalls": 2332,
+          "selfSeconds": 0.00012218,
+          "cumulativeSeconds": 0.00012218
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 117,
+          "function": "origin",
+          "primitiveCalls": 1527,
+          "totalCalls": 1527,
+          "selfSeconds": 0.00012123400000000001,
+          "cumulativeSeconds": 0.00012123400000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 386,
+          "function": "get_neighbors",
+          "primitiveCalls": 196,
+          "totalCalls": 196,
+          "selfSeconds": 0.000100463,
+          "cumulativeSeconds": 0.000117208
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 56,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.0375e-05,
+          "cumulativeSeconds": 0.000116458
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 58,
+          "function": "pos3d",
+          "primitiveCalls": 2216,
+          "totalCalls": 2216,
+          "selfSeconds": 0.00011534400000000001,
+          "cumulativeSeconds": 0.00011534400000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.cat>",
+          "primitiveCalls": 20,
+          "totalCalls": 20,
+          "selfSeconds": 0.00011445800000000001,
+          "cumulativeSeconds": 0.00011445800000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/lib/_shape_base_impl.py",
+          "line": 603,
+          "function": "_column_stack_dispatcher",
+          "primitiveCalls": 187,
+          "totalCalls": 187,
+          "selfSeconds": 3.8551000000000004e-05,
+          "cumulativeSeconds": 0.00011242500000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 133,
+          "function": "__init__",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.7100000000000003e-06,
+          "cumulativeSeconds": 0.00011158400000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 331,
+          "function": "view",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 4.0127000000000004e-05,
+          "cumulativeSeconds": 0.00010833300000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 151,
+          "function": "log_prob",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.6084e-05,
+          "cumulativeSeconds": 0.00010300000000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'getrandbits' of '_random.Random' objects>",
+          "primitiveCalls": 2324,
+          "totalCalls": 2324,
+          "selfSeconds": 0.00010011500000000001,
+          "cumulativeSeconds": 0.00010011500000000001
+        },
+        {
+          "file": "<string>",
+          "line": 26,
+          "function": "__hash__",
+          "primitiveCalls": 247,
+          "totalCalls": 247,
+          "selfSeconds": 6.968500000000001e-05,
+          "cumulativeSeconds": 9.7769e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.dist>",
+          "primitiveCalls": 1328,
+          "totalCalls": 1328,
+          "selfSeconds": 9.6519e-05,
+          "cumulativeSeconds": 9.6519e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'extend' of 'list' objects>",
+          "primitiveCalls": 255,
+          "totalCalls": 255,
+          "selfSeconds": 7.3823e-05,
+          "cumulativeSeconds": 9.496000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 207,
+          "function": "<genexpr>",
+          "primitiveCalls": 163,
+          "totalCalls": 163,
+          "selfSeconds": 3.8326000000000005e-05,
+          "cumulativeSeconds": 9.3873e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'bit_length' of 'int' objects>",
+          "primitiveCalls": 1501,
+          "totalCalls": 1501,
+          "selfSeconds": 8.674400000000001e-05,
+          "cumulativeSeconds": 8.674400000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 208,
+          "function": "<genexpr>",
+          "primitiveCalls": 159,
+          "totalCalls": 159,
+          "selfSeconds": 3.3674e-05,
+          "cumulativeSeconds": 8.1291e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'values' of 'dict' objects>",
+          "primitiveCalls": 820,
+          "totalCalls": 820,
+          "selfSeconds": 8.0648e-05,
+          "cumulativeSeconds": 8.0648e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6668,
+          "function": "<genexpr>",
+          "primitiveCalls": 88,
+          "totalCalls": 88,
+          "selfSeconds": 7.4091e-05,
+          "cumulativeSeconds": 7.8254e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/shape_base.py",
+          "line": 206,
+          "function": "_arrays_for_stack_dispatcher",
+          "primitiveCalls": 187,
+          "totalCalls": 187,
+          "selfSeconds": 4.6297e-05,
+          "cumulativeSeconds": 7.3874e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5331,
+          "function": "_aggregate_terminal",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.5162e-05,
+          "cumulativeSeconds": 7.1291e-05
+        },
+        {
+          "file": "<string>",
+          "line": 2,
+          "function": "__init__",
+          "primitiveCalls": 67,
+          "totalCalls": 67,
+          "selfSeconds": 7.1165e-05,
+          "cumulativeSeconds": 7.1165e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/distribution.py",
+          "line": 46,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.6833e-05,
+          "cumulativeSeconds": 6.1833e-05
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 119,
+          "function": "__init__",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 3.917e-06,
+          "cumulativeSeconds": 6.025e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'random' of '_random.Random' objects>",
+          "primitiveCalls": 888,
+          "totalCalls": 888,
+          "selfSeconds": 5.7152000000000004e-05,
+          "cumulativeSeconds": 5.7152000000000004e-05
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 128,
+          "function": "seed",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.2291000000000001e-05,
+          "cumulativeSeconds": 5.6333000000000004e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method numpy.array>",
+          "primitiveCalls": 374,
+          "totalCalls": 374,
+          "selfSeconds": 5.6286e-05,
+          "cumulativeSeconds": 5.6286e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 237,
+          "function": "<genexpr>",
+          "primitiveCalls": 424,
+          "totalCalls": 424,
+          "selfSeconds": 4.1714e-05,
+          "cumulativeSeconds": 5.6107e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/distribution.py",
+          "line": 280,
+          "function": "_validate_sample",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.3621e-05,
+          "cumulativeSeconds": 5.254e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 395,
+          "function": "star_graph_offsets",
+          "primitiveCalls": 37,
+          "totalCalls": 37,
+          "selfSeconds": 2.0787000000000003e-05,
+          "cumulativeSeconds": 5.1914000000000005e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 90,
+          "function": "<genexpr>",
+          "primitiveCalls": 506,
+          "totalCalls": 506,
+          "selfSeconds": 4.8296e-05,
+          "cumulativeSeconds": 4.8296e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 261,
+          "function": "<genexpr>",
+          "primitiveCalls": 896,
+          "totalCalls": 896,
+          "selfSeconds": 4.7274e-05,
+          "cumulativeSeconds": 4.7274e-05
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/collections/__init__.py",
+          "line": 599,
+          "function": "__init__",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.375e-06,
+          "cumulativeSeconds": 4.6125e-05
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/collections/__init__.py",
+          "line": 673,
+          "function": "update",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.666e-06,
+          "cumulativeSeconds": 4.375e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<function Random.seed at 0x105f1c9a0>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 4.1668e-05,
+          "cumulativeSeconds": 4.1668e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method _collections._count_elements>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 8.876000000000001e-06,
+          "cumulativeSeconds": 3.8792000000000004e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 209,
+          "function": "<genexpr>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.4255000000000002e-05,
+          "cumulativeSeconds": 3.6499000000000004e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.multinomial>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.625e-05,
+          "cumulativeSeconds": 3.625e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/utils.py",
+          "line": 165,
+          "function": "__get__",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.1046e-05,
+          "cumulativeSeconds": 3.5877e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 3044,
+          "function": "_max_dispatcher",
+          "primitiveCalls": 472,
+          "totalCalls": 472,
+          "selfSeconds": 3.5592e-05,
+          "cumulativeSeconds": 3.5592e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.atan2>",
+          "primitiveCalls": 373,
+          "totalCalls": 373,
+          "selfSeconds": 3.3138e-05,
+          "cumulativeSeconds": 3.3138e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 406,
+          "function": "where",
+          "primitiveCalls": 399,
+          "totalCalls": 399,
+          "selfSeconds": 3.2418e-05,
+          "cumulativeSeconds": 3.2418e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'logsumexp' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.1916000000000004e-05,
+          "cumulativeSeconds": 3.1916000000000004e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.fsum>",
+          "primitiveCalls": 25,
+          "totalCalls": 25,
+          "selfSeconds": 1.6835e-05,
+          "cumulativeSeconds": 3.0459e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method numpy.zeros>",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 3.0336000000000002e-05,
+          "cumulativeSeconds": 3.0336000000000002e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1116,
+          "function": "_public_module",
+          "primitiveCalls": 15,
+          "totalCalls": 15,
+          "selfSeconds": 1.8920000000000002e-05,
+          "cumulativeSeconds": 3.0002000000000002e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 338,
+          "function": "<genexpr>",
+          "primitiveCalls": 106,
+          "totalCalls": 106,
+          "selfSeconds": 1.5040000000000002e-05,
+          "cumulativeSeconds": 2.9916000000000003e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.hasattr>",
+          "primitiveCalls": 190,
+          "totalCalls": 190,
+          "selfSeconds": 2.8453e-05,
+          "cumulativeSeconds": 2.8453e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.hash>",
+          "primitiveCalls": 247,
+          "totalCalls": 247,
+          "selfSeconds": 2.8084e-05,
+          "cumulativeSeconds": 2.8084e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 159,
+          "function": "entropy",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.5417e-05,
+          "cumulativeSeconds": 2.7793000000000003e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method numpy.asanyarray>",
+          "primitiveCalls": 374,
+          "totalCalls": 374,
+          "selfSeconds": 2.778e-05,
+          "cumulativeSeconds": 2.778e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 263,
+          "function": "check",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 9.166e-06,
+          "cumulativeSeconds": 2.7708000000000003e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 366,
+          "function": "check",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.7083e-05,
+          "cumulativeSeconds": 2.7083e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/_tensor.py",
+          "line": 1195,
+          "function": "__iter__",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 7.748000000000001e-06,
+          "cumulativeSeconds": 2.6584e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6673,
+          "function": "<genexpr>",
+          "primitiveCalls": 220,
+          "totalCalls": 220,
+          "selfSeconds": 2.5741000000000003e-05,
+          "cumulativeSeconds": 2.5741000000000003e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py",
+          "line": 1954,
+          "function": "__getattr__",
+          "primitiveCalls": 100,
+          "totalCalls": 100,
+          "selfSeconds": 2.3959000000000002e-05,
+          "cumulativeSeconds": 2.3959000000000002e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'mean' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.2917e-05,
+          "cumulativeSeconds": 2.2917e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_policy.py",
+          "line": 62,
+          "function": "<genexpr>",
+          "primitiveCalls": 630,
+          "totalCalls": 630,
+          "selfSeconds": 2.1645e-05,
+          "cumulativeSeconds": 2.1645e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 232,
+          "function": "<genexpr>",
+          "primitiveCalls": 317,
+          "totalCalls": 317,
+          "selfSeconds": 2.1137e-05,
+          "cumulativeSeconds": 2.1137e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._get_tracing_state>",
+          "primitiveCalls": 116,
+          "totalCalls": 116,
+          "selfSeconds": 1.8715e-05,
+          "cumulativeSeconds": 1.8715e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'conj' of 'numpy.ndarray' objects>",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 1.8663e-05,
+          "cumulativeSeconds": 1.8663e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/container.py",
+          "line": 240,
+          "function": "__iter__",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 1.2369000000000001e-05,
+          "cumulativeSeconds": 1.8582000000000003e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'setdefault' of 'dict' objects>",
+          "primitiveCalls": 164,
+          "totalCalls": 164,
+          "selfSeconds": 1.8243e-05,
+          "cumulativeSeconds": 1.8243e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/_tensor.py",
+          "line": 1179,
+          "function": "__len__",
+          "primitiveCalls": 12,
+          "totalCalls": 12,
+          "selfSeconds": 1.1707e-05,
+          "cumulativeSeconds": 1.7667000000000002e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'reshape' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 12,
+          "totalCalls": 12,
+          "selfSeconds": 1.7376e-05,
+          "cumulativeSeconds": 1.7376e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/functional.py",
+          "line": 47,
+          "function": "broadcast_tensors",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 9.333e-06,
+          "cumulativeSeconds": 1.6625e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 157,
+          "function": "add_edge",
+          "primitiveCalls": 9,
+          "totalCalls": 9,
+          "selfSeconds": 1.1456e-05,
+          "cumulativeSeconds": 1.6083000000000002e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.zeros>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.5333e-05,
+          "cumulativeSeconds": 1.5333e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'unbind' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.5251e-05,
+          "cumulativeSeconds": 1.5251e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 1088,
+          "function": "copyto",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 1.4876000000000001e-05,
+          "cumulativeSeconds": 1.4876000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 85,
+          "function": "add_node",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.0376e-05,
+          "cumulativeSeconds": 1.4792000000000002e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 197,
+          "function": "concatenate",
+          "primitiveCalls": 187,
+          "totalCalls": 187,
+          "selfSeconds": 1.4704e-05,
+          "cumulativeSeconds": 1.4704e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'squeeze' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 12,
+          "totalCalls": 12,
+          "selfSeconds": 1.3999000000000001e-05,
+          "cumulativeSeconds": 1.3999000000000001e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.zeros_like>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.3833000000000001e-05,
+          "cumulativeSeconds": 1.3833000000000001e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'pop' of 'list' objects>",
+          "primitiveCalls": 159,
+          "totalCalls": 159,
+          "selfSeconds": 1.359e-05,
+          "cumulativeSeconds": 1.359e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 114,
+          "function": "probs",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.498e-06,
+          "cumulativeSeconds": 1.3124e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.issubclass>",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 1.2834000000000001e-05,
+          "cumulativeSeconds": 1.2834000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/numeric.py",
+          "line": 91,
+          "function": "_zeros_like_dispatcher",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 1.2756000000000001e-05,
+          "cumulativeSeconds": 1.2756000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 115,
+          "function": "empty_like",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 1.2666e-05,
+          "cumulativeSeconds": 1.2666e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/utils.py",
+          "line": 90,
+          "function": "logits_to_probs",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.793e-06,
+          "cumulativeSeconds": 1.1626e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py",
+          "line": 2594,
+          "function": "_norm_dispatcher",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 1.1134e-05,
+          "cumulativeSeconds": 1.1134e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.getattr>",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 6.2470000000000005e-06,
+          "cumulativeSeconds": 1.0789000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 2469,
+          "function": "_any_dispatcher",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 1.0135e-05,
+          "cumulativeSeconds": 1.0135e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/functional.py",
+          "line": 2170,
+          "function": "softmax",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.25e-06,
+          "cumulativeSeconds": 9.833e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._is_all_true>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 9.167e-06,
+          "cumulativeSeconds": 9.167e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 3182,
+          "function": "_min_dispatcher",
+          "primitiveCalls": 133,
+          "totalCalls": 133,
+          "selfSeconds": 9.124000000000001e-06,
+          "cumulativeSeconds": 9.124000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'clamp_min' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 9.124000000000001e-06,
+          "cumulativeSeconds": 9.124000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'disable' of '_lsprof.Profiler' objects>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 8.958000000000001e-06,
+          "cumulativeSeconds": 8.958000000000001e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5189,
+          "function": "_runtime_diagnostics",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 5.459000000000001e-06,
+          "cumulativeSeconds": 8.25e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.ones_like>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 7.915000000000001e-06,
+          "cumulativeSeconds": 7.915000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'gather' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 7.791e-06,
+          "cumulativeSeconds": 7.791e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_sampler.py",
+          "line": 57,
+          "function": "<lambda>",
+          "primitiveCalls": 155,
+          "totalCalls": 155,
+          "selfSeconds": 7.744e-06,
+          "cumulativeSeconds": 7.744e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'softmax' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 7.417e-06,
+          "cumulativeSeconds": 7.417e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'expand' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 6.999e-06,
+          "cumulativeSeconds": 6.999e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.clamp>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 6.791000000000001e-06,
+          "cumulativeSeconds": 6.791000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'sum' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 5.585000000000001e-06,
+          "cumulativeSeconds": 5.585000000000001e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1074,
+          "function": "_std",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.543e-06,
+          "cumulativeSeconds": 5.584e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'all' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 5.541e-06,
+          "cumulativeSeconds": 5.541e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'dim' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 32,
+          "totalCalls": 32,
+          "selfSeconds": 5.29e-06,
+          "cumulativeSeconds": 5.29e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 185,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.4150000000000003e-06,
+          "cumulativeSeconds": 5.124e-06
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/enum.py",
+          "line": 696,
+          "function": "__call__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.542e-06,
+          "cumulativeSeconds": 4.707e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/utils/_contextlib.py",
+          "line": 167,
+          "function": "__new__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.6240000000000004e-06,
+          "cumulativeSeconds": 4.582e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.broadcast_tensors>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 4.542e-06,
+          "cumulativeSeconds": 4.542e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 424,
+          "function": "check",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 4.541e-06,
+          "cumulativeSeconds": 4.541e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 105,
+          "function": "support",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.251e-06,
+          "cumulativeSeconds": 4.3750000000000005e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1056,
+          "function": "_mean",
+          "primitiveCalls": 9,
+          "totalCalls": 9,
+          "selfSeconds": 2.3770000000000003e-06,
+          "cumulativeSeconds": 4.374e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.iter>",
+          "primitiveCalls": 36,
+          "totalCalls": 36,
+          "selfSeconds": 4.255e-06,
+          "cumulativeSeconds": 4.255e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'unsqueeze' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 4.1270000000000005e-06,
+          "cumulativeSeconds": 4.1270000000000005e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._has_torch_function_unary>",
+          "primitiveCalls": 44,
+          "totalCalls": 44,
+          "selfSeconds": 4.126e-06,
+          "cumulativeSeconds": 4.126e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 751,
+          "function": "dot",
+          "primitiveCalls": 54,
+          "totalCalls": 54,
+          "selfSeconds": 4.007e-06,
+          "cumulativeSeconds": 4.007e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 156,
+          "function": "is_dependent",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.5020000000000002e-06,
+          "cumulativeSeconds": 3.6670000000000002e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 212,
+          "function": "<genexpr>",
+          "primitiveCalls": 64,
+          "totalCalls": 64,
+          "selfSeconds": 3.547e-06,
+          "cumulativeSeconds": 3.547e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'size' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 16,
+          "totalCalls": 16,
+          "selfSeconds": 3.5430000000000002e-06,
+          "cumulativeSeconds": 3.5430000000000002e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 218,
+          "function": "<genexpr>",
+          "primitiveCalls": 64,
+          "totalCalls": 64,
+          "selfSeconds": 3.542e-06,
+          "cumulativeSeconds": 3.542e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._set_grad_enabled>",
+          "primitiveCalls": 20,
+          "totalCalls": 20,
+          "selfSeconds": 3.2500000000000002e-06,
+          "cumulativeSeconds": 3.2500000000000002e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 4825,
+          "function": "_core_stacking_event",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.7090000000000002e-06,
+          "cumulativeSeconds": 2.8330000000000002e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 3475,
+          "function": "summary",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.292e-06,
+          "cumulativeSeconds": 2.792e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 136,
+          "function": "__enter__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.376e-06,
+          "cumulativeSeconds": 2.6250000000000003e-06
+        },
+        {
+          "file": "<frozen abc>",
+          "line": 117,
+          "function": "__instancecheck__",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.292e-06,
+          "cumulativeSeconds": 2.4170000000000003e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/utils.py",
+          "line": 183,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.4160000000000002e-06,
+          "cumulativeSeconds": 2.4160000000000002e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'long' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.334e-06,
+          "cumulativeSeconds": 2.334e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'detach' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.333e-06,
+          "cumulativeSeconds": 2.333e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/_VF.py",
+          "line": 27,
+          "function": "__getattr__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.4590000000000001e-06,
+          "cumulativeSeconds": 2.2080000000000003e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 361,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.1240000000000003e-06,
+          "cumulativeSeconds": 2.1240000000000003e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'numel' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.711e-06,
+          "cumulativeSeconds": 1.711e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 194,
+          "function": "__enter__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.043e-06,
+          "cumulativeSeconds": 1.667e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 197,
+          "function": "__exit__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.001e-06,
+          "cumulativeSeconds": 1.6260000000000002e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'update' of 'dict' objects>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 1.6250000000000001e-06,
+          "cumulativeSeconds": 1.6250000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'cpu' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.5830000000000001e-06,
+          "cumulativeSeconds": 1.5830000000000001e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1081,
+          "function": "_safe_ratio",
+          "primitiveCalls": 15,
+          "totalCalls": 15,
+          "selfSeconds": 1.5440000000000002e-06,
+          "cumulativeSeconds": 1.5440000000000002e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1078,
+          "function": "<genexpr>",
+          "primitiveCalls": 16,
+          "totalCalls": 16,
+          "selfSeconds": 1.458e-06,
+          "cumulativeSeconds": 1.458e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1098,
+          "function": "_clamp",
+          "primitiveCalls": 3,
+          "totalCalls": 3,
+          "selfSeconds": 9.160000000000001e-07,
+          "cumulativeSeconds": 1.458e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method resource.getrusage>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.416e-06,
+          "cumulativeSeconds": 1.416e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.is_grad_enabled>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.416e-06,
+          "cumulativeSeconds": 1.416e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 140,
+          "function": "__exit__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 9.160000000000001e-07,
+          "cumulativeSeconds": 1.3750000000000002e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5404,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 9.15e-07,
+          "cumulativeSeconds": 1.374e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5413,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 9.15e-07,
+          "cumulativeSeconds": 1.2080000000000001e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5419,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 7.91e-07,
+          "cumulativeSeconds": 1.167e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5340,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 8.32e-07,
+          "cumulativeSeconds": 1.165e-06
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/enum.py",
+          "line": 1158,
+          "function": "__new__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.165e-06,
+          "cumulativeSeconds": 1.165e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method _abc._abc_instancecheck>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.125e-06,
+          "cumulativeSeconds": 1.125e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6966,
+          "function": "<genexpr>",
+          "primitiveCalls": 2,
+          "totalCalls": 2,
+          "selfSeconds": 1.041e-06,
+          "cumulativeSeconds": 1.041e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5415,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.26e-07,
+          "cumulativeSeconds": 9.59e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5425,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 7.09e-07,
+          "cumulativeSeconds": 9.59e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method __new__ of type object at 0x101723cf0>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 9.58e-07,
+          "cumulativeSeconds": 9.58e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5374,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 7.09e-07,
+          "cumulativeSeconds": 8.760000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5370,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 8.750000000000001e-07,
+          "cumulativeSeconds": 8.750000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5337,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 7.92e-07,
+          "cumulativeSeconds": 7.92e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 3472,
+          "function": "record",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 4.1700000000000004e-07,
+          "cumulativeSeconds": 7.5e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.setattr>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 7.09e-07,
+          "cumulativeSeconds": 7.09e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5357,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 7.08e-07,
+          "cumulativeSeconds": 7.08e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5346,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.67e-07,
+          "cumulativeSeconds": 6.67e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5361,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.67e-07,
+          "cumulativeSeconds": 6.67e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5350,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.25e-07,
+          "cumulativeSeconds": 6.25e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5365,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.25e-07,
+          "cumulativeSeconds": 6.25e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5338,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 5.84e-07,
+          "cumulativeSeconds": 5.84e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5341,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 5.830000000000001e-07,
+          "cumulativeSeconds": 5.830000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/shared_modules.py",
+          "line": 64,
+          "function": "__post_init__",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 5.830000000000001e-07,
+          "cumulativeSeconds": 5.830000000000001e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'ndimension' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 5.420000000000001e-07,
+          "cumulativeSeconds": 5.420000000000001e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._has_torch_function>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 5.420000000000001e-07,
+          "cumulativeSeconds": 5.420000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5339,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 5.000000000000001e-07,
+          "cumulativeSeconds": 5.000000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/geometry.py",
+          "line": 189,
+          "function": "native_geometry_status",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 5.000000000000001e-07,
+          "cumulativeSeconds": 5.000000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5342,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 4.99e-07,
+          "cumulativeSeconds": 4.99e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method time.perf_counter>",
+          "primitiveCalls": 3,
+          "totalCalls": 3,
+          "selfSeconds": 3.3300000000000003e-07,
+          "cumulativeSeconds": 3.3300000000000003e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.get_num_threads>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.5000000000000004e-07,
+          "cumulativeSeconds": 2.5000000000000004e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.sqrt>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 8.400000000000001e-08,
+          "cumulativeSeconds": 8.400000000000001e-08
+        }
+      ]
+    },
+    {
+      "tier": "XL",
+      "settings": {
+        "generatorEngine": "graph_voronoi",
+        "graphController": "neural",
+        "boundaryType": "rect",
+        "siteAreaTier": "XL",
+        "parallelEnvironments": 4,
+        "maxModules": 120,
+        "seed": 123
+      },
+      "nodesBefore": 173,
+      "nodesAfter": 177,
+      "profiledWallSeconds": 0.06356879200029653,
+      "profileTotalSeconds": 0.06340856900000003,
+      "functions": [
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6945,
+          "function": "step",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 3.6874e-05,
+          "cumulativeSeconds": 0.063437625
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6600,
+          "function": "_step_graph_voronoi",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 0.0015949850000000002,
+          "cumulativeSeconds": 0.063398375
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 201,
+          "function": "probe",
+          "primitiveCalls": 282,
+          "totalCalls": 282,
+          "selfSeconds": 0.004101773,
+          "cumulativeSeconds": 0.043160503
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 94,
+          "function": "shape_with",
+          "primitiveCalls": 737,
+          "totalCalls": 737,
+          "selfSeconds": 0.0017612010000000002,
+          "cumulativeSeconds": 0.022668802000000002
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 52,
+          "function": "make_shape",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 0.009303428,
+          "cumulativeSeconds": 0.017808249
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 23,
+          "function": "displacement_plane",
+          "primitiveCalls": 3988,
+          "totalCalls": 3988,
+          "selfSeconds": 0.0015689200000000001,
+          "cumulativeSeconds": 0.009273459000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 20,
+          "function": "plane_key",
+          "primitiveCalls": 4978,
+          "totalCalls": 4978,
+          "selfSeconds": 0.0021275770000000003,
+          "cumulativeSeconds": 0.007594436
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_policy.py",
+          "line": 114,
+          "function": "choose",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.00018341900000000001,
+          "cumulativeSeconds": 0.005505335
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 20,
+          "function": "<genexpr>",
+          "primitiveCalls": 19912,
+          "totalCalls": 19912,
+          "selfSeconds": 0.002094252,
+          "cumulativeSeconds": 0.005466859
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.round>",
+          "primitiveCalls": 22859,
+          "totalCalls": 22859,
+          "selfSeconds": 0.004954497,
+          "cumulativeSeconds": 0.004954497
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.any>",
+          "primitiveCalls": 2119,
+          "totalCalls": 2119,
+          "selfSeconds": 0.001594757,
+          "cumulativeSeconds": 0.004641663
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 34,
+          "function": "near",
+          "primitiveCalls": 919,
+          "totalCalls": 919,
+          "selfSeconds": 0.00283685,
+          "cumulativeSeconds": 0.0038498990000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 181,
+          "function": "frontier_candidates",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.0007088540000000001,
+          "cumulativeSeconds": 0.0038229580000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_sampler.py",
+          "line": 29,
+          "function": "generate_candidates",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.001125731,
+          "cumulativeSeconds": 0.0036427490000000002
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_policy.py",
+          "line": 60,
+          "function": "encode_graph",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.001733677,
+          "cumulativeSeconds": 0.003512083
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.all>",
+          "primitiveCalls": 603,
+          "totalCalls": 603,
+          "selfSeconds": 0.00015750100000000002,
+          "cumulativeSeconds": 0.0028969380000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6661,
+          "function": "<genexpr>",
+          "primitiveCalls": 1042,
+          "totalCalls": 1042,
+          "selfSeconds": 0.000232567,
+          "cumulativeSeconds": 0.002744687
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 14,
+          "function": "origin_fits",
+          "primitiveCalls": 722,
+          "totalCalls": 722,
+          "selfSeconds": 0.000704767,
+          "cumulativeSeconds": 0.00251212
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 159,
+          "function": "contact",
+          "primitiveCalls": 375,
+          "totalCalls": 375,
+          "selfSeconds": 0.000189506,
+          "cumulativeSeconds": 0.002231256
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_sampler.py",
+          "line": 169,
+          "function": "_point_inside_polygon",
+          "primitiveCalls": 978,
+          "totalCalls": 978,
+          "selfSeconds": 0.001679996,
+          "cumulativeSeconds": 0.002220852
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 155,
+          "function": "_interval",
+          "primitiveCalls": 750,
+          "totalCalls": 750,
+          "selfSeconds": 0.000215942,
+          "cumulativeSeconds": 0.001996977
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 42,
+          "function": "support",
+          "primitiveCalls": 1015,
+          "totalCalls": 1015,
+          "selfSeconds": 0.0013036570000000002,
+          "cumulativeSeconds": 0.0019282190000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 15,
+          "function": "rotate",
+          "primitiveCalls": 5316,
+          "totalCalls": 5316,
+          "selfSeconds": 0.0011661900000000001,
+          "cumulativeSeconds": 0.00178629
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'get' of 'dict' objects>",
+          "primitiveCalls": 19692,
+          "totalCalls": 19692,
+          "selfSeconds": 0.001579047,
+          "cumulativeSeconds": 0.001579047
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py",
+          "line": 1774,
+          "function": "_wrapped_call_impl",
+          "primitiveCalls": 4,
+          "totalCalls": 96,
+          "selfSeconds": 4.4418e-05,
+          "cumulativeSeconds": 0.0014594170000000002
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py",
+          "line": 1782,
+          "function": "_call_impl",
+          "primitiveCalls": 4,
+          "totalCalls": 96,
+          "selfSeconds": 7.317200000000001e-05,
+          "cumulativeSeconds": 0.001453834
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_policy.py",
+          "line": 35,
+          "function": "forward",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.000185164,
+          "cumulativeSeconds": 0.001441626
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.cos>",
+          "primitiveCalls": 21584,
+          "totalCalls": 21584,
+          "selfSeconds": 0.0011560350000000001,
+          "cumulativeSeconds": 0.0011560350000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method numpy.asarray>",
+          "primitiveCalls": 586,
+          "totalCalls": 586,
+          "selfSeconds": 0.001100541,
+          "cumulativeSeconds": 0.001100541
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 66,
+          "function": "_wrapreduction",
+          "primitiveCalls": 586,
+          "totalCalls": 586,
+          "selfSeconds": 0.00037526700000000004,
+          "cumulativeSeconds": 0.001054721
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.sorted>",
+          "primitiveCalls": 1016,
+          "totalCalls": 1016,
+          "selfSeconds": 0.00084557,
+          "cumulativeSeconds": 0.001002854
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 164,
+          "function": "_preserves_edges",
+          "primitiveCalls": 46,
+          "totalCalls": 46,
+          "selfSeconds": 0.000157935,
+          "cumulativeSeconds": 0.0009801270000000001
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 354,
+          "function": "shuffle",
+          "primitiveCalls": 60,
+          "totalCalls": 60,
+          "selfSeconds": 0.00021433400000000003,
+          "cumulativeSeconds": 0.000933704
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 3049,
+          "function": "max",
+          "primitiveCalls": 462,
+          "totalCalls": 462,
+          "selfSeconds": 0.000194832,
+          "cumulativeSeconds": 0.0009297960000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+          "primitiveCalls": 834,
+          "totalCalls": 834,
+          "selfSeconds": 0.0009218970000000001,
+          "cumulativeSeconds": 0.0009218970000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.sum>",
+          "primitiveCalls": 169,
+          "totalCalls": 169,
+          "selfSeconds": 0.000278067,
+          "cumulativeSeconds": 0.000856616
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.sin>",
+          "primitiveCalls": 13648,
+          "totalCalls": 13648,
+          "selfSeconds": 0.0007839870000000001,
+          "cumulativeSeconds": 0.0007839870000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_sampler.py",
+          "line": 73,
+          "function": "<genexpr>",
+          "primitiveCalls": 1202,
+          "totalCalls": 1202,
+          "selfSeconds": 0.0005331310000000001,
+          "cumulativeSeconds": 0.000780837
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/container.py",
+          "line": 248,
+          "function": "forward",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 2.3575e-05,
+          "cumulativeSeconds": 0.0007480400000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 205,
+          "function": "metrics",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 5.6202e-05,
+          "cumulativeSeconds": 0.0007479580000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 11,
+          "function": "root_id",
+          "primitiveCalls": 3610,
+          "totalCalls": 3610,
+          "selfSeconds": 0.000473772,
+          "cumulativeSeconds": 0.000735242
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 245,
+          "function": "_randbelow_with_getrandbits",
+          "primitiveCalls": 1982,
+          "totalCalls": 1982,
+          "selfSeconds": 0.00046933,
+          "cumulativeSeconds": 0.0007155810000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'add' of 'set' objects>",
+          "primitiveCalls": 6762,
+          "totalCalls": 6762,
+          "selfSeconds": 0.000704961,
+          "cumulativeSeconds": 0.000704961
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 102,
+          "function": "<genexpr>",
+          "primitiveCalls": 3085,
+          "totalCalls": 3085,
+          "selfSeconds": 0.0006628760000000001,
+          "cumulativeSeconds": 0.0006628760000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.tensor>",
+          "primitiveCalls": 24,
+          "totalCalls": 24,
+          "selfSeconds": 0.0006556660000000001,
+          "cumulativeSeconds": 0.0006556660000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py",
+          "line": 2598,
+          "function": "norm",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 0.000397878,
+          "cumulativeSeconds": 0.0006064600000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'append' of 'list' objects>",
+          "primitiveCalls": 8111,
+          "totalCalls": 8111,
+          "selfSeconds": 0.0005392670000000001,
+          "cumulativeSeconds": 0.0005392670000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 205,
+          "function": "<genexpr>",
+          "primitiveCalls": 3546,
+          "totalCalls": 3546,
+          "selfSeconds": 0.0005038670000000001,
+          "cumulativeSeconds": 0.0005038670000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/lib/_shape_base_impl.py",
+          "line": 607,
+          "function": "column_stack",
+          "primitiveCalls": 175,
+          "totalCalls": 175,
+          "selfSeconds": 0.00032957,
+          "cumulativeSeconds": 0.000458753
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 61,
+          "function": "<genexpr>",
+          "primitiveCalls": 9050,
+          "totalCalls": 9050,
+          "selfSeconds": 0.00041649700000000005,
+          "cumulativeSeconds": 0.00041649700000000005
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.hypot>",
+          "primitiveCalls": 5531,
+          "totalCalls": 5531,
+          "selfSeconds": 0.000380026,
+          "cumulativeSeconds": 0.000380026
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/enum.py",
+          "line": 200,
+          "function": "__get__",
+          "primitiveCalls": 2395,
+          "totalCalls": 2395,
+          "selfSeconds": 0.000266093,
+          "cumulativeSeconds": 0.00037903000000000004
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.min>",
+          "primitiveCalls": 4391,
+          "totalCalls": 4391,
+          "selfSeconds": 0.00029982,
+          "cumulativeSeconds": 0.000369574
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 3187,
+          "function": "min",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 4.8410000000000006e-05,
+          "cumulativeSeconds": 0.00036816700000000003
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/numeric.py",
+          "line": 97,
+          "function": "zeros_like",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 0.00030440100000000004,
+          "cumulativeSeconds": 0.000357368
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.max>",
+          "primitiveCalls": 5406,
+          "totalCalls": 5406,
+          "selfSeconds": 0.000350923,
+          "cumulativeSeconds": 0.000350923
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.abs>",
+          "primitiveCalls": 8141,
+          "totalCalls": 8141,
+          "selfSeconds": 0.00033640000000000005,
+          "cumulativeSeconds": 0.00033640000000000005
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/linear.py",
+          "line": 130,
+          "function": "forward",
+          "primitiveCalls": 36,
+          "totalCalls": 36,
+          "selfSeconds": 1.8799e-05,
+          "cumulativeSeconds": 0.00033195800000000004
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.len>",
+          "primitiveCalls": 5321,
+          "totalCalls": 5321,
+          "selfSeconds": 0.00031387,
+          "cumulativeSeconds": 0.00033037100000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 420,
+          "function": "validate_circulation_connectivity",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 0.000192728,
+          "cumulativeSeconds": 0.00032833300000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 32,
+          "function": "key",
+          "primitiveCalls": 923,
+          "totalCalls": 923,
+          "selfSeconds": 0.00022832900000000002,
+          "cumulativeSeconds": 0.000324661
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._nn.linear>",
+          "primitiveCalls": 36,
+          "totalCalls": 36,
+          "selfSeconds": 0.00030207700000000004,
+          "cumulativeSeconds": 0.00030207700000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/activation.py",
+          "line": 471,
+          "function": "forward",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 9.457000000000001e-06,
+          "cumulativeSeconds": 0.000296666
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 2474,
+          "function": "any",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 4.7043000000000003e-05,
+          "cumulativeSeconds": 0.000290714
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/functional.py",
+          "line": 2423,
+          "function": "silu",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 1.4000000000000001e-05,
+          "cumulativeSeconds": 0.000287209
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._nn.silu>",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 0.00027012600000000004,
+          "cumulativeSeconds": 0.00027012600000000004
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 178,
+          "function": "_area_total",
+          "primitiveCalls": 46,
+          "totalCalls": 46,
+          "selfSeconds": 2.1971e-05,
+          "cumulativeSeconds": 0.000256339
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6660,
+          "function": "<genexpr>",
+          "primitiveCalls": 1120,
+          "totalCalls": 1120,
+          "selfSeconds": 0.00020727700000000001,
+          "cumulativeSeconds": 0.000254928
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 86,
+          "function": "_wrapreduction_any_all",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 7.1548e-05,
+          "cumulativeSeconds": 0.00024367100000000002
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 502,
+          "function": "_min_distance_to_boundary",
+          "primitiveCalls": 36,
+          "totalCalls": 36,
+          "selfSeconds": 0.000159788,
+          "cumulativeSeconds": 0.000223665
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'index_add_' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 16,
+          "totalCalls": 16,
+          "selfSeconds": 0.00021579200000000002,
+          "cumulativeSeconds": 0.00021579200000000002
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 91,
+          "function": "<genexpr>",
+          "primitiveCalls": 2316,
+          "totalCalls": 2316,
+          "selfSeconds": 0.000194436,
+          "cumulativeSeconds": 0.000194436
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.isinstance>",
+          "primitiveCalls": 3241,
+          "totalCalls": 3241,
+          "selfSeconds": 0.00018448000000000002,
+          "cumulativeSeconds": 0.00018648000000000002
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.floor>",
+          "primitiveCalls": 3234,
+          "totalCalls": 3234,
+          "selfSeconds": 0.000171582,
+          "cumulativeSeconds": 0.000171582
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 179,
+          "function": "<genexpr>",
+          "primitiveCalls": 736,
+          "totalCalls": 736,
+          "selfSeconds": 0.00011887100000000001,
+          "cumulativeSeconds": 0.000166004
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 498,
+          "function": "uniform",
+          "primitiveCalls": 792,
+          "totalCalls": 792,
+          "selfSeconds": 0.00011183,
+          "cumulativeSeconds": 0.00016172900000000002
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 194,
+          "function": "<genexpr>",
+          "primitiveCalls": 1418,
+          "totalCalls": 1418,
+          "selfSeconds": 0.000154238,
+          "cumulativeSeconds": 0.000154238
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 220,
+          "function": "<genexpr>",
+          "primitiveCalls": 389,
+          "totalCalls": 389,
+          "selfSeconds": 9.5433e-05,
+          "cumulativeSeconds": 0.00014754000000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'extend' of 'list' objects>",
+          "primitiveCalls": 390,
+          "totalCalls": 390,
+          "selfSeconds": 0.000114303,
+          "cumulativeSeconds": 0.000141833
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 81,
+          "function": "<genexpr>",
+          "primitiveCalls": 548,
+          "totalCalls": 548,
+          "selfSeconds": 0.00014094900000000002,
+          "cumulativeSeconds": 0.00014094900000000002
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 58,
+          "function": "pos3d",
+          "primitiveCalls": 2796,
+          "totalCalls": 2796,
+          "selfSeconds": 0.000138028,
+          "cumulativeSeconds": 0.000138028
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'getrandbits' of '_random.Random' objects>",
+          "primitiveCalls": 3104,
+          "totalCalls": 3104,
+          "selfSeconds": 0.000129953,
+          "cumulativeSeconds": 0.000129953
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'items' of 'dict' objects>",
+          "primitiveCalls": 1215,
+          "totalCalls": 1215,
+          "selfSeconds": 0.000127155,
+          "cumulativeSeconds": 0.000127155
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 273,
+          "function": "commit",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 7.483400000000001e-05,
+          "cumulativeSeconds": 0.00012575000000000002
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.dist>",
+          "primitiveCalls": 1673,
+          "totalCalls": 1673,
+          "selfSeconds": 0.00011998500000000001,
+          "cumulativeSeconds": 0.00011998500000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 386,
+          "function": "get_neighbors",
+          "primitiveCalls": 210,
+          "totalCalls": 210,
+          "selfSeconds": 0.00010357500000000001,
+          "cumulativeSeconds": 0.000119364
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.cat>",
+          "primitiveCalls": 20,
+          "totalCalls": 20,
+          "selfSeconds": 0.00011858300000000001,
+          "cumulativeSeconds": 0.00011858300000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'bit_length' of 'int' objects>",
+          "primitiveCalls": 1982,
+          "totalCalls": 1982,
+          "selfSeconds": 0.000116298,
+          "cumulativeSeconds": 0.000116298
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 133,
+          "function": "__init__",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.459e-06,
+          "cumulativeSeconds": 0.000113375
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/enum.py",
+          "line": 1339,
+          "function": "value",
+          "primitiveCalls": 2395,
+          "totalCalls": 2395,
+          "selfSeconds": 0.000112937,
+          "cumulativeSeconds": 0.000112937
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 56,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.0416000000000002e-05,
+          "cumulativeSeconds": 0.000110916
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 331,
+          "function": "view",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 4.0712e-05,
+          "cumulativeSeconds": 0.00011037500000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/lib/_shape_base_impl.py",
+          "line": 603,
+          "function": "_column_stack_dispatcher",
+          "primitiveCalls": 175,
+          "totalCalls": 175,
+          "selfSeconds": 3.8262e-05,
+          "cumulativeSeconds": 0.000108048
+        },
+        {
+          "file": "<string>",
+          "line": 26,
+          "function": "__hash__",
+          "primitiveCalls": 275,
+          "totalCalls": 275,
+          "selfSeconds": 7.571700000000001e-05,
+          "cumulativeSeconds": 0.000106637
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 207,
+          "function": "<genexpr>",
+          "primitiveCalls": 181,
+          "totalCalls": 181,
+          "selfSeconds": 4.1832e-05,
+          "cumulativeSeconds": 0.00010203700000000001
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 151,
+          "function": "log_prob",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.5791000000000002e-05,
+          "cumulativeSeconds": 9.7291e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'values' of 'dict' objects>",
+          "primitiveCalls": 892,
+          "totalCalls": 892,
+          "selfSeconds": 8.923600000000001e-05,
+          "cumulativeSeconds": 8.923600000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 208,
+          "function": "<genexpr>",
+          "primitiveCalls": 177,
+          "totalCalls": 177,
+          "selfSeconds": 3.5675e-05,
+          "cumulativeSeconds": 8.712800000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/shape_base.py",
+          "line": 206,
+          "function": "_arrays_for_stack_dispatcher",
+          "primitiveCalls": 175,
+          "totalCalls": 175,
+          "selfSeconds": 4.4998000000000005e-05,
+          "cumulativeSeconds": 6.9786e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6668,
+          "function": "<genexpr>",
+          "primitiveCalls": 72,
+          "totalCalls": 72,
+          "selfSeconds": 6.6457e-05,
+          "cumulativeSeconds": 6.975400000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5331,
+          "function": "_aggregate_terminal",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.491e-05,
+          "cumulativeSeconds": 6.916700000000001e-05
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 119,
+          "function": "__init__",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 4.292000000000001e-06,
+          "cumulativeSeconds": 6.1833e-05
+        },
+        {
+          "file": "<string>",
+          "line": 2,
+          "function": "__init__",
+          "primitiveCalls": 57,
+          "totalCalls": 57,
+          "selfSeconds": 6.0457e-05,
+          "cumulativeSeconds": 6.0457e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/distribution.py",
+          "line": 46,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.6539000000000002e-05,
+          "cumulativeSeconds": 5.8874000000000006e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 237,
+          "function": "<genexpr>",
+          "primitiveCalls": 424,
+          "totalCalls": 424,
+          "selfSeconds": 4.3006e-05,
+          "cumulativeSeconds": 5.8319e-05
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/random.py",
+          "line": 128,
+          "function": "seed",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.3038000000000001e-05,
+          "cumulativeSeconds": 5.7541000000000004e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method numpy.array>",
+          "primitiveCalls": 350,
+          "totalCalls": 350,
+          "selfSeconds": 5.399e-05,
+          "cumulativeSeconds": 5.399e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/distribution.py",
+          "line": 280,
+          "function": "_validate_sample",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.3457e-05,
+          "cumulativeSeconds": 5.0583e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'random' of '_random.Random' objects>",
+          "primitiveCalls": 792,
+          "totalCalls": 792,
+          "selfSeconds": 4.9899000000000005e-05,
+          "cumulativeSeconds": 4.9899000000000005e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 395,
+          "function": "star_graph_offsets",
+          "primitiveCalls": 33,
+          "totalCalls": 33,
+          "selfSeconds": 1.9958e-05,
+          "cumulativeSeconds": 4.8707e-05
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/collections/__init__.py",
+          "line": 599,
+          "function": "__init__",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.6250000000000003e-06,
+          "cumulativeSeconds": 4.7041000000000006e-05
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/collections/__init__.py",
+          "line": 673,
+          "function": "update",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.7490000000000001e-06,
+          "cumulativeSeconds": 4.4416e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 117,
+          "function": "origin",
+          "primitiveCalls": 508,
+          "totalCalls": 508,
+          "selfSeconds": 4.2592e-05,
+          "cumulativeSeconds": 4.2592e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 90,
+          "function": "<genexpr>",
+          "primitiveCalls": 410,
+          "totalCalls": 410,
+          "selfSeconds": 4.2448000000000004e-05,
+          "cumulativeSeconds": 4.2448000000000004e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 261,
+          "function": "<genexpr>",
+          "primitiveCalls": 736,
+          "totalCalls": 736,
+          "selfSeconds": 4.2063e-05,
+          "cumulativeSeconds": 4.2063e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<function Random.seed at 0x105f1c9a0>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 4.2042e-05,
+          "cumulativeSeconds": 4.2042e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 209,
+          "function": "<genexpr>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.6342e-05,
+          "cumulativeSeconds": 4.0959000000000005e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method _collections._count_elements>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 9.67e-06,
+          "cumulativeSeconds": 3.9792e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.multinomial>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.5375e-05,
+          "cumulativeSeconds": 3.5375e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/utils.py",
+          "line": 165,
+          "function": "__get__",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.1083e-05,
+          "cumulativeSeconds": 3.5083e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 3044,
+          "function": "_max_dispatcher",
+          "primitiveCalls": 462,
+          "totalCalls": 462,
+          "selfSeconds": 3.3569e-05,
+          "cumulativeSeconds": 3.3569e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.atan2>",
+          "primitiveCalls": 350,
+          "totalCalls": 350,
+          "selfSeconds": 3.1683e-05,
+          "cumulativeSeconds": 3.1683e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.hash>",
+          "primitiveCalls": 275,
+          "totalCalls": 275,
+          "selfSeconds": 3.092e-05,
+          "cumulativeSeconds": 3.092e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1116,
+          "function": "_public_module",
+          "primitiveCalls": 15,
+          "totalCalls": 15,
+          "selfSeconds": 2.0280000000000002e-05,
+          "cumulativeSeconds": 3.0789e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 338,
+          "function": "<genexpr>",
+          "primitiveCalls": 106,
+          "totalCalls": 106,
+          "selfSeconds": 1.5207e-05,
+          "cumulativeSeconds": 3.0122e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.fsum>",
+          "primitiveCalls": 25,
+          "totalCalls": 25,
+          "selfSeconds": 1.6835e-05,
+          "cumulativeSeconds": 2.9835e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'logsumexp' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.9293000000000002e-05,
+          "cumulativeSeconds": 2.9293000000000002e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method numpy.zeros>",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 2.8587000000000003e-05,
+          "cumulativeSeconds": 2.8587000000000003e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_dictionary.py",
+          "line": 232,
+          "function": "<genexpr>",
+          "primitiveCalls": 423,
+          "totalCalls": 423,
+          "selfSeconds": 2.7530000000000002e-05,
+          "cumulativeSeconds": 2.7530000000000002e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 159,
+          "function": "entropy",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.5167e-05,
+          "cumulativeSeconds": 2.7501000000000003e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 406,
+          "function": "where",
+          "primitiveCalls": 372,
+          "totalCalls": 372,
+          "selfSeconds": 2.6642e-05,
+          "cumulativeSeconds": 2.6642e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method numpy.asanyarray>",
+          "primitiveCalls": 350,
+          "totalCalls": 350,
+          "selfSeconds": 2.6555000000000002e-05,
+          "cumulativeSeconds": 2.6555000000000002e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 263,
+          "function": "check",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 8.291e-06,
+          "cumulativeSeconds": 2.5624e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.hasattr>",
+          "primitiveCalls": 178,
+          "totalCalls": 178,
+          "selfSeconds": 2.5622000000000003e-05,
+          "cumulativeSeconds": 2.5622000000000003e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 366,
+          "function": "check",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.5209000000000002e-05,
+          "cumulativeSeconds": 2.5209000000000002e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_policy.py",
+          "line": 62,
+          "function": "<genexpr>",
+          "primitiveCalls": 702,
+          "totalCalls": 702,
+          "selfSeconds": 2.3234e-05,
+          "cumulativeSeconds": 2.3234e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/_tensor.py",
+          "line": 1195,
+          "function": "__iter__",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 7.1270000000000005e-06,
+          "cumulativeSeconds": 2.2375000000000002e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6673,
+          "function": "<genexpr>",
+          "primitiveCalls": 180,
+          "totalCalls": 180,
+          "selfSeconds": 2.2325e-05,
+          "cumulativeSeconds": 2.2325e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py",
+          "line": 1954,
+          "function": "__getattr__",
+          "primitiveCalls": 100,
+          "totalCalls": 100,
+          "selfSeconds": 2.2247000000000002e-05,
+          "cumulativeSeconds": 2.2247000000000002e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'setdefault' of 'dict' objects>",
+          "primitiveCalls": 182,
+          "totalCalls": 182,
+          "selfSeconds": 2.2246e-05,
+          "cumulativeSeconds": 2.2246e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'mean' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.1667e-05,
+          "cumulativeSeconds": 2.1667e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'conj' of 'numpy.ndarray' objects>",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 1.8164e-05,
+          "cumulativeSeconds": 1.8164e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/modules/container.py",
+          "line": 240,
+          "function": "__iter__",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 1.1331e-05,
+          "cumulativeSeconds": 1.7251e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._get_tracing_state>",
+          "primitiveCalls": 116,
+          "totalCalls": 116,
+          "selfSeconds": 1.7124e-05,
+          "cumulativeSeconds": 1.7124e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/_tensor.py",
+          "line": 1179,
+          "function": "__len__",
+          "primitiveCalls": 12,
+          "totalCalls": 12,
+          "selfSeconds": 1.1209e-05,
+          "cumulativeSeconds": 1.6501e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'reshape' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 12,
+          "totalCalls": 12,
+          "selfSeconds": 1.5625e-05,
+          "cumulativeSeconds": 1.5625e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/functional.py",
+          "line": 47,
+          "function": "broadcast_tensors",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 8.043e-06,
+          "cumulativeSeconds": 1.5292000000000002e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'pop' of 'list' objects>",
+          "primitiveCalls": 177,
+          "totalCalls": 177,
+          "selfSeconds": 1.4852000000000001e-05,
+          "cumulativeSeconds": 1.4852000000000001e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'squeeze' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 12,
+          "totalCalls": 12,
+          "selfSeconds": 1.4419e-05,
+          "cumulativeSeconds": 1.4419e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 197,
+          "function": "concatenate",
+          "primitiveCalls": 175,
+          "totalCalls": 175,
+          "selfSeconds": 1.4375e-05,
+          "cumulativeSeconds": 1.4375e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 85,
+          "function": "add_node",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 9.501000000000001e-06,
+          "cumulativeSeconds": 1.4334e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.zeros>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.4209e-05,
+          "cumulativeSeconds": 1.4209e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.zeros_like>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.3419000000000001e-05,
+          "cumulativeSeconds": 1.3419000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 1088,
+          "function": "copyto",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 1.3338e-05,
+          "cumulativeSeconds": 1.3338e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.issubclass>",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 1.3045000000000001e-05,
+          "cumulativeSeconds": 1.3045000000000001e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'unbind' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.2290000000000001e-05,
+          "cumulativeSeconds": 1.2290000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 114,
+          "function": "probs",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.5e-06,
+          "cumulativeSeconds": 1.2250000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py",
+          "line": 2594,
+          "function": "_norm_dispatcher",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 1.1505e-05,
+          "cumulativeSeconds": 1.1505e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/typed_cell.py",
+          "line": 157,
+          "function": "add_edge",
+          "primitiveCalls": 6,
+          "totalCalls": 6,
+          "selfSeconds": 8.332000000000001e-06,
+          "cumulativeSeconds": 1.1499000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/numeric.py",
+          "line": 91,
+          "function": "_zeros_like_dispatcher",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 1.1048e-05,
+          "cumulativeSeconds": 1.1048e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 115,
+          "function": "empty_like",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 1.1042e-05,
+          "cumulativeSeconds": 1.1042e-05
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.getattr>",
+          "primitiveCalls": 28,
+          "totalCalls": 28,
+          "selfSeconds": 6.499000000000001e-06,
+          "cumulativeSeconds": 1.0999000000000001e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/utils.py",
+          "line": 90,
+          "function": "logits_to_probs",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.082e-06,
+          "cumulativeSeconds": 1.075e-05
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_sampler.py",
+          "line": 57,
+          "function": "<lambda>",
+          "primitiveCalls": 173,
+          "totalCalls": 173,
+          "selfSeconds": 9.744e-06,
+          "cumulativeSeconds": 9.744e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 2469,
+          "function": "_any_dispatcher",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 8.798000000000001e-06,
+          "cumulativeSeconds": 8.798000000000001e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5189,
+          "function": "_runtime_diagnostics",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 5.667e-06,
+          "cumulativeSeconds": 8.792e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/nn/functional.py",
+          "line": 2170,
+          "function": "softmax",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.1680000000000002e-06,
+          "cumulativeSeconds": 8.668e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._is_all_true>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 8.542e-06,
+          "cumulativeSeconds": 8.542e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'disable' of '_lsprof.Profiler' objects>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 8.375e-06,
+          "cumulativeSeconds": 8.375e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py",
+          "line": 3182,
+          "function": "_min_dispatcher",
+          "primitiveCalls": 124,
+          "totalCalls": 124,
+          "selfSeconds": 8.333000000000001e-06,
+          "cumulativeSeconds": 8.333000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'clamp_min' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 7.957e-06,
+          "cumulativeSeconds": 7.957e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'gather' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 7.292000000000001e-06,
+          "cumulativeSeconds": 7.292000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.ones_like>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 7.043e-06,
+          "cumulativeSeconds": 7.043e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'expand' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 6.708000000000001e-06,
+          "cumulativeSeconds": 6.708000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.clamp>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 6.584000000000001e-06,
+          "cumulativeSeconds": 6.584000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'softmax' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 6.2080000000000005e-06,
+          "cumulativeSeconds": 6.2080000000000005e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'sum' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 5.75e-06,
+          "cumulativeSeconds": 5.75e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1074,
+          "function": "_std",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.291e-06,
+          "cumulativeSeconds": 5.625e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'all' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 5.208e-06,
+          "cumulativeSeconds": 5.208e-06
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/enum.py",
+          "line": 696,
+          "function": "__call__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.751e-06,
+          "cumulativeSeconds": 5e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 185,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.168e-06,
+          "cumulativeSeconds": 4.834000000000001e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/categorical.py",
+          "line": 105,
+          "function": "support",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.333e-06,
+          "cumulativeSeconds": 4.667e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'dim' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 32,
+          "totalCalls": 32,
+          "selfSeconds": 4.6230000000000005e-06,
+          "cumulativeSeconds": 4.6230000000000005e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/utils/_contextlib.py",
+          "line": 167,
+          "function": "__new__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.7090000000000004e-06,
+          "cumulativeSeconds": 4.542e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.broadcast_tensors>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 4.3750000000000005e-06,
+          "cumulativeSeconds": 4.3750000000000005e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._has_torch_function_unary>",
+          "primitiveCalls": 44,
+          "totalCalls": 44,
+          "selfSeconds": 4.334e-06,
+          "cumulativeSeconds": 4.334e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1056,
+          "function": "_mean",
+          "primitiveCalls": 9,
+          "totalCalls": 9,
+          "selfSeconds": 2.5400000000000002e-06,
+          "cumulativeSeconds": 4.289e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 212,
+          "function": "<genexpr>",
+          "primitiveCalls": 64,
+          "totalCalls": 64,
+          "selfSeconds": 4.087e-06,
+          "cumulativeSeconds": 4.087e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 424,
+          "function": "check",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 4.084e-06,
+          "cumulativeSeconds": 4.084e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.iter>",
+          "primitiveCalls": 36,
+          "totalCalls": 36,
+          "selfSeconds": 3.834e-06,
+          "cumulativeSeconds": 3.834e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/numpy/_core/multiarray.py",
+          "line": 751,
+          "function": "dot",
+          "primitiveCalls": 51,
+          "totalCalls": 51,
+          "selfSeconds": 3.7880000000000004e-06,
+          "cumulativeSeconds": 3.7880000000000004e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 3475,
+          "function": "summary",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.291e-06,
+          "cumulativeSeconds": 3.5830000000000003e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'unsqueeze' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.5830000000000003e-06,
+          "cumulativeSeconds": 3.5830000000000003e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/graph_proxy.py",
+          "line": 218,
+          "function": "<genexpr>",
+          "primitiveCalls": 56,
+          "totalCalls": 56,
+          "selfSeconds": 3.5430000000000002e-06,
+          "cumulativeSeconds": 3.5430000000000002e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 156,
+          "function": "is_dependent",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.6250000000000001e-06,
+          "cumulativeSeconds": 3.501e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'size' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 16,
+          "totalCalls": 16,
+          "selfSeconds": 3.1660000000000003e-06,
+          "cumulativeSeconds": 3.1660000000000003e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._set_grad_enabled>",
+          "primitiveCalls": 20,
+          "totalCalls": 20,
+          "selfSeconds": 2.875e-06,
+          "cumulativeSeconds": 2.875e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 136,
+          "function": "__enter__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.875e-06,
+          "cumulativeSeconds": 2.792e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/utils.py",
+          "line": 183,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.582e-06,
+          "cumulativeSeconds": 2.582e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/_VF.py",
+          "line": 27,
+          "function": "__getattr__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.833e-06,
+          "cumulativeSeconds": 2.5e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'detach' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.458e-06,
+          "cumulativeSeconds": 2.458e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 4825,
+          "function": "_core_stacking_event",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.25e-06,
+          "cumulativeSeconds": 2.4170000000000003e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/distributions/constraints.py",
+          "line": 361,
+          "function": "__init__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 2.334e-06,
+          "cumulativeSeconds": 2.334e-06
+        },
+        {
+          "file": "<frozen abc>",
+          "line": 117,
+          "function": "__instancecheck__",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.209e-06,
+          "cumulativeSeconds": 2.0000000000000003e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method resource.getrusage>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.7500000000000002e-06,
+          "cumulativeSeconds": 1.7500000000000002e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'numel' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.7490000000000001e-06,
+          "cumulativeSeconds": 1.7490000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'update' of 'dict' objects>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 1.7080000000000002e-06,
+          "cumulativeSeconds": 1.7080000000000002e-06
+        },
+        {
+          "file": "<string>",
+          "line": 12,
+          "function": "__eq__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.7080000000000002e-06,
+          "cumulativeSeconds": 1.7080000000000002e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1081,
+          "function": "_safe_ratio",
+          "primitiveCalls": 15,
+          "totalCalls": 15,
+          "selfSeconds": 1.667e-06,
+          "cumulativeSeconds": 1.667e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1078,
+          "function": "<genexpr>",
+          "primitiveCalls": 16,
+          "totalCalls": 16,
+          "selfSeconds": 1.627e-06,
+          "cumulativeSeconds": 1.627e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 197,
+          "function": "__exit__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.04e-06,
+          "cumulativeSeconds": 1.582e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 194,
+          "function": "__enter__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.001e-06,
+          "cumulativeSeconds": 1.5010000000000001e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'long' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.333e-06,
+          "cumulativeSeconds": 1.333e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/.venv/lib/python3.13/site-packages/torch/autograd/grad_mode.py",
+          "line": 140,
+          "function": "__exit__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 7.92e-07,
+          "cumulativeSeconds": 1.25e-06
+        },
+        {
+          "file": "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/enum.py",
+          "line": 1158,
+          "function": "__new__",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.249e-06,
+          "cumulativeSeconds": 1.249e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.is_grad_enabled>",
+          "primitiveCalls": 8,
+          "totalCalls": 8,
+          "selfSeconds": 1.2080000000000001e-06,
+          "cumulativeSeconds": 1.2080000000000001e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5413,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 8.33e-07,
+          "cumulativeSeconds": 1.167e-06
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'cpu' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 1.167e-06,
+          "cumulativeSeconds": 1.167e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 1098,
+          "function": "_clamp",
+          "primitiveCalls": 3,
+          "totalCalls": 3,
+          "selfSeconds": 6.68e-07,
+          "cumulativeSeconds": 1.1660000000000001e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5404,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 7.5e-07,
+          "cumulativeSeconds": 1.1660000000000001e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5340,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 8.33e-07,
+          "cumulativeSeconds": 1.125e-06
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5374,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 7.480000000000001e-07,
+          "cumulativeSeconds": 9.99e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5415,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.650000000000001e-07,
+          "cumulativeSeconds": 9.99e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5425,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 7.070000000000001e-07,
+          "cumulativeSeconds": 9.99e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5419,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.27e-07,
+          "cumulativeSeconds": 9.59e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 6966,
+          "function": "<genexpr>",
+          "primitiveCalls": 2,
+          "totalCalls": 2,
+          "selfSeconds": 9.160000000000001e-07,
+          "cumulativeSeconds": 9.160000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5337,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 8.760000000000001e-07,
+          "cumulativeSeconds": 8.760000000000001e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method __new__ of type object at 0x101723cf0>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 8.33e-07,
+          "cumulativeSeconds": 8.33e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 3472,
+          "function": "record",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 5.43e-07,
+          "cumulativeSeconds": 7.92e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method _abc._abc_instancecheck>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 7.91e-07,
+          "cumulativeSeconds": 7.91e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<method 'ndimension' of 'torch._C.TensorBase' objects>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 7.5e-07,
+          "cumulativeSeconds": 7.5e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5370,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.68e-07,
+          "cumulativeSeconds": 6.68e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5341,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.67e-07,
+          "cumulativeSeconds": 6.67e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5346,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.67e-07,
+          "cumulativeSeconds": 6.67e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5350,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.67e-07,
+          "cumulativeSeconds": 6.67e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5357,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 6.23e-07,
+          "cumulativeSeconds": 6.23e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.setattr>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 5.84e-07,
+          "cumulativeSeconds": 5.84e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5365,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 5.830000000000001e-07,
+          "cumulativeSeconds": 5.830000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/geometry.py",
+          "line": 189,
+          "function": "native_geometry_status",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 5.830000000000001e-07,
+          "cumulativeSeconds": 5.830000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5361,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 5.82e-07,
+          "cumulativeSeconds": 5.82e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5338,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 5.420000000000001e-07,
+          "cumulativeSeconds": 5.420000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5339,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 5.000000000000001e-07,
+          "cumulativeSeconds": 5.000000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/shared_modules.py",
+          "line": 64,
+          "function": "__post_init__",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 5.000000000000001e-07,
+          "cumulativeSeconds": 5.000000000000001e-07
+        },
+        {
+          "file": "/Users/ruslan_faz/Desktop/Work/Thesis/src/server.py",
+          "line": 5342,
+          "function": "<genexpr>",
+          "primitiveCalls": 5,
+          "totalCalls": 5,
+          "selfSeconds": 4.1700000000000004e-07,
+          "cumulativeSeconds": 4.1700000000000004e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method time.perf_counter>",
+          "primitiveCalls": 3,
+          "totalCalls": 3,
+          "selfSeconds": 3.75e-07,
+          "cumulativeSeconds": 3.75e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch._C._has_torch_function>",
+          "primitiveCalls": 4,
+          "totalCalls": 4,
+          "selfSeconds": 3.7400000000000004e-07,
+          "cumulativeSeconds": 3.7400000000000004e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method torch.get_num_threads>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 2.5000000000000004e-07,
+          "cumulativeSeconds": 2.5000000000000004e-07
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method math.sqrt>",
+          "primitiveCalls": 1,
+          "totalCalls": 1,
+          "selfSeconds": 1.2500000000000002e-07,
+          "cumulativeSeconds": 1.2500000000000002e-07
+        }
+      ]
+    }
+  ]
+}
