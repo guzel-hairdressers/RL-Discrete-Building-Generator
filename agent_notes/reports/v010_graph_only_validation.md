@@ -24,3 +24,5 @@ No architecture winner is claimed. Historical architecture pilots used a differe
 ## UI and checkpoint follow-up
 
 The live demo performed 41 graph weight updates. Switching to inference kept that count fixed while geometry was realized. A browser-created checkpoint exposed a legacy `siteId` compatibility bug; the fixed loader restores all 41 updates and the original settings. The original default checkpoint was preserved separately from the demo save. Added two checkpoint regressions; **266 tests passed in 16.618 seconds (2 skipped)**. Both isolated release UI and working UI builds pass. Inference now stops on one completed layout for inspection.
+
+Final browser check: the saved network restored 41 updates; graph inference completed with a valid realized layout and stopped automatically without another weight update. Corrected the legacy HUD fallback that substituted -40.0 for numeric score strings, and removed the BPE label from the graph dictionary.

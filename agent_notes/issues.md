@@ -348,3 +348,7 @@ Profiling found 69 shared polygon inference calls plus whole-graph trial copies 
 ### 2026-11-04 — UI-created checkpoints and inference review
 
 The UI site-selection path persisted a `siteId` alias outside the settings schema, so Save succeeded but Load rejected its own checkpoint. Migrate the alias to canonical `realSiteId` on load and stop creating it during new site selection. Regressions cover alias precedence and actual checkpoint round trips. A live checkpoint with 41 graph updates was restored in a separate trainer. Graph inference now stops after one completed layout for review; training continues to loop. Diagnostics distinguish unmeasured graph training from realized geometry. Site events now include authoritative settings so loading weights also restores the UI controls and site interpretation.
+
+### 2026-11-04 — truthful completed-score display
+
+The graph backend emits a numeric score string at completion. A legacy HUD type check replaced it with a fabricated -40.0 fallback. Parse finite numeric values and show an unavailable marker for missing data. The graph dictionary is labeled as shared modules rather than BPE output. Verified these UI changes through production builds; the backend suite remains at 266 passing tests (2 skipped).

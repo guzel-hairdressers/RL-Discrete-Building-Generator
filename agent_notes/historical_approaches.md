@@ -180,3 +180,7 @@ Discarded per-candidate graph deepcopy and full prototype polygon inference as a
 ### 2026-11-04 — inspect one inference result
 
 Graph inference generates one realized layout and stops, preserving weights for further training. Removed the implicit auto-loop for this review flow. Old UI site aliases migrate when loading checkpoints; canonical site settings take precedence.
+
+### 2026-11-04 — removed legacy graph display fallbacks
+
+Completed graph scores are displayed from the backend value, including numeric strings; missing data is shown as unavailable. Graph inference dictionaries are identified as shared modules, not BPE merges.

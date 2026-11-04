@@ -589,7 +589,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
             <div className="diag-title-with-badge">
               <span className="diag-section-title">Procedural Shape Library</span>
               <span className={`diag-mode-pill ${isRunning ? 'unmerged' : 'merged'}`}>
-                {isRunning ? 'Primitive Dictionary (Live Episode)' : 'BPE Merged Shapes (Paused / Episode Done)'}
+                {graphMode ? (graphState?.realized ? 'Shared module dictionary' : 'Provisional types') : (isRunning ? 'Primitive Dictionary (Live Episode)' : 'BPE Merged Shapes (Paused / Episode Done)')}
               </span>
             </div>
             <span className="diag-badge-live">

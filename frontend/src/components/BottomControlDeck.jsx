@@ -45,7 +45,8 @@ export const BottomControlDeck = () => {
   const fillPct = Math.round((metrics.fillRatio || 0) * 100);
   const rentablePct = Math.round((metrics.rentableRatio || 0) * 100);
   const filledArea = Math.round((metrics.fillRatio || 0) * totalSiteArea);
-  const rewardVal = typeof metrics.score === 'number' ? metrics.score.toFixed(1) : '-40.0';
+  const numericScore = metrics.score == null || metrics.score === '' ? NaN : Number(metrics.score);
+  const rewardVal = Number.isFinite(numericScore) ? numericScore.toFixed(1) : '—';
   const bestVal = typeof bestReward === 'number' ? bestReward.toFixed(1) : '--';
 
   return (
