@@ -1,0 +1,59 @@
+{
+  "protocol": {
+    "generatorEngine": "graph_voronoi",
+    "graphController": "neural",
+    "graphPolicyArchitecture": "message_passing",
+    "siteAreaTier": "ANY",
+    "boundaryType": "free",
+    "parallelEnvironments": 4,
+    "maxModules": 120,
+    "autoChangeEpisodes": 1,
+    "learningRate": 0.001,
+    "dictCap": 10,
+    "graphMaxTypes": 15,
+    "graphPriorRadius": 4.5,
+    "graphMinArea": 1.0,
+    "graphMaxArea": 80.0
+  },
+  "arms": [
+    "legacy",
+    "continuous",
+    "vocabulary"
+  ],
+  "seeds": [
+    123,
+    456,
+    789
+  ],
+  "trainingEpisodes": 60,
+  "evaluationCases": 24,
+  "milestones": [
+    0,
+    20,
+    40,
+    60
+  ],
+  "intermediateEvaluationCases": 8,
+  "pilot": true,
+  "status": "complete",
+  "preregistration": "Same objective and network capacity; paired sites and initialization seeds; frozen independent geometry evaluation. Outcome/fill/failures/reuse versus episodes and training-only wall time. No promotion from training reward or speed caused by early stopping. Threshold mean held-out valid-adjusted outcome >= 0.5; report unreached thresholds. Confirmation required for a proposed winner.",
+  "revision": "40daee073a1807fb486b6e7f5ab196df0a2a6032",
+  "sourceHashes": {
+    "tools/compare_graph_proposals.py": "707e35c0bec9fe70fb47897588ac36f4660b709cf468725dfcb78770e3a20fad",
+    "src/server.py": "ee0e99ba1c6942594b0502da5d729b344e05048a890bc63eaeea22915ad7c7e4",
+    "src/graph_policy.py": "360807bb0455c9908a2381ee3e75f59b3381c38e36a459e878e07545c4852e1f",
+    "src/graph_dictionary.py": "254770dc1f53d803ab81c5811ac674433870afadafd70a1f10fc1103fa830848",
+    "src/relative_vocabulary.py": "bf41fffc02603d7e4967dd0d4a1b0fc4ae3e3d571882f244d7a420c4e1032741",
+    "src/graph_sampler.py": "5f728cabe7ea552214157bba8d3a0b0cba0c396fe2eada7a8b774720fb04cd93",
+    "src/graph_proxy.py": "e9756ae1ef602afa2b49d8dcaf6477bb315e8e89b31a199087390bc319cf17ff",
+    "src/shared_modules.py": "94a2377f39fecbd044ca108efe8758dd7c928dac1d7a237b9d66d6ddc0fa79fc",
+    "src/typed_cell.py": "092e1b900299c92b0a21a8d4bbb3853c41c8b75af949b19de04ee79b04ced13d",
+    "src/voronoi_realizer.py": "4bfcee124bd21c4e6f001816d974c8eda8e817eee8de14188c688414306644a7"
+  },
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "python": "3.13.14 (main, Jun 10 2026, 12:24:04) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "torch": "2.13.0",
+  "threads": 4,
+  "device": "cpu",
+  "elapsedSeconds": 1096.640265957998
+}

@@ -33,3 +33,9 @@ Training returns `geometryValid: null`, `validation.status: not_run`, and a sepa
 Site/settings/mode changes discard incomplete tapes and preserve weights. Save/Load retains model, Adam, architecture, update count and sampler RNG. Invalid loads roll back. Historical checkpoint `siteId` migrates to `realSiteId`; site events synchronize controls.
 
 See the [bounded dictionary and latency report](../reports/v010_bounded_dictionary_speed.md) for L/XL 120-per-floor, 4/8-floor timings, actual reached counts, the retained failed overlap run, and limitations. See [architecture evaluation](graph_architecture_evaluation.md) for the separate research gates. The suite checks polygon-free training completion, shared rotations, incompatible types, near-parallel constraints, full-height footprints, independent reuse credit, real gradients, preview isolation, and checkpoints. No throughput ratio is inferred from unequal episode lengths.
+
+## 2026-11-05 — observed factors and UI contract
+
+The per-building angle/length vocabulary and a learned continuous proposal head are now experimental options via graphProposalStrategy. Mixed proposals can reuse a length while inventing an angle, or reuse an angle while inventing a length. Old checkpoints migrate to schema 3. No angle/length increment is imposed.
+
+The corrected three-seed pilot does not demonstrate faster learning; legacy remains default. See [measured results](../reports/v010_angle_proposal_evaluation.md), [implementation guide](relative_angle_vocabulary.md), and [UI contract](../contracts/graph_ui_v010.md). The independent identity/reuse exports are additive and do not affect rewards. Right-angle preferences and explicit corridor policies remain proposed experiments.

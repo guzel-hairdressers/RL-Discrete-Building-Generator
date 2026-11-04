@@ -1,0 +1,251 @@
+{
+  "pilot": true,
+  "completed": true,
+  "trainingEpisodesPerArmSeed": 60,
+  "seeds": [
+    123,
+    456,
+    789
+  ],
+  "heldOutCasesPerSeed": 24,
+  "commonLearningCurveCases": 8,
+  "confidence": "Crossed bootstrap over initialization seeds and shared held-out sites; 4000 draws. Three initialization seeds remain limited evidence.",
+  "arms": {
+    "legacy": {
+      "valid": 69,
+      "total": 72,
+      "errors": 0,
+      "meanOutcome": 0.4642599734131412,
+      "initialMeanOutcome": 0.4661941335508129,
+      "meanValidAdjustedFill": 0.4276298658873573,
+      "meanFillOnValidLayouts": 0.44622246875202504,
+      "meanIndependentRepeatOnValidLayouts": 0.746723527960491,
+      "meanTypesOnValidLayouts": 14.231884057971014,
+      "maxTypes": 15,
+      "meanIndependentOccurrencesOnValidLayouts": 106.6086956521739,
+      "meanFloorInstancesOnValidLayouts": 157.7826086956522,
+      "trainingCases": 180,
+      "trainingSeconds": 185.95195588404022,
+      "meanTrainingEpisodeSeconds": 1.0330664215780012,
+      "medianTrainingEpisodeSeconds": 0.5143305209967366,
+      "meanTrainingFloorInstances": 126.70555555555555,
+      "allHeldOutMeanGain": -0.0019341601376717016,
+      "meanMonitorGain": 0.016314037631554052,
+      "monitorGainBySeed": {
+        "123": -0.0023611168452838394,
+        "456": 0.02184924867271365,
+        "789": 0.02945398106723235
+      },
+      "outcomeThreshold05FirstMilestone": {
+        "123": null,
+        "456": null,
+        "789": null
+      },
+      "monitorOutcomeByMilestone": {
+        "0": 0.35634381486057015,
+        "20": 0.36690567152185843,
+        "40": 0.36471838871474516,
+        "60": 0.3726578524921242
+      },
+      "trainingSecondsByMilestone": {
+        "0": 0.0,
+        "20": 19.870753793327214,
+        "40": 44.26082968201081,
+        "60": 61.983985294680075
+      },
+      "selectedProposalSources": {
+        "continuous_reference": 1747,
+        "shared_module_contact": 5540
+      },
+      "selectedFactorSources": {
+        "sampled/sampled": 1747,
+        "observed/observed": 5540
+      },
+      "maxAbsoluteFilledAreaPredictionError": 1.229946701641893e-05
+    },
+    "continuous": {
+      "valid": 69,
+      "total": 72,
+      "errors": 0,
+      "meanOutcome": 0.3190910285652732,
+      "initialMeanOutcome": 0.30854966398891465,
+      "meanValidAdjustedFill": 0.3733532317181594,
+      "meanFillOnValidLayouts": 0.3895859809232967,
+      "meanIndependentRepeatOnValidLayouts": 0.39952883339754897,
+      "meanTypesOnValidLayouts": 13.898550724637682,
+      "maxTypes": 15,
+      "meanIndependentOccurrencesOnValidLayouts": 74.27536231884058,
+      "meanFloorInstancesOnValidLayouts": 96.53623188405797,
+      "trainingCases": 180,
+      "trainingSeconds": 72.94379637407837,
+      "meanTrainingEpisodeSeconds": 0.40524331318932433,
+      "medianTrainingEpisodeSeconds": 0.2688056249971851,
+      "meanTrainingFloorInstances": 60.138888888888886,
+      "allHeldOutMeanGain": 0.010541364576358526,
+      "meanMonitorGain": 0.018119623075641286,
+      "monitorGainBySeed": {
+        "123": -0.01276890007858611,
+        "456": 0.04102227646542492,
+        "789": 0.02610549284008505
+      },
+      "outcomeThreshold05FirstMilestone": {
+        "123": null,
+        "456": null,
+        "789": null
+      },
+      "monitorOutcomeByMilestone": {
+        "0": 0.16946797830309002,
+        "20": 0.14153474066132263,
+        "40": 0.15664732144193957,
+        "60": 0.18758760137873132
+      },
+      "trainingSecondsByMilestone": {
+        "0": 0.0,
+        "20": 9.018281582345177,
+        "40": 16.379911611353844,
+        "60": 24.314598791359458
+      },
+      "selectedProposalSources": {
+        "neural_continuous": 913,
+        "shared_module_contact": 4143
+      },
+      "selectedFactorSources": {
+        "neural/neural": 913,
+        "observed/observed": 4143
+      },
+      "maxAbsoluteFilledAreaPredictionError": 7.275957614183426e-12
+    },
+    "vocabulary": {
+      "valid": 69,
+      "total": 72,
+      "errors": 0,
+      "meanOutcome": 0.476193632480606,
+      "initialMeanOutcome": 0.4707603413190416,
+      "meanValidAdjustedFill": 0.43590941694012336,
+      "meanFillOnValidLayouts": 0.4548620002853461,
+      "meanIndependentRepeatOnValidLayouts": 0.75727800596348,
+      "meanTypesOnValidLayouts": 11.768115942028986,
+      "maxTypes": 15,
+      "meanIndependentOccurrencesOnValidLayouts": 83.76811594202898,
+      "meanFloorInstancesOnValidLayouts": 123.20289855072464,
+      "trainingCases": 180,
+      "trainingSeconds": 194.31317936901178,
+      "meanTrainingEpisodeSeconds": 1.0795176631611765,
+      "medianTrainingEpisodeSeconds": 0.5911451464999118,
+      "meanTrainingFloorInstances": 114.83888888888889,
+      "allHeldOutMeanGain": 0.005433291161564397,
+      "meanMonitorGain": -0.00966373911111651,
+      "monitorGainBySeed": {
+        "123": -0.035251604025307304,
+        "456": -0.0026734655239671334,
+        "789": 0.008933852215924909
+      },
+      "outcomeThreshold05FirstMilestone": {
+        "123": null,
+        "456": null,
+        "789": null
+      },
+      "monitorOutcomeByMilestone": {
+        "0": 0.36740367570885296,
+        "20": 0.3602055178816452,
+        "40": 0.36368048100803246,
+        "60": 0.35773993659773645
+      },
+      "trainingSecondsByMilestone": {
+        "0": 0.0,
+        "20": 22.314541527014324,
+        "40": 48.47485286001271,
+        "60": 64.77105978967059
+      },
+      "selectedProposalSources": {
+        "neural_continuous": 808,
+        "shared_module_contact": 4266,
+        "observed_angle_length": 637
+      },
+      "selectedFactorSources": {
+        "neural/neural": 201,
+        "observed/observed": 4903,
+        "neural/observed": 457,
+        "observed/neural": 150
+      },
+      "maxAbsoluteFilledAreaPredictionError": 1.018007424136158e-06
+    }
+  },
+  "paired": {
+    "continuous": {
+      "outcomeDifference": -0.145168944847868,
+      "outcomeCrossed95": [
+        -0.3144962271147376,
+        0.058313103140933346
+      ],
+      "learningGainDifference": 0.012475524714030229,
+      "learningGainCrossed95": [
+        -0.01659858339023232,
+        0.04329276290892254
+      ],
+      "validAdjustedFillDifference": -0.05427663416919797,
+      "fillCrossed95": [
+        -0.17045375849818664,
+        0.0703636648224001
+      ],
+      "perSeedOutcomeDifference": {
+        "123": 0.06263034237302256,
+        "456": -0.21933157738844264,
+        "789": -0.27880559952818385
+      },
+      "commonTrainingSecondsBySeed": {
+        "123": 34.65698308399442,
+        "456": 21.266246288061666,
+        "789": 17.02056700202229
+      },
+      "descriptiveAverageGainDifferenceAtCommonTimeBySeed": {
+        "123": -0.0880316949063703,
+        "456": 0.021375131091696576,
+        "789": 0.013126689822298926
+      },
+      "descriptiveEndpointGainDifferenceAtCommonTimeBySeed": {
+        "123": -0.0019355428891105753,
+        "456": 0.013078708288335489,
+        "789": 0.0046753342907416146
+      }
+    },
+    "vocabulary": {
+      "outcomeDifference": 0.011933659067464833,
+      "outcomeCrossed95": [
+        -0.003627228271583662,
+        0.030196751275123855
+      ],
+      "learningGainDifference": 0.007367451299236099,
+      "learningGainCrossed95": [
+        -0.015571321133499598,
+        0.03361346627648492
+      ],
+      "validAdjustedFillDifference": 0.008279551052766048,
+      "fillCrossed95": [
+        -0.011345010866264847,
+        0.02767547769375511
+      ],
+      "perSeedOutcomeDifference": {
+        "123": 0.015204493113011884,
+        "456": 0.01349121395010494,
+        "789": 0.0071052701392776765
+      },
+      "commonTrainingSecondsBySeed": {
+        "123": 89.3961537930154,
+        "456": 44.55101588404068,
+        "789": 44.32615866200649
+      },
+      "descriptiveAverageGainDifferenceAtCommonTimeBySeed": {
+        "123": 0.0019600579103898033,
+        "456": -0.02387804015274483,
+        "789": -0.014675501674095733
+      },
+      "descriptiveEndpointGainDifferenceAtCommonTimeBySeed": {
+        "123": -0.02553295049042209,
+        "456": -0.023991167019872084,
+        "789": -0.015103466715705782
+      }
+    }
+  },
+  "defaultPromotion": "not_performed; evaluate fill/validity/reuse, learning evidence and untouched confirmation before adoption"
+}

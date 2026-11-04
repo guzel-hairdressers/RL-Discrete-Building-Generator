@@ -1,5 +1,7 @@
 # v0.10.0: shared module limits, training latency and reuse reward
 
+> Later numerical corrections and the angle-proposal experiment supersede this report for current behavior. Earlier timings remain raw evidence for their captured source revisions, not current performance claims. See [the corrected comparison](v010_angle_proposal_evaluation.md).
+
 2026-11-04; branch `version/v0.10.0`. Parent revision `3e9ed018`. This report records implementation checks and latency smoke runs, not convergence or an architectural-quality result.
 
 ## What caused the slowdown and type explosion

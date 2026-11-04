@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 import torch
 from torch import nn
-from torch.distributions import Categorical
+from torch.distributions import Categorical,Normal
 
 
 ARCHITECTURES = ('pooled', 'message_passing', 'local_message_passing', 'candidate_attention')
@@ -27,12 +27,15 @@ class GraphActorCritic(nn.Module):
         self.node = nn.Sequential(nn.Linear(8,32),nn.SiLU())
         self.message = nn.Sequential(nn.Linear(33,32),nn.SiLU())
         self.update = nn.Sequential(nn.Linear(64,32),nn.SiLU())
-        self.actor = nn.Sequential(nn.Linear(74 if architecture in ('local_message_passing','candidate_attention') else 42,64),nn.SiLU(),nn.Linear(64,1))
+        self.actor = nn.Sequential(nn.Linear(76 if architecture in ('local_message_passing','candidate_attention') else 44,64),nn.SiLU(),nn.Linear(64,1))
         self.critic = nn.Sequential(nn.Linear(32,32),nn.SiLU(),nn.Linear(32,1))
         if architecture=='candidate_attention':
             self.attention=nn.Sequential(nn.Linear(37,32),nn.SiLU(),nn.Linear(32,1))
 
-    def forward(self,nodes,edges,lengths,candidates,anchors=None,geometry=None):
+        # Continuous proposals use the same graph/anchor embeddings as selection.
+        self.proposal=nn.Sequential(nn.Linear(66,32),nn.SiLU(),nn.Linear(32,4))
+
+    def encode(self,nodes,edges,lengths):
         h=self.node(nodes)
         for _ in range(2):
             messages=torch.zeros_like(h)
@@ -42,7 +45,12 @@ class GraphActorCritic(nn.Module):
                 messages.index_add_(0,dst,self.message(torch.cat((h[src],lengths),dim=1)))
                 degree.index_add_(0,dst,torch.ones_like(lengths))
             h=self.update(torch.cat((h,messages/degree.clamp_min(1)),dim=1))
-        context=h.mean(0)
+        return h,h.mean(0)
+
+    def forward(self,nodes,edges,lengths,candidates,anchors=None,geometry=None,encoded=None):
+        h,context=self.encode(nodes,edges,lengths) if encoded is None else encoded
+        if candidates.shape[-1]==10:
+            candidates=torch.nn.functional.pad(candidates,(0,2))
         parts=[context.expand(len(candidates),-1),candidates]
         if self.architecture=='local_message_passing':
             if anchors is None: raise ValueError('local graph actor requires candidate anchors')
@@ -109,9 +117,84 @@ class GraphLearner:
         self.last={}
         self.clear_episode()
 
-    def clear_episode(self): self.trajectory=[]
+    def clear_episode(self):
+        self.trajectory=[];self._prepared=None
+        self.proposal_count=0;self.proposal_decisions=0
+        self.selected_sources={};self.selected_factors={}
 
-    def choose(self,graph,features,training=True,anchors=None,positions=None):
+    def _prepare(self,graph):
+        key=(id(graph),len(graph.nodes),torch.is_grad_enabled())
+        if self._prepared is None or self._prepared[0]!=key:
+            tensors=encode_graph(graph,self.device)
+            self._prepared=(key,tensors,self.model.encode(*tensors))
+        return self._prepared[1:]
+
+    def propose_continuous(self,bank,floor,training=True,limit=4,min_distance=2.5,use_vocabulary=False):
+        import random
+        from relative_vocabulary import RelativeVocabulary
+        nodes=list(bank.floor_nodes[floor])
+        selection_rng=random.Random(194+len(bank.graph.nodes)*104729+floor)
+        selection_rng.shuffle(nodes)
+        nodes=[nodes[i%len(nodes)] for i in range(limit)] if nodes else []
+        span_range=2*bank.prior.radius-min_distance
+        if not nodes or span_range<=1e-8:return []
+        # Reuse either factor independently: a new angle need not invent a new
+        # length. Continuous lengths almost never hit an existing contact length
+        # at numeric tolerance, so coupling both factors prevented useful reuse.
+        fixed_turns={};fixed_lengths={}
+        if use_vocabulary:
+            for i in range(len(nodes)):
+                if i%3==0 and bank.vocabulary._length_keys:
+                    fixed_lengths[i]=bank.vocabulary.lengths[selection_rng.choice(bank.vocabulary._length_keys)]
+                elif i%3==1 and bank.vocabulary._angle_keys:
+                    fixed_turns[i]=bank.vocabulary.angles[selection_rng.choice(bank.vocabulary._angle_keys)]
+        with torch.set_grad_enabled(training):
+            tensors,(h,context)=self._prepare(bank.graph)
+            ids={nid:i for i,nid in enumerate(bank.graph.nodes)}
+            anchors=torch.tensor([ids[n.node_id] for n in nodes],device=self.device)
+            summary=bank.vocabulary.summary()
+            vocab=h.new_tensor([math.log1p(summary['observedLengthCount']),math.log1p(summary['observedAngleCount'])]).expand(len(nodes),-1)
+            parameters=self.model.proposal(torch.cat((context.expand(len(nodes),-1),h[anchors],vocab),dim=1))
+            mean,log_std=parameters[:,:2],parameters[:,2:].clamp(-3.,1.)
+            distribution=Normal(mean,log_std.exp())
+            free=torch.ones_like(mean)
+            for i in fixed_turns:free[i,0]=0.
+            for i in fixed_lengths:free[i,1]=0.
+            if training:
+                noise=torch.randn(mean.shape,generator=self.rng).to(self.device)
+                sample=mean+log_std.exp()*noise
+                latent=sample.detach()
+                def log_jacobian(z):
+                    angular=math.log(math.pi)+2*(math.log(2.)-z[:,0]-torch.nn.functional.softplus(-2*z[:,0]))
+                    length=math.log(span_range)+torch.nn.functional.logsigmoid(z[:,1])+torch.nn.functional.logsigmoid(-z[:,1])
+                    return torch.stack((angular,length),dim=1)
+                # Entropy is for physical angle/length, including the nonlinear
+                # transform; latent variance cannot earn entropy by saturation.
+                entropy=((distribution.entropy()+log_jacobian(sample))*free).sum(-1).mean()
+                # All latent proposals are stochastic actions, including rejected
+                # ones. Credit the joint proposal draw, not just accepted samples.
+                self.trajectory.append((((distribution.log_prob(latent)-log_jacobian(latent))*free).sum(),self.model.critic(context).squeeze(-1),
+                    entropy,1))
+            else:
+                # Frozen inference searches the learned distribution with a
+                # reproducible noise bank. No learned angle is snapped to a grid.
+                rng=torch.Generator(device='cpu').manual_seed(871+len(bank.graph.nodes)*104729+floor)
+                noise=torch.randn(mean.shape,generator=rng).to(self.device)
+                latent=(mean+log_std.exp()*noise).detach()
+            self.proposal_count+=len(nodes);self.proposal_decisions+=1
+            relative=(math.pi*latent[:,0].tanh()).cpu().tolist()
+            spans=(min_distance+(2*bank.prior.radius-min_distance)*latent[:,1].sigmoid()).cpu().tolist()
+        result=[]
+        for i,(n,turn,span) in enumerate(zip(nodes,relative,spans)):
+            turn=fixed_turns.get(i,turn);span=fixed_lengths.get(i,span)
+            bearing=RelativeVocabulary.reference_angle(bank,n)+turn
+            result.append(dict(x=n.x+span*math.cos(bearing),y=n.y+span*math.sin(bearing),
+                anchor_node=n.node_id,span=span,relativeAngle=turn,source='neural_continuous',
+                angleSource='observed' if i in fixed_turns else 'neural',
+                lengthSource='observed' if i in fixed_lengths else 'neural'))
+        return result
+
+    def choose(self,graph,features,training=True,anchors=None,positions=None,sources=None,factor_sources=None):
         ids={nid:i for i,nid in enumerate(graph.nodes)}
         anchor_indices=torch.tensor([ids[a] for a in anchors],dtype=torch.long,device=self.device) if anchors is not None else None
         geometry=None
@@ -119,13 +202,21 @@ class GraphLearner:
             if positions is None or anchors is None: raise ValueError('candidate attention needs poses and anchors')
             geometry=relative_candidate_geometry(graph,anchor_indices,positions,self.device)
         with torch.set_grad_enabled(training):
-            logits,value=self.model(*encode_graph(graph,self.device),
+            tensors,encoded=self._prepare(graph)
+            logits,value=self.model(*tensors,
                 torch.tensor(features,dtype=torch.float32,device=self.device),
-                anchor_indices,geometry)
+                anchor_indices,geometry,encoded=encoded)
             distribution=Categorical(logits=logits)
             index=int(torch.multinomial(distribution.probs.detach().cpu(),1,generator=self.rng)) if training else int(logits.argmax())
             if training:
                 self.trajectory.append((distribution.log_prob(torch.tensor(index,device=self.device)),value,distribution.entropy(),len(features)))
+            if sources:
+                source=sources[index];self.selected_sources[source]=self.selected_sources.get(source,0)+1
+            if factor_sources:
+                key='/'.join(factor_sources[index]);self.selected_factors[key]=self.selected_factors.get(key,0)+1
+        # Reuse the embedding for proposal generation + selection only; callers
+        # may mutate existing nodes without changing their count between choices.
+        self._prepared=None
         return index
 
     def finish(self,reward,training=True):
@@ -134,7 +225,9 @@ class GraphLearner:
             advantage=0.,policyUpdateCount=self.updates,policyDecisionCount=len(self.trajectory),
             learningAlgorithm='graph_actor_critic_experimental' if training else 'graph_inference',
             architecture=self.model.architecture,
-            learningRate=self.optimizer.param_groups[0]['lr'] if training else 0.,trainingReward=reward)
+            learningRate=self.optimizer.param_groups[0]['lr'] if training else 0.,trainingReward=reward,
+            continuousProposalCount=self.proposal_count,continuousProposalDecisions=self.proposal_decisions,
+            selectedProposalSources=dict(self.selected_sources),selectedFactorSources=dict(self.selected_factors))
         if training and self.trajectory:
             # This is one completed-design objective, independent of how many
             # decisions were used to construct it. Do not reward delaying failure.
@@ -157,11 +250,11 @@ class GraphLearner:
         return stats
 
     def state(self):
-        return dict(schema=2,architecture=self.model.architecture,model={k:v.detach().cpu().clone() for k,v in self.model.state_dict().items()},
+        return dict(schema=3,architecture=self.model.architecture,model={k:v.detach().cpu().clone() for k,v in self.model.state_dict().items()},
             optimizer=self.optimizer.state_dict(),rng=self.rng.get_state(),updates=self.updates)
 
     def load(self,state):
-        if not isinstance(state,dict) or state.get('schema') not in (1,2):
+        if not isinstance(state,dict) or state.get('schema') not in (1,2,3):
             raise ValueError('unsupported graph policy checkpoint')
         architecture=state.get('architecture','message_passing')
         if architecture not in ARCHITECTURES: raise ValueError('unknown graph architecture')
@@ -169,8 +262,34 @@ class GraphLearner:
             raise ValueError('invalid graph update count')
         # Prepare a fresh model/optimizer; rejected checkpoints cannot partially mutate a learner.
         candidate=GraphLearner(self.device,lr=self.optimizer.param_groups[0]['lr'],architecture=architecture)
-        candidate.model.load_state_dict(state['model'],strict=True)
-        candidate.optimizer.load_state_dict(state['optimizer'])
+        import copy
+        model_state=copy.deepcopy(state['model'])
+        optimizer_state=copy.deepcopy(state['optimizer'])
+        if state['schema']<3:
+            # Preserve old encoder/actor/critic and Adam moments. New source
+            # features start at zero influence; the proposal head starts fresh.
+            def widen(value):
+                result=value.new_zeros((value.shape[0],value.shape[1]+2))
+                result[:,:42]=value[:,:42];result[:,44:]=value[:,42:]
+                return result
+            weight=model_state.get('actor.0.weight')
+            migrated=weight is not None and weight.shape[1] in (42,74)
+            if migrated:model_state['actor.0.weight']=widen(weight)
+            expected=candidate.model.state_dict()
+            for key,value in expected.items():
+                if key.startswith('proposal.') and key not in model_state:model_state[key]=value
+            group=optimizer_state['param_groups'][0]
+            new_ids=candidate.optimizer.state_dict()['param_groups'][0]['params']
+            if len(group['params'])<len(new_ids):
+                old_ids=group['params'];group['params']=new_ids
+                actor_index=list(dict(candidate.model.named_parameters())).index('actor.0.weight')
+                actor_id=old_ids[actor_index]
+                if migrated and actor_id in optimizer_state['state']:
+                    for key,value in optimizer_state['state'][actor_id].items():
+                        if isinstance(value,torch.Tensor) and value.ndim==2:
+                            optimizer_state['state'][actor_id][key]=widen(value)
+        candidate.model.load_state_dict(model_state,strict=True)
+        candidate.optimizer.load_state_dict(optimizer_state)
         candidate.rng.set_state(state['rng'])
         self.model=candidate.model;self.optimizer=candidate.optimizer
         self.rng=candidate.rng;self.updates=state['updates'];self.clear_episode()

@@ -1,0 +1,61 @@
+{
+  "functionalOnly": true,
+  "trainingPerformed": false,
+  "origin": "http://localhost:3000",
+  "backendPort": 8001,
+  "proposalStrategy": "vocabulary",
+  "nodes": 8,
+  "reuseAudit": {
+    "prototypeCount": 1,
+    "independentOccurrences": 5,
+    "verticalCopies": 3,
+    "singletonCount": 0,
+    "independentRepeatFraction": 0.8,
+    "confirmedReuseRatio": 1.0
+  },
+  "vocabulary": {
+    "observedLengthCount": 1,
+    "observedAngleCount": 0,
+    "angleConvention": "directed_modulo_2pi",
+    "includesCompositeTurns": true,
+    "edgeLengths": [
+      7.770193099975585
+    ],
+    "relativeAnglesRadians": []
+  },
+  "validation": {
+    "valid": true,
+    "violations": [],
+    "unresolved": {},
+    "perFloor": {
+      "0": {
+        "filledArea": 119.54422956243624,
+        "exposedPerimeter": 51.21943079478678,
+        "rentableArea": 59.772114781218136,
+        "coreArea": 59.772114781218114,
+        "areaMethod": "sum_disjoint_convex"
+      },
+      "1": {
+        "filledArea": 119.54422956243621,
+        "exposedPerimeter": 51.21943166144193,
+        "rentableArea": 59.77211478121811,
+        "coreArea": 59.772114781218114,
+        "areaMethod": "sum_disjoint_convex"
+      },
+      "2": {
+        "filledArea": 119.54422956243624,
+        "exposedPerimeter": 51.21943079478678,
+        "rentableArea": 59.772114781218136,
+        "coreArea": 59.772114781218114,
+        "areaMethod": "sum_disjoint_convex"
+      },
+      "3": {
+        "filledArea": 119.54422956243621,
+        "exposedPerimeter": 51.21943166144193,
+        "rentableArea": 59.77211478121811,
+        "coreArea": 59.772114781218114,
+        "areaMethod": "sum_disjoint_convex"
+      }
+    }
+  }
+}

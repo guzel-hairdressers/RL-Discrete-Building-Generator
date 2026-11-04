@@ -1,0 +1,8 @@
+{
+  "sourceRevision": "40daee07",
+  "sourceSha256": "c53ec0b50ca1563afc5ddc3128d404b394b6f9e9fb4e59694e7ba5cef639e67c",
+  "initializationSeed": 7,
+  "updates": 1,
+  "checkpointSha256": "335bcf493ef5ead77d5dc3ec82eead583ccc4e205ae0d0886b6253ec9b59bdd3",
+  "purpose": "Self-contained real schema-2 model/Adam/RNG migration regression; no Git history required at test runtime."
+}

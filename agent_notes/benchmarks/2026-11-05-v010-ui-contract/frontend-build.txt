@@ -1,0 +1,1 @@
+Clean frontend with additive proposal controls and environment-selectable backend proxy: Vite 5.4.21, 60 modules transformed, production build passed. Generated assets are left to UI integration. No unrelated local UI styles were included in this clean build.

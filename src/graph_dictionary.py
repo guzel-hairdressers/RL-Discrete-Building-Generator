@@ -40,7 +40,32 @@ class Shape:
     centers: object = field(compare=False,repr=False)
     tangents: object = field(compare=False,repr=False)
     limits: object = field(compare=False,repr=False)
+    faces: tuple = field(compare=False,repr=False)
+    face_angles: tuple = field(compare=False,repr=False)
+    prior_planes: frozenset = field(compare=False,repr=False)
     support_cache: dict = field(default_factory=dict,compare=False,repr=False)
+
+    def interval(self,key):
+        cached=self.intervals.get(key)
+        if cached is not None:return cached
+        # Indexed numeric contact aliases, tighter than the oracle's existing
+        # micrometre tolerance. No array scan for every rejected proposal.
+        length=math.hypot(*key[:2]);nx,ny=key[0]/length,key[1]/length
+        bound=key[2]/length;angle=math.atan2(ny,nx)%(2*math.pi)
+        queries=[angle]
+        if angle<1e-7:queries.append(angle+2*math.pi)
+        if angle>2*math.pi-1e-7:queries.append(angle-2*math.pi)
+        lower=math.inf;upper=-math.inf
+        for query in queries:
+            for i in range(bisect_left(self.face_angles,query-1e-7),bisect_right(self.face_angles,query+1e-7)):
+                _,_,_,distance,cx,cy,tx,ty,lo,hi=self.faces[i]
+                if abs(distance-bound)>1e-7:continue
+                center=-cx*ny+cy*nx;slope=-tx*ny+ty*nx
+                a,b=center+slope*lo,center+slope*hi
+                lower=min(lower,a,b);upper=max(upper,a,b)
+        if lower==math.inf:return None
+        result=(lower,upper);self.intervals[key]=result
+        return result
 
     def support(self,normal):
         key=tuple(normal)
@@ -61,13 +86,26 @@ def prior_constraints(prior):
         for i in range(prior.directions))
 
 
+@lru_cache(maxsize=32768)
+def normalized_plane_key(row):
+    length=math.hypot(*row[:2])
+    return (round(row[0]/length,12),round(row[1]/length,12)),row[2]/length
+
+
 @lru_cache(maxsize=4096)
-def make_shape(planes,required,prior):
+def make_shape(planes,required,prior,retained_prior=None):
     # The adapter's explicit regular prior is represented by inequalities, not
     # vertices. Every other observation is a unit-normal midpoint inequality.
-    prior_planes=prior_constraints(prior)
-    obs={plane_key(p) for p in planes if p[2]<prior.radius+1e-8}
-    rows=sorted(prior_planes|obs)
+    prior_planes=prior_constraints(prior) if retained_prior is None else retained_prior
+    obs={plane_key(p) for p in set(planes)|set(required) if p[2]<prior.radius+1e-8}
+    # Parallel half-spaces contribute one facet, at their strongest bound.
+    # Counting almost identical offsets as separate facets inflated areas and
+    # could split contact intervals inconsistently with the polygon adapter.
+    parallel={}
+    for row in sorted(prior_planes|obs):
+        key,distance=normalized_plane_key(row)
+        if key not in parallel or distance<parallel[key][0]:parallel[key]=(distance,row)
+    rows=sorted(value[1] for value in parallel.values())
     if any(p[2]<=0 for p in rows):return None
     data=np.asarray(rows,dtype=float)
     # Rounded keys are identifiers, not unit-vector guarantees. Normalize the
@@ -85,10 +123,9 @@ def make_shape(planes,required,prior):
     # circle clamp would introduce a different realizer and lose corner area.
     lower=np.max(np.where(coefficients < -1e-10,ratios,-np.inf),axis=0)
     upper=np.min(np.where(coefficients > 1e-10,ratios,np.inf),axis=0)
-    infeasible=np.any((np.abs(coefficients)<=1e-10)&(residual < -1e-7),axis=0)
+    infeasible=np.any((np.abs(coefficients)<=1e-10)&(residual < -1e-12),axis=0)
     spans=np.where(infeasible,0.,np.maximum(0.,upper-lower))
     intervals={row:(float(lo),float(hi)) for row,lo,hi,length in zip(rows,lower,upper,spans) if length>1e-7}
-    if any(key not in intervals or intervals[key][1]-intervals[key][0]<prior.min_contact-1e-6 for key in required):return None
     # Divergence theorem: area = 1/2 Σ support_distance * facet_length.
     # Exact for this bounded convex half-space model; no vertices are produced.
     area=float(.5*np.dot(bounds,spans))
@@ -97,24 +134,32 @@ def make_shape(planes,required,prior):
     centers=normals[active]*bounds[active,None]
     ts=tangents[active];limits=np.column_stack((lower[active],upper[active]))
     for array in (centers,ts,limits):array.flags.writeable=False
-    return Shape(tuple(p for p in sorted(obs) if p in intervals),frozenset(required),intervals,area,
-                 any(p in intervals for p in prior_planes),centers,ts,limits)
+    faces=tuple(sorted((float(math.atan2(ny,nx)%(2*math.pi)),float(nx),float(ny),float(bound),
+        float(c[0]),float(c[1]),float(t[0]),float(t[1]),float(lim[0]),float(lim[1]))
+        for (nx,ny),bound,c,t,lim in zip(normals[active],bounds[active],centers,ts,limits)))
+    shape=Shape(tuple(p for p in sorted(obs) if p in intervals),frozenset(required),intervals,area,
+                 any(p in intervals for p in prior_planes),centers,ts,limits,faces,tuple(f[0] for f in faces),frozenset(p for p in prior_planes if p in intervals))
+    if any(shape.interval(key) is None or shape.interval(key)[1]-shape.interval(key)[0]<prior.min_contact-1e-6 for key in required):return None
+    return shape
 
 
 def shape_with(base,extra,required,prior):
     extras=set(extra)
-    req=frozenset((base.required if base else frozenset())|set(required))
+    added=frozenset(required)
+    req=(base.required if not added else base.required|added) if base else added
     if base is not None:
         # Repeated modules usually receive redundant neighborhood evidence.
         # Cached scalar support proves that without solving the prototype again.
         extras={p for p in extras if p not in base.planes and base.support(p[:2])>p[2]+1e-9}
         if not extras:
-            if any(key not in base.intervals or base.intervals[key][1]-base.intervals[key][0]<prior.min_contact-1e-6 for key in req):return None
             if req==base.required:return base
+            if any(base.interval(key) is None or base.interval(key)[1]-base.interval(key)[0]<prior.min_contact-1e-6 for key in added-base.required):return None
             return Shape(base.planes,req,base.intervals,base.area,base.prior_boundary,
-                         base.centers,base.tangents,base.limits,base.support_cache)
+                         base.centers,base.tangents,base.limits,base.faces,base.face_angles,base.prior_planes,base.support_cache)
     planes=tuple(sorted(set(base.planes if base else ())|extras))
-    return make_shape(planes,req,prior)
+    # Adding cuts cannot reactivate a previously redundant prior inequality.
+    # Retain active prior faces instead of rebuilding all 64 rows per trial.
+    return make_shape(planes,req,prior,base.prior_planes if base else None)
 
 
 @dataclass
@@ -146,6 +191,8 @@ class PlacementPlan:
 class GraphDictionary:
     def __init__(self,graph,max_types=15):
         self.graph=graph;self.prior=graph.size_prior;self.max_types=max_types
+        from relative_vocabulary import RelativeVocabulary
+        self.vocabulary=RelativeVocabulary()
         self.instances={};self.shapes={};self.members=defaultdict(set);self.copy_counts=Counter()
         self.floor_nodes=defaultdict(list);self.incident=defaultdict(list);self.links=defaultdict(set)
         self.spatial=SpatialNodes(graph,self.prior.radius)
@@ -164,7 +211,7 @@ class GraphDictionary:
 
     def _interval(self,shape,origin,angle,other):
         key=displacement_plane((other[0]-origin[0],other[1]-origin[1]),angle)
-        return shape.intervals.get(key)
+        return shape.interval(key)
 
     def contact(self,a,pa,aa,b,pb,ab):
         ia=self._interval(pa,a,aa,b);ib=self._interval(pb,b,ab,a)
@@ -282,7 +329,7 @@ class GraphDictionary:
         if best_existing is not None and new_option is not None and abs(best_existing.filled-new_option.filled)<1e-6:
             def signature(plan):
                 return {tuple(round(v,6) for v in (*rotate((nx,ny),plan.angle),b))
-                        for nx,ny,b in plan.shapes[plan.prototype].intervals}
+                        for _,nx,ny,b,*_ in plan.shapes[plan.prototype].faces}
             if signature(best_existing)==signature(new_option):new_option=None
         result=[p for p in (best_existing,new_option) if p is not None]
         if not result:self.rejections['dictionary_incompatible']+=1
@@ -315,6 +362,7 @@ class GraphDictionary:
             vx,vy=rotate((-dx,-dy),-neighbor.angle)
             self.links[other].add((vx,vy,plan.prototype,plan.angle-neighbor.angle))
 
+        self.vocabulary.observe(self.graph,[n.node_id for n in nodes]+[nid for _,nid,_ in plan.contacts])
         for pid in plan.shapes:
             for oid in self.members[pid]:
                 i=self.instances[oid]
@@ -333,7 +381,7 @@ class GraphDictionary:
         from shared_modules import Inference,Occurrence,Prototype,_bounded_polygon
         occurrences={};prototypes={};unresolved={}
         if not self._preserves_edges(self.shapes,check_all=True):
-            unresolved['shared_contacts']='edited poses violate shared module contacts'
+            unresolved['shared_contacts']='shared module contact constraints are inconsistent'
         for pid,shape in self.shapes.items():
             constraints=[((x,y),b) for x,y,b in shape.planes]
             required=[((x,y),b) for x,y,b in shape.required]

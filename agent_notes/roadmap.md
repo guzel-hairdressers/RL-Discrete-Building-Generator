@@ -322,3 +322,11 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [IMPLEMENTED] Bounded WebSocket training bursts and viewer setup/label caching; 279 tests pass (2 skipped), production build verified.
 - [MEASURED] Seeded L/XL 120-per-floor 4/8-floor latency smoke runs; actual counts, failed development overlap and independent previews retained. See [report](reports/v010_bounded_dictionary_speed.md). No unequal-workload speedup or learned quality claim.
 - [OPEN] Better fill with the same compatible dictionary, global reassignment/pose search, calibrated environmental estimates, multi-seed learning evidence and throughput distributions. Earlier speculative sub-millisecond/10x roadmap targets are not achieved evidence.
+
+### 2026-11-05 — proposal comparison and parallel UI work
+
+- [IMPLEMENTED] Observed directed turns/lengths, composite turns and mixed learned/observed factors; no spatial grid or fixed turn set.
+- [CORRECTED] Parallel-face area/contact errors and invalid-start proposal credit; active-prior caching and additive UI reuse identity.
+- [MEASURED] Three seeds × three strategies × 60 training episodes with 24 initial/final held-out cases each; no faster learning established. Current default retained.
+- [PLANNED] Boundary/goal conditioning, adaptive ranking, local repair, explicit circulation and soft real-corner orthogonality; no new reward/grid imposed.
+- [PREPARED] UI handoff, protocol contract and isolated worktrees for backend/UI branches. [Brief](guides/UI_OVERHAUL_HANDOFF.md).

@@ -35,6 +35,31 @@ class ImplicitShapeTests(unittest.TestCase):
             self.assertLessEqual(max(nx*x+ny*y-b for x,y in polygon),1e-6)
         self.assertAlmostEqual(shape.area,area(polygon),places=5)
 
+    def test_parallel_duplicate_observations_count_one_facet_and_keep_contact_aliases(self):
+        prior=SizePrior();planes=((1.,0.,2.),(1.,0.,2.+1e-8),(1.,0.,2.+2e-8))
+        shape=make_shape(planes,frozenset(planes),prior)
+        polygon=_bounded_polygon(tuple(((x,y),b) for x,y,b in planes),(),prior)
+        self.assertIsNotNone(shape)
+        self.assertAlmostEqual(shape.area,area(polygon),places=5)
+        self.assertEqual(len(shape.planes),1)
+        for p in planes:self.assertAlmostEqual(shape.interval(p)[1]-shape.interval(p)[0],shape.interval(planes[0])[1]-shape.interval(planes[0])[0])
+
+    def test_contact_alias_tolerance_cannot_bridge_a_millimetre_difference(self):
+        planes=((1.,0.,2.),(1.,0.,2.001))
+        self.assertIsNone(make_shape(planes,frozenset(planes),SizePrior()))
+
+    def test_incremental_active_prior_pruning_matches_full_adapter(self):
+        from graph_dictionary import shape_with
+        prior=SizePrior();shape=make_shape((),frozenset(),prior)
+        evidence=[]
+        for i in range(11):
+            a=.23+i*2*math.pi/7;plane=plane_key((math.cos(a),math.sin(a),2.+.2*math.sin(i)))
+            evidence.append(plane);shape=shape_with(shape,(plane,),(),prior)
+            self.assertIsNotNone(shape)
+            polygon=_bounded_polygon(tuple(((x,y),b) for x,y,b in evidence),(),prior)
+            self.assertAlmostEqual(shape.area,area(polygon),places=5)
+        self.assertEqual(len(shape.prior_planes),0)
+
 class SharedDictionaryTests(unittest.TestCase):
     def graph(self,cap=2,floors=1):
         g=BuildingGraph(floors);g.size_prior=SizePrior()

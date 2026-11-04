@@ -17,10 +17,10 @@ import torch
 from server import ParallelTrainer
 
 
-def run(output,floors=4):
+def run(output,floors=4,strategy='legacy'):
     output.mkdir(parents=True,exist_ok=False)
     sources={str(p.relative_to(ROOT)):p.read_text() for p in [ROOT/'tools/benchmark_graph_training.py',
-        *[ROOT/'src'/name for name in ('server.py','typed_cell.py','graph_proxy.py','graph_dictionary.py','graph_sampler.py','graph_policy.py','shared_modules.py','voronoi_realizer.py')]]}
+        *[ROOT/'src'/name for name in ('server.py','typed_cell.py','graph_proxy.py','graph_dictionary.py','relative_vocabulary.py','graph_sampler.py','graph_policy.py','shared_modules.py','voronoi_realizer.py')]]}
     manifest=dict(revision=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
         protocol=f'L/XL,120 max modules per floor,{floors} floors,seed123',pilotOnly=True,
         sourceHashes={k:hashlib.sha256(v.encode()).hexdigest() for k,v in sources.items()})
@@ -29,7 +29,7 @@ def run(output,floors=4):
     rows=[]
     for tier in ('L','XL'):
         torch.manual_seed(123)
-        settings=dict(generatorEngine='graph_voronoi',graphController='neural',boundaryType='rect',
+        settings=dict(generatorEngine='graph_voronoi',graphController='neural',graphProposalStrategy=strategy,boundaryType='rect',
             siteAreaTier=tier,parallelEnvironments=floors,maxModules=120,seed=123)
         t=ParallelTrainer(settings)
         try:
@@ -66,4 +66,5 @@ def run(output,floors=4):
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--output',required=True,type=Path)
     parser.add_argument('--floors',type=int,choices=(4,8),default=4)
-    args=parser.parse_args();run(args.output,args.floors)
+    parser.add_argument('--strategy',choices=('legacy','continuous','vocabulary'),default='legacy')
+    args=parser.parse_args();run(args.output,args.floors,args.strategy)

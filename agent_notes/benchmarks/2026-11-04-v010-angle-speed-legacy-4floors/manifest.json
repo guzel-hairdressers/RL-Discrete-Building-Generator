@@ -1,0 +1,17 @@
+{
+  "revision": "40daee073a1807fb486b6e7f5ab196df0a2a6032",
+  "protocol": "L/XL,120 max modules per floor,4 floors,seed123",
+  "pilotOnly": true,
+  "sourceHashes": {
+    "tools/benchmark_graph_training.py": "86621849730142bda35785037ba14af59b9b3e206ad9f77efb6bff1f481dbd9a",
+    "src/server.py": "0397b063655f02d8a757a57b7bd12c9f4e12446be665df631f2d2f04dd944e69",
+    "src/typed_cell.py": "092e1b900299c92b0a21a8d4bbb3853c41c8b75af949b19de04ee79b04ced13d",
+    "src/graph_proxy.py": "e9756ae1ef602afa2b49d8dcaf6477bb315e8e89b31a199087390bc319cf17ff",
+    "src/graph_dictionary.py": "50462f77a552e81c95b62a9c69a9d0e71aca516a90dc4f4defea40e07b308283",
+    "src/relative_vocabulary.py": "bf41fffc02603d7e4967dd0d4a1b0fc4ae3e3d571882f244d7a420c4e1032741",
+    "src/graph_sampler.py": "5f728cabe7ea552214157bba8d3a0b0cba0c396fe2eada7a8b774720fb04cd93",
+    "src/graph_policy.py": "80ea48114aa13cca07143da594cb0998b9f75c101154853fd6e216e6522242f8",
+    "src/shared_modules.py": "94a2377f39fecbd044ca108efe8758dd7c928dac1d7a237b9d66d6ddc0fa79fc",
+    "src/voronoi_realizer.py": "4bfcee124bd21c4e6f001816d974c8eda8e817eee8de14188c688414306644a7"
+  }
+}

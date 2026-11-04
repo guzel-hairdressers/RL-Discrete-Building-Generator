@@ -121,6 +121,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "graphMinArea": 1.0,
     "graphMaxArea": 80.0,
     "graphMaxTypes": 15,
+    "graphProposalStrategy": "legacy",
 }
 
 BOUNDARY_TYPES = {
@@ -269,6 +270,8 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
         raise SettingsError('graphController must be neural or reference')
     if merged.get('graphSearchMode','balanced') not in ('balanced','alternatives'):
         raise SettingsError('graphSearchMode must be balanced or alternatives')
+    if merged.get('graphProposalStrategy','vocabulary') not in ('legacy','continuous','vocabulary'):
+        raise SettingsError('graphProposalStrategy must be legacy, continuous or vocabulary')
     merged['graphMaxTypes']=int(_in_range(_integer(merged.get('graphMaxTypes',15),'graphMaxTypes'),1,15,'graphMaxTypes'))
     from shared_modules import SizePrior
     try:
@@ -4928,11 +4931,13 @@ class ParallelTrainer:
             ymin=max(min(y for x,y in pts) for pts in points);ymax=min(max(y for x,y in pts) for pts in points)
             candidates.extend((rng.uniform(xmin,xmax),rng.uniform(ymin,ymax)) for _ in range(512))
             origin=next((p for p in candidates if all(origin_fits(p,env.site['outer'],env.site.get('holes',[]),radius)
-                        for env in environments)),candidates[0])
+                        for env in environments)),None)
+            certified_origin=origin is not None
+            if origin is None:origin=candidates[0]
             # No legacy shape-policy sampling or polygon-core preflight.
-            return environments,[],[],dict(enabled=len(environments)>1,status='ready',
+            return environments,[],[],dict(enabled=len(environments)>1,status='ready' if certified_origin else 'unresolved_origin',
                 mode='graph-full-height',boundaryPolicy='unchanged',siteResampleAttempts=0,
-                graphOrigin=list(origin),initialCandidateCount=0),[]
+                graphOrigin=list(origin),initialCandidateCount=len(candidates)),[]
         attempt_limit = 1 if bool(settings["singleFloor"]) else CORE_SITE_TRANSACTION_ATTEMPTS
         for attempt in range(attempt_limit):
             environments, atrium_logs = self._build_sites(
@@ -6037,6 +6042,8 @@ class ParallelTrainer:
             metrics = self._aggregate_terminal(per_site)
             metrics['estimateStatus']='implicit_shared_constraints' if self.mode=='training' else 'realized_uncalibrated_environment'
             metrics['moduleIdentityStatus']='constraint_checked' if self.mode=='training' else 'confirmed'
+            metrics['proposalStrategy']=self.settings.get('graphProposalStrategy','vocabulary')
+            metrics['proposalVocabulary']=self.building_graph.module_bank.vocabulary.summary()
             metrics['dictionaryMaxTypes']=self.building_graph.module_bank.max_types
             metrics['dictionaryTargetTypes']=min(metrics['dictionaryMaxTypes'],int(self.settings.get('dictCap',10)))
             metrics['incompatibleProposalCount']=int(sum(self.building_graph.module_bank.rejections.values()))
@@ -6083,6 +6090,7 @@ class ParallelTrainer:
             for key in ('singletonPenalty','underfillPenalty','topologyPenalty','reuseBonus'):
                 metrics[key]=_mean([float(ps.get(key,0.)) for ps in per_site])
 
+            metrics['reuseAudit']=per_site[0].get('reuseAudit',{}) if per_site else {}
             metrics['perFloorScores']=[float(ps['score']) for ps in per_site]
             self.baseline=.90*self.baseline+.10*(score/100.)
             metrics.update(policyLoss=0.,actorLoss=0.,valueLoss=0.,policyEntropy=0.,gradientNorm=0.,
@@ -6637,7 +6645,10 @@ class ParallelTrainer:
         if getattr(self.building_graph,'module_bank',None) is None:
             self.building_graph.module_bank=GraphDictionary(self.building_graph,int(self.settings.get('graphMaxTypes',15)))
         bank=self.building_graph.module_bank
-        active_envs=[env for env in self.environments if not env.done]
+        # No placement can repair an already invalid full-height starter.
+        # Retain the failed layout, but do not credit arbitrary proposal draws.
+        active_envs=([env for env in self.environments if not env.done]
+                     if all(bank.initial_fits.values()) else [])
         self.last_graph_candidate_count=0
         new_nodes_added=0
         radius=bank.prior.radius
@@ -6646,11 +6657,19 @@ class ParallelTrainer:
             if len(bank.floor_nodes[f])>=int(self.settings['maxModules']):continue
             site_poly=self.building_graph.site_boundaries[f]
             motif=bank.frontier_candidates(f,24)
-            novel=env.seed_sampler.generate_candidates(self.building_graph,f,site_poly,max_proposals=16)
-            # Interleave module-derived contacts and continuous exploration.
+            strategy=self.settings.get('graphProposalStrategy','vocabulary')
+            neural=self.settings.get('graphController','neural')=='neural'
+            observed=bank.vocabulary.candidates(bank,f,8) if strategy=='vocabulary' else []
+            if strategy=='legacy' or not neural:
+                novel=env.seed_sampler.generate_candidates(self.building_graph,f,site_poly,max_proposals=16)
+            else:
+                novel=self.graph_learner.propose_continuous(bank,f,training=self.mode=='training',
+                    limit=16-len(observed),min_distance=env.seed_sampler.min_seed_distance,use_vocabulary=strategy=='vocabulary')
+            # Bound work and offer every source before scanning further motifs.
             candidates=[]
-            for i in range(max(len(motif),len(novel))):
+            for i in range(max(len(motif),len(novel),len(observed))):
                 if i<len(motif):candidates.append(motif[i])
+                if i<len(observed):candidates.append(observed[i])
                 if i<len(novel):candidates.append(novel[i])
             choices=[]
             for candidate in candidates:
@@ -6673,14 +6692,19 @@ class ParallelTrainer:
                             plan.type_count/max(1,target),plan.singleton_count/max(1,len(bank.instances)+1),
                             plan.filled/max(1.,sum(e.site['area'] for e in self.environments)),
                             f/max(1,num_floors-1),float(plan.shapes[plan.prototype].prior_boundary),
-                            (len(self.building_graph.nodes)+len(floors))/max(1,self.max_graph_seeds*num_floors)]
+                            (len(self.building_graph.nodes)+len(floors))/max(1,self.max_graph_seeds*num_floors),
+                            float(candidate.get('source')=='observed_angle_length'),
+                            float(candidate.get('source')=='neural_continuous')]
                         choices.append((objective,candidate,plan,features))
                 if len(choices)>=12:break
             if not choices:continue
             self.last_graph_candidate_count=len(choices)
             if self.settings.get('graphController','neural')=='neural':
                 selected=self.graph_learner.choose(self.building_graph,[row[3] for row in choices],training=self.mode=='training',
-                    anchors=[row[1]['anchor_node'] for row in choices],positions=[(row[2].x,row[2].y) for row in choices])
+                    anchors=[row[1]['anchor_node'] for row in choices],positions=[(row[2].x,row[2].y) for row in choices],
+                    sources=[row[1].get('source','unknown') for row in choices],
+                    factor_sources=[(row[1].get('angleSource','observed' if row[1].get('source') in ('observed_angle_length','shared_module_contact') else 'sampled'),
+                                     row[1].get('lengthSource','observed' if row[1].get('source') in ('observed_angle_length','shared_module_contact') else 'sampled')) for row in choices])
                 chosen=choices[selected]
             elif self.settings.get('graphSearchMode')=='alternatives':
                 best=max(row[0] for row in choices)
@@ -6777,6 +6801,7 @@ class ParallelTrainer:
             "isComplete": is_complete,
             "realized": realize_now,
             "moduleIdentityStatus": 'confirmed' if realize_now else 'constraint_checked',
+            "proposalVocabulary": bank.vocabulary.summary(),
             "nodes": [
                 {
                     "id": n.node_id,
@@ -6786,6 +6811,8 @@ class ParallelTrainer:
                     "world_x": round(n.x + (self.environments[n.floor_index].offset[0] if n.floor_index < len(self.environments) else 0.0), 2),
                     "world_y": round(n.y + (self.environments[n.floor_index].offset[1] if n.floor_index < len(self.environments) else 0.0), 2),
                     "type": n.cell_type.value,
+                    "occurrenceId": n.metadata.get('root_id',n.node_id),
+                    "scope": n.scope.value,
                     "floor": n.floor_index,
                     "roomNumber": node_room_numbers.get(n.node_id, (1 if n.cell_type == typed_cell.CellType.CORE else 2)),
                     "moduleId": n.module_id,
@@ -6903,6 +6930,8 @@ class ParallelTrainer:
                 "graphCandidateCount": getattr(self,'last_graph_candidate_count',0),
                 "singletonPenalty": float(agg_metrics.get("singletonPenalty",0.)),
                 "reuseBonus": float(agg_metrics.get("reuseBonus",0.)),
+                "reuseAudit": per_floor_metrics[0].get('reuseAudit',{}) if per_floor_metrics else {},
+                "proposalStrategy": self.settings.get('graphProposalStrategy','legacy'),
                 "estimateStatus": "implicit_shared_constraints",
                 "moduleIdentityStatus": "constraint_checked",
                 "dictionaryMaxTypes": bank.max_types,
@@ -7410,6 +7439,7 @@ class ParallelTrainer:
             "isComplete": completed,
             "realized": True,
             "moduleIdentityStatus": "confirmed",
+            "proposalVocabulary": active_graph.module_bank.vocabulary.export() if getattr(active_graph,'module_bank',None) else None,
             "nodes": [
                 {
                     "id": n.node_id,
@@ -7419,6 +7449,8 @@ class ParallelTrainer:
                     "world_x": round(n.x + (self.environments[n.floor_index].offset[0] if n.floor_index < len(self.environments) else 0.0), 2),
                     "world_y": round(n.y + (self.environments[n.floor_index].offset[1] if n.floor_index < len(self.environments) else 0.0), 2),
                     "type": n.cell_type.value,
+                    "occurrenceId": n.metadata.get('root_id',n.node_id),
+                    "scope": n.scope.value,
                     "floor": n.floor_index,
                     "roomNumber": node_room_numbers.get(n.node_id, (1 if n.cell_type == typed_cell.CellType.CORE else 2)),
                     "moduleId": n.module_id,
@@ -7500,8 +7532,11 @@ class ParallelTrainer:
             "mergedDictionary": [_public_module(m) for m in self.dictionary],
             "metrics": {
                 **self.graph_learner.last,
+                "policyUpdateCount": self.graph_learner.updates,
                 "geometryValid": audit['valid'],
                 "reuseBonus": agg_metrics['reuseBonus'],
+                "reuseAudit": per_floor_metrics[0].get('reuseAudit',{}) if per_floor_metrics else {},
+                "proposalStrategy": self.settings.get('graphProposalStrategy','legacy'),
                 "singletonPenalty": agg_metrics['singletonPenalty'],
                 "dictionaryMaxTypes": getattr(getattr(active_graph,'module_bank',None),'max_types',15),
                 "dictionaryTargetTypes": min(15,int(self.settings.get('dictCap',10))),

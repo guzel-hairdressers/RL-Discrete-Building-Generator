@@ -1,32 +1,36 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Separate UI development from another running backend without editing routes.
+const backendUrl = process.env.MODULE_LAB_BACKEND_URL || 'http://localhost:8000';
+const websocketUrl = backendUrl.replace(/^http/, 'ws');
+
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
     proxy: {
       '/ws': {
-        target: 'ws://localhost:8000',
+        target: websocketUrl,
         ws: true,
       },
       '/api': {
-        target: 'http://localhost:8000',
+        target: backendUrl,
       },
       '/sites': {
-        target: 'http://localhost:8000',
+        target: backendUrl,
       },
       '/data': {
-        target: 'http://localhost:8000',
+        target: backendUrl,
       },
       '/scripts': {
-        target: 'http://localhost:8000',
+        target: backendUrl,
       },
       '/styles': {
-        target: 'http://localhost:8000',
+        target: backendUrl,
       },
       '/vendor': {
-        target: 'http://localhost:8000',
+        target: backendUrl,
       },
     },
   },

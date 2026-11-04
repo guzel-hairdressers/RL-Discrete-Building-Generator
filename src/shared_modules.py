@@ -109,6 +109,7 @@ class Inference:
         return {'prototypeCount':len(counts), 'independentOccurrences':len(built),
                 'verticalCopies':sum(len(o.nodes)-1 for o in built),
                 'singletonCount':sum(c==1 for c in counts.values()),
+                'independentRepeatFraction':(len(built)-len(counts))/max(1,len(built)),
                 'confirmedReuseRatio':sum(c for c in counts.values() if c>1)/max(1,len(built))}
 
 

@@ -87,6 +87,7 @@ class GraphOnlyLifecycleTests(unittest.TestCase):
         self.assertEqual(solve.call_count,1)
         self.assertTrue(e['graphState']['realized'])
         self.assertFalse(e['graphState']['isComplete'])
+        self.assertEqual(e['metrics']['policyUpdateCount'],0)
         self.assertTrue(e['placements'])
         self.assertEqual(len(t.graph_learner.trajectory),count)
         for k,v in t.graph_learner.model.state_dict().items():
@@ -161,3 +162,31 @@ class BoundedBatchTests(unittest.TestCase):
         self.assertEqual(changed['dictCap'],1)
         with self.assertRaises(SettingsError):
             validate_settings_patch(DEFAULT_SETTINGS,dict(graphMaxTypes=600))
+
+    def test_impossible_starter_does_not_train_an_unrelated_continuous_draw(self):
+        from server import ParallelTrainer
+        t=ParallelTrainer(dict(generatorEngine='graph_voronoi',graphProposalStrategy='vocabulary',
+            boundaryType='rect',siteAreaTier='L',parallelEnvironments=4,maxModules=120))
+        try:
+            t.new_site()
+            with patch('graph_dictionary.origin_fits',return_value=False):
+                event=t.step(t.generation_id,t.episode)
+            self.assertEqual(event['type'],'episodeDone')
+            self.assertFalse(event['metrics']['graphValid'])
+            self.assertEqual(event['metrics']['continuousProposalCount'],0)
+            self.assertEqual(event['metrics']['policyUpdateCount'],0)
+        finally:t.executor.shutdown(wait=True)
+
+    def test_ui_contract_exposes_independent_occurrences_without_parsing_ids(self):
+        from server import ParallelTrainer
+        t=ParallelTrainer(dict(generatorEngine='graph_voronoi',boundaryType='rect',siteAreaTier='L',
+            parallelEnvironments=4,maxModules=120))
+        try:
+            t.new_site();event=t.step(t.generation_id,t.episode)
+            nodes=[n for n in event['graphState']['nodes'] if n['type']!='void']
+            roots={n['occurrenceId'] for n in nodes};audit=event['metrics']['reuseAudit']
+            self.assertEqual(audit['independentOccurrences'],len(roots))
+            self.assertEqual(audit['verticalCopies'],len(nodes)-len(roots))
+            self.assertTrue(all(n['scope'] in ('independent','multi_floor') for n in nodes))
+            self.assertAlmostEqual(audit['independentRepeatFraction'],(len(roots)-audit['prototypeCount'])/len(roots))
+        finally:t.executor.shutdown(wait=True)

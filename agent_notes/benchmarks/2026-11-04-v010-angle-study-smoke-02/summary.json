@@ -1,0 +1,68 @@
+{
+  "legacy": {
+    "0": {
+      "cases": 1,
+      "failures": 0,
+      "valid": 1,
+      "meanOutcome": 0.5338038895112571,
+      "meanValidAdjustedFill": 0.42088892682302015,
+      "perSeed": {
+        "123": 0.5338038895112571
+      }
+    },
+    "1": {
+      "cases": 1,
+      "failures": 0,
+      "valid": 1,
+      "meanOutcome": 0.5360450422440516,
+      "meanValidAdjustedFill": 0.42856191935899673,
+      "perSeed": {
+        "123": 0.5360450422440516
+      }
+    }
+  },
+  "continuous": {
+    "0": {
+      "cases": 1,
+      "failures": 0,
+      "valid": 1,
+      "meanOutcome": 0.6106953231483953,
+      "meanValidAdjustedFill": 0.5206999077776328,
+      "perSeed": {
+        "123": 0.6106953231483953
+      }
+    },
+    "1": {
+      "cases": 1,
+      "failures": 0,
+      "valid": 1,
+      "meanOutcome": 0.620384548390371,
+      "meanValidAdjustedFill": 0.521702127885616,
+      "perSeed": {
+        "123": 0.620384548390371
+      }
+    }
+  },
+  "vocabulary": {
+    "0": {
+      "cases": 1,
+      "failures": 0,
+      "valid": 1,
+      "meanOutcome": 0.5859398209512439,
+      "meanValidAdjustedFill": 0.44957038617402467,
+      "perSeed": {
+        "123": 0.5859398209512439
+      }
+    },
+    "1": {
+      "cases": 1,
+      "failures": 0,
+      "valid": 1,
+      "meanOutcome": 0.5799776501488132,
+      "meanValidAdjustedFill": 0.4408856296961214,
+      "perSeed": {
+        "123": 0.5799776501488132
+      }
+    }
+  }
+}
