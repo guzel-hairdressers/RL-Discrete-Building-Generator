@@ -194,3 +194,29 @@ class GraphSeedSampler:
                 inside = not inside
 
         return inside
+
+
+def convex_polygon_inside_site(polygon, boundary, tolerance=1e-8):
+    """Containment without Boolean clipping, including concave site boundaries.
+
+    Vertex inclusion alone misses a room edge spanning an exterior notch.
+    Require included vertices and no proper room/site edge crossings.
+    """
+    if len(polygon)<3 or len(boundary)<3:return False
+    site=[(float(p['x']),float(p['y'])) if isinstance(p,dict) else tuple(p) for p in boundary]
+    if site[0]==site[-1]:site=site[:-1]
+    def orient(a,b,c):return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])
+    def covered(p):
+        for a,b in zip(site,site[1:]+site[:1]):
+            length=math.dist(a,b)
+            if length and abs(orient(a,b,p))<=tolerance*length and min(a[0],b[0])-tolerance<=p[0]<=max(a[0],b[0])+tolerance and min(a[1],b[1])-tolerance<=p[1]<=max(a[1],b[1])+tolerance:
+                return True
+        return GraphSeedSampler._point_inside_polygon(p,site)
+    if not all(covered(p) for p in polygon):return False
+    for a,b in zip(polygon,polygon[1:]+polygon[:1]):
+        for c,d in zip(site,site[1:]+site[:1]):
+            o1,o2=orient(a,b,c),orient(a,b,d)
+            o3,o4=orient(c,d,a),orient(c,d,b)
+            if o1*o2 < -tolerance**2 and o3*o4 < -tolerance**2:return False
+        if not covered(((a[0]+b[0])/2,(a[1]+b[1])/2)):return False
+    return True

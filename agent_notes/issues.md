@@ -336,3 +336,11 @@ Replaced budget-driven label welding, wrong-direction template copying, floor-lo
 ### 2026-11-04 — neural demo and audit fixes
 
 Completion was clearing `building_graph` before publishing its audit. Capture the completed audit before teardown and use the same audit for experimental training outcomes and client validation. Floating-point rotated party walls required a micrometre-scale independent contact tolerance; a 1 mm gap remains non-contact. Repeated rotation/constraint evidence is deduplicated and local solves memoized. Removed hardcoded diagnostic throughput, candidate count, memory and bonus defaults; retain real completed learning signals during subsequent graph growth.
+
+### 2026-11-04 — architecture-research corrections
+
+The previous invalid reward (-1) could exceed a highly penalized valid graph score/100. Apply a fixed monotone tanh transform to valid scores; retain raw scores and fixed invalid outcome separately. Candidate-local graph information was absent from the baseline actor; added explicit experimental local and attention variants without changing the default. Concave containment previously checked only vertices; a room edge could cross an exterior notch. Added edge containment checks and an independent-oracle regression. Pilot 01 retains its original pre-fix behavior; pilot 02 is a separate run.
+
+### 2026-11-04 — graph-only training and deferred realization
+
+Profiling found 69 shared polygon inference calls plus whole-graph trial copies in one active step. Replaced candidate geometry lookahead with scalar constraint checks, pooled full-height contact intervals, spatial indexing and cached area estimates. Training now completes without realization; inference/explicit previews solve once per building. Geometry audits are separate from rewards. Fixed stale contacts, cross-floor footprint evidence, static-hole containment, unsafe individually surviving contact faces, and unknown/fabricated timing displays. Preview predictions retain their measured errors. Provisional type matches are not confirmed reuse. Historical failed and interrupted runs are preserved; see `reports/v010_graph_only_validation.md`.

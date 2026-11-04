@@ -22,5 +22,7 @@ class CalibrationTests(unittest.TestCase):
         row=result['rows'][0]
         self.assertFalse(row['valid'])
         self.assertGreater(row['predictedArea'],4.)
-        self.assertAlmostEqual(row['predictedArea'],row['actualArea']) # Geometry not clipped to conceal invalidity.
+        self.assertGreater(row['actualArea'],4.) # Geometry is not clipped to conceal invalidity.
+        self.assertAlmostEqual(row['absoluteError'],abs(row['predictedArea']-row['actualArea']))
+        self.assertGreater(row['absoluteError'],0.) # Scalar proxy error is retained.
         self.assertIsNone(result['pairwiseRankingAgreement'])

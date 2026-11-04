@@ -67,7 +67,7 @@ export const ThreeViewer = () => {
     if (!iframe || !iframe.contentWindow) return;
 
     // Live Real-Time 3D Building Stream (Merged on Pause / Episode Done, Live Unmerged during Episode)
-    const effectiveList = (Array.isArray(completed3DPlacements) && completed3DPlacements.length > 0)
+    const effectiveList = (graphState && !graphState.realized) ? [] : (Array.isArray(completed3DPlacements) && completed3DPlacements.length > 0)
       ? completed3DPlacements
       : ((!disableMerging && Array.isArray(currentMergedPlacements) && currentMergedPlacements.length > 0)
           ? currentMergedPlacements

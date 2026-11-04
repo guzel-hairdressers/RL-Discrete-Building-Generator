@@ -88,3 +88,30 @@ class TestGraphSeedSampler(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class ConcaveContainmentTests(unittest.TestCase):
+    def test_edges_may_not_cross_notch_even_when_corners_are_inside(self):
+        from graph_sampler import convex_polygon_inside_site
+        site=[(0,0),(10,0),(10,10),(6,10),(6,4),(4,4),(4,10),(0,10)]
+        room=[(2,2),(8,2),(8,8),(2,8)]
+        self.assertTrue(all(GraphSeedSampler._point_inside_polygon(p,site) for p in room))
+        self.assertFalse(convex_polygon_inside_site(room,site))
+        self.assertTrue(convex_polygon_inside_site([(1,1),(3,1),(3,9),(1,9)],site))
+
+    def test_boundary_contact_is_contained(self):
+        from graph_sampler import convex_polygon_inside_site
+        self.assertTrue(convex_polygon_inside_site([(0,0),(10,0),(10,10),(0,10)],[(0,0),(10,0),(10,10),(0,10)]))
+
+    def test_containment_matches_independent_oracle_on_oblique_hulls(self):
+        import random
+        from shapely.geometry import Polygon, MultiPoint
+        from graph_sampler import convex_polygon_inside_site
+        rng=random.Random(20261104)
+        site=[(0,0),(12,0),(12,12),(8,12),(8,5),(4,5),(4,12),(0,12)]
+        oracle=Polygon(site)
+        lattice=[(x,y) for x in range(1,12) for y in range(1,12) if oracle.covers(MultiPoint([(x,y)]))]
+        for _ in range(150):
+            hull=MultiPoint(rng.sample(lattice,4)).convex_hull
+            if hull.geom_type!='Polygon':continue
+            coords=list(hull.exterior.coords)[:-1]
+            self.assertEqual(convex_polygon_inside_site(coords,site),oracle.covers(hull),coords)

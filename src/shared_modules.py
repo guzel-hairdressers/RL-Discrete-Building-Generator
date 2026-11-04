@@ -37,6 +37,22 @@ def face_length(poly, n, b, tol=1e-6):
     return max((math.dist(a,c) for a in on for c in on), default=0.)
 
 
+def boundary_contact_length(poly_a,poly_b,origin_a,origin_b,tolerance=1e-6):
+    """Contact interval on the two origins' bisector, without a geometry library."""
+    dx,dy=origin_b[0]-origin_a[0],origin_b[1]-origin_a[1]
+    distance=math.hypot(dx,dy)
+    if distance<1e-8:return 0.
+    nx,ny=dx/distance,dy/distance;tx,ty=-ny,nx
+    mx,my=(origin_a[0]+origin_b[0])/2,(origin_a[1]+origin_b[1])/2
+    ranges=[]
+    for poly in (poly_a,poly_b):
+        values=[(x-mx)*tx+(y-my)*ty for x,y in poly
+                if abs((x-mx)*nx+(y-my)*ny)<=tolerance]
+        if len(values)<2:return 0.
+        ranges.append((min(values),max(values)))
+    return max(0.,min(r[1] for r in ranges)-max(r[0] for r in ranges))
+
+
 @dataclass(frozen=True)
 class SizePrior:
     radius: float = 4.5
@@ -160,6 +176,28 @@ def infer(graph, prior=None):
     def signature(o):
         cs,rs=evidence(o,o.angle)
         return (-len(rs),tuple(sorted((round(math.atan2(n[1],n[0]),7),round(b,7)) for n,b in rs)),o.origin)
+    # A surviving face on each module is insufficient: their usable intervals
+    # must overlap at every placed connection after a shared-prototype merge.
+    def world_polygon(o,poly,angle):
+        ox,oy=o.origin
+        return [(x+ox,y+oy) for x,y in (turn(p,angle) for p in poly)]
+    own_polygons={}
+    for oid,o in occ.items():
+        cs,rs=evidence(o,o.angle);p=build(cs,rs)
+        if p is not None:own_polygons[oid]=world_polygon(o,p,o.angle)
+    placed_polygons=dict(own_polygons)
+    incident={oid:[] for oid in occ}
+    for edge in graph.edges_horiz:
+        u,v=node_to_occ[edge.u],node_to_occ[edge.v]
+        if u!=v:
+            incident[u].append((u,v));incident[v].append((u,v))
+    def joint_contacts(changed):
+        pairs={pair for oid in changed for pair in incident[oid]}
+        for u,v in pairs:
+            pu=changed.get(u,placed_polygons.get(u));pv=changed.get(v,placed_polygons.get(v))
+            if pu is None or pv is None:continue # unresolved is retained independently
+            if boundary_contact_length(pu,pv,occ[u].origin,occ[v].origin)<prior.min_contact-1e-6:return False
+        return True
     classes=[]; unresolved={}
     for o in sorted(occ.values(),key=signature):
         own_c,own_r=evidence(o,o.angle)
@@ -184,10 +222,14 @@ def infer(graph, prior=None):
                 if not any(math.dist(n,cn)<1e-6 and abs(b-cb)<1e-6 for n,b in (rs or cs) for cn,cb in target): continue
                 p=build(c['constraints']+cs,c['required']+rs)
                 if p is not None:
-                    selected=(j,a,p,cs,rs); break
+                    changed={oid:world_polygon(occ[oid],p,occ[oid].angle) for oid in c['members']}
+                    changed[o.id]=world_polygon(o,p,a)
+                    if not joint_contacts(changed):continue
+                    selected=(j,a,p,cs,rs,changed); break
             if selected: break
         if selected:
-            j,a,p,cs,rs=selected; c=classes[j]
+            j,a,p,cs,rs,changed=selected; c=classes[j]
+            placed_polygons.update(changed)
             c['polygon']=p
             def unique(rows):
                 seen=set();out=[]
@@ -209,32 +251,69 @@ def infer(graph, prior=None):
             occ[oid].prototype=pid
             for n in occ[oid].nodes:
                 n.module_id=pid; n.orientation=occ[oid].angle
+                n.area=area(c['polygon'])
     return Inference(occ,prototypes,unresolved,prior,graph)
+
+
+def convex_interiors_overlap(a,b,tolerance=1e-7):
+    """Independent SAT on actual convex footprints; shared walls are not overlaps.
+
+    Avoid GEOS overlay's ambiguous noding of almost-coincident shared edges.
+    No coordinates are snapped, repaired or changed.
+    """
+    if not a or not b:return False
+    if (max(x for x,y in a)<=min(x for x,y in b)+tolerance or
+        max(x for x,y in b)<=min(x for x,y in a)+tolerance or
+        max(y for x,y in a)<=min(y for x,y in b)+tolerance or
+        max(y for x,y in b)<=min(y for x,y in a)+tolerance):return False
+    for poly in (a,b):
+        for u,v in zip(poly,poly[1:]+poly[:1]):
+            nx,ny=-(v[1]-u[1]),v[0]-u[0];length=math.hypot(nx,ny)
+            if length<1e-12:continue
+            # Relative projections avoid cancellation at large world origins.
+            pa=[((x-u[0])*nx+(y-u[1])*ny)/length for x,y in a]
+            pb=[((x-u[0])*nx+(y-u[1])*ny)/length for x,y in b]
+            if max(pa)<=min(pb)+tolerance or max(pb)<=min(pa)+tolerance:return False
+    return True
 
 
 def validate(result, boundaries):
     """Independent GEOS oracle. Never clips, repairs, or resizes instances."""
     from shapely.geometry import Polygon
     from shapely.ops import unary_union
+    boundaries={f:[(p['x'],p['y']) if isinstance(p,dict) else tuple(p) for p in pts]
+                for f,pts in boundaries.items()}
     polygons={}; violations=[]; floors={}
     for oid,o in result.occurrences.items():
         if not o.prototype: continue
         poly=Polygon(result.polygon(oid))
         for n in o.nodes:
             polygons[n.node_id]=poly
-            site=Polygon(boundaries[n.floor_index])
+            holes=getattr(result.graph,'site_holes',{}).get(n.floor_index,[])
+            holes=[[(p['x'],p['y']) if isinstance(p,dict) else p for p in hole] for hole in holes]
+            site=Polygon(boundaries[n.floor_index],holes)
             if not poly.is_valid or not site.buffer(1e-7).covers(poly):
                 violations.append({'kind':'containment','node':n.node_id})
             floors.setdefault(n.floor_index,[]).append((n,poly))
     metrics={}
     for f,rows in floors.items():
         built=[p for n,p in rows if n.cell_type.value!='void']
+        coordinates={n.node_id:list(p.exterior.coords)[:-1] for n,p in rows}
+        overlap=False
         for i,(n,p) in enumerate(rows):
             for m,q in rows[i+1:]:
-                if p.intersection(q).area>1e-6:
+                if convex_interiors_overlap(coordinates[n.node_id],coordinates[m.node_id]):
+                    overlap=True
                     violations.append({'kind':'overlap','nodes':[n.node_id,m.node_id]})
         union=unary_union(built)
-        metrics[f]={'filledArea':union.area,'exposedPerimeter':union.length}
+        # Disjoint interiors certify that measured polygon areas add exactly;
+        # GEOS overlay is unnecessary for area in that case.
+        def occupied_area(functions):
+            selected=[p for n,p in rows if n.cell_type.value in functions]
+            return unary_union(selected).area if overlap else math.fsum(p.area for p in selected)
+        metrics[f]={'filledArea':occupied_area({'core','room','balcony'}),'exposedPerimeter':union.length,
+            'rentableArea':occupied_area({'room'}),'coreArea':occupied_area({'core'}),
+            'areaMethod':'geos_union_overlapping' if overlap else 'sum_disjoint_convex'}
     contacts,access=contact_pairs(result)
     contact_set={frozenset(e) for e in contacts}
     for e in result.graph.edges_horiz:

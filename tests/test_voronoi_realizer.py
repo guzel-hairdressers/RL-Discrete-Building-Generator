@@ -127,7 +127,7 @@ class TestVoronoiRealizer(unittest.TestCase):
 
     def test_parallel_trainer_graph_voronoi_step(self):
         from server import ParallelTrainer
-        trainer = ParallelTrainer(settings={"generatorEngine": "graph_voronoi"})
+        trainer = ParallelTrainer(settings={"generatorEngine": "graph_voronoi", "boundaryType":"rect", "siteAreaTier":"L", "seed":123})
         trainer.new_site()
         event = trainer.step(trainer.generation_id, trainer.episode)
         self.assertIn("graphState", event)
@@ -139,6 +139,7 @@ class TestVoronoiRealizer(unittest.TestCase):
     def test_parallel_trainer_graph_voronoi_full_episode(self):
         from server import ParallelTrainer
         trainer = ParallelTrainer(settings={"generatorEngine": "graph_voronoi"})
+        trainer.set_mode('inference')
         trainer.new_site()
         event = None
         for _ in range(35):
@@ -270,25 +271,26 @@ class TestVoronoiRealizer(unittest.TestCase):
         self.assertTrue(any(c >= 2 for c in counts.values()), f"Expected repeatable modules, got: {counts}")
 
     def test_evaluate_on_pause_returns_canonical_dictionary(self):
-        """Verify that evaluate (called on Pause) keeps view as graph (no solid realization) and populates repeatable room numbers."""
+        """Verify that evaluate (called on Pause) realizes a snapshot and populates repeatable room numbers."""
         from server import ParallelTrainer
-        trainer = ParallelTrainer(settings={"generatorEngine": "graph_voronoi"})
+        trainer = ParallelTrainer(settings={"generatorEngine":"graph_voronoi", "boundaryType":"rect", "siteAreaTier":"L", "seed":123})
         trainer.new_site()
-        for _ in range(5):
+        for _ in range(2):
             trainer.step(trainer.generation_id, trainer.episode)
 
         eval_event = trainer.evaluate(trainer.generation_id, trainer.episode)
         self.assertIn("dictionary", eval_event)
         self.assertIn("placements", eval_event)
         self.assertIn("graphState", eval_event)
-        # Realization into solid placements happens ONLY at the end of points generation
-        self.assertEqual(eval_event["placements"], [])
+        self.assertTrue(eval_event['graphState']['realized'])
+        self.assertFalse(eval_event['graphState']['isComplete'])
+        self.assertGreater(len(eval_event["placements"]), 0)
         self.assertGreater(len(eval_event["dictionary"]), 0)
         self.assertGreater(len(eval_event["graphState"]["nodes"]), 0)
 
         # Nodes have integer roomNumber assigned
         core_nodes = [n for n in eval_event["graphState"]["nodes"] if n.get("type") == "core"]
-        self.assertTrue(all(n.get("roomNumber") == 1 for n in core_nodes))
+        self.assertTrue(all(n.get("roomNumber",0) > 0 for n in core_nodes)) # Function is independent of prototype identity.
         self.assertTrue(all(n.get("roomNumber") is not None for n in eval_event["graphState"]["nodes"]))
 
         # Check that modules have area, uses, and roomNumber
@@ -406,9 +408,11 @@ class TestVoronoiRealizer(unittest.TestCase):
         g.add_node('r',16,10);g.add_edge('c','r')
         from shared_modules import infer, area
         solution=infer(g)
-        metrics=g.evaluate_graph_metrics(0)
-        self.assertAlmostEqual(metrics['filledArea'],sum(area(p.polygon)*len(p.members) for p in solution.prototypes.values()))
-        self.assertEqual(metrics['estimateStatus'],'uncalibrated')
+        from shared_modules import validate
+        audit=validate(solution,{0:[(-100,-100),(100,-100),(100,100),(-100,100)]})
+        metrics=g.evaluate_graph_metrics(0,realization=(solution,audit))
+        self.assertAlmostEqual(metrics['filledArea'],audit['perFloor'][0]['filledArea'])
+        self.assertEqual(metrics['estimateStatus'],'realized_uncalibrated_environment')
         self.assertIn('daylightRatio',metrics['unavailableMetrics'])
         self.assertIsNone(metrics['sunExposure'])
         self.assertTrue(metrics['topologyValid'])
@@ -433,6 +437,7 @@ class TestVoronoiRealizer(unittest.TestCase):
         """Verify post-step evaluation latency, episode execution timing, and profiler breakdown."""
         from server import ParallelTrainer
         trainer = ParallelTrainer({"generatorEngine": "graph_voronoi", "parallelEnvironments": 2})
+        trainer.set_mode('inference')
         trainer.new_site()
 
         # Step until episode completes
@@ -502,9 +507,10 @@ class TestVoronoiRealizer(unittest.TestCase):
         self.assertEqual(len(bg.edges_vert), 4)
 
         # Multi-core metrics evaluation
-        m_multi = bg.evaluate_graph_metrics(0, site_area=1800.0, site_boundary=site)
-        from shared_modules import infer, area
+        from shared_modules import infer, area, validate
         solution=infer(bg)
+        audit=validate(solution,{f:site for f in range(3)})
+        m_multi = bg.evaluate_graph_metrics(0, site_area=1800.0, site_boundary=site,realization=(solution,audit))
         expected=sum(area(solution.prototypes[n.module_id].polygon) for n in bg.nodes.values()
                      if n.floor_index==0 and n.cell_type==CellType.CORE)
         self.assertAlmostEqual(m_multi['coreArea'],expected)

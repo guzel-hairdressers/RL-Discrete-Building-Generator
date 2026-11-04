@@ -229,14 +229,15 @@ class VoronoiRealizer:
 
     def realize_floor(self, graph, floor_index, site_boundary, site_pca_angle_rad=0.,
                       max_bay_size=6.5, max_module_area=80.,
-                      master_selection_strategy='highest_usage', dict_cap=10):
+                      master_selection_strategy='highest_usage', dict_cap=10, prepared=None):
         from shared_modules import infer, SizePrior, validate
         # One building-wide solve; no floor-local clipping or template choice.
-        result=infer(graph,getattr(graph,"size_prior",None) or SizePrior(max_area=max_module_area))
-        boundaries=getattr(graph,'site_boundaries',{}) or {f:site_boundary for f in range(graph.num_floors)}
-        boundaries={f:[(p['x'],p['y']) if isinstance(p,dict) else tuple(p) for p in pts]
-                    for f,pts in boundaries.items()}
-        audit=validate(result,boundaries)
+        if prepared is None:
+            result=infer(graph,getattr(graph,"size_prior",None) or SizePrior(max_area=max_module_area))
+            boundaries=getattr(graph,'site_boundaries',{}) or {f:site_boundary for f in range(graph.num_floors)}
+            audit=validate(result,boundaries)
+        else:
+            result,audit=prepared
         graph.last_inference=result
         graph.realization_audit={k:v for k,v in audit.items() if k!='polygons'}
         rows=[]

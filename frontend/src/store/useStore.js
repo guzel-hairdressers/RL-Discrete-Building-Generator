@@ -551,7 +551,7 @@ export const useStore = create((set, get) => ({
 
       set((state) => {
         let nextList;
-        if (isEval || (data.step != null && data.step <= 1) || (data.episode != null && data.episode !== state.episode)) {
+        if ((data.graphState && !data.graphState.realized) || isEval || (data.step != null && data.step <= 1) || (data.episode != null && data.episode !== state.episode)) {
           nextList = data.placements || [];
         } else {
           const idMap = new Map();
@@ -564,6 +564,7 @@ export const useStore = create((set, get) => ({
           step: data.step ?? state.step + 1,
           episode: data.episode ?? state.episode,
           individualPlacementsList: nextList,
+          completed3DPlacements: isEval ? nextList : (data.graphState && !data.graphState.realized ? [] : state.completed3DPlacements),
           graphState: data.graphState || (data.step != null && data.step <= 1 ? null : state.graphState),
           currentMergedPlacements: incomingMerged || ((data.step != null && data.step <= 1) ? [] : state.currentMergedPlacements),
           dictionary: data.dictionary || state.dictionary,
@@ -575,13 +576,11 @@ export const useStore = create((set, get) => ({
       });
 
       if (get().trainingWanted) {
-        // When running Graph & Voronoi with visuals enabled, add a smooth visual observation delay
-        // so the user can visibly watch the node/edge lattice growing in 2D and 3D
-        const stepDelay = (get().visualsEnabled && get().settings.generatorEngine === 'graph_voronoi')
-          ? (get().mode === 'inference' ? 260 : 190)
-          : 0;
+        // Graph growth has no fixed visualization delay.
+        const stepDelay = 0;
 
         setTimeout(() => {
+          if (!get().trainingWanted || get().phase === 'paused') return;
           get().sendCommand({
             cmd: 'step',
             generationId: Number(data.generationId ?? get().generationId),

@@ -176,7 +176,7 @@ export const PlanCanvas2D = () => {
     });
 
     // 1b. Draw Graph Lattice (Nodes & Edges in 2D) during graph exploration / generation
-    if (graphState && Array.isArray(graphState.nodes) && graphState.nodes.length > 0) {
+    if (graphState && !graphState.realized && Array.isArray(graphState.nodes) && graphState.nodes.length > 0) {
       // Draw Horizontal Edges
       if (Array.isArray(graphState.edgesHoriz) && graphState.edgesHoriz.length > 0) {
         ctx.save();
@@ -228,7 +228,7 @@ export const PlanCanvas2D = () => {
 
     // 2. Draw Placed Building Modules (Red Core, White Normal Blocks, Black Outlines)
     const isRunning = phase === 'running';
-    const effectivePlacements = (isRunning || disableMerging)
+    const effectivePlacements = (graphState && !graphState.realized) ? [] : (isRunning || disableMerging)
       ? individualPlacementsList
       : ((currentMergedPlacements && currentMergedPlacements.length > 0)
           ? currentMergedPlacements
@@ -315,7 +315,7 @@ export const PlanCanvas2D = () => {
     drawArchitecturalScaleBar(ctx, w, zoom);
 
     ctx.restore();
-  }, [boundaries, individualPlacementsList, currentMergedPlacements, completed3DPlacements, phase, disableMerging, hoveredModuleId]);
+  }, [boundaries, individualPlacementsList, currentMergedPlacements, completed3DPlacements, graphState, phase, disableMerging, hoveredModuleId]);
 
   // Schedule render via requestAnimationFrame
   const scheduleRender = useCallback(() => {

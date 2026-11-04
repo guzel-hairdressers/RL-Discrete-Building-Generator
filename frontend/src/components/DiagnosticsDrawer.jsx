@@ -24,6 +24,8 @@ export const DiagnosticsDrawer = ({ onClose }) => {
   const completed3DPlacements = useStore((s) => s.completed3DPlacements || []);
   const individualPlacementsList = useStore((s) => s.individualPlacementsList || []);
   const setHoveredModuleId = useStore((s) => s.setHoveredModuleId);
+  const settings = useStore((s) => s.settings || {});
+  const graphState = useStore((s) => s.graphState || null);
   const canvasRef = useRef(null);
 
   // SVG Thumbnail Renderer for Shapes in Diagnostics (Red for Cores, White for Rooms, Crisp Black Outlines)
@@ -251,21 +253,56 @@ export const DiagnosticsDrawer = ({ onClose }) => {
   const maxRewardMag = Math.max(1, ...allComponents.map((c) => Math.abs(c.val || 0)));
 
   // Timings Profiler
-  const timings = debugTelemetry.performanceTimings || {
-    candidateGeneration: { avg: safeNum(diagnostics.candidateLatencyMs, 2.84), max: 5.1, count: 120 },
-    policyInference: { avg: safeNum(diagnostics.stepTimeMs ? diagnostics.stepTimeMs * 0.4 : 1.65), max: 3.2, count: 120 },
-    placement: { avg: 0.42, max: 1.1, count: 120 },
-    stepTotal: { avg: safeNum(diagnostics.stepTimeMs, 4.15), max: 8.5, count: 120 },
-    episodeTotal: { avg: 142.5, max: 210.0, count: 12 },
+  const serverTimings = metrics.performanceTimings || debugTelemetry.performanceTimings || {};
+
+  const effectiveCycleAvg = safeNum(diagnostics.effectiveCycleTimeMs || metrics.effectiveCycleTimeMs, 0);
+  const postStepEvalAvg = safeNum(diagnostics.postStepEvaluationMs || metrics.postStepEvaluationMs, safeNum(serverTimings.postStepEvaluation?.avg, 0));
+  const episodeTotalAvg = safeNum(diagnostics.episodeTimeMs || metrics.episodeExecutionTimeMs, safeNum(serverTimings.episodeTotal?.avg, 0));
+  const stepTotalAvg = safeNum(diagnostics.stepTimeMs, safeNum(serverTimings.stepTotal?.avg, 0));
+
+  const timings = {
+    ...serverTimings,
+    effectiveCycle: {
+      avg: effectiveCycleAvg,
+      max: effectiveCycleAvg,
+      count: effectiveCycleAvg > 0 ? 1 : 0,
+    },
+    postStepEvaluation: serverTimings.postStepEvaluation || {
+      avg: postStepEvalAvg,
+      max: postStepEvalAvg,
+      count: postStepEvalAvg > 0 ? 1 : 0,
+    },
+    episodeTotal: serverTimings.episodeTotal || {
+      avg: episodeTotalAvg,
+      max: episodeTotalAvg,
+      count: episodeTotalAvg > 0 ? 1 : 0,
+    },
+    stepTotal: serverTimings.stepTotal || {
+      avg: stepTotalAvg,
+      max: stepTotalAvg,
+      count: stepTotalAvg > 0 ? 1 : 0,
+    },
   };
 
-  const timingKeys = [
+  const allTimingDefinitions = [
+    { key: 'effectiveCycle', label: 'Effective Cycle (Wall-Clock Transition to Next Ep)' },
+    { key: 'postStepEvaluation', label: 'Post-Step Evaluation & Realization (Server)' },
+    { key: 'voronoiRealization', label: '— Shared Prototype Realization & Validation' },
+    { key: 'canonicalDictionary', label: '— Canonical Dictionary Synthesis' },
+    { key: 'graphMetricsEvaluation', label: '— Graph Architectural Evaluation' },
+    { key: 'episodeTotal', label: 'Server Episode Execution Total' },
+    { key: 'stepTotal', label: 'Step Generation / Placement Latency' },
     { key: 'candidateGeneration', label: 'Candidate Generation (C SAT)' },
     { key: 'policyInference', label: 'Policy Inference (Neural)' },
     { key: 'placement', label: 'Placement & Shaft Commit' },
-    { key: 'stepTotal', label: 'Step Total Latency' },
-    { key: 'episodeTotal', label: 'Episode Execution Total' },
   ];
+
+  const activeTimingKeys = allTimingDefinitions.filter((t) => {
+    const item = timings[t.key];
+    return item && safeNum(item.avg, 0) > 0;
+  });
+
+  const timingKeys = activeTimingKeys;
 
   const maxTimingAvg = Math.max(0.1, ...timingKeys.map((t) => safeNum(timings[t.key]?.avg, 0.1)));
 
@@ -503,6 +540,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           </div>
           <dl className="diag-dl-grid">
             <div><dt>Algorithm</dt><dd>{({graph_actor_critic_experimental: 'Graph actor–critic (experimental)', graph_inference: 'Graph inference', graph_reference_search: 'Reference search', inference_only: 'Inference only', a2c_gae: 'A2C + GAE'})[metrics.learningAlgorithm] || 'Waiting for episode'}</dd></div>
+            <div><dt>Module identities</dt><dd>{metrics.moduleIdentityStatus === 'provisional' ? 'Provisional · realize on pause/end in inference' : (graphState?.realized ? 'Realized · see validity' : '—')}</dd></div>
             <div><dt>Graph weight updates</dt><dd>{metrics.policyUpdateCount ?? '—'}</dd></div>
             <div><dt>Episode decisions</dt><dd>{metrics.policyDecisionCount ?? '—'}</dd></div>
             <div><dt>Geometry validated</dt><dd>{typeof metrics.geometryValid === 'boolean' ? (metrics.geometryValid ? 'Yes' : 'No') : '—'}</dd></div>
@@ -522,9 +560,9 @@ export const DiagnosticsDrawer = ({ onClose }) => {
           </div>
           <div className="timing-breakdown-list">
             {timingKeys.map((t, idx) => {
-              const item = timings[t.key] || { avg: 1.0, max: 2.0, count: 100 };
-              const avg = safeNum(item.avg, 1.0);
-              const max = safeNum(item.max, 2.0);
+              const item = timings[t.key];
+              const avg = safeNum(item.avg, 0);
+              const max = safeNum(item.max, 0);
               return (
                 <div key={idx} className="timing-row">
                   <div className="timing-labels">
@@ -561,7 +599,7 @@ export const DiagnosticsDrawer = ({ onClose }) => {
 
           <div className="diag-shape-list-container">
             {displayShapes.length === 0 ? (
-              <div className="diag-empty-shapes">Waiting for procedural dictionary generation...</div>
+              <div className="diag-empty-shapes">{graphMode && !graphState?.realized ? 'Module shapes are inferred on explicit preview or inference completion. Live type assignments are provisional.' : 'Waiting for procedural dictionary generation...'}</div>
             ) : (
               <div className="diag-shape-grid">
                 {displayShapes.map((shape, idx) => {

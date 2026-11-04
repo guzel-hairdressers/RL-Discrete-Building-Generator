@@ -1,0 +1,54 @@
+{
+  "architectures": {
+    "local_message_passing": {
+      "cases": 2,
+      "errors": 0,
+      "valid": 2,
+      "meanOutcome": -0.30014758980469647,
+      "meanActualFill": 0.39803012088773737,
+      "meanReuse": 0.7037974683544304,
+      "meanChangeFromUntrained": 0.007985460772602038,
+      "pairedCases": 2,
+      "meanPairedDifference": 0.07968445807765034,
+      "hierarchicalBootstrap95": [
+        -1.126166784114098,
+        1.2855357002693988
+      ],
+      "perInitializationMeanDifference": {
+        "123": 0.07968445807765034
+      },
+      "validationCandidate": false
+    },
+    "message_passing": {
+      "cases": 2,
+      "errors": 0,
+      "valid": 1,
+      "meanOutcome": -0.3798320478823468,
+      "meanActualFill": 0.32971844253466,
+      "meanReuse": 0.7891414141414141,
+      "meanChangeFromUntrained": 0.0
+    },
+    "pooled": {
+      "cases": 2,
+      "errors": 0,
+      "valid": 1,
+      "meanOutcome": -0.3798320478823468,
+      "meanActualFill": 0.32971844253466,
+      "meanReuse": 0.7891414141414141,
+      "meanChangeFromUntrained": 0.0,
+      "pairedCases": 2,
+      "meanPairedDifference": 0.0,
+      "hierarchicalBootstrap95": [
+        0.0,
+        0.0
+      ],
+      "perInitializationMeanDifference": {
+        "123": 0.0
+      },
+      "validationCandidate": false
+    }
+  },
+  "promotion": "not_performed",
+  "minimumEvidence": "3 initialization seeds, 24 validation sites each; then untouched confirmation sites",
+  "pilotOnly": true
+}

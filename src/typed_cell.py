@@ -555,10 +555,13 @@ class BuildingGraph:
             raise
 
     def evaluate_graph_metrics(self, floor_index, site_area=1000., site_pca_angle_rad=0.,
-                               star_motif_matcher=None, dict_cap=10, site_boundary=None):
-        """Uncalibrated estimates from shared constraints, never sunlight claims."""
-        from shared_modules import infer, area
-        result=infer(self)
+                               star_motif_matcher=None, dict_cap=10, site_boundary=None, realization=None):
+        """Graph-only estimates by default; measured metrics require an explicit realization."""
+        if realization is None:
+            from graph_proxy import GraphSketch
+            return GraphSketch(self).metrics(floor_index,site_area,dict_cap)
+        from shared_modules import area
+        result,audit=realization
         from graph_evidence import daylight_accessibility
         daylight=daylight_accessibility(self,result,floor_index)
         nodes=[n for n in self.nodes.values() if n.floor_index==floor_index]
@@ -568,6 +571,10 @@ class BuildingGraph:
         filled=sum(node_areas[n.node_id] for n in built)
         rentable=sum(node_areas[n.node_id] for n in built if n.cell_type==CellType.ROOM)
         core=sum(node_areas[n.node_id] for n in built if n.cell_type==CellType.CORE)
+        measured=audit.get('perFloor',{}).get(floor_index,{})
+        filled=measured.get('filledArea',filled)
+        rentable=measured.get('rentableArea',rentable)
+        core=measured.get('coreArea',core)
         # Count independent placement groups, not vertical replicas, for reuse.
         reuse=result.reuse(); k=reuse['prototypeCount']
         excess=max(0,k-dict_cap)
@@ -587,7 +594,7 @@ class BuildingGraph:
             areaVariancePenalty=0.,rawScore=score+underfill,underfillPenalty=underfill,
             topologyPenalty=0. if topology else 20.,facadeChasmPenalty=0.,vocabSize=k,
             dictLimitBreach=excess,dictBreachPenalty=budget_cost,singletonPenalty=singleton_cost,
-            score=score,estimateStatus='uncalibrated',sunExposure=None,daylightAccessibility=daylight,
+            score=score,estimateStatus='realized_uncalibrated_environment',sunExposure=None,daylightAccessibility=daylight,
             unavailableMetrics=['daylightRatio','constructibilityScore','envelopeEfficiency'],
             uncertainty={'priorDerivedPrototypes':sum(p.prior_boundary for p in result.prototypes.values()),
                          'unresolvedOccurrences':len(result.unresolved)},reuseAudit=reuse)

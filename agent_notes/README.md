@@ -50,3 +50,6 @@ agent_notes/
 * 🐛 **Issue Tracker**: [`issues.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/issues.md)
 * ⚡ **Benchmark Summary**: [`benchmarks/BENCHMARK_SUMMARY.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/agent_notes/benchmarks/BENCHMARK_SUMMARY.md)
 * 📖 **Management Guidelines**: [`/AGENT_NOTES_GUIDE.md`](file:///Users/ruslan_faz/Desktop/Work/Thesis/AGENT_NOTES_GUIDE.md)
+
+- [Graph-policy architecture evaluation](guides/graph_architecture_evaluation.md) — experimental variants, paired sites, no promoted winner.
+- [Graph-only training/runtime validation](reports/v010_graph_only_validation.md) — mode split, raw runtime evidence and remaining proxy gaps.

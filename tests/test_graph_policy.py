@@ -123,3 +123,123 @@ class ContactNumericsTests(unittest.TestCase):
             contacts,access=contact_pairs(result)
             self.assertEqual(len(contacts),expected)
             self.assertEqual(len(access),expected)
+
+class ArchitectureTests(unittest.TestCase):
+    def fixture(self):
+        g=BuildingGraph(1)
+        g.add_node('core',0,0,cell_type=CellType.CORE)
+        g.add_node('room',4,0);g.add_edge('core','room')
+        return g,[[.1]*10,[.2]*10],['core','room']
+
+    def test_every_architecture_trains_and_checkpoint_restores_type(self):
+        from graph_policy import ARCHITECTURES
+        g,f,anchors=self.fixture()
+        for architecture in ARCHITECTURES:
+            with self.subTest(architecture=architecture):
+                learner=GraphLearner(architecture=architecture)
+                learner.choose(g,f,anchors=anchors,positions=[(4,2),(0,5)])
+                stats=learner.finish(.5)
+                self.assertEqual(stats['architecture'],architecture)
+                self.assertGreater(stats['gradientNorm'],0)
+                restored=GraphLearner();restored.load(copy.deepcopy(learner.state()))
+                self.assertEqual(restored.model.architecture,architecture)
+                self.assertEqual(learner.choose(g,f,False,anchors,[(4,2),(0,5)]),restored.choose(g,f,False,anchors,[(4,2),(0,5)]))
+
+    def test_local_actor_distinguishes_anchors_for_equal_proposal_features(self):
+        from graph_policy import encode_graph
+        g,f,anchors=self.fixture();learner=GraphLearner(architecture='local_message_passing')
+        with torch.no_grad():
+            logits,_=learner.model(*encode_graph(g,'cpu'),torch.tensor([[.1]*10]*2),torch.tensor([0,1]))
+        self.assertNotEqual(float(logits[0]),float(logits[1]))
+
+    def test_local_encoder_invariant_to_node_relabel_and_insertion(self):
+        from graph_policy import encode_graph
+        g,f,anchors=self.fixture();other=BuildingGraph(1)
+        other.add_node('new_room',4,0);other.add_node('new_core',0,0,cell_type=CellType.CORE)
+        other.add_edge('new_core','new_room')
+        learner=GraphLearner(architecture='local_message_passing')
+        with torch.no_grad():
+            a,_=learner.model(*encode_graph(g,'cpu'),torch.tensor(f),torch.tensor([0,1]))
+            b,_=learner.model(*encode_graph(other,'cpu'),torch.tensor(f),torch.tensor([1,0]))
+        self.assertTrue(torch.allclose(a,b,atol=1e-6))
+
+    def test_old_schema_one_loads_baseline(self):
+        learner=GraphLearner();state=learner.state();state['schema']=1;state.pop('architecture')
+        restored=GraphLearner(architecture='local_message_passing');restored.load(state)
+        self.assertEqual(restored.model.architecture,'message_passing')
+
+    def test_invalid_geometry_cannot_outscore_a_valid_low_score(self):
+        from graph_policy import outcome_reward
+        for score in (-500,-200,-35,0,100):
+            self.assertGreater(outcome_reward(score,True),outcome_reward(score,False))
+        self.assertLess(outcome_reward(-35,True),outcome_reward(0,True))
+
+class CandidateAttentionTests(unittest.TestCase):
+    def test_attention_trains_and_is_rigid_frame_invariant(self):
+        from graph_policy import encode_graph,relative_candidate_geometry
+        from shared_modules import turn
+        g=BuildingGraph(1)
+        g.add_node('c',0,0,cell_type=CellType.CORE);g.add_node('r',4,0);g.add_edge('c','r')
+        positions=[(4,2),(0,5)];anchors=torch.tensor([0,1])
+        theta=.713
+        rotated=BuildingGraph(1)
+        for n in g.nodes.values():
+            x,y=turn((n.x,n.y),theta)
+            rotated.add_node(n.node_id,x+13,y-17,cell_type=n.cell_type)
+        rotated.add_edge('c','r')
+        new_positions=[(x+13,y-17) for x,y in (turn(p,theta) for p in positions)]
+        a=relative_candidate_geometry(g,anchors,positions,'cpu')
+        b=relative_candidate_geometry(rotated,anchors,new_positions,'cpu')
+        self.assertTrue(torch.allclose(a,b,atol=1e-6))
+        learner=GraphLearner(architecture='candidate_attention')
+        features=[[.1]*10,[.2]*10]
+        with torch.no_grad():
+            logits,_=learner.model(*encode_graph(g,'cpu'),torch.tensor(features),anchors,a)
+            new_logits,_=learner.model(*encode_graph(rotated,'cpu'),torch.tensor(features),anchors,b)
+        self.assertTrue(torch.allclose(logits,new_logits,atol=1e-6))
+        before=learner.model.attention[0].weight.clone()
+        learner.choose(g,features,anchors=['c','r'],positions=positions);learner.finish(.7)
+        self.assertFalse(torch.equal(before,learner.model.attention[0].weight))
+
+    def test_missing_geometric_inputs_rejected(self):
+        learner=GraphLearner(architecture='candidate_attention');g=BuildingGraph(1);g.add_node('a',0,0)
+        with self.assertRaises(ValueError):learner.choose(g,[[0.]*10],anchors=['a'])
+
+class ArchitectureServerLifecycleTests(unittest.TestCase):
+    def trainer(self):
+        from server import ParallelTrainer
+        return ParallelTrainer({'generatorEngine':'graph_voronoi','boundaryType':'rect',
+            'siteAreaTier':'L','parallelEnvironments':4,'maxModules':10})
+
+    def test_architecture_change_resets_only_when_changed(self):
+        t=self.trainer();g=BuildingGraph(1);g.add_node('c',0,0,cell_type=CellType.CORE)
+        t.graph_learner.choose(g,[[.1]*10,[.2]*10]);t.graph_learner.finish(.5)
+        old=t.graph_learner
+        t.new_site();self.assertIs(t.graph_learner,old)
+        self.assertEqual(t.graph_learner.updates,1)
+        t.update_settings({'graphPolicyArchitecture':'local_message_passing'})
+        self.assertEqual(t.graph_learner.model.architecture,'local_message_passing')
+        self.assertEqual(t.graph_learner.updates,0)
+        local=t.graph_learner;t.new_site();self.assertIs(t.graph_learner,local)
+
+    def test_local_checkpoint_can_load_into_baseline_session(self):
+        t=self.trainer();t.update_settings({'graphPolicyArchitecture':'local_message_passing'})
+        with tempfile.TemporaryDirectory() as directory:
+            with patch('server.OUTPUT_DIR',directory):path=t.save_checkpoint()
+            from pathlib import Path
+            data=Path(path).read_bytes()
+        other=self.trainer();other.load_checkpoint_data(data)
+        self.assertEqual(other.graph_learner.model.architecture,'local_message_passing')
+        self.assertEqual(other.settings['graphPolicyArchitecture'],'local_message_passing')
+        before=other.graph_learner
+        other.new_site();self.assertIs(other.graph_learner,before)
+
+    def test_candidate_attention_runs_real_training_episode(self):
+        t=self.trainer();t.update_settings({'graphPolicyArchitecture':'candidate_attention'})
+        for _ in range(25):
+            event=t.step(t.generation_id,t.episode)
+            if event['type']=='episodeDone':break
+        else:self.fail('attention integration episode did not finish')
+        self.assertEqual(event['metrics']['architecture'],'candidate_attention')
+        self.assertGreater(event['metrics']['policyUpdateCount'],0)
+        self.assertGreater(event['metrics']['gradientNorm'],0)

@@ -19,6 +19,7 @@ import json
 import math
 import os
 import re
+import random
 import sys
 import threading
 import time
@@ -115,6 +116,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "generatorEngine": "discrete_polygon",
     "graphSearchMode": "balanced",
     "graphController": "neural",
+    "graphPolicyArchitecture": "message_passing",
     "graphPriorRadius": 4.5,
     "graphMinArea": 1.0,
     "graphMaxArea": 80.0,
@@ -259,6 +261,9 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     if engine not in GENERATOR_ENGINES:
         raise SettingsError(f"generatorEngine must be one of {sorted(GENERATOR_ENGINES)}")
     merged["generatorEngine"] = engine
+    from graph_policy import ARCHITECTURES
+    if merged.get('graphPolicyArchitecture','message_passing') not in ARCHITECTURES:
+        raise SettingsError('unknown graph policy architecture')
     if merged.get('graphController','neural') not in ('neural','reference'):
         raise SettingsError('graphController must be neural or reference')
     if merged.get('graphSearchMode','balanced') not in ('balanced','alternatives'):
@@ -1111,10 +1116,12 @@ def _public_module(module: dict) -> dict:
         "area": float(module["area"]),
         "triangle": bool(module.get("triangle", module.get("isTriangle", False))),
         "regularity": float(module.get("regularity", 0.5)),
-        "minWidth": float(module.get("minWidth", G.min_polygon_width(module["poly"]))),
+        "minWidth": float(module.get("minWidth", 0.)) if not module["poly"] else float(module.get("minWidth", G.min_polygon_width(module["poly"]))),
         "parameters": module.get("parameters", {}),
         "uses": int(module.get("uses", 1)),
         "roomNumber": module.get("roomNumber"),
+        "estimateStatus": module.get("estimateStatus"),
+        "identityStatus": module.get("identityStatus", "confirmed"),
     }
 
 
@@ -1321,6 +1328,7 @@ class FloorEnvironment:
         master_selection_strategy: str = "highest_usage",
         dict_cap: int = 10,
         site_pca_angle_rad: float | None = None,
+        prepared=None,
     ) -> list[dict]:
         """Convert the current building_graph nodes into realized 2D/3D Voronoi room placements."""
         poly_pts = self.site.get("outer") or self.boundary.get("outer") or self.boundary.get("polygon", [])
@@ -1339,6 +1347,7 @@ class FloorEnvironment:
             site_pca_angle_rad=pca_angle,
             master_selection_strategy=master_selection_strategy,
             dict_cap=dict_cap,
+            prepared=prepared,
         )
 
         placements = []
@@ -3477,7 +3486,7 @@ class ParallelTrainer:
         self.model = PolicyModel().to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=float(self.settings["learningRate"]))
         from graph_policy import GraphLearner
-        self.graph_learner=GraphLearner(self.device,int(self.settings['seed']),float(self.settings['learningRate']))
+        self.graph_learner=GraphLearner(self.device,int(self.settings['seed']),float(self.settings['learningRate']),self.settings.get('graphPolicyArchitecture','message_passing'))
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
         self.mode: str = "training"
         self.generation_id = 0
@@ -4898,6 +4907,23 @@ class ParallelTrainer:
         dict[str, Any],
         list[CoreStackCandidate],
     ]:
+        if settings.get('generatorEngine')=='graph_voronoi':
+            environments,_=self._build_sites(settings,generation_id,attempt=0)
+            from graph_proxy import origin_fits
+            boundaries=[env.site['outer'] for env in environments]
+            points=[[(p['x'],p['y']) if isinstance(p,dict) else p for p in boundary] for boundary in boundaries]
+            radius=float(settings.get('graphPriorRadius',4.5))
+            candidates=[(sum(x for x,y in pts)/len(pts),sum(y for x,y in pts)/len(pts)) for pts in points]
+            rng=random.Random(int(settings['seed'])+generation_id*104729)
+            xmin=max(min(x for x,y in pts) for pts in points);xmax=min(max(x for x,y in pts) for pts in points)
+            ymin=max(min(y for x,y in pts) for pts in points);ymax=min(max(y for x,y in pts) for pts in points)
+            candidates.extend((rng.uniform(xmin,xmax),rng.uniform(ymin,ymax)) for _ in range(512))
+            origin=next((p for p in candidates if all(origin_fits(p,env.site['outer'],env.site.get('holes',[]),radius)
+                        for env in environments)),candidates[0])
+            # No legacy shape-policy sampling or polygon-core preflight.
+            return environments,[],[],dict(enabled=len(environments)>1,status='ready',
+                mode='graph-full-height',boundaryPolicy='unchanged',siteResampleAttempts=0,
+                graphOrigin=list(origin),initialCandidateCount=0),[]
         attempt_limit = 1 if bool(settings["singleFloor"]) else CORE_SITE_TRANSACTION_ATTEMPTS
         for attempt in range(attempt_limit):
             environments, atrium_logs = self._build_sites(
@@ -5018,9 +5044,14 @@ class ParallelTrainer:
         """Validate, prepare, and atomically commit settings plus a fresh site."""
 
         proposed = validate_settings_patch(self.settings, patch)
+        graph_replacement=None
+        if proposed['graphPolicyArchitecture']!=self.graph_learner.model.architecture:
+            from graph_policy import GraphLearner
+            graph_replacement=GraphLearner(self.device,int(proposed['seed']),float(proposed['learningRate']),proposed['graphPolicyArchitecture'])
         generation = self.generation_id + 1
         prepared = self._prepare_generation(proposed, generation, self.episode)
         self._commit_generation(proposed, generation, *prepared)
+        if graph_replacement is not None: self.graph_learner=graph_replacement
         return self.site_event()
 
     def new_site(self) -> dict[str, Any]:
@@ -5082,7 +5113,7 @@ class ParallelTrainer:
             self.episode = old_episode
             raise
         from graph_policy import GraphLearner
-        self.graph_learner=GraphLearner(self.device,int(self.settings['seed']),float(self.settings['learningRate']))
+        self.graph_learner=GraphLearner(self.device,int(self.settings['seed']),float(self.settings['learningRate']),self.settings.get('graphPolicyArchitecture','message_passing'))
         self.baseline = 0.35
         self.score_history = []
         self.best_score = 0.0
@@ -5995,7 +6026,8 @@ class ParallelTrainer:
             per_site = list(graph_per_site or [])
             aggregate_terminal_start = time.perf_counter()
             metrics = self._aggregate_terminal(per_site)
-            metrics['estimateStatus']='uncalibrated'
+            metrics['estimateStatus']='graph_proxy_uncalibrated' if self.mode=='training' else 'realized_uncalibrated_environment'
+            metrics['moduleIdentityStatus']='provisional' if self.mode=='training' else 'confirmed'
             metrics['sunExposure']=None
             metrics['unavailableMetrics']=['daylightRatio','constructibilityScore','envelopeEfficiency']
             self.step_profiler.record("aggregateTerminal", time.perf_counter() - aggregate_terminal_start)
@@ -6004,7 +6036,7 @@ class ParallelTrainer:
             placed_room_counts = Counter(
                 p.get("roomNumber", 2) for env in self.environments for p in env.placements
             )
-            total_placed = sum(placed_room_counts.values())
+            total_placed = (len(self.building_graph.nodes) if self.mode=='training' else sum(placed_room_counts.values()))
             if total_placed > 0 and len(placed_room_counts) > 1:
                 usage_probs = [cnt / total_placed for cnt in placed_room_counts.values() if cnt > 0]
                 shannon_h = -sum(p * math.log(p) for p in usage_probs)
@@ -6044,17 +6076,19 @@ class ParallelTrainer:
             metrics.update(policyLoss=0.,actorLoss=0.,valueLoss=0.,policyEntropy=0.,gradientNorm=0.,
                            advantage=0.,learningRate=0.,learningAlgorithm='graph_reference_search')
             if self.settings.get('graphController','neural')=='neural':
-                audit=getattr(self.building_graph,'realization_audit',{})
-                valid=bool(audit.get('valid',False))
-                # Explicit failure outcome, with raw proxy score and validation retained.
-                reward=score/100. if valid else -1.
+                from graph_policy import outcome_reward
+                graph_valid=all(ps['topologyValid'] and ps.get('constraintsValid',True) for ps in per_site)
+                geometry_valid=(bool(getattr(self.building_graph,'realization_audit',{}).get('valid',False))
+                                if self.mode=='inference' else None)
+                reward=outcome_reward(score,graph_valid)
                 stats=self.graph_learner.finish(reward,training=self.mode=='training')
+                stats.update(geometryValid=geometry_valid,graphValid=graph_valid)
+                self.graph_learner.last.update(geometryValid=geometry_valid,graphValid=graph_valid)
                 metrics.update(stats)
                 self.last_loss=stats['policyLoss']; self.last_actor_loss=stats['actorLoss']
                 self.last_value_loss=stats['valueLoss']; self.last_entropy=stats['policyEntropy']
                 self.last_gradient_norm=stats['gradientNorm']; self.last_advantage=stats['advantage']
-                metrics['trainingObjective']='experimental_graph_score_with_invalid_completion_minus_one'
-                metrics['geometryValid']=valid
+                metrics['trainingObjective']='experimental_graph_proxy_v2'
 
             self.placement_decisions=[]
             self.shape_log_probs=[]
@@ -6088,7 +6122,7 @@ class ParallelTrainer:
             self.episode += 1
             self.step_number = 0
             for environment in self.environments:
-                environment.reset(self.dictionary)
+                environment.reset([])
             self.building_graph = None
             self._reset_episode_reward_telemetry()
 
@@ -6558,6 +6592,7 @@ class ParallelTrainer:
         if not hasattr(self, "building_graph") or self.building_graph is None or self.step_number == 0:
             self.building_graph = typed_cell.BuildingGraph(num_floors=num_floors)
             self.graph_step_count = 0
+            self.graph_clearance_cache={}
             env0 = self.environments[0]
             poly_pts = env0.site.get("outer") or env0.boundary.get("outer") or env0.boundary.get("polygon", [])
             if not poly_pts:
@@ -6567,14 +6602,8 @@ class ParallelTrainer:
             max_mods = int(self.settings.get("maxModules", 120))
             self.max_graph_seeds = max(10, min(max_mods, int(site_area / 30.0)))
 
-            # Step 0: Place shared vertical circulation core at the centroid
-            cx = sum(float(p["x"]) if isinstance(p, dict) and "x" in p else float(p[0]) for p in poly_pts) / len(poly_pts)
-            cy = sum(float(p["y"]) if isinstance(p, dict) and "y" in p else float(p[1]) for p in poly_pts) / len(poly_pts)
-
-            if not env0.seed_sampler._point_inside_polygon((cx,cy),[(p["x"],p["y"]) if isinstance(p,dict) else p for p in poly_pts]):
-                from shapely.geometry import Polygon
-                point=Polygon([(p['x'],p['y']) if isinstance(p,dict) else p for p in poly_pts]).representative_point()
-                cx,cy=point.x,point.y
+            # Static site preparation chooses an origin with a scalar clearance certificate.
+            cx,cy=self.core_stacking_metadata['graphOrigin']
             # Initial core is a full-height occurrence, not a fixed geometric box.
             self.building_graph.add_node(
                 node_id="core_0",
@@ -6583,13 +6612,14 @@ class ParallelTrainer:
                 floor_index=0,
                 cell_type=typed_cell.CellType.CORE,
                 scope=typed_cell.VerticalScope.MULTI_FLOOR,
-                area=36.0,
+                area=0.0,
             )
 
         from shared_modules import SizePrior
         self.building_graph.size_prior=SizePrior(radius=float(self.settings.get('graphPriorRadius',4.5)),
             min_area=float(self.settings.get('graphMinArea',1.)),max_area=float(self.settings.get('graphMaxArea',80.)))
         self.building_graph.site_boundaries={env.index:env.site.get('outer') or env.boundary.get('outer') or env.boundary.get('polygon',[]) for env in self.environments}
+        self.building_graph.site_holes={env.index:env.site.get('holes',[]) for env in self.environments}
         active_envs = [env for env in self.environments if not env.done]
         new_nodes_added = 0
 
@@ -6608,120 +6638,98 @@ class ParallelTrainer:
 
             if candidates:
                 pts=[{'x':p['x'],'y':p['y']} if isinstance(p,dict) else {'x':p[0],'y':p[1]} for p in site_poly]
-                site_area=abs(G.polygon_area(pts))
-                # Reproducible one-action lookahead reference search. No claim of learning.
-                from shared_modules import infer, area, missing_required_contacts
+                site_area=float(env.site.get('area',abs(G.polygon_area(pts))))
+                # Graph-only proposals: no trial graphs, prototype polygons or GEOS.
+                from graph_proxy import GraphSketch, refresh_local_contacts, origin_fits
+                sketch=GraphSketch(self.building_graph)
+                radius=sketch.radius
+                counts=Counter(n.floor_index for n in self.building_graph.nodes.values())
                 choices=[]
                 for ci,candidate in enumerate(candidates):
+                    x,y=candidate['x'],candidate['y']
+                    anchor=self.building_graph.nodes[candidate['anchor_node']]
                     for candidate_scope in (typed_cell.VerticalScope.INDEPENDENT,
                                             typed_cell.VerticalScope.MULTI_FLOOR):
-                        trial=copy.deepcopy(self.building_graph)
-                        candidate_id=f"node_{f}_{len(trial.nodes)}"
-                        trial.add_node(candidate_id,candidate['x'],candidate['y'],floor_index=f,
-                            scope=candidate_scope,cell_type=typed_cell.CellType.ROOM)
-                        if any(sum(n.floor_index==floor for n in trial.nodes.values())>int(self.settings['maxModules'])
-                               for floor in range(trial.num_floors)):
-                            continue
-                        trial.add_edge(candidate_id,candidate['anchor_node'],properties={'relation':'construction'})
-                        for n in list(trial.nodes.values()):
-                            if n.node_id==candidate_id or n.metadata.get('root_id')==candidate_id:
-                                trial.grow_node_connections(n.node_id,site_boundary=trial.site_boundaries[n.floor_index])
-                        solution=infer(trial)
-                        if solution.unresolved or missing_required_contacts(solution): continue
+                        floors=range(num_floors) if candidate_scope==typed_cell.VerticalScope.MULTI_FLOOR else (f,)
+                        if any(counts[floor]>=int(self.settings['maxModules']) for floor in floors):continue
                         fits=True
-                        for oid,o in solution.occurrences.items():
-                            poly=solution.polygon(oid)
-                            for n in o.nodes:
-                                boundary=trial.site_boundaries[n.floor_index]
-                                boundary=[(p['x'],p['y']) if isinstance(p,dict) else p for p in boundary]
-                                if any(not env.seed_sampler._point_inside_polygon(p,boundary) for p in poly):
-                                    fits=False;break
-                            if not fits:break
-                        if not fits:continue
-                        reuse=solution.reuse()
-                        size=sum(area(solution.prototypes[o.prototype].polygon)*len(o.nodes)
-                                 for o in solution.occurrences.values()
-                                 if o.prototype and o.nodes[0].cell_type!=typed_cell.CellType.VOID)
-                        excess=max(0,reuse['prototypeCount']-int(self.settings.get('dictCap',10)))
-                        objective=size-10*excess**2-5*reuse['singletonCount']
-                        # Alternatives mode changes exploration/tie selection only.
-                        tie=ci if self.settings.get('graphSearchMode')=='balanced' else -ci
-                        node=trial.nodes[candidate_id]
-                        nearest_core=min((math.hypot(node.x-n.x,node.y-n.y) for n in trial.nodes.values()
+                        for floor in floors:
+                            boundary=self.building_graph.site_boundaries[floor]
+                            boundary=[(p['x'],p['y']) if isinstance(p,dict) else p for p in boundary]
+                            # Sufficient scalar clearance certificate. No boundary clipping.
+                            # Conservative near the site edge; exact validation remains terminal.
+                            if not origin_fits((x,y),boundary,self.building_graph.site_holes[floor],radius):
+                                fits=False;break
+                        if not fits or not sketch.addition_feasible(x,y,floors,env.seed_sampler.min_seed_distance):continue
+                        k,singletons,size,estimated_area=sketch.preview(f,x,y,anchor,candidate_scope.value,
+                            site_area,int(self.settings.get('dictCap',10)))
+                        excess=max(0,k-int(self.settings.get('dictCap',10)))
+                        objective=size-10*excess**2-5*singletons
+                        nearest_core=min((math.hypot(x-n.x,y-n.y) for n in self.building_graph.nodes.values()
                                           if n.floor_index==f and n.cell_type==typed_cell.CellType.CORE),default=0.)
-                        radius=trial.size_prior.radius
-                        candidate['_policy_features']=[float(candidate_scope==typed_cell.VerticalScope.MULTI_FLOOR),
+                        features=[float(candidate_scope==typed_cell.VerticalScope.MULTI_FLOOR),
                             candidate.get('span',0.)/(2*radius),nearest_core/(10*radius),
-                            typed_cell.BuildingGraph._min_distance_to_boundary((node.x,node.y),site_poly)/(2*radius),
-                            reuse['prototypeCount']/max(1,int(self.settings.get('dictCap',10))),
-                            reuse['singletonCount']/max(1,reuse['independentOccurrences']),
-                            size/max(1.,site_area*trial.num_floors),f/max(1,trial.num_floors-1),
-                            sum(p.prior_boundary for p in solution.prototypes.values())/max(1,len(solution.prototypes)),
-                            len(trial.nodes)/max(1,self.max_graph_seeds*trial.num_floors)]
-                        # Scope alternatives own their feature rows, not a shared mutable proposal.
-                        choices.append((objective,tie,trial,candidate_id,dict(candidate),candidate_scope))
-                if not choices: continue
+                            typed_cell.BuildingGraph._min_distance_to_boundary((x,y),site_poly)/(2*radius),
+                            k/max(1,int(self.settings.get('dictCap',10))),
+                            singletons/max(1,len(sketch.built)+1),size/max(1.,site_area*num_floors),
+                            f/max(1,num_floors-1),1.,
+                            (len(self.building_graph.nodes)+len(floors))/max(1,self.max_graph_seeds*num_floors)]
+                        proposal={**candidate,'_policy_features':features}
+                        choices.append((objective,ci,proposal,candidate_scope))
+                if not choices:continue
                 self.last_graph_candidate_count=len(choices)
-                best=max(row[0] for row in choices)
                 if self.settings.get('graphController','neural')=='neural':
                     selected=self.graph_learner.choose(self.building_graph,
-                        [row[4]['_policy_features'] for row in choices],training=self.mode=='training')
+                        [row[2]['_policy_features'] for row in choices],training=self.mode=='training',
+                        anchors=[row[2]['anchor_node'] for row in choices],
+                        positions=[(row[2]['x'],row[2]['y']) for row in choices])
                     chosen=choices[selected]
                 elif self.settings.get('graphSearchMode')=='alternatives':
+                    best=max(row[0] for row in choices)
                     eligible=[row for row in choices if row[0]>=best-max(1.,abs(best)*.05)]
                     chosen=eligible[self.graph_step_count%len(eligible)]
                 else:
                     chosen=max(choices,key=lambda row:(row[0],row[1]))
-                _,_,trial,node_id,cand,scope=chosen
-                self.building_graph=trial
-                c_type=typed_cell.CellType.ROOM
-
-                # Incrementally grow connections for this newly placed node (Voronoi party walls, no grid triangulation)
-                anchor_id = cand.get("anchor_node")
-                if not anchor_id and "anchor_edge" in cand and isinstance(cand["anchor_edge"], (list, tuple)):
-                    anchor_id = cand["anchor_edge"][0]
-                pca_angle = env.site_orientation_prior.get("angle_rad", 0.0)
-                self.building_graph.grow_node_connections(
-                    node_id=node_id,
-                    anchor_id=anchor_id,
-                    site_boundary=site_poly,
-                    site_pca_angle_rad=pca_angle,
-                    max_dist=12.0,
-                )
-
-                # If multi-floor, also grow connections for propagated replicas on other stories
-                if scope == typed_cell.VerticalScope.MULTI_FLOOR:
-                    for other_f in range(self.building_graph.num_floors):
-                        if other_f != f:
-                            rep_id = f"{node_id}_f{other_f:02d}"
-                            if rep_id in self.building_graph.nodes:
-                                self.building_graph.grow_node_connections(
-                                    node_id=rep_id,
-                                    anchor_id=None,
-                                    site_boundary=site_poly,
-                                    site_pca_angle_rad=pca_angle,
-                                    max_dist=12.0,
-                                )
+                _,_,cand,scope=chosen
+                node_id=f"node_{f}_{len(self.building_graph.nodes)}"
+                self.building_graph.add_node(node_id,cand['x'],cand['y'],floor_index=f,
+                    scope=scope,cell_type=typed_cell.CellType.ROOM)
+                new_ids=[n.node_id for n in self.building_graph.nodes.values()
+                         if n.node_id==node_id or n.metadata.get('root_id')==node_id]
+                refresh_local_contacts(self.building_graph,new_ids,radius,
+                    self.building_graph.size_prior.min_contact)
                 new_nodes_added += 1
 
         self.graph_step_count += 1
         self.step_number += 1
         is_complete = (self.graph_step_count >= self.max_graph_seeds) or (new_nodes_added == 0)
 
+        realize_now=is_complete and self.mode=='inference'
         all_placements: list[dict[str, Any]] = []
         master_strategy = self.settings.get("masterSelectionStrategy", "highest_usage")
 
+        from graph_proxy import GraphSketch
+        sketch=GraphSketch(self.building_graph)
+        predicted_metrics={env.index:sketch.metrics(env.index,
+            float(env.site['area']),int(self.settings.get('dictCap',10)))
+            for env in self.environments}
         post_eval_start = None
-        if is_complete:
+        if realize_now:
             post_eval_start = time.perf_counter()
             self._post_eval_start = post_eval_start
             voronoi_start = time.perf_counter()
             ground_pca = self.environments[0].site_orientation_prior.get("angle_rad", 0.0) if self.environments else 0.0
+            from shared_modules import infer, validate
+            solution=infer(self.building_graph)
+            audit=validate(solution,self.building_graph.site_boundaries)
+            self.building_graph.last_inference=solution
+            self.building_graph.realization_audit={k:v for k,v in audit.items() if k!='polygons'}
             for env in self.environments:
                 realized = env.realize_graph_voronoi_placements(
                     self.building_graph,
                     master_selection_strategy=master_strategy,
                     site_pca_angle_rad=ground_pca,
+                    prepared=(solution,audit),
                 )
                 env.placements = realized
                 env.placement_by_id = {p["id"]: p for p in realized}
@@ -6752,34 +6760,30 @@ class ParallelTrainer:
         # Real-time room numbers and module templates for active graph nodes
         node_room_numbers: dict[str, int] = {}
         node_template_map: dict[str, str] = {}
-        if is_complete:
+        if realize_now:
             for p in all_placements:
                 nid = p.get("node_id")
                 if nid:
                     node_template_map[nid] = p.get("moduleId", "mod_std_m2")
                     node_room_numbers[nid] = p.get("roomNumber", (1 if p.get("category") == "core" else 2))
         else:
-            from shared_modules import infer, area
-            solution=infer(self.building_graph)
-            floor_rnum_maps={env.index:{} for env in self.environments}
             active_dict=[]
-            for rn,(pid,proto) in enumerate(solution.prototypes.items(),1):
-                built_members=[solution.occurrences[oid] for oid in proto.members
-                               if solution.occurrences[oid].nodes[0].cell_type!=typed_cell.CellType.VOID]
-                for oid in proto.members:
-                    for n in solution.occurrences[oid].nodes:
+            for rn,(pid,members) in enumerate(sketch.prototypes.items(),1):
+                for oid in members:
+                    for n in sketch.groups[oid]:
                         node_room_numbers[n.node_id]=rn
                         node_template_map[n.node_id]=pid
-                        floor_rnum_maps[n.floor_index][n.node_id]=rn
-                active_dict.append(dict(id=pid,name=f'Module #{rn}',category='room',area=area(proto.polygon),
-                    uses=len(built_members),roomNumber=rn,poly=[{'x':x,'y':y} for x,y in proto.polygon],
-                    estimateStatus='prior_derived' if proto.prior_boundary else 'constraint_derived',
-                    regularity=0.,minWidth=0.))
+                        n.module_id=pid
+                active_dict.append(dict(id=pid,name=f'Provisional type #{rn}',category='room',
+                    area=sketch.areas[members[0]],uses=0,roomNumber=rn,poly=[],
+                    estimateStatus='graph_proxy_uncalibrated',identityStatus='provisional'))
             self.dictionary=active_dict
 
         graph_state = {
             "step": self.step_number,
             "isComplete": is_complete,
+            "realized": realize_now,
+            "moduleIdentityStatus": 'confirmed' if realize_now else 'provisional',
             "nodes": [
                 {
                     "id": n.node_id,
@@ -6827,23 +6831,17 @@ class ParallelTrainer:
             ],
         }
 
-        # Compute pure graph-native architectural evaluation (<0.15ms per floor)
+        # Growth uses scalar graph estimates; pause/end use the independent realization audit.
         eval_metrics_start = time.perf_counter()
         per_floor_metrics: list[dict[str, Any]] = []
         for env in self.environments:
             site_poly = env.site.get("outer") or env.boundary.get("outer") or env.boundary.get("polygon", [])
             pts_for_area = [{"x": float(p["x"] if isinstance(p, dict) else p[0]), "y": float(p["y"] if isinstance(p, dict) else p[1])} for p in site_poly]
-            site_area = abs(G.polygon_area(pts_for_area)) if pts_for_area else 1000.0
+            site_area = float(env.site.get('area',1000.))
             pca_angle = env.site_orientation_prior.get("angle_rad", 0.0)
             dict_cap = int(self.settings.get("dictCap", 10))
-            fm = self.building_graph.evaluate_graph_metrics(
-                env.index,
-                site_area=site_area,
-                site_pca_angle_rad=pca_angle,
-                dict_cap=dict_cap,
-                star_motif_matcher=(lambda g, f: node_room_numbers) if is_complete else (lambda g, f: floor_rnum_maps.get(f, {})),
-                site_boundary=site_poly,
-            )
+            fm = self.building_graph.evaluate_graph_metrics(env.index,site_area=site_area,
+                dict_cap=dict_cap,realization=(solution,audit)) if realize_now else predicted_metrics[env.index]
             per_floor_metrics.append(fm)
 
         if is_complete:
@@ -6860,7 +6858,10 @@ class ParallelTrainer:
 
         if is_complete:
             self.step_profiler.record("stepTotal",time.perf_counter()-step_start_time)
-            completed_audit=copy.deepcopy(getattr(self.building_graph,'realization_audit',{}))
+            self.last_completed_graph=self.building_graph
+            completed_audit=copy.deepcopy(self.building_graph.realization_audit) if realize_now else {
+                'status':'not_run','valid':None,'reason':'graph_only_training','violations':[],
+                'graphValid':all(m['topologyValid'] and m.get('constraintsValid',True) for m in per_floor_metrics)}
             ep_event = self._finish_episode(
                 graph_per_site=per_floor_metrics,
                 post_eval_start=post_eval_start,
@@ -6868,9 +6869,9 @@ class ParallelTrainer:
             ep_event["graphState"] = graph_state
             audit=completed_audit
             ep_event['validation']=audit
-            ep_event['predictionErrors']={str(m['floorIndex']):{
-                'filledArea':m['filledArea']-audit.get('perFloor',{}).get(m['floorIndex'],{}).get('filledArea',0.)}
-                for m in per_floor_metrics}
+            ep_event['predictionErrors']=({str(m['floorIndex']):{
+                'filledArea':predicted_metrics[m['floorIndex']]['filledArea']-audit.get('perFloor',{}).get(m['floorIndex'],{}).get('filledArea',0.)}
+                for m in per_floor_metrics} if realize_now else None)
             if all_placements:
                 ep_event["placements"] = all_placements
                 ep_event["dictionary"] = [_public_module(m) for m in self.dictionary]
@@ -6906,7 +6907,9 @@ class ParallelTrainer:
                 "parallelFloors": len(self.environments),
                 "graphCandidateCount": getattr(self,'last_graph_candidate_count',0),
                 "singletonPenalty": float(agg_metrics.get("singletonPenalty",0.)),
-                "estimateStatus": "uncalibrated",
+                "estimateStatus": "graph_proxy_uncalibrated",
+                "moduleIdentityStatus": "provisional",
+                "estimatedReuseRatio": _mean([m.get('estimatedReuseRatio',0.) for m in per_floor_metrics]),
                 "score": round(float(agg_metrics.get("score", 0.0)), 2),
                 "fillRatio": round(float(agg_metrics.get("fillRatio", 0.0)), 3),
                 "rentableRatio": round(float(agg_metrics.get("rentableRatio", 0.0)), 3),
@@ -7359,150 +7362,171 @@ class ParallelTrainer:
             "diagnostics": diagnostics,
         }
 
+    def _preview_graph(self, active_graph, completed=False):
+        """Explicit geometry preview, isolated from the learner and episode transition."""
+        from graph_proxy import GraphSketch
+        sketch=GraphSketch(active_graph)
+        predicted={env.index:sketch.metrics(env.index,float(env.site['area']),int(self.settings['dictCap']))
+                   for env in self.environments}
+        all_realized = []
+        node_template_map: dict[str, str] = {}
+        node_room_numbers: dict[str, int] = {}
+        master_strategy = self.settings.get("masterSelectionStrategy", "highest_usage")
+        from shared_modules import infer, validate
+        solution=infer(active_graph)
+        audit=validate(solution,active_graph.site_boundaries)
+        active_graph.last_inference=solution
+        active_graph.realization_audit={k:v for k,v in audit.items() if k!='polygons'}
+        for env in self.environments:
+            realized = env.realize_graph_voronoi_placements(
+                active_graph,
+                master_selection_strategy=master_strategy,
+                prepared=(solution,audit),
+            )
+            for r in realized:
+                tid = r.get("moduleId") or "mod_std_m2"
+                nid = r.get("node_id")
+                if nid:
+                    node_template_map[nid] = tid
+                    node_room_numbers[nid] = r.get("roomNumber", (1 if r.get("category") == "core" else 2))
+            all_realized.extend(realized)
+
+        if all_realized:
+            self.dictionary = self._build_canonical_voronoi_dictionary(all_realized)
+
+        graph_state = {
+            "step": self.step_number,
+            "isComplete": completed,
+            "realized": True,
+            "moduleIdentityStatus": "confirmed",
+            "nodes": [
+                {
+                    "id": n.node_id,
+                    "x": round(n.x, 2),
+                    "y": round(n.y, 2),
+                    "z": round(n.z, 2),
+                    "world_x": round(n.x + (self.environments[n.floor_index].offset[0] if n.floor_index < len(self.environments) else 0.0), 2),
+                    "world_y": round(n.y + (self.environments[n.floor_index].offset[1] if n.floor_index < len(self.environments) else 0.0), 2),
+                    "type": n.cell_type.value,
+                    "floor": n.floor_index,
+                    "roomNumber": node_room_numbers.get(n.node_id, (1 if n.cell_type == typed_cell.CellType.CORE else 2)),
+                    "moduleId": n.module_id,
+                    "orientation": n.orientation,
+                }
+                for n in active_graph.nodes.values()
+            ],
+            "edgesHoriz": [
+                {
+                    "u": e.u,
+                    "v": e.v,
+                    "floor": active_graph.nodes[e.u].floor_index,
+                    "p1": [round(active_graph.nodes[e.u].x, 2), round(active_graph.nodes[e.u].y, 2), round(active_graph.nodes[e.u].z, 2)],
+                    "p2": [round(active_graph.nodes[e.v].x, 2), round(active_graph.nodes[e.v].y, 2), round(active_graph.nodes[e.v].z, 2)],
+                    "world_p1": [
+                        round(active_graph.nodes[e.u].x + self.environments[active_graph.nodes[e.u].floor_index].offset[0], 2),
+                        round(active_graph.nodes[e.u].y + self.environments[active_graph.nodes[e.u].floor_index].offset[1], 2),
+                    ],
+                    "world_p2": [
+                        round(active_graph.nodes[e.v].x + self.environments[active_graph.nodes[e.v].floor_index].offset[0], 2),
+                        round(active_graph.nodes[e.v].y + self.environments[active_graph.nodes[e.v].floor_index].offset[1], 2),
+                    ],
+                }
+                for e in active_graph.edges_horiz
+                if e.u in active_graph.nodes and e.v in active_graph.nodes
+            ],
+            "edgesVert": [
+                {
+                    "u": e.u,
+                    "v": e.v,
+                    "p1": [round(active_graph.nodes[e.u].x, 2), round(active_graph.nodes[e.u].y, 2), round(active_graph.nodes[e.u].z, 2)],
+                    "p2": [round(active_graph.nodes[e.v].x, 2), round(active_graph.nodes[e.v].y, 2), round(active_graph.nodes[e.v].z, 2)],
+                }
+                for e in active_graph.edges_vert
+                if e.u in active_graph.nodes and e.v in active_graph.nodes
+            ],
+        }
+
+        dict_cap = int(self.settings.get("dictCap", 10))
+        per_floor_metrics = []
+        for env in self.environments:
+            poly_pts = env.site.get("outer") or env.boundary.get("outer") or env.boundary.get("polygon", [])
+            pts_for_area = [{"x": float(p["x"] if isinstance(p, dict) else p[0]), "y": float(p["y"] if isinstance(p, dict) else p[1])} for p in poly_pts]
+            site_area = float(env.site.get('area',1000.))
+            pca_angle = env.site_orientation_prior.get("angle_rad", 0.0)
+            fm = active_graph.evaluate_graph_metrics(
+                env.index,
+                site_area=site_area,
+                site_pca_angle_rad=pca_angle,
+                dict_cap=dict_cap,
+                realization=(solution,audit),
+                site_boundary=poly_pts,
+            )
+            per_floor_metrics.append(fm)
+
+        agg_metrics = self._aggregate_terminal(per_floor_metrics, update_state=False)
+        dict_limit_breach = max(0, len(self.dictionary) - dict_cap)
+        dict_breach_penalty = _mean([m['dictBreachPenalty'] for m in per_floor_metrics])
+
+        return {
+            "type": "placements",
+            "isEvaluation": True,
+            "generationId": self.generation_id,
+            "episode": self.episode,
+            "step": self.step_number,
+            "placements": all_realized,
+            "validation": active_graph.realization_audit,
+            "predictionErrors": {str(m['floorIndex']):{
+                'filledArea':predicted[m['floorIndex']]['filledArea']-m['filledArea'],
+                'rentableArea':predicted[m['floorIndex']]['rentableArea']-m['rentableArea']}
+                for m in per_floor_metrics},
+            "mergedPlacements": [],
+            "graphState": graph_state,
+            "dictionary": [_public_module(m) for m in self.dictionary],
+            "mergedDictionary": [_public_module(m) for m in self.dictionary],
+            "metrics": {
+                **self.graph_learner.last,
+                "geometryValid": audit['valid'],
+                "estimateStatus": "realized_uncalibrated_environment",
+                "moduleIdentityStatus": "confirmed",
+                "score": round(float(agg_metrics.get("score", 0.0)), 2),
+                "fillRatio": round(float(agg_metrics.get("fillRatio", 0.0)), 3),
+                "rentableRatio": round(float(agg_metrics.get("rentableRatio", 0.0)), 3),
+                "daylightRatio": round(float(agg_metrics.get("daylightRatio", 0.0)), 3),
+                "reuseRatio": round(float(agg_metrics.get("reuseRatio", 0.0)), 3),
+                "constructibilityScore": round(float(agg_metrics.get("constructibilityScore", 0.0)), 3),
+                "envelopeEfficiency": round(float(agg_metrics.get("envelopeEfficiency", 0.0)), 3),
+                "deepInteriorPenalty": round(float(agg_metrics.get("deepInteriorPenalty", 0.0)), 2),
+                "facadeChasmPenalty": round(float(agg_metrics.get("facadeChasmPenalty", 0.0)), 2),
+                "underfillPenalty": round(float(agg_metrics.get("underfillPenalty", 0.0)), 2),
+                "topologyPenalty": round(float(agg_metrics.get("topologyPenalty", 0.0)), 2),
+                "areaVariancePenalty": round(float(agg_metrics.get("areaVariancePenalty", 0.0)), 3),
+                "vocabSize": len(self.dictionary),
+                "dictLimitBreach": dict_limit_breach,
+                "dictBreachPenalty": round(dict_breach_penalty, 2),
+                "graphNodes": len(active_graph.nodes),
+                "graphEdgesHoriz": len(active_graph.edges_horiz),
+                "graphEdgesVert": len(active_graph.edges_vert),
+                "performanceTimings": self.step_profiler.summary(),
+            },
+            "diagnostics": self._runtime_diagnostics(),
+        }
+
     def evaluate(self, generation_id: str, episode: int) -> dict[str, Any]:
         """Perform a complete terminal-like evaluation of the current placements without state mutation."""
         if generation_id != self.generation_id or episode != self.episode:
             raise StaleStepError("evaluation is stale")
 
-        # In graph_voronoi mode: Realization happens ONLY at the end of points generation.
-        # When paused midway, evaluate rooms to identify identical room numbers, but keep view as graph (points + connections).
         if self.settings.get("generatorEngine") == "graph_voronoi":
+            active=getattr(self,'building_graph',None)
+            if active is not None:
+                return self._preview_graph(active)
             previous=getattr(self,'last_graph_event',None)
-            if self.building_graph is None and previous and previous.get('generationId')==self.generation_id:
-                event=copy.deepcopy(previous)
-                event.update(type='placements',isEvaluation=True,graphPhase='completed',placements=[],
-                             completedEpisode=previous.get('episode'),episode=self.episode)
+            completed=getattr(self,'last_completed_graph',None)
+            if completed is not None and previous and previous.get('generationId')==self.generation_id:
+                event=self._preview_graph(completed,completed=True)
+                event.update(graphPhase='completed',completedEpisode=previous.get('completedEpisode'))
                 return event
-            is_graph_midway = (
-                getattr(self, "building_graph", None) is not None
-                and not all(env.done for env in self.environments)
-            )
-            if is_graph_midway:
-                all_realized = []
-                node_template_map: dict[str, str] = {}
-                node_room_numbers: dict[str, int] = {}
-                master_strategy = self.settings.get("masterSelectionStrategy", "highest_usage")
-                for env in self.environments:
-                    realized = env.realize_graph_voronoi_placements(
-                        self.building_graph,
-                        master_selection_strategy=master_strategy,
-                    )
-                    for r in realized:
-                        tid = r.get("moduleId") or "mod_std_m2"
-                        nid = r.get("node_id")
-                        if nid:
-                            node_template_map[nid] = tid
-                            node_room_numbers[nid] = r.get("roomNumber", (1 if r.get("category") == "core" else 2))
-                    all_realized.extend(realized)
-
-                if all_realized:
-                    self.dictionary = self._build_canonical_voronoi_dictionary(all_realized)
-
-                graph_state = {
-                    "step": self.step_number,
-                    "isComplete": False,
-                    "nodes": [
-                        {
-                            "id": n.node_id,
-                            "x": round(n.x, 2),
-                            "y": round(n.y, 2),
-                            "z": round(n.z, 2),
-                            "world_x": round(n.x + (self.environments[n.floor_index].offset[0] if n.floor_index < len(self.environments) else 0.0), 2),
-                            "world_y": round(n.y + (self.environments[n.floor_index].offset[1] if n.floor_index < len(self.environments) else 0.0), 2),
-                            "type": n.cell_type.value,
-                            "floor": n.floor_index,
-                            "roomNumber": node_room_numbers.get(n.node_id, (1 if n.cell_type == typed_cell.CellType.CORE else 2)),
-                            "moduleId": n.module_id,
-                    "orientation": n.orientation,
-                        }
-                        for n in self.building_graph.nodes.values()
-                    ],
-                    "edgesHoriz": [
-                        {
-                            "u": e.u,
-                            "v": e.v,
-                            "floor": self.building_graph.nodes[e.u].floor_index,
-                            "p1": [round(self.building_graph.nodes[e.u].x, 2), round(self.building_graph.nodes[e.u].y, 2), round(self.building_graph.nodes[e.u].z, 2)],
-                            "p2": [round(self.building_graph.nodes[e.v].x, 2), round(self.building_graph.nodes[e.v].y, 2), round(self.building_graph.nodes[e.v].z, 2)],
-                            "world_p1": [
-                                round(self.building_graph.nodes[e.u].x + self.environments[self.building_graph.nodes[e.u].floor_index].offset[0], 2),
-                                round(self.building_graph.nodes[e.u].y + self.environments[self.building_graph.nodes[e.u].floor_index].offset[1], 2),
-                            ],
-                            "world_p2": [
-                                round(self.building_graph.nodes[e.v].x + self.environments[self.building_graph.nodes[e.v].floor_index].offset[0], 2),
-                                round(self.building_graph.nodes[e.v].y + self.environments[self.building_graph.nodes[e.v].floor_index].offset[1], 2),
-                            ],
-                        }
-                        for e in self.building_graph.edges_horiz
-                        if e.u in self.building_graph.nodes and e.v in self.building_graph.nodes
-                    ],
-                    "edgesVert": [
-                        {
-                            "u": e.u,
-                            "v": e.v,
-                            "p1": [round(self.building_graph.nodes[e.u].x, 2), round(self.building_graph.nodes[e.u].y, 2), round(self.building_graph.nodes[e.u].z, 2)],
-                            "p2": [round(self.building_graph.nodes[e.v].x, 2), round(self.building_graph.nodes[e.v].y, 2), round(self.building_graph.nodes[e.v].z, 2)],
-                        }
-                        for e in self.building_graph.edges_vert
-                        if e.u in self.building_graph.nodes and e.v in self.building_graph.nodes
-                    ],
-                }
-
-                dict_cap = int(self.settings.get("dictCap", 10))
-                per_floor_metrics = []
-                for env in self.environments:
-                    poly_pts = env.site.get("outer") or env.boundary.get("outer") or env.boundary.get("polygon", [])
-                    pts_for_area = [{"x": float(p["x"] if isinstance(p, dict) else p[0]), "y": float(p["y"] if isinstance(p, dict) else p[1])} for p in poly_pts]
-                    site_area = abs(G.polygon_area(pts_for_area)) if pts_for_area else 1000.0
-                    pca_angle = env.site_orientation_prior.get("angle_rad", 0.0)
-                    fm = self.building_graph.evaluate_graph_metrics(
-                        env.index,
-                        site_area=site_area,
-                        site_pca_angle_rad=pca_angle,
-                        dict_cap=dict_cap,
-                        star_motif_matcher=(lambda g, f: node_room_numbers),
-                        site_boundary=poly_pts,
-                    )
-                    per_floor_metrics.append(fm)
-
-                agg_metrics = self._aggregate_terminal(per_floor_metrics, update_state=False)
-                dict_limit_breach = max(0, len(self.dictionary) - dict_cap)
-                dict_breach_penalty = min(80.0, float(dict_limit_breach ** 2) * 1.0)
-
-                return {
-                    "type": "placements",
-                    "isEvaluation": True,
-                    "generationId": self.generation_id,
-                    "episode": self.episode,
-                    "step": self.step_number,
-                    "placements": [],
-                    "mergedPlacements": [],
-                    "graphState": graph_state,
-                    "dictionary": [_public_module(m) for m in self.dictionary],
-                    "mergedDictionary": [_public_module(m) for m in self.dictionary],
-                    "metrics": {
-                        "score": round(float(agg_metrics.get("score", 0.0)), 2),
-                        "fillRatio": round(float(agg_metrics.get("fillRatio", 0.0)), 3),
-                        "rentableRatio": round(float(agg_metrics.get("rentableRatio", 0.0)), 3),
-                        "daylightRatio": round(float(agg_metrics.get("daylightRatio", 0.0)), 3),
-                        "reuseRatio": round(float(agg_metrics.get("reuseRatio", 0.0)), 3),
-                        "constructibilityScore": round(float(agg_metrics.get("constructibilityScore", 0.0)), 3),
-                        "envelopeEfficiency": round(float(agg_metrics.get("envelopeEfficiency", 0.0)), 3),
-                        "deepInteriorPenalty": round(float(agg_metrics.get("deepInteriorPenalty", 0.0)), 2),
-                        "facadeChasmPenalty": round(float(agg_metrics.get("facadeChasmPenalty", 0.0)), 2),
-                        "underfillPenalty": round(float(agg_metrics.get("underfillPenalty", 0.0)), 2),
-                        "topologyPenalty": round(float(agg_metrics.get("topologyPenalty", 0.0)), 2),
-                        "areaVariancePenalty": round(float(agg_metrics.get("areaVariancePenalty", 0.0)), 3),
-                        "vocabSize": len(self.dictionary),
-                        "dictLimitBreach": dict_limit_breach,
-                        "dictBreachPenalty": round(dict_breach_penalty, 2),
-                        "graphNodes": len(self.building_graph.nodes),
-                        "graphEdgesHoriz": len(self.building_graph.edges_horiz),
-                        "graphEdgesVert": len(self.building_graph.edges_vert),
-                        "performanceTimings": self.step_profiler.summary(),
-                    },
-                    "diagnostics": self._runtime_diagnostics(),
-                }
+            raise StaleStepError('no graph available to preview')
 
         # 1. Compute BPE merges
         layout_graphs = []
@@ -7865,7 +7889,7 @@ class ParallelTrainer:
                         f"missing={unsupported_missing}, unexpected={unexpected}"
                     )
             from graph_policy import GraphLearner
-            graph_candidate=GraphLearner(self.device,int(self.settings['seed']),float(self.settings['learningRate']))
+            graph_candidate=GraphLearner(self.device,int(self.settings['seed']),float(self.settings['learningRate']),self.settings.get('graphPolicyArchitecture','message_passing'))
             if 'graphLearner' in checkpoint:
                 validate_safe_state(checkpoint['graphLearner'],'graphLearner')
                 graph_candidate.load(checkpoint['graphLearner'])
@@ -7886,6 +7910,8 @@ class ParallelTrainer:
                 self.optimizer = optim.Adam(
                     self.model.parameters(), lr=float(self.settings["learningRate"])
                 )
+            if graph_candidate.model.architecture!=self.settings['graphPolicyArchitecture']:
+                raise ValueError('checkpoint graph architecture disagrees with settings')
             self.generation_id = generation_id
             self.episode = episode
             self.baseline = baseline

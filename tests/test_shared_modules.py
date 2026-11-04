@@ -133,3 +133,30 @@ class EvidenceAndActionTests(unittest.TestCase):
         polygons=[Polygon(r.polygon(oid)) for oid,o in r.occurrences.items() if o.prototype]
         for i,p in enumerate(polygons):
             for q in polygons[i+1:]:self.assertLess(p.intersection(q).area,1e-6)
+
+class JointIntervalRegressionTests(unittest.TestCase):
+    def test_individually_usable_faces_can_have_no_shared_contact(self):
+        from shared_modules import boundary_contact_length
+        a=[(0,0),(2,0),(2,4),(0,4)]
+        b=[(2,-4),(4,-4),(4,0),(2,0)]
+        self.assertEqual(boundary_contact_length(a,b,(0,0),(4,0)),0.)
+        c=[(2,1),(4,1),(4,3),(2,3)]
+        self.assertAlmostEqual(boundary_contact_length(a,c,(0,0),(4,0)),2.)
+
+    def test_oracle_respects_static_site_holes(self):
+        g=BuildingGraph(1);g.add_node('c',0,0,cell_type=CellType.CORE)
+        g.site_holes={0:[[(-1,-1),(1,-1),(1,1),(-1,1)]]}
+        audit=validate(infer(g),{0:[(-20,-20),(20,-20),(20,20),(-20,20)]})
+        self.assertFalse(audit['valid'])
+        self.assertIn('containment',[v['kind'] for v in audit['violations']])
+
+    def test_nearly_coincident_shared_edge_has_no_interior_overlap(self):
+        from shared_modules import convex_interiors_overlap
+        a=[(16.76282965874093,-.5045641756225088),(20.073753192526297,3.623853969237018),
+           (19.683474014436154,4.644901559664048),(15.736829215356638,5.659399871647452),
+           (15.300915911334485,2.679182435033913)]
+        b=[(16.76282965874093,-.5045641756225088),(16.72564874561116,-1.2816504271251055),
+           (18.751290537617407,-2.9885759590423207),(22.231801958732024,.6524135184733069),
+           (21.349642861314617,3.1483304910353382),(20.073753192526297,3.6238539692370177)]
+        self.assertFalse(convex_interiors_overlap(a,b))
+        self.assertTrue(convex_interiors_overlap(a,a))

@@ -168,3 +168,11 @@ Implemented a building-wide convex constraint inference kernel, independent geom
 ### 2026-11-04 — experimental graph actor-critic demo
 
 Integrated a separate message-passing graph actor, value baseline and Adam learner over feasible growth actions. User-requested neural demo now trains on an explicitly provisional graph objective with invalid completion reported separately. Verified actual parameter updates and frozen inference rather than interpreting a reference heuristic's score as learning. Architecture comparisons and held-out generalization remain unproven; see `guides/trainable_graph_demo.md`.
+
+### 2026-11-04 — architecture screening, no winner claimed
+
+Implemented and tested candidate-local GNN and candidate-conditioned attention alternatives plus a pooled control. Recorded a completed 18-episode ANY/FREE pilot with matched sites and actual independent geometry audits. The local variant improved a tiny sample's mean outcome but reduced module reuse and benefited from avoiding a geometry-mask bug; this is insufficient evidence for adoption. The separate longer baseline/local screen was interrupted for the graph hot-path rewrite; its partial results remain recorded. Default architecture remains unchanged.
+
+### 2026-11-04 — removed geometry lookahead from graph training
+
+Discarded per-candidate graph deepcopy and full prototype polygon inference as a training hot path. The replacement evaluates numeric implicit constraints and performs graph-only episode updates; polygon realization and independent validation run on explicit preview or inference completion. Retained the convex shared-prototype adapter as a separate check, including joint contact-interval validation. Provisional dictionary hypotheses and quadrature estimates are not presented as confirmed fabrication reuse or calibrated geometry. This improves the execution contract, not evidence of learned design quality.

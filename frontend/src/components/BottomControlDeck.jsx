@@ -252,7 +252,7 @@ export const BottomControlDeck = () => {
                   type="button"
                   className="split-side-btn"
                   onClick={startTraining}
-                  title="Start Training Policy (Space)"
+                  title={settings.generatorEngine === 'graph_voronoi' ? 'Train on graph constraints; realize in inference or preview (Space)' : 'Start Training Policy (Space)'}
                 >
                   Start Training
                 </button>
@@ -496,9 +496,9 @@ export const BottomControlDeck = () => {
             >
               <span className="metric-lbl">EP TIME</span>
               <strong className="metric-num">
-                {diagnostics.episodeTimeMs ? `${Math.round(diagnostics.episodeTimeMs)}ms` : (step > 0 ? `${Math.round(step * (diagnostics.stepTimeMs || 4.2))}ms` : '142ms')}
+                {diagnostics.episodeTimeMs ? `${Math.round(diagnostics.episodeTimeMs)}ms` : '—'}
               </strong>
-              <span className="metric-desc">Step {diagnostics.stepTimeMs ? `${diagnostics.stepTimeMs.toFixed(1)}ms` : '4.2ms'}</span>
+              <span className="metric-desc">Step {diagnostics.stepTimeMs ? `${diagnostics.stepTimeMs.toFixed(1)}ms` : '—'}</span>
             </div>
           </div>
 

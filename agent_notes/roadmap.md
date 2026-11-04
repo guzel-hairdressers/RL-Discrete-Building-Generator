@@ -297,3 +297,18 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [IMPLEMENTED] Numeric contact-tolerance regression and completion-audit handoff fix.
 - [ACTIVE] Compare alternative ML architectures on common held-out configurations; retain raw measurements and reject unsupported quality/convergence claims.
 - [PENDING] Calibrated architectural objectives and automatic multi-action core/void planning.
+
+### 2026-11-04 — controlled architecture research
+
+- [IMPLEMENTED] Pooled, global GNN, local GNN and candidate-conditioned attention implementations, architecture-aware checkpoint compatibility and frozen evaluation.
+- [IMPLEMENTED] Matched-site pre/post-training comparison driver, raw failure retention and explicit statistical/adoption gates.
+- [COMPLETED/INCONCLUSIVE] Pilot 01: 18 real episodes, three models, one initialization seed; no architecture promoted.
+- [ACTIVE] Pilot 02: longer matched baseline/local comparison with corrected concave containment, separate from pilot 01.
+- [PENDING] Multi-seed confirmation, full learning protocol, untouched test sites and L/XL throughput validation before any winner claim.
+
+### v0.10.0 graph-only training update — 2026-11-04
+
+- [IMPLEMENTED] Graph-only candidate scoring and training completions; explicit preview and inference realization share one building-wide solve.
+- [IMPLEMENTED] Pooled full-height contact checks, local contact refresh, conservative site/hole masks, real gradient and preview-isolation regressions.
+- [EXPERIMENTAL] Area quadrature and provisional dictionary descriptors; complementary evidence equivalence with the exact solver is incomplete.
+- [OPEN] Trainable pose/function/void planning, calibrated proxy errors, held-out quality improvement, untouched architecture confirmation. No architecture promoted.

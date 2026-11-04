@@ -1,7 +1,7 @@
 """Experimental trainable graph actor-critic for feasible growth actions.
 
 A small message-passing encoder sees the current graph. Its actor chooses among
-validated proposals; it is not trained to imitate the reference search ranking.
+graph-screened proposals; it is not trained to imitate the reference search ranking.
 The episode objective is explicitly experimental, not a calibrated design score.
 """
 from __future__ import annotations
@@ -11,27 +11,49 @@ from torch import nn
 from torch.distributions import Categorical
 
 
+ARCHITECTURES = ('pooled', 'message_passing', 'local_message_passing', 'candidate_attention')
+
+
+def outcome_reward(score, valid):
+    if not math.isfinite(score): raise ValueError('nonfinite graph score')
+    return math.tanh(score / 100.) if valid else -1.
+
+
 class GraphActorCritic(nn.Module):
-    def __init__(self):
+    def __init__(self, architecture='message_passing'):
         super().__init__()
+        if architecture not in ARCHITECTURES: raise ValueError('unknown graph architecture')
+        self.architecture=architecture
         self.node = nn.Sequential(nn.Linear(8,32),nn.SiLU())
         self.message = nn.Sequential(nn.Linear(33,32),nn.SiLU())
         self.update = nn.Sequential(nn.Linear(64,32),nn.SiLU())
-        self.actor = nn.Sequential(nn.Linear(42,64),nn.SiLU(),nn.Linear(64,1))
+        self.actor = nn.Sequential(nn.Linear(74 if architecture in ('local_message_passing','candidate_attention') else 42,64),nn.SiLU(),nn.Linear(64,1))
         self.critic = nn.Sequential(nn.Linear(32,32),nn.SiLU(),nn.Linear(32,1))
+        if architecture=='candidate_attention':
+            self.attention=nn.Sequential(nn.Linear(37,32),nn.SiLU(),nn.Linear(32,1))
 
-    def forward(self,nodes,edges,lengths,candidates):
+    def forward(self,nodes,edges,lengths,candidates,anchors=None,geometry=None):
         h=self.node(nodes)
         for _ in range(2):
             messages=torch.zeros_like(h)
             degree=torch.zeros((len(h),1),device=h.device)
-            if edges.numel():
+            if edges.numel() and self.architecture!='pooled':
                 src,dst=edges
                 messages.index_add_(0,dst,self.message(torch.cat((h[src],lengths),dim=1)))
                 degree.index_add_(0,dst,torch.ones_like(lengths))
             h=self.update(torch.cat((h,messages/degree.clamp_min(1)),dim=1))
         context=h.mean(0)
-        logits=self.actor(torch.cat((context.expand(len(candidates),-1),candidates),dim=1)).squeeze(-1)
+        parts=[context.expand(len(candidates),-1),candidates]
+        if self.architecture=='local_message_passing':
+            if anchors is None: raise ValueError('local graph actor requires candidate anchors')
+            parts.append(h[anchors])
+        if self.architecture=='candidate_attention':
+            if geometry is None: raise ValueError('candidate attention requires relative geometry')
+            nodes=h.expand(len(candidates),-1,-1)
+            scope=candidates[:,0,None,None].expand(-1,len(h),1)
+            energies=self.attention(torch.cat((nodes,geometry,scope),dim=-1)).squeeze(-1)
+            parts.append((energies.softmax(dim=1).unsqueeze(-1)*nodes).sum(dim=1))
+        logits=self.actor(torch.cat(parts,dim=1)).squeeze(-1)
         return logits,self.critic(context).squeeze(-1)
 
 
@@ -56,13 +78,31 @@ def encode_graph(graph,device):
             torch.tensor(lengths,dtype=torch.float32,device=device).reshape(-1,1))
 
 
+def relative_candidate_geometry(graph,anchors,positions,device):
+    """Geometry in each proposed action's own frame; no absolute compass/grid axes."""
+    rows=list(graph.nodes.values())
+    points=torch.tensor([[n.x,n.y] for n in rows],dtype=torch.float32,device=device)
+    candidates=torch.tensor(positions,dtype=torch.float32,device=device)
+    direction=candidates-points[anchors]
+    direction=direction/direction.norm(dim=1,keepdim=True).clamp_min(1e-8)
+    normal=torch.stack((-direction[:,1],direction[:,0]),dim=1)
+    delta=points[None,:,:]-candidates[:,None,:]
+    scale=2*getattr(getattr(graph,'size_prior',None),'radius',4.5)
+    along=(delta*direction[:,None,:]).sum(-1)/scale
+    across=(delta*normal[:,None,:]).sum(-1)/scale
+    distance=delta.norm(dim=-1)/scale
+    floors=torch.tensor([n.floor_index for n in rows],dtype=torch.float32,device=device)
+    vertical=(floors[None,:]-floors[anchors,None])/max(1,graph.num_floors-1)
+    return torch.stack((along,across,distance,vertical),dim=-1)
+
+
 class GraphLearner:
-    def __init__(self,device='cpu',seed=123,lr=.001):
+    def __init__(self,device='cpu',seed=123,lr=.001,architecture='message_passing'):
         self.device=torch.device(device)
         # Separate initialization/sampling RNG preserves legacy-policy reproducibility.
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(seed)
-            self.model=GraphActorCritic().to(self.device)
+            self.model=GraphActorCritic(architecture).to(self.device)
         self.optimizer=torch.optim.Adam(self.model.parameters(),lr=lr)
         self.rng=torch.Generator(device='cpu').manual_seed(seed)
         self.updates=0
@@ -71,10 +111,17 @@ class GraphLearner:
 
     def clear_episode(self): self.trajectory=[]
 
-    def choose(self,graph,features,training=True):
+    def choose(self,graph,features,training=True,anchors=None,positions=None):
+        ids={nid:i for i,nid in enumerate(graph.nodes)}
+        anchor_indices=torch.tensor([ids[a] for a in anchors],dtype=torch.long,device=self.device) if anchors is not None else None
+        geometry=None
+        if self.model.architecture=='candidate_attention':
+            if positions is None or anchors is None: raise ValueError('candidate attention needs poses and anchors')
+            geometry=relative_candidate_geometry(graph,anchor_indices,positions,self.device)
         with torch.set_grad_enabled(training):
             logits,value=self.model(*encode_graph(graph,self.device),
-                torch.tensor(features,dtype=torch.float32,device=self.device))
+                torch.tensor(features,dtype=torch.float32,device=self.device),
+                anchor_indices,geometry)
             distribution=Categorical(logits=logits)
             index=int(torch.multinomial(distribution.probs.detach().cpu(),1,generator=self.rng)) if training else int(logits.argmax())
             if training:
@@ -86,6 +133,7 @@ class GraphLearner:
         stats=dict(policyLoss=0.,actorLoss=0.,valueLoss=0.,policyEntropy=0.,gradientNorm=0.,
             advantage=0.,policyUpdateCount=self.updates,policyDecisionCount=len(self.trajectory),
             learningAlgorithm='graph_actor_critic_experimental' if training else 'graph_inference',
+            architecture=self.model.architecture,
             learningRate=self.optimizer.param_groups[0]['lr'] if training else 0.,trainingReward=reward)
         if training and self.trajectory:
             returns=torch.tensor([reward*.99**(len(self.trajectory)-1-i) for i in range(len(self.trajectory))],device=self.device)
@@ -107,12 +155,20 @@ class GraphLearner:
         return stats
 
     def state(self):
-        return dict(schema=1,model={k:v.detach().cpu().clone() for k,v in self.model.state_dict().items()},
+        return dict(schema=2,architecture=self.model.architecture,model={k:v.detach().cpu().clone() for k,v in self.model.state_dict().items()},
             optimizer=self.optimizer.state_dict(),rng=self.rng.get_state(),updates=self.updates)
 
     def load(self,state):
-        if not isinstance(state,dict) or state.get('schema')!=1: raise ValueError('unsupported graph policy checkpoint')
-        if type(state.get('updates')) is not int or state['updates']<0: raise ValueError('invalid graph update count')
-        self.model.load_state_dict(state['model'],strict=True)
-        self.optimizer.load_state_dict(state['optimizer'])
-        self.rng.set_state(state['rng']);self.updates=state['updates'];self.clear_episode()
+        if not isinstance(state,dict) or state.get('schema') not in (1,2):
+            raise ValueError('unsupported graph policy checkpoint')
+        architecture=state.get('architecture','message_passing')
+        if architecture not in ARCHITECTURES: raise ValueError('unknown graph architecture')
+        if type(state.get('updates')) is not int or state['updates']<0:
+            raise ValueError('invalid graph update count')
+        # Prepare a fresh model/optimizer; rejected checkpoints cannot partially mutate a learner.
+        candidate=GraphLearner(self.device,lr=self.optimizer.param_groups[0]['lr'],architecture=architecture)
+        candidate.model.load_state_dict(state['model'],strict=True)
+        candidate.optimizer.load_state_dict(state['optimizer'])
+        candidate.rng.set_state(state['rng'])
+        self.model=candidate.model;self.optimizer=candidate.optimizer
+        self.rng=candidate.rng;self.updates=state['updates'];self.clear_episode()

@@ -103,3 +103,14 @@ python3 benchmarks/benchmark.py \
   --json-out benchmark_results/v0.8.0_seed123_10ep.json \
   --csv-out benchmark_results/v0.8.0_seed123_10ep.csv
 ```
+
+## 2026-11-04 graph-policy architecture experiments
+
+- [Pilot 01 — completed and inconclusive](2026-11-04-v010-architecture-pilot-01/README.md): 18 episodes, three models; no convergence, throughput or winner claim.
+- Pilot 02 runs separately on the corrected concave containment implementation; do not combine scores across the two environment versions.
+
+### Graph-only runtime diagnostics — 2026-11-04
+
+- [Before hot-path profiles](2026-11-04-v010-hotpath-before/): L/XL, 120 max/floor, four floors, instrumented active steps.
+- [Intermediate after profiles](2026-11-04-v010-hotpath-after/): changed trajectories; not a matched speedup benchmark. Includes failed intermediate completions.
+- Graph-only training [run 01](2026-11-04-v010-graph-only-training-01/), [run 02](2026-11-04-v010-graph-only-training-02/), [run 03](2026-11-04-v010-graph-only-training-03/): separate source snapshots, raw failures, training and preview times; L/XL, 120 max/floor, four floors. One seed, no convergence claim.

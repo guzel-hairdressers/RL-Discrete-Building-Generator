@@ -1,0 +1,154 @@
+[
+  {
+    "tier": "L",
+    "validation": {
+      "valid": false,
+      "violations": [
+        {
+          "kind": "access",
+          "node": "node_1_51_f00"
+        }
+      ],
+      "unresolved": {},
+      "perFloor": {
+        "0": {
+          "filledArea": 1686.2747341305474,
+          "exposedPerimeter": 793.8357871655126,
+          "rentableArea": 1672.515495491818,
+          "coreArea": 13.759238638729402,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "1": {
+          "filledArea": 1913.7659891663986,
+          "exposedPerimeter": 987.7624198521053,
+          "rentableArea": 1900.006750527669,
+          "coreArea": 13.759238638729402,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "2": {
+          "filledArea": 1659.4130532091328,
+          "exposedPerimeter": 721.1795051339668,
+          "rentableArea": 1645.6538145704035,
+          "coreArea": 13.759238638729402,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "3": {
+          "filledArea": 1832.513258030039,
+          "exposedPerimeter": 980.1659390117597,
+          "rentableArea": 1818.7540193913096,
+          "coreArea": 13.759238638729402,
+          "areaMethod": "sum_disjoint_convex"
+        }
+      }
+    },
+    "sourcesHash": "ed71ec8f12d38ea2efa7d6b9af6c0b76f6b721c2d9b118bc4e1bf06ed1e45044",
+    "method": "replay captured full-precision origins, scope, functions and edges; SAT convex overlap validation",
+    "independentOccurrences": 354
+  },
+  {
+    "tier": "XL",
+    "validation": {
+      "valid": false,
+      "violations": [
+        {
+          "kind": "access",
+          "node": "node_2_106"
+        },
+        {
+          "kind": "access",
+          "node": "node_2_171"
+        },
+        {
+          "kind": "access",
+          "node": "node_0_186_f02"
+        },
+        {
+          "kind": "access",
+          "node": "node_2_191"
+        },
+        {
+          "kind": "access",
+          "node": "node_2_236"
+        },
+        {
+          "kind": "access",
+          "node": "node_2_270"
+        },
+        {
+          "kind": "access",
+          "node": "node_2_310"
+        },
+        {
+          "kind": "access",
+          "node": "node_0_327_f02"
+        },
+        {
+          "kind": "access",
+          "node": "node_2_346"
+        },
+        {
+          "kind": "access",
+          "node": "node_2_365"
+        },
+        {
+          "kind": "access",
+          "node": "node_0_371_f02"
+        },
+        {
+          "kind": "access",
+          "node": "node_2_411"
+        },
+        {
+          "kind": "access",
+          "node": "node_3_422_f02"
+        },
+        {
+          "kind": "access",
+          "node": "node_1_460_f02"
+        },
+        {
+          "kind": "access",
+          "node": "node_3_168"
+        },
+        {
+          "kind": "access",
+          "node": "node_0_186_f03"
+        }
+      ],
+      "unresolved": {},
+      "perFloor": {
+        "0": {
+          "filledArea": 1755.0678861495996,
+          "exposedPerimeter": 1034.29147595565,
+          "rentableArea": 1744.9560121957848,
+          "coreArea": 10.111873953814968,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "1": {
+          "filledArea": 1740.7926482141672,
+          "exposedPerimeter": 1116.5944413077364,
+          "rentableArea": 1730.680774260352,
+          "coreArea": 10.111873953814968,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "2": {
+          "filledArea": 1714.5705961850256,
+          "exposedPerimeter": 886.1027711734471,
+          "rentableArea": 1704.4587222312107,
+          "coreArea": 10.111873953814968,
+          "areaMethod": "sum_disjoint_convex"
+        },
+        "3": {
+          "filledArea": 1804.156344718868,
+          "exposedPerimeter": 787.6626045974294,
+          "rentableArea": 1794.044470765053,
+          "coreArea": 10.111873953814968,
+          "areaMethod": "sum_disjoint_convex"
+        }
+      }
+    },
+    "sourcesHash": "ed71ec8f12d38ea2efa7d6b9af6c0b76f6b721c2d9b118bc4e1bf06ed1e45044",
+    "method": "replay captured full-precision origins, scope, functions and edges; SAT convex overlap validation",
+    "independentOccurrences": 267
+  }
+]
