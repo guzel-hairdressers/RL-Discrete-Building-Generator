@@ -25,8 +25,9 @@ export function moduleInventory(nodes = [], dictionary = []) {
   })).sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
 }
 export function validationLabel(validation) {
-  if (validation?.valid === true) return 'Geometry & access checked';
   if (validation?.valid === false) return 'Validation failed';
+  if (validation?.residentialSpatial?.requirementsMet === false) return 'Spatial proxy requirements unmet';
+  if (validation?.valid === true) return 'Geometry & access checked';
   return 'Geometry not checked';
 }
 export function areaMetrics(metrics, validation, placements = []) {

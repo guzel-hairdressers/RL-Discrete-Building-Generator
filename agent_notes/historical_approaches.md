@@ -202,3 +202,7 @@ Implemented opt-in boundary context, feasibility ranking, bounded pose repair, i
 ## 2026-11-05 — continuity during graph growth
 
 Replaced detection-only handling with connected boundary-arc attachment and persistent shared-junction witnesses. Measured wall endpoints/circumcircles provide closure proposals with free directions, no grid/templates. Prototype extreme-point/support caching preserves the same constraint strength. The initial failed2.48m² diagnostic is retained; a fragmented-contact lookup caused the missed contact and is fixed. Shared shapes stay rigid and no per-instance fillers/void relabeling are used. [Measured result](reports/continuity_2026-11-05/README.md).
+
+## 2026-11-05 — livable spatial constraints
+
+Replaced property-boundary daylight scoring with graph-derived potential-window-frontage/sky/depth-allowance evidence for ROOM only. Cores remain obstructions and gain additional full-height placement/promotion actions without shape changes. Feasibility tiers replace buying spatial failure with fill/reuse; residential-share and minimum-fill guards counter relabeling/thinning. Dropped rounded-bin frontage grouping after a0.46 room-level overestimate; geometric alias normalization now agrees with independent realized measurement. This validates the same proxy, not actual daylight. Pilots remain spatially infeasible; no convergence/speedup conclusion. [Report](reports/livable_spatial_2026-11-05/README.md).

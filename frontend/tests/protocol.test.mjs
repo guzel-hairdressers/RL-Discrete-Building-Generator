@@ -130,3 +130,33 @@ test('reset dispatch is verified against a simulated socket without resetting li
   assert.equal(useStore.getState().resetConfirmOpen,false);
   assert.equal(useStore.getState().pendingSite,true);
 });
+
+test('active wall time freezes on pause and resumes without paused or preview time',()=>{
+  const original=globalThis.performance;let now=100;
+  Object.defineProperty(globalThis,'performance',{configurable:true,value:{now:()=>now}});
+  try {
+    useStore.getState().startTraining();
+    useStore.getState().handleServerEvent({type:'ack',command:'setMode',mode:'training',generationId:7,episode:3});
+    now=1100;useStore.getState().pauseExecution();
+    assert.equal(useStore.getState().elapsedEpisodeMs(),1000);
+    now=61100;
+    useStore.getState().handleServerEvent(event({step:2}));
+    useStore.getState().handleServerEvent(event({isEvaluation:true,graphState:{realized:true,nodes:[]},validation:{valid:true}}));
+    assert.equal(useStore.getState().elapsedEpisodeMs(),1000);
+    useStore.getState().startTraining();
+    useStore.getState().handleServerEvent({type:'ack',command:'setMode',mode:'training',generationId:7,episode:3});
+    now=63100;useStore.setState({mode:'inference'});
+    useStore.getState().handleServerEvent(done());
+    assert.equal(useStore.getState().episodeRecords.at(-1).wallMs,3000);
+    now=90000;assert.equal(useStore.getState().elapsedEpisodeMs(),3000);
+  } finally {Object.defineProperty(globalThis,'performance',{configurable:true,value:original});}
+});
+
+test('livable facade proxy and spatial failure retain their own provenance',()=>{
+  useStore.setState({mode:'inference'});
+  useStore.getState().handleServerEvent(done({metrics:{daylightAccessProxy:.4,spatialRequirementsMet:false},validation:{valid:true,residentialSpatial:{requirementsMet:false}}}));
+  assert.equal(useStore.getState().episodeRecords[0].exposure,.4);
+  assert.equal(useStore.getState().episodeRecords[0].spatialRequirementsMet,false);
+  assert.equal(validationLabel(useStore.getState().validation),'Spatial proxy requirements unmet');
+  assert.equal(validationLabel({valid:false,residentialSpatial:{requirementsMet:false}}),'Validation failed');
+});

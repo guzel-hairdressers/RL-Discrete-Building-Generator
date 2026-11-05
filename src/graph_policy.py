@@ -34,6 +34,9 @@ class GraphActorCritic(nn.Module):
 
         # Continuous proposals use the same graph/anchor embeddings as selection.
         self.proposal=nn.Sequential(nn.Linear(66,32),nn.SiLU(),nn.Linear(32,4))
+        # New relation/role features start with zero influence on old policies.
+        self.spatial=nn.Sequential(nn.Linear(6,32),nn.SiLU(),nn.Linear(32,1))
+        nn.init.zeros_(self.spatial[-1].weight);nn.init.zeros_(self.spatial[-1].bias)
 
     def encode(self,nodes,edges,lengths):
         h=self.node(nodes)
@@ -51,6 +54,8 @@ class GraphActorCritic(nn.Module):
         h,context=self.encode(nodes,edges,lengths) if encoded is None else encoded
         if candidates.shape[-1]==10:
             candidates=torch.nn.functional.pad(candidates,(0,2))
+        spatial=candidates[:,12:] if candidates.shape[-1]>12 else None
+        candidates=candidates[:,:12]
         parts=[context.expand(len(candidates),-1),candidates]
         if self.architecture=='local_message_passing':
             if anchors is None: raise ValueError('local graph actor requires candidate anchors')
@@ -62,6 +67,7 @@ class GraphActorCritic(nn.Module):
             energies=self.attention(torch.cat((nodes,geometry,scope),dim=-1)).squeeze(-1)
             parts.append((energies.softmax(dim=1).unsqueeze(-1)*nodes).sum(dim=1))
         logits=self.actor(torch.cat(parts,dim=1)).squeeze(-1)
+        if spatial is not None:logits=logits+self.spatial(spatial).squeeze(-1)
         return logits,self.critic(context).squeeze(-1)
 
 
@@ -250,11 +256,11 @@ class GraphLearner:
         return stats
 
     def state(self):
-        return dict(schema=3,architecture=self.model.architecture,model={k:v.detach().cpu().clone() for k,v in self.model.state_dict().items()},
+        return dict(schema=4,architecture=self.model.architecture,model={k:v.detach().cpu().clone() for k,v in self.model.state_dict().items()},
             optimizer=self.optimizer.state_dict(),rng=self.rng.get_state(),updates=self.updates)
 
     def load(self,state):
-        if not isinstance(state,dict) or state.get('schema') not in (1,2,3):
+        if not isinstance(state,dict) or state.get('schema') not in (1,2,3,4):
             raise ValueError('unsupported graph policy checkpoint')
         architecture=state.get('architecture','message_passing')
         if architecture not in ARCHITECTURES: raise ValueError('unknown graph architecture')
@@ -288,6 +294,10 @@ class GraphLearner:
                     for key,value in optimizer_state['state'][actor_id].items():
                         if isinstance(value,torch.Tensor) and value.ndim==2:
                             optimizer_state['state'][actor_id][key]=widen(value)
+        if state['schema']<4:
+            for key,value in candidate.model.state_dict().items():
+                if key.startswith('spatial.') and key not in model_state:model_state[key]=value
+            optimizer_state['param_groups'][0]['params']=candidate.optimizer.state_dict()['param_groups'][0]['params']
         candidate.model.load_state_dict(model_state,strict=True)
         candidate.optimizer.load_state_dict(optimizer_state)
         candidate.rng.set_state(state['rng'])

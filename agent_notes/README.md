@@ -73,3 +73,11 @@ See [the report](../reports/v010_bounded_dictionary_speed.md) for scope and actu
 ## 2026-11-05 — continuity prevention implemented
 
 [Shared-module hole fix](reports/continuity_2026-11-05/README.md): connected boundary-arc growth, protected shared junctions, numeric contact correction and measured endpoint proposals. Final held-out69/69 valid starts, dense12/12 and stochastic-training36/36 pass independent checks with zero raw enclosed-gap area. Three starting-core failures remain explicit. Backend/UI integrated and verified on port8000, including fresh9-floor UI and independent WebSocket runs. Existing data/checkpoints preserved.
+
+## 2026-11-05 — legacy objectives and new spatial constraints audit
+
+[Constraint audit](reports/constraint_audit_2026-11-05/README.md) checks August v0.9.0 source, reproduces two clearance-metric weaknesses, and proposes graph/dictionary open-space relations with explicit uncertainty. Includes multiple-core policy gap: automatic growth currently seeds one core and creates rooms only. Audit/probes only; no training objective or live generator change.
+
+## 2026-11-05 — livable exposure constraints and pause-aware time
+
+[Implemented contract](guides/livable_spatial_constraints_v010.md) and [validation report](reports/livable_spatial_2026-11-05/README.md): livable-only potential-window exposure, multiple-core policy choices, explicit feasibility requirements and an active-time clock.337 backend tests (2 skipped),20 frontend tests; live training/preview verified. Finite pilots have no fully spatial-feasible layouts and establish no convergence improvement; failed/superseded runs are retained.

@@ -55,6 +55,10 @@ export const DEFAULT_SETTINGS = {
   graphMaxTypes: 15,
   graphPolicyArchitecture: 'message_passing',
   graphSearchMode: 'balanced',
+  graphSpatialEnabled: true,
+  graphFacadeClearance: 4, graphExposureHorizon: 30, graphDaylightDepth: 6,
+  graphMinRoomExposure: .35, graphMaxAccessDistance: 30, graphExposureSampleSpacing: 1,
+  graphMinResidentialShare: .65, graphMinCoreArea: 12, graphMinCoreWidth: 2, graphCoreCapacity: 500, graphMinSkyShare: .25, graphMinFill: .4,
 };
 
 const DEFAULT_FILTERS = {
@@ -67,7 +71,6 @@ const DEFAULT_FILTERS = {
 };
 
 let activeStepTimer = null;
-let lastEpisodeStartTime = 0;
 function clearActiveStepTimer() {
   if (activeStepTimer != null) {
     clearTimeout(activeStepTimer);
@@ -75,9 +78,6 @@ function clearActiveStepTimer() {
   }
 }
 
-function recordEpisodeStart() {
-  lastEpisodeStartTime = performance.now();
-}
 
 export const useStore = create((set, get) => ({
   // WebSocket Connection
@@ -93,6 +93,26 @@ export const useStore = create((set, get) => ({
   trainingWanted: false,
   autoGenerate: true,
   disableMerging: false,
+
+  // Active client time excludes pauses, previews and disconnected idle time.
+  episodeActiveMs: 0,
+  episodeClockStartedAt: null,
+  episodeClockInitialized: false,
+  startEpisodeClock: () => set({ episodeActiveMs: 0, episodeClockStartedAt: performance.now(), episodeClockInitialized: true }),
+  resumeEpisodeClock: () => {
+    if (!get().episodeClockInitialized) return get().startEpisodeClock();
+    if (get().episodeClockStartedAt == null) set({ episodeClockStartedAt: performance.now() });
+  },
+  elapsedEpisodeMs: () => {
+    const s=get();
+    return s.episodeClockInitialized ? Math.round(s.episodeActiveMs + (s.episodeClockStartedAt == null ? 0 : performance.now()-s.episodeClockStartedAt)) : null;
+  },
+  pauseEpisodeClock: () => {
+    const elapsed=get().elapsedEpisodeMs();
+    if (elapsed != null) set({ episodeActiveMs: elapsed, episodeClockStartedAt: null,
+      diagnostics: { ...get().diagnostics, clientWallTimeMs: elapsed } });
+  },
+  resetEpisodeClock: () => set({ episodeActiveMs: 0, episodeClockStartedAt: null, episodeClockInitialized: false }),
 
   // Run Telemetry
   generationId: 0,
@@ -397,6 +417,7 @@ export const useStore = create((set, get) => ({
     clearActiveStepTimer();
     if (get().pendingSite) return false;
     if (!get().sendCommand(payload)) return false;
+    get().resetEpisodeClock();
     set({ pendingSite: true, trainingWanted: false, awaitingMode: false,
       phase: 'paused', statusMessage: 'Preparing site…' });
     return true;
@@ -409,7 +430,7 @@ export const useStore = create((set, get) => ({
       set({ episode: s.nextEpisode ?? s.episode, nextEpisode: null, step: 0, phase: 'running',
         individualPlacementsList: [], currentMergedPlacements: [], completed3DPlacements: [],
         graphState: null, validation: null, predictionErrors: null });
-      recordEpisodeStart();
+      get().startEpisodeClock();
     }
     const current = get();
     if (get().sendCommand({ cmd: 'step', generationId: current.generationId, episode: current.episode })) {
@@ -418,8 +439,8 @@ export const useStore = create((set, get) => ({
   },
   startExecution: (mode) => {
     if (!get().connected || !get().hasSite || get().pendingSite || get().stepInFlight || get().evaluationInFlight) return;
-    const starting = get().phase === 'complete' || get().step === 0;
-    if (starting) recordEpisodeStart();
+    if (get().phase === 'complete' || !get().episodeClockInitialized) get().startEpisodeClock();
+    else get().resumeEpisodeClock();
     set({ mode, trainingWanted: true, awaitingMode: true,
       statusMessage: mode === 'training' ? 'Starting training…' : 'Generating one layout…' });
     get().sendCommand({ cmd: 'setMode', mode });
@@ -434,6 +455,7 @@ export const useStore = create((set, get) => ({
     }
   },
   pauseExecution: () => {
+    get().pauseEpisodeClock();
     clearActiveStepTimer();
     set({ trainingWanted: false, awaitingMode: false, phase: 'paused', statusMessage: 'Paused' });
     if (!get().stepInFlight) get().requestEvaluation();
@@ -463,6 +485,7 @@ export const useStore = create((set, get) => ({
     };
     socket.onclose = () => {
       if (get().socket !== socket) return;
+      get().pauseEpisodeClock();
       set({ connected: false, connectionState: 'disconnected', trainingWanted: false,
         pendingSite: false, stepInFlight: false, evaluationInFlight: false, awaitingMode: false,
         phase: 'paused', statusMessage: 'Connection lost · reconnecting' });
@@ -487,6 +510,7 @@ export const useStore = create((set, get) => ({
       return;
     }
     if (type === 'error') {
+      get().pauseEpisodeClock();
       clearActiveStepTimer();
       set({ trainingWanted: false, pendingSite: false, awaitingMode: false,
         stepInFlight: false, evaluationInFlight: false, phase: 'paused',
@@ -495,6 +519,7 @@ export const useStore = create((set, get) => ({
     }
     if (type === 'site') {
       if (get().hasSite && data.generationId < get().generationId) return;
+      get().resetEpisodeClock();
       const bList = data.boundaries || [];
       const contextSiteId = data.contextData?.site_id;
       const idx = get().filteredSites.findIndex((s) => s.site_id === contextSiteId);
@@ -510,7 +535,7 @@ export const useStore = create((set, get) => ({
         device: data.device?.toUpperCase() || get().device,
         statusMessage: `Site ready · ${bList.length} floors`,
       });
-      if (get().trainingWanted) { recordEpisodeStart(); get().dispatchStep(); }
+      if (get().trainingWanted) { get().startEpisodeClock(); get().dispatchStep(); }
       return;
     }
     // Drop replies from a replaced generation, and queued replies while replacing a site.
@@ -536,9 +561,9 @@ export const useStore = create((set, get) => ({
     const merged = data.graphState ? nextList : (data.mergedPlacements?.length ? data.mergedPlacements : nextList);
     const effectiveMetrics = { ...(data.metrics || get().metrics) };
     const validation = data.validation ?? (graphOnly ? null : get().validation);
-    const now = performance.now();
-    const wall = lastEpisodeStartTime > 0 ? Math.round(now - lastEpisodeStartTime) : null;
-    const diagnostics = { ...get().diagnostics, ...data.diagnostics, ...effectiveMetrics.runtimeDiagnostics };
+    if (completed) get().pauseEpisodeClock();
+    const wall = get().elapsedEpisodeMs();
+    const diagnostics = { ...get().diagnostics, ...data.diagnostics, ...effectiveMetrics.runtimeDiagnostics, clientWallTimeMs: wall };
     if (completed) {
       diagnostics.episodeTimeMs = effectiveMetrics.episodeExecutionTimeMs ?? data.diagnostics?.episodeTimeMs ?? null;
       diagnostics.postStepEvaluationMs = effectiveMetrics.postStepEvaluationMs ?? data.diagnostics?.postStepEvaluationMs ?? null;
@@ -561,6 +586,8 @@ export const useStore = create((set, get) => ({
     if (completed) {
       const record = { episode: get().episode, mode: get().mode, realized: Boolean(data.graphState?.realized),
         fill: effectiveMetrics.fillRatio ?? null, reuse: effectiveMetrics.reuseAudit?.independentRepeatFraction ?? null,
+        exposure: effectiveMetrics.daylightAccessProxy ?? null,
+        spatialRequirementsMet: effectiveMetrics.spatialRequirementsMet ?? null,
         valid: validation?.valid ?? null, graphValid: validation?.graphValid ?? effectiveMetrics.graphValid ?? null,
         serverMs: diagnostics.episodeTimeMs, wallMs: wall, score: effectiveMetrics.score ?? null };
       set((s) => ({ episodeRecords: [...s.episodeRecords, record],

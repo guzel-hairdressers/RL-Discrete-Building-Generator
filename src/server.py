@@ -124,6 +124,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "graphProposalStrategy": "legacy",
 }
 
+from graph_spatial import DEFAULTS as GRAPH_SPATIAL_DEFAULTS
+DEFAULT_SETTINGS.update(GRAPH_SPATIAL_DEFAULTS)
+
 BOUNDARY_TYPES = {
     "lobed", "lshape", "ushape", "tshape", "convex", "rect", "free",
     "real", "mixed", "real site", "real_site", "mixed random with real sites",
@@ -273,6 +276,14 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
     if merged.get('graphProposalStrategy','vocabulary') not in ('legacy','continuous','vocabulary'):
         raise SettingsError('graphProposalStrategy must be legacy, continuous or vocabulary')
     merged['graphMaxTypes']=int(_in_range(_integer(merged.get('graphMaxTypes',15),'graphMaxTypes'),1,15,'graphMaxTypes'))
+    for key,default in GRAPH_SPATIAL_DEFAULTS.items():
+        if isinstance(default,bool):
+            if type(merged[key]) is not bool:raise SettingsError(f'{key} must be a boolean')
+        else:
+            lo,hi=(.01,1.) if key in ('graphMinRoomExposure','graphMinResidentialShare','graphMinSkyShare','graphMinFill') else (.1,10000.)
+            merged[key]=_in_range(_finite_number(merged[key],key),lo,hi,key)
+    if merged['graphFacadeClearance']>merged['graphExposureHorizon']:
+        raise SettingsError('facade clearance exceeds the exposure horizon')
     from shared_modules import SizePrior
     try:
         SizePrior(radius=float(merged.get('graphPriorRadius',4.5)),
@@ -6076,6 +6087,8 @@ class ParallelTrainer:
             dict_limit_breach = max(0, vocab_size - dict_limit)
             dict_breach_penalty = min(80.0, float(dict_limit_breach ** 2) * 1.0)
             # Use the graph objective once: no legacy time reward or duplicate budget cost.
+            from graph_spatial import summary as spatial_summary
+            metrics.update(spatial_summary(per_site))
             score = _mean([float(ps['score']) for ps in per_site])
             dict_breach_penalty = _mean([float(ps['dictBreachPenalty']) for ps in per_site])
             metrics["score"] = f"{score:.4f}"
@@ -6105,7 +6118,10 @@ class ParallelTrainer:
                 graph_valid=all(ps['topologyValid'] and ps.get('constraintsValid',True) for ps in per_site)
                 geometry_valid=(bool(getattr(self.building_graph,'realization_audit',{}).get('valid',False))
                                 if self.mode=='inference' else None)
-                reward=outcome_reward(score,graph_valid)
+                if self.settings.get('graphSpatialEnabled',False):
+                    from graph_spatial import constrained_reward
+                    reward=constrained_reward(score,graph_valid,metrics.get('spatialDeficit',1.))
+                else:reward=outcome_reward(score,graph_valid)
                 stats=self.graph_learner.finish(reward,training=self.mode=='training')
                 stats.update(geometryValid=geometry_valid,graphValid=graph_valid)
                 self.graph_learner.last.update(geometryValid=geometry_valid,graphValid=graph_valid)
@@ -6113,7 +6129,7 @@ class ParallelTrainer:
                 self.last_loss=stats['policyLoss']; self.last_actor_loss=stats['actorLoss']
                 self.last_value_loss=stats['valueLoss']; self.last_entropy=stats['policyEntropy']
                 self.last_gradient_norm=stats['gradientNorm']; self.last_advantage=stats['advantage']
-                metrics['trainingObjective']='shared_constraints_v4_reuse'
+                metrics['trainingObjective']=('shared_constraints_v5_livable_spatial' if self.settings.get('graphSpatialEnabled') else 'shared_constraints_v4_reuse')
 
             self.placement_decisions=[]
             self.shape_log_probs=[]
@@ -6154,7 +6170,7 @@ class ParallelTrainer:
             if post_eval_start is None:
                 post_eval_start = getattr(self, "_post_eval_start", time.perf_counter())
             post_eval_duration = time.perf_counter() - post_eval_start
-            episode_total_duration = time.perf_counter() - episode_start_time
+            episode_total_duration = self._active_episode_duration()
             self.step_profiler.record("postStepEvaluation", post_eval_duration)
             self.step_profiler.record("episodeTotal", episode_total_duration)
 
@@ -6525,7 +6541,7 @@ class ParallelTrainer:
         if post_eval_start is None:
             post_eval_start = terminal_metrics_start
         post_eval_duration = time.perf_counter() - post_eval_start
-        episode_total_duration = time.perf_counter() - episode_start_time
+        episode_total_duration = self._active_episode_duration()
         self.step_profiler.record("postStepEvaluation", post_eval_duration)
         self.step_profiler.record("episodeTotal", episode_total_duration)
 
@@ -6640,6 +6656,7 @@ class ParallelTrainer:
                 area=0.0,
             )
 
+        self.building_graph.spatial_settings={k:self.settings[k] for k in GRAPH_SPATIAL_DEFAULTS}
         from shared_modules import SizePrior
         self.building_graph.size_prior=SizePrior(radius=float(self.settings.get('graphPriorRadius',4.5)),
             min_area=float(self.settings.get('graphMinArea',1.)),max_area=float(self.settings.get('graphMaxArea',80.)))
@@ -6683,7 +6700,12 @@ class ParallelTrainer:
                 if i<len(observed):candidates.append(observed[i])
                 if i<len(novel):candidates.append(novel[i])
             if experiment is not None:candidates=experiment.rank(bank,f,candidates)
+            from graph_spatial import access_distances,candidate_features,core_eligible
+            from dataclasses import replace
+            spatial_enabled=self.settings.get('graphSpatialEnabled',False)
+            route_distances=access_distances(self.building_graph,f) if spatial_enabled else {}
             choices=[]
+            placement_count=0
             for candidate in candidates:
                 x,y=candidate['x'],candidate['y']
                 for scope in ('independent','multi_floor'):
@@ -6714,8 +6736,36 @@ class ParallelTrainer:
                             (len(self.building_graph.nodes)+len(floors))/max(1,self.max_graph_seeds*num_floors),
                             float(candidate.get('source')=='observed_angle_length'),
                             float(candidate.get('source')=='neural_continuous')]
-                        choices.append((objective,candidate,plan,features))
-                if len(choices)>=(experiment.choice_limit if experiment is not None else 12):break
+                        roles=['room']
+                        if spatial_enabled and scope=='multi_floor' and core_eligible(plan.shapes[plan.prototype],self.settings):roles.append('core')
+                        base_extra=candidate_features(bank,plan,'room',route_distances,candidate.get('anchor_node')) if spatial_enabled else []
+                        for role in roles:
+                            role_plan=replace(plan,function=role)
+                            extra=[float(role=='core'),*base_extra[1:]] if spatial_enabled else []
+                            role_objective=objective
+                            if spatial_enabled:
+                                need=max(0.,extra[1]-1.)+max(0.,extra[4]-1.)
+                                role_objective+=10*need if role=='core' else -10*max(0.,extra[1]-1.)
+                            choices.append((role_objective,candidate,role_plan,features+extra))
+                        placement_count+=1
+                if placement_count>=(experiment.choice_limit if experiment is not None else 12):break
+            if spatial_enabled:
+                from graph_dictionary import PlacementPlan
+                eligible=[i for i in bank.instances.values() if i.nodes[0].cell_type.value=='room'
+                          and i.nodes[0].scope.value=='multi_floor' and core_eligible(bank.shapes[i.prototype],self.settings)]
+                eligible.sort(key=lambda i:route_distances.get(next(n.node_id for n in i.nodes if n.floor_index==f),0.),reverse=True)
+                for instance in eligible[:4]:
+                    nid=next(n.node_id for n in instance.nodes if n.floor_index==f)
+                    plan=PlacementPlan(*instance.origin,f,'multi_floor',instance.prototype,instance.angle,{},[],
+                        sum(bank.shapes[i.prototype].area*len(i.nodes) for i in bank.instances.values()),
+                        len(bank.shapes),sum(len(m)==1 for m in bank.members.values()),revision=len(self.building_graph.nodes),
+                        function='core',reassign_id=instance.id)
+                    extra=candidate_features(bank,plan,'core',route_distances,nid)
+                    if extra[1]<=1 and extra[4]<=1:continue
+                    feature=[1.,0.,extra[1],0.,len(bank.shapes)/max(1,self.settings['dictCap']),0.,
+                             plan.filled/max(1.,building_site_area),f/max(1,num_floors-1),0.,0.,0.,0.]
+                    candidate={'anchor_node':nid,'source':'function_reassignment','x':instance.origin[0],'y':instance.origin[1]}
+                    choices.append((10*(max(0.,extra[1]-1)+max(0.,extra[4]-1)),candidate,plan,feature+extra))
             if not choices:continue
             self.last_graph_candidate_count=len(choices)
             if self.settings.get('graphController','neural')=='neural':
@@ -6749,6 +6799,7 @@ class ParallelTrainer:
         all_placements: list[dict[str, Any]] = []
         master_strategy = self.settings.get("masterSelectionStrategy", "highest_usage")
 
+        self.building_graph._spatial_evaluate=is_complete
         from graph_proxy import GraphSketch
         sketch=GraphSketch(self.building_graph)
         predicted_metrics={env.index:sketch.metrics(env.index,
@@ -6828,6 +6879,7 @@ class ParallelTrainer:
             "realized": realize_now,
             "moduleIdentityStatus": 'confirmed' if realize_now else 'constraint_checked',
             "proposalVocabulary": bank.vocabulary.summary(),
+            "edgesProximity": [edge for rows in getattr(getattr(bank,'spatial_evidence',None),'relations',{}).values() for edge in rows] if is_complete else [],
             "nodes": [
                 {
                     "id": n.node_id,
@@ -6918,7 +6970,8 @@ class ParallelTrainer:
             ep_event['terminationReason']=('module_limit' if all(len(bank.floor_nodes[f])>=int(self.settings['maxModules'])
                 for f in range(num_floors)) else ('no_compatible_placement' if new_nodes_added==0 else 'growth_budget'))
             ep_event['predictionErrors']=({str(m['floorIndex']):{
-                'filledArea':predicted_metrics[m['floorIndex']]['filledArea']-audit.get('perFloor',{}).get(m['floorIndex'],{}).get('filledArea',0.)}
+                'filledArea':predicted_metrics[m['floorIndex']]['filledArea']-audit.get('perFloor',{}).get(m['floorIndex'],{}).get('filledArea',0.),
+                **((audit.get('residentialSpatial') or {}).get('predictionErrors',{}).get(m['floorIndex'],{}))}
                 for m in per_floor_metrics} if realize_now else None)
             if all_placements:
                 ep_event["placements"] = all_placements
@@ -7006,7 +7059,22 @@ class ParallelTrainer:
         event.setdefault('diagnostics',{})['batchTimeMs']=(time.perf_counter()-started)*1000
         return event
 
+    def _active_episode_duration(self):
+        current=getattr(self,'_active_step_started_at',None)
+        return getattr(self,'_active_episode_seconds',0.)+(time.perf_counter()-current if current is not None else 0.)
+
     def step(self, generation_id: Any, episode: Any) -> dict[str, Any]:
+        # Only server work contributes; websocket idle/paused previews do not.
+        started=time.perf_counter()
+        if self.step_number==0:self._active_episode_seconds=0.
+        self._active_step_started_at=started
+        try:
+            return self._step_impl(generation_id,episode)
+        finally:
+            self._active_episode_seconds+=time.perf_counter()-started
+            self._active_step_started_at=None
+
+    def _step_impl(self, generation_id: Any, episode: Any) -> dict[str, Any]:
         """Advance active floors while keeping cores as one building action."""
 
         step_start_time = time.perf_counter()
@@ -7436,6 +7504,8 @@ class ParallelTrainer:
     def _preview_graph(self, active_graph, completed=False):
         """Explicit geometry preview, isolated from the learner and episode transition."""
         from graph_proxy import GraphSketch,site_net_area
+        from graph_spatial import summary as spatial_summary
+        active_graph._spatial_evaluate=True
         sketch=GraphSketch(active_graph)
         predicted={env.index:sketch.metrics(env.index,site_net_area(env.site),int(self.settings['dictCap']))
                    for env in self.environments}
@@ -7555,13 +7625,15 @@ class ParallelTrainer:
             "validation": active_graph.realization_audit,
             "predictionErrors": {str(m['floorIndex']):{
                 'filledArea':predicted[m['floorIndex']]['filledArea']-m['filledArea'],
-                'rentableArea':predicted[m['floorIndex']]['rentableArea']-m['rentableArea']}
+                'rentableArea':predicted[m['floorIndex']]['rentableArea']-m['rentableArea'],
+                **((audit.get('residentialSpatial') or {}).get('predictionErrors',{}).get(m['floorIndex'],{}))}
                 for m in per_floor_metrics},
             "mergedPlacements": [],
             "graphState": graph_state,
             "dictionary": [_public_module(m) for m in self.dictionary],
             "mergedDictionary": [_public_module(m) for m in self.dictionary],
             "metrics": {
+                **spatial_summary(per_floor_metrics),
                 **self.graph_learner.last,
                 "policyUpdateCount": self.graph_learner.updates,
                 "geometryValid": audit['valid'],

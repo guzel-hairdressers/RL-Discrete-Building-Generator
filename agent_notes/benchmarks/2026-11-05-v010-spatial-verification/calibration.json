@@ -1,0 +1,15 @@
+{
+  "inputs": [
+    "agent_notes/benchmarks/2026-11-05-v010-spatial-quality-02",
+    "agent_notes/benchmarks/2026-11-05-v010-spatial-speed-06"
+  ],
+  "roomReferences": 10738,
+  "meanAbsoluteError": 1.9547904825172236e-06,
+  "p95AbsoluteError": 3.0488732649658346e-09,
+  "maxAbsoluteError": 0.010865749956402992,
+  "perFloorMeanAbsoluteError": 9.849039583421298e-07,
+  "perFloorMaxAbsoluteError": 0.0001806431523543317,
+  "spearmanRankAgreement": 0.9999999938494208,
+  "roomThresholdDisagreements": 0,
+  "definition": "Same finite-horizon potential-window-frontage proxy, independent polygon-edge geometry. Not measured daylight/illuminance accuracy."
+}

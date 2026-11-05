@@ -1,0 +1,10 @@
+{
+  "coreOccurrences": 7,
+  "policyUpdates": 1,
+  "serverActiveSeconds": 12.003549999999999,
+  "clientSecondsIncludingPause": 14.609912875006557,
+  "geometryAndGapChecksPass": true,
+  "rawGapArea": 0,
+  "spatialRequirementsMet": false,
+  "liveFacadeProxy": 0.47300880193346034
+}

@@ -189,6 +189,8 @@ class PlacementPlan:
     singleton_count: int
     continuity: object = None
     revision: object = None
+    function: str = 'room'
+    reassign_id: object = None
 
 
 class GraphDictionary:
@@ -494,11 +496,15 @@ class GraphDictionary:
     def commit(self,plan,node_id):
         from typed_cell import CellType,VerticalScope
         if plan.revision is not None and plan.revision!=len(self.graph.nodes):raise ValueError('stale placement plan')
+        if plan.function not in ('room','core'):raise ValueError('unsupported growth function')
+        if plan.reassign_id is not None:
+            self.graph.reassign_functions({plan.reassign_id:CellType(plan.function)},require_access=True)
+            return
         if self.enforce_continuity and plan.continuity is None:raise ValueError('placement has no continuity certificate')
         if any(pid not in self.shapes or shape.planes!=self.shapes[pid].planes for pid,shape in plan.shapes.items()):
             self._distance_index=None
         self.shapes.update(plan.shapes)
-        self.graph.add_node(node_id,plan.x,plan.y,floor_index=plan.floor,scope=VerticalScope(plan.scope),cell_type=CellType.ROOM)
+        self.graph.add_node(node_id,plan.x,plan.y,floor_index=plan.floor,scope=VerticalScope(plan.scope),cell_type=CellType(plan.function))
         nodes=[self.graph.nodes[node_id]]
         if plan.scope=='multi_floor':nodes.extend(self.graph.nodes[f'{node_id}_f{f:02d}'] for f in range(self.graph.num_floors) if f!=plan.floor)
         instance=Instance(node_id,nodes,plan.prototype,plan.angle)

@@ -56,7 +56,7 @@ export function ConfigurationDrawer() {
   const edit = (key, value) => setDraft((d) => ({ ...d, [key]: value }));
   const graph = draft.generatorEngine === 'graph_voronoi';
   const changed = Object.keys(draft).some((k) => draft[k] !== s.settings[k]);
-  const select = (label, key, options) => <label className="config-field">{label}<select value={draft[key] ?? ''} onChange={(e) => edit(key, e.target.value)}>{options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>;
+  const select = (label, key, options) => <label className="config-field">{label}<select value={key === 'graphSpatialEnabled' ? String(draft[key] ?? true) : (draft[key] ?? '')} onChange={(e) => edit(key, key === 'graphSpatialEnabled' ? e.target.value === 'true' : e.target.value)}>{options.map(([v, l]) => <option key={String(v)} value={String(v)}>{l}</option>)}</select></label>;
   const input = (label, key, min, max, step = 1) => <label className="config-field">{label}<input type="number" value={draft[key] ?? ''} min={min} max={max} step={step} onChange={(e) => edit(key, e.target.value === '' ? '' : Number(e.target.value))}/></label>;
   return <div className="drawer-scrim" onClick={() => s.setActiveBottomDrawer(null)}><section className="workspace-drawer" role="dialog" aria-modal="true" aria-label="Configuration" onClick={(e) => e.stopPropagation()}>
     <div className="drawer-heading"><div><span className="eyebrow">Preferences</span><h2>Configuration</h2></div><button aria-label="Close configuration" onClick={() => s.setActiveBottomDrawer(null)}><X size={18}/></button></div>
@@ -77,9 +77,20 @@ export function ConfigurationDrawer() {
       {graph && draft.graphController !== 'reference' && select('Policy architecture', 'graphPolicyArchitecture', [['message_passing','Message passing'],['pooled','Pooled'],['local_message_passing','Local message passing'],['candidate_attention','Candidate attention']])}
       {graph && draft.graphController === 'reference' && select('Search', 'graphSearchMode', [['balanced','Balanced'],['alternatives','Explore alternatives']])}
       {input('Learning rate', 'learningRate', .00001, .01, .0001)}
+      {graph && select('Spatial proxy constraints', 'graphSpatialEnabled', [[true,'Enabled'],[false,'Disabled / baseline']])}
+      {graph && input('Potential window clearance (m)', 'graphFacadeClearance', .1, 30, .5)}
+      {graph && input('Daylight depth assumption (m)', 'graphDaylightDepth', 1, 20, .5)}
+      {graph && input('Minimum vertical sky share', 'graphMinSkyShare', .01, 1, .05)}
+      {graph && input('Minimum livable facade proxy', 'graphMinRoomExposure', .01, 1, .05)}
+      {graph && input('Minimum site fill for spatial feasibility', 'graphMinFill', .01, 1, .05)}
+      {graph && input('Minimum residential share', 'graphMinResidentialShare', .01, 1, .05)}
+      {graph && input('Maximum estimated core access (m)', 'graphMaxAccessDistance', 1, 120)}
+      {graph && input('Livable area served per core (m²)', 'graphCoreCapacity', 50, 5000, 50)}
+      {graph && input('Minimum core area assumption (m²)', 'graphMinCoreArea', 1, 80)}
+      {graph && input('Minimum core width assumption (m)', 'graphMinCoreWidth', .5, 9, .5)}
       {!graph && input('Maximum room hops', 'maxRoomHops', 1, 10)}
       {!graph && input('Core shaft spacing (m)', 'coreSpacing', 4, 16)}
-    </div><p>{graph ? 'Continuous angles are unsnapped. Experimental proposal routes have not established faster learning. Daylight and environmental performance are unmeasured.' : 'Legacy geometry uses its own angle, clearance and daylight heuristics.'}</p></details>
+    </div><p>{graph ? 'Continuous angles are unsnapped. Spatial thresholds are experimental design assumptions, not standards. The facade proxy applies only to livable rooms; illuminance and sunlight remain unmeasured.' : 'Legacy geometry uses its own angle, clearance and daylight heuristics.'}</p></details>
     <section className="site-tools"><h3>Urban context</h3><p>Browse the existing site collection or open the custom-site map.</p><div className="config-grid"><label className="config-field">Browse city<select value={browse.city} onChange={(e) => setBrowse({ ...browse, city: e.target.value })}><option value="ALL">All cities</option>{[...new Set(s.allSites.map((site) => site.city_code))].sort().map((v) => <option key={v} value={v}>{v}</option>)}</select></label>{[['Minimum plot area (m²)','minArea',150,10000],['Maximum plot area (m²)','maxArea',150,10000],['Minimum context height (m)','minHeight',0,300],['Maximum context height (m)','maxHeight',0,300]].map(([label,key,min,max]) => <label key={key} className="config-field">{label}<input type="number" min={min} max={max} value={browse[key]} onChange={(e) => setBrowse({ ...browse, [key]: Number(e.target.value), activeTier: null })}/></label>)}</div><div className="browse-actions"><button disabled={s.pendingSite || browse.minArea > browse.maxArea || browse.minHeight > browse.maxHeight} onClick={() => { useStore.setState({ filters: browse }); s.applyFilters(); }}>Apply context filters</button><button onClick={s.resetFilters}>Reset filters</button><button onClick={() => { s.setActiveBottomDrawer(null); s.setCustomModalOpen(true); }}>Custom site map <ArrowRight size={14}/></button></div></section>
     <footer className="drawer-footer"><span>{changed ? 'Unapplied changes' : 'Settings up to date'}</span><button className="primary-action" disabled={!changed || !s.connected || s.pendingSite} onClick={() => { const patch = Object.fromEntries(Object.entries(draft).filter(([k,v]) => v !== s.settings[k])); s.updateSettings(patch); }}>Apply settings</button></footer>
   </section></div>;

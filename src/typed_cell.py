@@ -550,6 +550,7 @@ class BuildingGraph:
                         n.cell_type=CellType(function)
             if require_access and not self.validate_circulation_connectivity():
                 raise ValueError('function change breaks same-floor access')
+            self.function_revision=getattr(self,'function_revision',0)+1
         except Exception:
             for nid,f in old.items(): self.nodes[nid].cell_type=f
             raise
@@ -586,7 +587,7 @@ class BuildingGraph:
         reuse_bonus=(20.*(reuse['independentOccurrences']-k)/max(1,reuse['independentOccurrences'])
                      if getattr(self,'module_bank',None) is not None else 0.)
         score=80.*min(1.,ratio)+15.*rentable/max(1.,filled)+reuse_bonus-budget_cost-singleton_cost-underfill-(0 if topology else 20)
-        return dict(instanceIdx=floor_index,floorIndex=floor_index,filledArea=filled,siteArea=site_area,
+        metrics=dict(instanceIdx=floor_index,floorIndex=floor_index,filledArea=filled,siteArea=site_area,
             rentableArea=rentable,coreArea=core,moduleCount=len(nodes),exposedPerimeter=0.,
             fillRatio=ratio,rentableRatio=rentable/max(1.,filled),daylightRatio=0.,
             envelopeDaylightRatio=0.,reuseRatio=reuse['confirmedReuseRatio'],
@@ -600,3 +601,11 @@ class BuildingGraph:
             unavailableMetrics=['daylightRatio','constructibilityScore','envelopeEfficiency'],
             uncertainty={'priorDerivedPrototypes':sum(p.prior_boundary for p in result.prototypes.values()),
                          'unresolvedOccurrences':len(result.unresolved)},reuseAudit=reuse)
+
+        if getattr(self,'spatial_settings',{}).get('graphSpatialEnabled',False) and getattr(self,'module_bank',None):
+            from graph_spatial import evidence
+            predicted=evidence(self.module_bank).metrics(floor_index)
+            actual=(audit.get('residentialSpatial') or {}).get('perFloor',{}).get(floor_index)
+            metrics.update(actual or predicted)
+            metrics['predictedDaylightAccessProxy']=predicted['daylightAccessProxy']
+        return metrics

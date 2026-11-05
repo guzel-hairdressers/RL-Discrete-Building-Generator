@@ -142,3 +142,7 @@ fresh9-floor UI inference and a separate694-reference WebSocket run,15 types,
 zero raw enclosed gaps. Includes settings, full final event, independent polygon
 union results and data/checkpoint preservation hashes. This is a smoke check,
 not another speed or quality benchmark.
+
+## 2026-11-05 — livable spatial proxy
+
+Primary evidence: `2026-11-05-v010-spatial-quality-02` (72 paired changing-site training cases with minimum-fill guard), `spatial-speed-06` (final one-seed L/XL120max/floor4/8-floor check), and `spatial-verification` (337/20 test logs, live API/pause evidence, calibration). Quality01 preceded the fill guard; speed01 failed and speed02–05 retain superseded checker/frontage diagnostics. Lossless gzip preserves raw cases and source snapshots with uncompressed hashes. No fully spatial-feasible pilot outcomes or learning/throughput improvement are claimed. [Report](../reports/livable_spatial_2026-11-05/README.md).

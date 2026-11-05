@@ -1,0 +1,26 @@
+{
+  "baseline": {
+    "cases": 12,
+    "errors": 0,
+    "geometryValid": 12,
+    "gapChecksPass": 12,
+    "spatialPass": 0,
+    "meanRolloutSeconds": 14.428269697915917,
+    "meanReachedReferences": 454.75,
+    "meanFill": 0.5015696762884981,
+    "meanFacadeAbsoluteError": 0.0013600128529800692,
+    "maxFacadeAbsoluteError": 0.00659894045387277
+  },
+  "spatial": {
+    "cases": 12,
+    "errors": 0,
+    "geometryValid": 12,
+    "gapChecksPass": 12,
+    "spatialPass": 0,
+    "meanRolloutSeconds": 10.912037128501348,
+    "meanReachedReferences": 451.1666666666667,
+    "meanFill": 0.5137288586161423,
+    "meanFacadeAbsoluteError": 0.0009690196473740286,
+    "maxFacadeAbsoluteError": 0.004593119006082724
+  }
+}

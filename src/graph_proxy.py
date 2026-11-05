@@ -234,7 +234,7 @@ class GraphSketch:
         reuse_bonus=20.*repeat_fraction
         penalty=0. if topology else 20.
         score=80*min(1.,ratio)+15*rentable/max(1.,filled)+reuse_bonus-budget_cost-singleton_cost-underfill-penalty
-        return dict(instanceIdx=floor,floorIndex=floor,filledArea=filled,siteArea=site_area,
+        result=dict(instanceIdx=floor,floorIndex=floor,filledArea=filled,siteArea=site_area,
             rentableArea=rentable,coreArea=core,moduleCount=len(nodes),exposedPerimeter=0.,
             fillRatio=ratio,rentableRatio=rentable/max(1.,filled),daylightRatio=0.,envelopeDaylightRatio=0.,
             reuseRatio=reuse if bank else 0.,estimatedReuseRatio=reuse,reuseBonus=reuse_bonus,
@@ -252,3 +252,7 @@ class GraphSketch:
             reuseAudit=dict(prototypeCount=k,independentOccurrences=len(self.built),
                 verticalCopies=sum(len(self.groups[oid])-1 for oid in self.built),
                 singletonCount=singletons,independentRepeatFraction=repeat_fraction,confirmedReuseRatio=reuse if bank else None))
+        if bank and getattr(self.graph,'_spatial_evaluate',False) and getattr(self.graph,'spatial_settings',{}).get('graphSpatialEnabled',False):
+            from graph_spatial import evidence
+            result.update(evidence(bank).metrics(floor))
+        return result

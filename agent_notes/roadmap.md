@@ -347,3 +347,10 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [VERIFIED]69/69 valid-start held-out layouts,12/12 dense L/XL4/8-floor cases and36/36 stochastic-training cases have zero raw enclosed gaps.320 tests completed,2 skipped.
 - [VERIFIED] Backend and completed UI merged in `d5e1e7eb`, rebuilt and running on port8000. Fresh9-floor UI run passes; separate live API run has694 floor references,15 types and zero raw enclosed gaps. User data/checkpoints preserved.
 - [OPEN] Three pre-existing starting-core containment failures; ordinary exterior recesses, architectural program and broader learning remain separate. [Report](reports/continuity_2026-11-05/README.md).
+
+### 2026-11-05 — livable spatial constraints
+
+- [IMPLEMENTED] Livable-only graph/dictionary exposure; cores exempt but obstructing. Additional full-height core placements/promotions and migrated trainable relation head.
+- [VERIFIED]337 backend tests,20 frontend tests; graph-only updates and independent preview; pause-excluding client/server timing.
+- [EXPERIMENTAL] Explicit spatial/program/core/fill feasibility tiers.72-case paired changing-site pilot has0/36 fully feasible layouts in each arm; no convergence success claimed.
+- [OPEN]750-episode held-out learning, public circulation, real windows/privacy, context shading, calibrated physical daylight and learned joint core relocation. [Report](reports/livable_spatial_2026-11-05/README.md).

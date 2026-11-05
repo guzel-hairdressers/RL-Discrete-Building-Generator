@@ -341,7 +341,13 @@ def validate(result, boundaries):
                 violations.append({'kind':'access','node':n.node_id})
     geometry_valid=not violations and not result.unresolved
     no_gaps=all(m['noUnplannedEnclosedGaps'] for m in gap_metrics.values())
+    residential_spatial=None
+    if getattr(result.graph,'spatial_settings',{}).get('graphSpatialEnabled',False) and getattr(result.graph,'module_bank',None):
+        from realized_spatial import audit_spatial
+        residential_spatial=audit_spatial(result)
     return {'valid':geometry_valid,'violations':violations,
+            'designValid':geometry_valid and no_gaps and (residential_spatial is None or residential_spatial['requirementsMet']),
+            'residentialSpatial':residential_spatial,
             'spatialQuality':{'noUnplannedEnclosedGaps':no_gaps,
                 'geometryAndGapChecksPass':geometry_valid and no_gaps,
                 'unplannedEnclosedGapArea':sum(m['unplannedEnclosedGapArea'] for m in gap_metrics.values()),

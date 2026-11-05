@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import { format } from '../store/presentation';
 
 const HEIGHT = 174;
+const LABELS={fill:'Site fill',reuse:'Independent reuse',exposure:'Livable facade access proxy'};
 const MARGIN = { left: 37, right: 39, top: 15, bottom: 29 };
 const finite = (value) => value != null && Number.isFinite(Number(value));
 
@@ -32,8 +33,8 @@ export function RewardTrendChart() {
     ? (elapsed[i] - elapsed[0]) / Math.max(1, elapsed.at(-1) - elapsed[0])
     : i / Math.max(1, selected.length - 1)) * plotWidth;
   const y = (value) => MARGIN.top + (1 - Number(value)) * plotHeight;
-  const state = (r) => r.valid === false || r.graphValid === false ? 'failed' : r.valid === true ? 'checked' : 'estimate';
-  const describe = (r) => r.valid === false ? 'Geometry validation failed' : r.graphValid === false
+  const state = (r) => r.valid === false || r.graphValid === false || r.spatialRequirementsMet === false ? 'failed' : r.valid === true ? 'checked' : 'estimate';
+  const describe = (r) => r.spatialRequirementsMet === false ? 'Spatial proxy requirements unmet' : r.valid === false ? 'Geometry validation failed' : r.graphValid === false
     ? 'Graph check failed; geometry not checked' : r.valid === true ? 'Geometry checked' : 'Graph estimate; geometry not checked';
   const coordinate = (r, i) => `${x(i)},${y(r[metric])}`;
   // Keep the complete observed sequence connected, including failed checks.
@@ -53,7 +54,7 @@ export function RewardTrendChart() {
   return <section className="progress-panel">
     <div className="progress-heading">
       <div><span className="eyebrow">Activity</span><strong>Learning progress</strong></div>
-      <div className="segmented small">{['fill', 'reuse'].map((v) => <button key={v} className={metric === v ? 'active' : ''} onClick={() => setMetric(v)}>{v === 'fill' ? 'Site fill' : 'Independent reuse'}</button>)}</div>
+      <div className="segmented small">{['fill', 'reuse', 'exposure'].map((v) => <button key={v} className={metric === v ? 'active' : ''} onClick={() => setMetric(v)}>{LABELS[v]}</button>)}</div>
       <div className="segmented small axis-controls">
         <button className={!timeAxis ? 'active' : ''} onClick={() => setAxis('episode')}>Episodes</button>
         <button className={timeAxis ? 'active' : ''} disabled={!hasTime} onClick={() => setAxis('time')}>Wall time</button>
@@ -61,7 +62,7 @@ export function RewardTrendChart() {
       <span className="progress-count">{records.length > 80 ? 'Latest 80 · ' : ''}{records.length} recorded</span>
     </div>
     <div className="learning-plot" ref={plot}>
-      {hasValues ? <svg className="learning-chart" viewBox={`0 0 ${width} ${HEIGHT}`} role="img" aria-label={`${metric === 'fill' ? 'Site fill' : 'Independent reuse'} from 0 to 100 percent by ${timeAxis ? 'client wall time' : 'completed episode'}. Hollow dots: graph estimates. Solid dots: checked geometry. Crosses: failed checks.`}>
+      {hasValues ? <svg className="learning-chart" viewBox={`0 0 ${width} ${HEIGHT}`} role="img" aria-label={`${LABELS[metric]} from 0 to 100 percent by ${timeAxis ? 'active client time (pauses excluded)' : 'completed episode'}. Hollow dots: graph estimates. Solid dots: checked geometry. Crosses: failed checks.`}>
         <defs><clipPath id="learning-plot-clip"><rect x={MARGIN.left - 4} y={MARGIN.top - 4} width={plotWidth + 8} height={plotHeight + 8}/></clipPath></defs>
         {[0, .25, .5, .75, 1].map((v) => <g key={v}>
           <line x1={MARGIN.left} x2={width - MARGIN.right} y1={y(v)} y2={y(v)} stroke={v === 0 ? '#dedede' : '#efefef'} strokeDasharray={v === 0 ? undefined : '3 5'}/>
@@ -83,11 +84,11 @@ export function RewardTrendChart() {
           })}
         </g>
         {tickIndices.map((i) => <text key={i} x={x(i)} y={HEIGHT - 7} textAnchor={selected.length === 1 ? 'middle' : i === 0 ? 'start' : i === selected.length - 1 ? 'end' : 'middle'} fill="#999" fontSize="10">{timeAxis ? `${format((elapsed[i] - elapsed[0]) / 1000, 1)} s` : `Ep ${selected[i].episode}`}</text>)}
-      </svg> : <div className="chart-empty">{records.length ? 'This metric has not been measured yet.' : 'Completed layouts will trace fill and reuse here.'}</div>}
+      </svg> : <div className="chart-empty">{records.length ? 'This metric has not been measured yet.' : 'Completed layouts will trace fill, reuse and livable facade access here.'}</div>}
     </div>
     <div className="chart-legend">
       <span><i className="estimate-symbol"/>Graph estimate</span><span><i className="checked-symbol"/>Geometry checked</span><span><i className="failed-symbol"/>Failed check</span>
-      <small>{timeAxis ? 'Client wall time since first visible result' : 'Completed episodes'} · hover a point for details</small>
+      <small>{timeAxis ? 'Active run time since first visible result; pauses excluded' : 'Completed episodes'} · hover a point for details</small>
     </div>
   </section>;
 }

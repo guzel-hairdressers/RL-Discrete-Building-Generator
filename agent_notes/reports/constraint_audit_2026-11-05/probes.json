@@ -1,0 +1,32 @@
+{
+  "reference": "version/v0.9.0-alpha",
+  "revision": "0dc53ded64c656fae6467424a9da944c8a884b0d",
+  "kind": "isolated correctness probes; not performance benchmarks",
+  "functionHashes": {
+    "bounds_of": "b1d6ba5658cf38c6ebd36b4c5bb43ef4c4cf621ab2690823db797b9cf72afe36",
+    "ray_intersect_segments": "769a19c618c5de8759104f4ee88a8789331cae2fdd0809233c417cbde8bf41d9",
+    "_safe_ratio": "476a5a3e0e93f00e7dba3d32a86881bb4676a49deb1c773793931de421b0f625",
+    "_bounds_intersect": "b56e606fc241164434fd1fe72cba89030df7bfabccd19791dcc4ede04a3fb6b6",
+    "_narrow_facade_chasm_metrics": "87633be7e355ece184bc842075b9934951259ef159c234ac06c5bedf664ebcde",
+    "_validate_edge_alignment": "52d468ee24264ed16e29be967d686c7ddd9fa4b1ef94bc33e67fdada3e190272"
+  },
+  "spatialPadding": 1e-06,
+  "augustMainRevision": "73f473aa3e7f92d7e1fd8128862c6bdfd487de83",
+  "sameFunctionsOnAugustMain": {
+    "bounds_of": true,
+    "ray_intersect_segments": true,
+    "_safe_ratio": true,
+    "_bounds_intersect": true,
+    "_narrow_facade_chasm_metrics": true,
+    "_validate_edge_alignment": true
+  },
+  "identicalFacadesAt3m": {
+    "unsplitWeightedOccludedLength": 9.600000000000001,
+    "splitIntoHalfMetreSegments": 0.0,
+    "conclusion": "same physical facades lose all chasm penalty after segmentation"
+  },
+  "oneMetreSeparatedRectangles": {
+    "alignmentValidatorAccepts": true,
+    "conclusion": "nonintersecting bounding boxes omit the opposing room before the intended1.2m clearance ray check"
+  }
+}

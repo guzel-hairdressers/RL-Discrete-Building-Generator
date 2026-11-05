@@ -26,6 +26,7 @@ def apply_action(graph, action, require_access=False):
         elif kind=='reassign':
             graph.reassign_functions(action['functions'],require_access=require_access)
         elif kind=='pose':
+            graph.pose_revision=getattr(graph,'pose_revision',0)+1
             node=graph.nodes[action['id']]; root=node.metadata.get('root_id',node.node_id)
             x,y=float(action['x']),float(action['y'])
             if not math.isfinite(x) or not math.isfinite(y): raise ValueError('nonfinite pose')
