@@ -1,341 +1,93 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
+import { format } from '../store/presentation';
 
-export const RewardTrendChart = () => {
-  const canvasRef = useRef(null);
-  const rewardHistory = useStore((s) => s.rewardHistory);
-  const fillHistory = useStore((s) => s.fillHistory);
-  const rentableHistory = useStore((s) => s.rentableHistory);
-  const modulesHistory = useStore((s) => s.modulesHistory);
-  const epTimeHistory = useStore((s) => s.epTimeHistory);
-  const activeTrendMetric = useStore((s) => s.activeTrendMetric);
-  const setActiveTrendMetric = useStore((s) => s.setActiveTrendMetric);
-  const metrics = useStore((s) => s.metrics);
-  const diagnostics = useStore((s) => s.diagnostics);
+const HEIGHT = 174;
+const MARGIN = { left: 37, right: 39, top: 15, bottom: 29 };
+const finite = (value) => value != null && Number.isFinite(Number(value));
 
-  const [showFullHistory, setShowFullHistory] = useState(false);
-  const [hoverData, setHoverData] = useState(null); // { ep, val, x, y }
-  const [hoverFactor, setHoverFactor] = useState(0); // 0 (smoothed) to 1 (fit)
+export function RewardTrendChart() {
+  const records = useStore((s) => s.episodeRecords);
+  const [metric, setMetric] = useState('fill');
+  const [axis, setAxis] = useState('episode');
+  const plot = useRef(null);
+  const [width, setWidth] = useState(700);
 
-  // Configure Active Metric Details
-  let rawValues = [];
-  let metricTitle = 'REWARD TREND';
-  let unit = '';
-  let themeColor = '#059669'; // Emerald
-  let fillColor = 'rgba(16, 185, 129, 0.18)';
-
-  if (activeTrendMetric === 'fill') {
-    rawValues = fillHistory.length > 0 ? fillHistory : [Math.round((metrics.fillRatio || 0) * 100)];
-    metricTitle = 'AVG. FILL % TREND';
-    unit = '%';
-    themeColor = '#2563eb'; // Blue
-    fillColor = 'rgba(37, 99, 235, 0.18)';
-  } else if (activeTrendMetric === 'rentable') {
-    rawValues = rentableHistory.length > 0 ? rentableHistory : [Math.round((metrics.rentableRatio || 0) * 100)];
-    metricTitle = 'RENTABLE % TREND';
-    unit = '%';
-    themeColor = '#8b5cf6'; // Purple
-    fillColor = 'rgba(139, 92, 246, 0.18)';
-  } else if (activeTrendMetric === 'modules') {
-    rawValues = modulesHistory.length > 0 ? modulesHistory : [metrics.placedCount || 0];
-    metricTitle = 'MODULES PLACED TREND';
-    unit = ' mod';
-    themeColor = '#d97706'; // Amber
-    fillColor = 'rgba(217, 119, 6, 0.18)';
-  } else if (activeTrendMetric === 'epTime') {
-    rawValues = epTimeHistory.length > 0 ? epTimeHistory : [Math.round(diagnostics.episodeTimeMs || 142)];
-    metricTitle = 'EPISODE TIME TREND';
-    unit = ' ms';
-    themeColor = '#0284c7'; // Sky
-    fillColor = 'rgba(2, 132, 199, 0.18)';
-  } else {
-    rawValues = rewardHistory.length > 0 ? rewardHistory : [metrics.score || -40];
-    metricTitle = 'REWARD TREND';
-    unit = '';
-    themeColor = '#059669';
-    fillColor = 'rgba(16, 185, 129, 0.18)';
-  }
-
-  const totalEpisodes = rawValues.length;
-  const isCropped = !showFullHistory && totalEpisodes > 100;
-  const values = isCropped ? rawValues.slice(-100) : rawValues;
-  const startEp = isCropped ? totalEpisodes - values.length + 1 : 1;
-
-  // Window Smoothing Function (Adaptive Gaussian-Weighted Moving Window)
-  const computeWindowSmoothedPoints = (rawVals, basePoints) => {
-    if (rawVals.length < 2) return basePoints;
-    const n = rawVals.length;
-    const k = Math.max(1, Math.min(8, Math.floor(n / 7)));
-    const sigma = Math.max(0.8, k * 0.55);
-
-    return basePoints.map((pt, i) => {
-      let sumY = 0;
-      let sumW = 0;
-      const start = Math.max(0, i - k);
-      const end = Math.min(n - 1, i + k);
-      for (let j = start; j <= end; j++) {
-        const dist = Math.abs(j - i);
-        const w = Math.exp(-(dist * dist) / (2 * sigma * sigma));
-        sumY += basePoints[j].y * w;
-        sumW += w;
-      }
-      return { x: pt.x, y: sumY / sumW };
-    });
-  };
-
-  // Regression Fit Function (Quadratic Polynomial Fit)
-  const computeFittedPoints = (rawVals, basePoints) => {
-    const n = rawVals.length;
-    if (n < 3) return basePoints;
-
-    const m = 3;
-    const A = Array.from({ length: m }, () => new Float64Array(m + 1));
-    const sumsU = new Float64Array(5);
-    const sumsUY = new Float64Array(3);
-
-    for (let i = 0; i < n; i++) {
-      const u = n > 1 ? i / (n - 1) : 0;
-      const y = basePoints[i].y;
-      let uPow = 1;
-      for (let p = 0; p < 5; p++) {
-        sumsU[p] += uPow;
-        if (p < 3) sumsUY[p] += uPow * y;
-        uPow *= u;
-      }
-    }
-
-    for (let r = 0; r < m; r++) {
-      for (let c = 0; c < m; c++) {
-        A[r][c] = sumsU[r + c];
-      }
-      A[r][m] = sumsUY[r];
-    }
-
-    for (let col = 0; col < m; col++) {
-      let maxRow = col;
-      for (let row = col + 1; row < m; row++) {
-        if (Math.abs(A[row][col]) > Math.abs(A[maxRow][col])) maxRow = row;
-      }
-      if (maxRow !== col) {
-        const tmp = A[col];
-        A[col] = A[maxRow];
-        A[maxRow] = tmp;
-      }
-      if (Math.abs(A[col][col]) < 1e-12) continue;
-
-      for (let row = 0; row < m; row++) {
-        if (row === col) continue;
-        const factor = A[row][col] / A[col][col];
-        for (let k = col; k <= m; k++) {
-          A[row][k] -= factor * A[col][k];
-        }
-      }
-    }
-
-    const c0 = A[0][m] / A[0][0];
-    const c1 = A[1][m] / A[1][1];
-    const c2 = A[2][m] / A[2][2];
-
-    return basePoints.map((pt, i) => {
-      const u = n > 1 ? i / (n - 1) : 0;
-      const fitY = c0 + c1 * u + c2 * (u * u);
-      return { x: pt.x, y: fitY };
-    });
-  };
-
-  // Render Canvas Chart
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.clientWidth || 320;
-    const h = canvas.clientHeight || 46;
-
-    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-    }
-
-    ctx.save();
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, w, h);
-
-    const marginLeft = 30;
-    const marginRight = 8;
-    const marginTop = 4;
-    const marginBottom = 12;
-    const gridW = w - marginLeft - marginRight;
-    const gridH = h - marginTop - marginBottom;
-
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const span = Math.max(activeTrendMetric === 'reward' ? 6 : 5, max - min);
-
-    // Y-Axis Numerical Labels
-    ctx.font = '500 7.5px Inter, system-ui, sans-serif';
-    ctx.fillStyle = '#64748b';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${max.toFixed(0)}${unit}`, marginLeft - 4, marginTop + 2);
-    ctx.fillText(`${min.toFixed(0)}${unit}`, marginLeft - 4, marginTop + gridH);
-
-    // X-Axis Epoch Labels
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`Ep ${startEp}`, marginLeft, h - marginBottom + 2);
-    ctx.textAlign = 'right';
-    ctx.fillText(`Ep ${totalEpisodes}`, w - marginRight, h - marginBottom + 2);
-
-    // Grid Baseline Lines
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(marginLeft, marginTop + gridH);
-    ctx.lineTo(marginLeft + gridW, marginTop + gridH);
-    ctx.stroke();
-
-    const n = values.length;
-    const basePoints = values.map((val, idx) => ({
-      x: marginLeft + (n > 1 ? (idx / (n - 1)) * gridW : gridW / 2),
-      y: marginTop + gridH - ((val - min) / span) * gridH,
-    }));
-
-    // Area Fill Gradient
-    if (basePoints.length > 1) {
-      const grad = ctx.createLinearGradient(0, marginTop, 0, marginTop + gridH);
-      grad.addColorStop(0, fillColor);
-      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      ctx.beginPath();
-      ctx.moveTo(basePoints[0].x, marginTop + gridH);
-      for (const pt of basePoints) ctx.lineTo(pt.x, pt.y);
-      ctx.lineTo(basePoints[basePoints.length - 1].x, marginTop + gridH);
-      ctx.closePath();
-      ctx.fillStyle = grad;
-      ctx.fill();
-    }
-
-    // Raw trace
-    ctx.beginPath();
-    basePoints.forEach((pt, idx) => {
-      if (idx === 0) ctx.moveTo(pt.x, pt.y);
-      else ctx.lineTo(pt.x, pt.y);
+    const observer = new ResizeObserver(([entry]) => {
+      setWidth(Math.max(180, Math.round(entry.contentRect.width)));
     });
-    ctx.strokeStyle = themeColor + '40';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    observer.observe(plot.current);
+    return () => observer.disconnect();
+  }, []);
 
-    // Smoothed vs Fit Line Crossfade
-    const smoothed = computeWindowSmoothedPoints(values, basePoints);
-    const fitted = computeFittedPoints(values, basePoints);
+  const selected = records.slice(-80);
+  const hasTime = selected.length > 0 && selected.every((r) => finite(r.wallMs));
+  const timeAxis = axis === 'time' && hasTime;
+  let total = 0;
+  const elapsed = selected.map((r) => (total += finite(r.wallMs) ? Number(r.wallMs) : 0));
+  const plotWidth = width - MARGIN.left - MARGIN.right;
+  const plotHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
+  const x = (i) => MARGIN.left + (selected.length === 1 ? .5 : timeAxis
+    ? (elapsed[i] - elapsed[0]) / Math.max(1, elapsed.at(-1) - elapsed[0])
+    : i / Math.max(1, selected.length - 1)) * plotWidth;
+  const y = (value) => MARGIN.top + (1 - Number(value)) * plotHeight;
+  const state = (r) => r.valid === false || r.graphValid === false ? 'failed' : r.valid === true ? 'checked' : 'estimate';
+  const describe = (r) => r.valid === false ? 'Geometry validation failed' : r.graphValid === false
+    ? 'Graph check failed; geometry not checked' : r.valid === true ? 'Geometry checked' : 'Graph estimate; geometry not checked';
+  const coordinate = (r, i) => `${x(i)},${y(r[metric])}`;
+  // Keep the complete observed sequence connected, including failed checks.
+  // Only an unavailable measurement creates a gap; crosses retain failure status.
+  const segments = [];
+  let segment = [];
+  selected.forEach((r, i) => {
+    if (!finite(r[metric])) {
+      if (segment.length > 1) segments.push(segment.join(' '));
+      segment = [];
+    } else segment.push(coordinate(r, i));
+  });
+  if (segment.length > 1) segments.push(segment.join(' '));
+  const tickIndices = [...new Set([0, Math.floor((selected.length - 1) / 2), selected.length - 1])].filter((i) => i >= 0);
+  const hasValues = selected.some((r) => finite(r[metric]));
 
-    ctx.beginPath();
-    for (let i = 0; i < n; i++) {
-      const sx = smoothed[i].x;
-      const sy = smoothed[i].y * (1 - hoverFactor) + fitted[i].y * hoverFactor;
-      if (i === 0) ctx.moveTo(sx, sy);
-      else ctx.lineTo(sx, sy);
-    }
-    ctx.strokeStyle = hoverFactor > 0.5 ? '#2563eb' : themeColor;
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
-
-    // Active End Point Dot
-    if (basePoints.length > 0) {
-      const last = basePoints[basePoints.length - 1];
-      ctx.fillStyle = themeColor;
-      ctx.beginPath();
-      ctx.arc(last.x, last.y, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-  }, [values, totalEpisodes, startEp, hoverFactor, activeTrendMetric, unit, themeColor, fillColor]);
-
-  // Pointer interactions for Hover & Fitting
-  const handlePointerMove = (e) => {
-    const canvas = canvasRef.current;
-    if (!canvas || values.length === 0) return;
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const marginLeft = 30;
-    const marginRight = 8;
-    const gridW = rect.width - marginLeft - marginRight;
-
-    const relX = Math.max(0, Math.min(gridW, mouseX - marginLeft));
-    const idx = Math.round((relX / gridW) * (values.length - 1));
-    const epNum = startEp + idx;
-    const metricVal = values[idx];
-
-    setHoverData({ ep: epNum, val: metricVal, clientX: e.clientX, clientY: e.clientY });
-    setHoverFactor(1.0);
-  };
-
-  const handlePointerLeave = () => {
-    setHoverData(null);
-    setHoverFactor(0.0);
-  };
-
-  return (
-    <div
-      className="reward-trend-wrap"
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
-    >
-      <div className="trend-header">
-        {/* Metric Selector Dropdown / Pill */}
-        <select
-          className="trend-metric-select"
-          value={activeTrendMetric}
-          onChange={(e) => setActiveTrendMetric(e.target.value)}
-          title="Switch Trend Metric"
-        >
-          <option value="reward">REWARD TREND</option>
-          <option value="fill">AVG. FILL % TREND</option>
-          <option value="rentable">RENTABLE % TREND</option>
-          <option value="modules">MODULES PLACED TREND</option>
-          <option value="epTime">EPISODE TIME TREND</option>
-        </select>
-
-        {totalEpisodes > 100 && (
-          <button
-            type="button"
-            className="crop-toggle-btn"
-            onClick={() => setShowFullHistory(!showFullHistory)}
-            title="Toggle last 100 episodes vs all episodes"
-          >
-            {showFullHistory ? 'All Ep' : 'Last 100'}
-          </button>
-        )}
+  return <section className="progress-panel">
+    <div className="progress-heading">
+      <div><span className="eyebrow">Activity</span><strong>Learning progress</strong></div>
+      <div className="segmented small">{['fill', 'reuse'].map((v) => <button key={v} className={metric === v ? 'active' : ''} onClick={() => setMetric(v)}>{v === 'fill' ? 'Site fill' : 'Independent reuse'}</button>)}</div>
+      <div className="segmented small axis-controls">
+        <button className={!timeAxis ? 'active' : ''} onClick={() => setAxis('episode')}>Episodes</button>
+        <button className={timeAxis ? 'active' : ''} disabled={!hasTime} onClick={() => setAxis('time')}>Wall time</button>
       </div>
-
-      <canvas
-        ref={canvasRef}
-        style={{
-          width: '100%',
-          height: '46px',
-          display: 'block',
-          cursor: 'crosshair',
-        }}
-      />
-
-      {hoverData && (
-        <div
-          className="trend-tooltip"
-          style={{
-            position: 'fixed',
-            left: `${hoverData.clientX + 8}px`,
-            top: `${hoverData.clientY - 30}px`,
-            zIndex: 1000,
-          }}
-        >
-          <strong>Ep {hoverData.ep}</strong> · {hoverData.val?.toFixed(1)}{unit}
-        </div>
-      )}
+      <span className="progress-count">{records.length > 80 ? 'Latest 80 · ' : ''}{records.length} recorded</span>
     </div>
-  );
-};
-
-export default RewardTrendChart;
+    <div className="learning-plot" ref={plot}>
+      {hasValues ? <svg className="learning-chart" viewBox={`0 0 ${width} ${HEIGHT}`} role="img" aria-label={`${metric === 'fill' ? 'Site fill' : 'Independent reuse'} from 0 to 100 percent by ${timeAxis ? 'client wall time' : 'completed episode'}. Hollow dots: graph estimates. Solid dots: checked geometry. Crosses: failed checks.`}>
+        <defs><clipPath id="learning-plot-clip"><rect x={MARGIN.left - 4} y={MARGIN.top - 4} width={plotWidth + 8} height={plotHeight + 8}/></clipPath></defs>
+        {[0, .25, .5, .75, 1].map((v) => <g key={v}>
+          <line x1={MARGIN.left} x2={width - MARGIN.right} y1={y(v)} y2={y(v)} stroke={v === 0 ? '#dedede' : '#efefef'} strokeDasharray={v === 0 ? undefined : '3 5'}/>
+          <text x={MARGIN.left - 9} y={y(v)} dominantBaseline="middle" textAnchor="end" fill="#999" fontSize="10">{v * 100}%</text>
+          <text x={width - MARGIN.right + 9} y={y(v)} dominantBaseline="middle" textAnchor="start" fill="#999" fontSize="10">{v * 100}%</text>
+        </g>)}
+        <g clipPath="url(#learning-plot-clip)">
+          {segments.map((points, i) => <polyline key={i} points={points} fill="none" stroke="#b4b4b4" strokeWidth="1.2" strokeLinejoin="round"/>)}
+          {selected.map((r, i) => {
+            if (!finite(r[metric])) return null;
+            const px = x(i), py = y(r[metric]);
+            return <g key={i} className="learning-observation">
+              <title>{`${r.mode} · Episode ${r.episode} · ${format(Number(r[metric]) * 100, 1)}%\n${describe(r)}`}</title>
+              <circle cx={px} cy={py} r="7" fill="transparent"/>
+              {state(r) === 'failed'
+                ? <path d={`M${px - 2.5},${py - 2.5}l5,5m-5,0l5,-5`} stroke="#555" strokeWidth="1.2" fill="none"/>
+                : <circle cx={px} cy={py} r="2.7" fill={state(r) === 'checked' ? '#333' : '#fff'} stroke={state(r) === 'checked' ? '#333' : '#888'} strokeWidth="1.1"/>}
+            </g>;
+          })}
+        </g>
+        {tickIndices.map((i) => <text key={i} x={x(i)} y={HEIGHT - 7} textAnchor={selected.length === 1 ? 'middle' : i === 0 ? 'start' : i === selected.length - 1 ? 'end' : 'middle'} fill="#999" fontSize="10">{timeAxis ? `${format((elapsed[i] - elapsed[0]) / 1000, 1)} s` : `Ep ${selected[i].episode}`}</text>)}
+      </svg> : <div className="chart-empty">{records.length ? 'This metric has not been measured yet.' : 'Completed layouts will trace fill and reuse here.'}</div>}
+    </div>
+    <div className="chart-legend">
+      <span><i className="estimate-symbol"/>Graph estimate</span><span><i className="checked-symbol"/>Geometry checked</span><span><i className="failed-symbol"/>Failed check</span>
+      <small>{timeAxis ? 'Client wall time since first visible result' : 'Completed episodes'} · hover a point for details</small>
+    </div>
+  </section>;
+}

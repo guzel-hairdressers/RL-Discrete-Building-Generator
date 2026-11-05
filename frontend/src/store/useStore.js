@@ -51,6 +51,10 @@ export const DEFAULT_SETTINGS = {
   autoChangeEpisodes: 1, // 1 to 20, or 21 (displayed as '∞' / 'Never')
   generatorEngine: 'graph_voronoi',
   graphController: 'neural',
+  graphProposalStrategy: 'legacy',
+  graphMaxTypes: 15,
+  graphPolicyArchitecture: 'message_passing',
+  graphSearchMode: 'balanced',
 };
 
 const DEFAULT_FILTERS = {
@@ -61,6 +65,19 @@ const DEFAULT_FILTERS = {
   minHeight: 10,
   maxHeight: 300,
 };
+
+let activeStepTimer = null;
+let lastEpisodeStartTime = 0;
+function clearActiveStepTimer() {
+  if (activeStepTimer != null) {
+    clearTimeout(activeStepTimer);
+    activeStepTimer = null;
+  }
+}
+
+function recordEpisodeStart() {
+  lastEpisodeStartTime = performance.now();
+}
 
 export const useStore = create((set, get) => ({
   // WebSocket Connection
@@ -88,17 +105,30 @@ export const useStore = create((set, get) => ({
   rentableHistory: [],
   modulesHistory: [],
   epTimeHistory: [],
-  activeTrendMetric: 'reward', // 'reward' | 'fill' | 'rentable' | 'modules' | 'epTime'
+  activeTrendMetric: 'fill', // 'reward' | 'fill' | 'rentable' | 'modules' | 'epTime'
   setActiveTrendMetric: (metric) => set({ activeTrendMetric: metric }),
-  metrics: {
-    score: -40.0,
-    fillRatio: 0,
-    rentableRatio: 0,
-    daylightRatio: 0,
-    reuseRatio: 0,
-    envelopeEfficiency: 0,
-  },
+  metrics: {},
   diagnostics: {},
+  validation: null,
+  predictionErrors: null,
+  episodeRecords: [],
+  nextEpisode: null,
+  pendingSite: false,
+  awaitingMode: false,
+  stepInFlight: false,
+  evaluationInFlight: false,
+  selectedFloor: 'all',
+  selectedModuleId: null,
+  selectedOccurrenceId: null,
+  showGraph: true,
+  showAccess: false,
+  show3D: false,
+  setSelectedFloor: (selectedFloor) => set({ selectedFloor }),
+  setSelectedModuleId: (id) => set({ selectedModuleId: get().selectedModuleId === id ? null : id, selectedOccurrenceId: null }),
+  setSelectedOccurrenceId: (selectedOccurrenceId) => set({ selectedOccurrenceId }),
+  setShowGraph: (showGraph) => set({ showGraph }),
+  setShowAccess: (showAccess) => set({ showAccess }),
+  setShow3D: (show3D) => set({ show3D }),
 
   // Real Sites Urban Dataset (Context Generator Engine)
   allSites: [],
@@ -127,7 +157,7 @@ export const useStore = create((set, get) => ({
 
   // Settings & Expandable Bottom Panels
   settings: { ...DEFAULT_SETTINGS },
-  activeBottomDrawer: null, // null | 'settings' | 'diagnostics'
+  activeBottomDrawer: (typeof window !== 'undefined' && window.location && window.location.search && window.location.search.includes('diagnostics')) ? 'diagnostics' : null,
   resetConfirmOpen: false,
 
   // Setters & Panel Toggles
@@ -159,9 +189,7 @@ export const useStore = create((set, get) => ({
   // Set Boundary Type (Family)
   setBoundaryType: (type) => {
     get().updateSettings({ boundaryType: type });
-    if (type !== 'real') {
-      get().requestNewSite();
-    }
+
   },
 
   // Load Context Generator Urban Dataset
@@ -272,7 +300,7 @@ export const useStore = create((set, get) => ({
 
     set({ filteredSites: filtered, activeSiteIndex: newIndex });
 
-    if (filtered.length > 0) {
+    if (get().hasSite && get().settings.boundaryType === 'real' && filtered.length > 0) {
       const activeSite = filtered[newIndex];
       get().syncSiteWithOptimizer(activeSite);
     }
@@ -348,7 +376,7 @@ export const useStore = create((set, get) => ({
 
   syncSiteWithOptimizer: (site) => {
     if (!site) return;
-    get().sendCommand({
+    get().invalidateSite({
       cmd: 'setSite',
       siteId: site.site_id,
       city: site.city_code,
@@ -357,366 +385,203 @@ export const useStore = create((set, get) => ({
     });
   },
 
-  // WebSocket Commands
+  // Command sequencing is independent of animation frames and browser timers.
   sendCommand: (payload) => {
     const { socket, connected } = get();
-    if (socket && connected && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(payload));
-      return true;
+    if (!socket || !connected || socket.readyState !== WebSocket.OPEN) return false;
+    socket.send(JSON.stringify(payload));
+    return true;
+  },
+
+  invalidateSite: (payload) => {
+    clearActiveStepTimer();
+    if (get().pendingSite) return false;
+    if (!get().sendCommand(payload)) return false;
+    set({ pendingSite: true, trainingWanted: false, awaitingMode: false,
+      phase: 'paused', statusMessage: 'Preparing site…' });
+    return true;
+  },
+  updateSettings: (patch) => get().invalidateSite({ cmd: 'updateSettings', settings: patch }),
+  dispatchStep: () => {
+    const s = get();
+    if (!s.trainingWanted || s.pendingSite || s.awaitingMode || s.stepInFlight || s.evaluationInFlight) return;
+    if (s.phase === 'complete') {
+      set({ episode: s.nextEpisode ?? s.episode, nextEpisode: null, step: 0, phase: 'running',
+        individualPlacementsList: [], currentMergedPlacements: [], completed3DPlacements: [],
+        graphState: null, validation: null, predictionErrors: null });
+      recordEpisodeStart();
     }
-    return false;
+    const current = get();
+    if (get().sendCommand({ cmd: 'step', generationId: current.generationId, episode: current.episode })) {
+      set({ stepInFlight: true });
+    }
   },
-
-  updateSettings: (patch) => {
-    set((state) => ({ settings: { ...state.settings, ...patch } }));
-    get().sendCommand({ cmd: 'updateSettings', settings: get().settings });
+  startExecution: (mode) => {
+    if (!get().connected || !get().hasSite || get().pendingSite || get().stepInFlight || get().evaluationInFlight) return;
+    const starting = get().phase === 'complete' || get().step === 0;
+    if (starting) recordEpisodeStart();
+    set({ mode, trainingWanted: true, awaitingMode: true,
+      statusMessage: mode === 'training' ? 'Starting training…' : 'Generating one layout…' });
+    get().sendCommand({ cmd: 'setMode', mode });
   },
-
-  // Execution Control: Split Training / Inference & Pause
-  startTraining: () => {
-    set((state) => ({
-      mode: 'training',
-      trainingWanted: true,
-      phase: 'running',
-      individualPlacementsList: (state.step === 0 || state.phase === 'complete') ? [] : state.individualPlacementsList,
-      currentMergedPlacements: [],
-      completed3DPlacements: [],
-      graphState: (state.step === 0 || state.phase === 'complete') ? null : state.graphState,
-      statusMessage: 'Training policy active',
-    }));
-    get().sendCommand({ cmd: 'setMode', mode: 'training' });
-    get().sendCommand({
-      cmd: 'step',
-      generationId: get().generationId,
-      episode: get().episode,
-      step: get().step,
-    });
+  startTraining: () => get().startExecution('training'),
+  startInference: () => get().startExecution('inference'),
+  requestEvaluation: () => {
+    const s = get();
+    if (s.pendingSite || s.stepInFlight || s.evaluationInFlight || !s.hasSite) return;
+    if (s.sendCommand({ cmd: 'evaluate', generationId: s.generationId, episode: s.nextEpisode ?? s.episode })) {
+      set({ evaluationInFlight: true, statusMessage: 'Checking geometry…' });
+    }
   },
-
-  startInference: () => {
-    set({
-      mode: 'inference',
-      autoGenerate: get().settings.generatorEngine === 'graph_voronoi' ? false : get().autoGenerate,
-      trainingWanted: true,
-      phase: 'running',
-      completed3DPlacements: [],
-      currentMergedPlacements: [],
-      graphState: null,
-      statusMessage: 'Generating building plan (Inference)...',
-    });
-    get().sendCommand({ cmd: 'setMode', mode: 'inference' });
-    get().sendCommand({
-      cmd: 'step',
-      generationId: get().generationId,
-      episode: get().episode,
-      step: get().step,
-    });
-  },
-
   pauseExecution: () => {
-    set({
-      trainingWanted: false,
-      phase: 'paused',
-      statusMessage: 'Paused by user',
-    });
-    get().sendCommand({
-      cmd: 'evaluate',
-      generationId: get().generationId,
-      episode: get().episode,
-    });
+    clearActiveStepTimer();
+    set({ trainingWanted: false, awaitingMode: false, phase: 'paused', statusMessage: 'Paused' });
+    if (!get().stepInFlight) get().requestEvaluation();
   },
-
-  toggleTraining: () => {
-    const { trainingWanted, startTraining, pauseExecution } = get();
-    if (trainingWanted) {
-      pauseExecution();
-    } else {
-      startTraining();
-    }
-  },
-
+  toggleTraining: () => get().trainingWanted ? get().pauseExecution() : get().startExecution(get().mode),
   requestNewSite: () => {
-    const { settings, sendCommand } = get();
-    set({
-      individualPlacementsList: [],
-      currentMergedPlacements: [],
-      completed3DPlacements: [],
-      graphState: null,
-    });
-    if (settings.boundaryType === 'real') {
-      get().navigateCarousel(1);
-    } else {
-      sendCommand({ cmd: 'newSite' });
-    }
+    if (get().settings.boundaryType === 'real' && get().filteredSites.length > 1) get().navigateCarousel(1);
+    else get().invalidateSite({ cmd: 'newSite' });
   },
-
   resetPolicy: () => {
-    get().sendCommand({ cmd: 'resetPolicy' });
+    get().invalidateSite({ cmd: 'resetPolicy' });
     set({ resetConfirmOpen: false });
   },
+  saveCheckpoint: () => get().sendCommand({ cmd: 'saveCheckpoint' }),
+  loadCheckpoint: (fileData) => get().invalidateSite({ cmd: 'loadCheckpoint', fileData }),
+  toggleMerging: () => set((s) => ({ disableMerging: !s.disableMerging })),
 
-  saveCheckpoint: () => {
-    get().sendCommand({ cmd: 'saveCheckpoint' });
-  },
-
-  loadCheckpoint: (fileData) => {
-    get().sendCommand({ cmd: 'loadCheckpoint', fileData });
-  },
-
-  toggleMerging: () => {
-    set((s) => ({ disableMerging: !s.disableMerging }));
-  },
-
-  // WebSocket Connection Lifecycle
   initWebSocket: () => {
+    // StrictMode mounts effects twice. Keep one connection and one isolated trainer.
+    if (get().socket && get().socket.readyState < 2) return;
     get().loadDatasets();
-    const wsUrl = `ws://${window.location.host || 'localhost:8000'}/ws`;
-    let socket;
-    try {
-      socket = new WebSocket(wsUrl);
-    } catch (e) {
-      console.error('Failed to create WebSocket:', e);
-      set({ connectionState: 'error' });
-      return;
-    }
-
+    const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
     set({ socket, connectionState: 'connecting' });
-
     socket.onopen = () => {
-      set({ connected: true, connectionState: 'connected', statusMessage: 'Connected to optimizer' });
+      set({ connected: true, connectionState: 'connected', pendingSite: false });
       get().updateSettings(get().settings);
     };
-
     socket.onclose = () => {
-      set({ connected: false, connectionState: 'disconnected', statusMessage: 'Reconnecting to optimizer...' });
+      if (get().socket !== socket) return;
+      set({ connected: false, connectionState: 'disconnected', trainingWanted: false,
+        pendingSite: false, stepInFlight: false, evaluationInFlight: false, awaitingMode: false,
+        phase: 'paused', statusMessage: 'Connection lost · reconnecting' });
       setTimeout(() => get().initWebSocket(), 2000);
     };
-
-    socket.onerror = () => {
-      set({ connectionState: 'error' });
-    };
-
+    socket.onerror = () => set({ connectionState: 'error' });
     socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        get().handleServerEvent(data);
-      } catch (err) {
-        console.error('Error handling WebSocket message:', err);
-      }
+      try { get().handleServerEvent(JSON.parse(event.data)); }
+      catch (error) { console.error('Invalid optimizer event', error); }
     };
   },
 
   handleServerEvent: (data) => {
     const { type } = data;
+    if (type === 'ack') {
+      if (data.command === 'setMode' && get().awaitingMode) {
+        set({ awaitingMode: false, mode: data.mode ?? get().mode,
+          generationId: data.generationId ?? get().generationId,
+          episode: data.episode ?? get().episode, nextEpisode: null, phase: 'running' });
+        get().dispatchStep();
+      } else if (data.command === 'saveCheckpoint') set({ statusMessage: data.message });
+      return;
+    }
+    if (type === 'error') {
+      clearActiveStepTimer();
+      set({ trainingWanted: false, pendingSite: false, awaitingMode: false,
+        stepInFlight: false, evaluationInFlight: false, phase: 'paused',
+        statusMessage: data.message || data.error || 'Optimizer rejected the command' });
+      return;
+    }
     if (type === 'site') {
+      if (get().hasSite && data.generationId < get().generationId) return;
       const bList = data.boundaries || [];
-      const totalArea = bList.reduce((acc, b) => acc + (b.siteArea || 0), 0);
-      set({
-        hasSite: true,
-        settings: data.settings || get().settings,
-        generationId: data.generationId,
-        episode: data.episode ?? 0,
-        step: 0,
-        boundaries: bList,
-        totalSiteArea: totalArea,
-        contextData: data.contextData || null,
-        individualPlacementsList: [],
-        currentMergedPlacements: [],
-        completed3DPlacements: [],
-        graphState: null,
-        dictionary: data.dictionary || [],
-        device: data.device ? data.device.toUpperCase() : 'CPU',
-        metrics: data.metrics || get().metrics,
-        rewardHistory: data.scoreHistory || [],
-        bestReward: data.bestScore ?? get().bestReward,
+      const contextSiteId = data.contextData?.site_id;
+      const idx = get().filteredSites.findIndex((s) => s.site_id === contextSiteId);
+      set({ hasSite: true, pendingSite: false, stepInFlight: false, evaluationInFlight: false,
+        generationId: data.generationId, episode: data.episode ?? 0, nextEpisode: null, step: 0,
+        settings: data.settings || get().settings, boundaries: bList,
+        totalSiteArea: bList.reduce((sum, b) => sum + (b.siteArea ?? b.exactArea ?? 0), 0),
+        contextData: data.contextData || null, activeSiteIndex: idx >= 0 ? idx : get().activeSiteIndex,
+        individualPlacementsList: [], currentMergedPlacements: [], completed3DPlacements: [],
+        graphState: null, validation: null, predictionErrors: null, selectedOccurrenceId: null,
+        selectedFloor: get().selectedFloor !== 'all' && Number(get().selectedFloor) >= bList.length ? 'all' : get().selectedFloor,
+        dictionary: data.dictionary || [], mergedDictionary: [], metrics: data.metrics || {}, diagnostics: {},
+        device: data.device?.toUpperCase() || get().device,
         statusMessage: `Site ready · ${bList.length} floors`,
       });
-
-      if (typeof window !== 'undefined' && window.location && window.location.search) {
-        if (window.location.search.includes('diagnostics')) {
-          set({ activeBottomDrawer: 'diagnostics' });
-        }
-        if (window.location.search.includes('autostart') && !get().trainingWanted) {
-          setTimeout(() => get().startTraining(), 400);
-        }
-      }
-
-      if (get().trainingWanted) {
-        get().sendCommand({ cmd: 'step', generationId: data.generationId, episode: data.episode ?? 0, step: 0 });
-      }
-    } else if (type === 'placements') {
-      const incomingMerged = (Array.isArray(data.mergedPlacements) && data.mergedPlacements.length > 0)
-        ? data.mergedPlacements
-        : null;
-
-      const isEval = !!data.isEvaluation;
-
-      set((state) => {
-        let nextList;
-        if ((data.graphState && !data.graphState.realized) || isEval || (data.step != null && data.step <= 1) || (data.episode != null && data.episode !== state.episode)) {
-          nextList = data.placements || [];
-        } else {
-          const idMap = new Map();
-          state.individualPlacementsList.forEach((p) => { if (p && p.id) idMap.set(p.id, p); });
-          (data.placements || []).forEach((p) => { if (p && p.id) idMap.set(p.id, p); });
-          nextList = Array.from(idMap.values());
-        }
-
-        return {
-          step: data.step ?? state.step + 1,
-          episode: data.episode ?? state.episode,
-          individualPlacementsList: nextList,
-          completed3DPlacements: isEval ? nextList : (data.graphState && !data.graphState.realized ? [] : state.completed3DPlacements),
-          graphState: data.graphState || (data.step != null && data.step <= 1 ? null : state.graphState),
-          currentMergedPlacements: incomingMerged || ((data.step != null && data.step <= 1) ? [] : state.currentMergedPlacements),
-          dictionary: data.dictionary || state.dictionary,
-          mergedDictionary: data.mergedDictionary || state.mergedDictionary,
-          metrics: data.metrics || state.metrics,
-          diagnostics: data.diagnostics || state.diagnostics,
-          statusMessage: `Episode ${data.episode} · step ${data.step}`,
-        };
-      });
-
-      if (get().trainingWanted) {
-        // WebSocket callbacks already yield to rendering. A zero-delay timer is
-        // throttled in background tabs and can dominate graph generation time.
-        if (data.graphState && !data.graphState.realized && !isEval) {
-          if (get().phase !== 'paused') get().sendCommand({
-            cmd: 'step', generationId: Number(data.generationId ?? get().generationId),
-            episode: Number(data.episode ?? get().episode), step: Number(data.step ?? get().step),
-          });
-          return;
-        }
-
-        // Graph growth has no fixed visualization delay.
-        const stepDelay = 0;
-
-        setTimeout(() => {
-          if (!get().trainingWanted || get().phase === 'paused') return;
-          get().sendCommand({
-            cmd: 'step',
-            generationId: Number(data.generationId ?? get().generationId),
-            episode: Number(data.episode ?? get().episode),
-            step: Number(data.step ?? get().step),
-          });
-        }, stepDelay);
-      }
-    } else if (type === 'error') {
-      console.warn('Server error received:', data);
-      if (get().trainingWanted) {
-        setTimeout(() => {
-          get().sendCommand({
-            cmd: 'step',
-            generationId: Number(data.generationId ?? get().generationId),
-            episode: Number(data.episode ?? get().episode),
-            step: Number(get().step),
-          });
-        }, 50);
-      }
-    } else if (type === 'episodeDone') {
-      const nextEp = data.nextEpisode ?? get().episode + 1;
-
-      // Update completed3DPlacements so the 3D and 2D scenes capture the finalized building at episode completion!
-      const finalized = (data.mergedPlacements && data.mergedPlacements.length > 0)
-        ? data.mergedPlacements
-        : (get().currentMergedPlacements && get().currentMergedPlacements.length > 0
-            ? get().currentMergedPlacements
-            : get().individualPlacementsList);
-
-      const effectiveMetrics = data.metrics || get().metrics;
-      const currentFillPct = Math.round(((effectiveMetrics.fillRatio) || 0) * 1000) / 10;
-      const currentRentablePct = Math.round(((effectiveMetrics.rentableRatio) || 0) * 1000) / 10;
-      const currentModulesCount = effectiveMetrics.placedCount ?? get().step ?? 0;
-      const currentEpTime = Math.round(data.diagnostics?.episodeTimeMs || (currentModulesCount * (data.diagnostics?.stepTimeMs || 4.2)) || 142);
-
-      set((state) => ({
-        phase: 'complete',
-        episode: data.completedEpisode,
-        completed3DPlacements: finalized,
-        currentMergedPlacements: finalized,
-        graphState: data.graphState || null,
-        metrics: effectiveMetrics,
-        rewardHistory: data.scoreHistory || state.rewardHistory,
-        fillHistory: [...state.fillHistory, currentFillPct],
-        rentableHistory: [...state.rentableHistory, currentRentablePct],
-        modulesHistory: [...state.modulesHistory, currentModulesCount],
-        epTimeHistory: [...state.epTimeHistory, currentEpTime],
-        bestReward: data.bestScore ?? state.bestReward,
-        statusMessage: `Episode ${data.completedEpisode} complete`,
-      }));
-
-      const autoChangeLimit = get().settings.autoChangeEpisodes ?? 1;
-      const currentSiteCount = (get().episodesOnCurrentSite || 0) + 1;
-
-      if (get().mode === 'inference' && !get().autoGenerate) {
-        set({ trainingWanted: false, phase: 'paused', episodesOnCurrentSite: currentSiteCount });
-      } else if (get().trainingWanted) {
-        const shouldChangeSite = (autoChangeLimit <= 20) && (currentSiteCount >= autoChangeLimit);
-
-        if (shouldChangeSite) {
-          setTimeout(() => {
-            if (get().trainingWanted) {
-              set({
-                episodesOnCurrentSite: 0,
-                episode: nextEp,
-                step: 0,
-                individualPlacementsList: [],
-                currentMergedPlacements: [],
-                completed3DPlacements: [],
-                graphState: null,
-                phase: 'running',
-              });
-              get().requestNewSite();
-            }
-          }, 400);
-          const epDelay = (get().visualsEnabled && get().settings.generatorEngine === 'graph_voronoi') ? 750 : 100;
-          setTimeout(() => {
-            if (get().trainingWanted) {
-              set({
-                episodesOnCurrentSite: currentSiteCount,
-                episode: nextEp,
-                step: 0,
-                individualPlacementsList: [],
-                currentMergedPlacements: [],
-                completed3DPlacements: [],
-                graphState: null,
-                phase: 'running',
-              });
-              get().sendCommand({
-                cmd: 'step',
-                generationId: Number(get().generationId),
-                episode: Number(nextEp),
-                step: 0,
-              });
-            }
-          }, epDelay);
-        }
-      }
-    } else if (type === 'sync') {
-      // Response to the `getState` command sent when visuals are re-enabled. This
-      // is a non-mutating full snapshot (placements + boundaries + dictionary +
-      // metrics) rebuilt by the server even when visuals were off, so the client
-      // can repaint the 3D/2D scenes from live state — no page reload, no weight
-      // reload. Setting the placement/merged lists here triggers ThreeViewer's
-      // extrusion-sync effect, which re-posts optimizer_placements to the iframe.
-      set({
-        boundaries: data.boundaries || [],
-        dictionary: data.dictionary || [],
-        mergedDictionary: data.mergedDictionary || [],
-        individualPlacementsList: data.placements || [],
-        currentMergedPlacements: data.mergedPlacements || [],
-        completed3DPlacements: (Array.isArray(data.mergedPlacements) && data.mergedPlacements.length > 0)
-          ? data.mergedPlacements
-          : (data.placements || []),
-        graphState: data.graphState || null,
-        metrics: data.metrics || get().metrics,
-        diagnostics: data.diagnostics || get().diagnostics,
-        rewardHistory: data.scoreHistory || get().rewardHistory,
-        bestReward: data.bestScore ?? get().bestReward,
-        totalSiteArea: (data.boundaries || []).reduce((acc, b) => acc + (b.siteArea || 0), 0),
-        contextData: data.contextData ?? get().contextData,
-        statusMessage: 'Visuals re-enabled · scene refreshed',
-      });
+      if (get().trainingWanted) { recordEpisodeStart(); get().dispatchStep(); }
+      return;
+    }
+    // Drop replies from a replaced generation, and queued replies while replacing a site.
+    if (get().pendingSite || (data.generationId != null && data.generationId !== get().generationId)) return;
+    if (!['placements', 'episodeDone', 'sync'].includes(type)) return;
+    const isEval = Boolean(data.isEvaluation);
+    const completed = type === 'episodeDone';
+    const expectedEpisode = get().nextEpisode ?? get().episode;
+    // Evaluation of the last completed layout is tagged with its inspected episode.
+    if (!completed && !isEval && data.episode != null && data.episode !== expectedEpisode) return;
+    if (completed && data.completedEpisode != null && data.completedEpisode !== get().episode) return;
+    if (isEval && data.episode != null && ![get().episode, expectedEpisode].includes(data.episode)) return;
+    if (isEval && get().trainingWanted) return;
+    const wasRunning = get().trainingWanted;
+    const graphOnly = data.graphState && !data.graphState.realized;
+    const placements = data.placements || [];
+    let nextList = placements;
+    if (!graphOnly && !isEval && !completed && type !== 'sync') {
+      const map = new Map(get().individualPlacementsList.map((p) => [p.id, p]));
+      placements.forEach((p) => map.set(p.id, p)); nextList = [...map.values()];
+    }
+    if (completed && !data.placements && !graphOnly) nextList = get().individualPlacementsList;
+    const merged = data.graphState ? nextList : (data.mergedPlacements?.length ? data.mergedPlacements : nextList);
+    const effectiveMetrics = { ...(data.metrics || get().metrics) };
+    const validation = data.validation ?? (graphOnly ? null : get().validation);
+    const now = performance.now();
+    const wall = lastEpisodeStartTime > 0 ? Math.round(now - lastEpisodeStartTime) : null;
+    const diagnostics = { ...get().diagnostics, ...data.diagnostics, ...effectiveMetrics.runtimeDiagnostics };
+    if (completed) {
+      diagnostics.episodeTimeMs = effectiveMetrics.episodeExecutionTimeMs ?? data.diagnostics?.episodeTimeMs ?? null;
+      diagnostics.postStepEvaluationMs = effectiveMetrics.postStepEvaluationMs ?? data.diagnostics?.postStepEvaluationMs ?? null;
+      diagnostics.clientWallTimeMs = wall;
+    }
+    set({ stepInFlight: isEval ? get().stepInFlight : false,
+      evaluationInFlight: isEval ? false : get().evaluationInFlight,
+      step: data.step ?? get().step,
+      episode: completed ? (data.completedEpisode ?? data.episode ?? get().episode) : (isEval && get().nextEpisode != null ? get().episode : (data.episode ?? get().episode)),
+      nextEpisode: completed ? data.nextEpisode : get().nextEpisode,
+      graphState: data.graphState ?? (type === 'sync' ? null : get().graphState),
+      individualPlacementsList: nextList, currentMergedPlacements: merged,
+      completed3DPlacements: completed || isEval || type === 'sync' ? merged : (graphOnly ? [] : get().completed3DPlacements),
+      dictionary: data.dictionary ?? get().dictionary, mergedDictionary: data.mergedDictionary ?? get().mergedDictionary,
+      metrics: effectiveMetrics, diagnostics, validation,
+      predictionErrors: data.predictionErrors ?? get().predictionErrors,
+      phase: completed ? 'complete' : get().phase,
+      statusMessage: isEval ? 'Geometry preview ready' : completed ? `Episode ${data.completedEpisode ?? data.episode} complete` : `Episode ${data.episode} · batch ${data.step}`,
+    });
+    if (completed) {
+      const record = { episode: get().episode, mode: get().mode, realized: Boolean(data.graphState?.realized),
+        fill: effectiveMetrics.fillRatio ?? null, reuse: effectiveMetrics.reuseAudit?.independentRepeatFraction ?? null,
+        valid: validation?.valid ?? null, graphValid: validation?.graphValid ?? effectiveMetrics.graphValid ?? null,
+        serverMs: diagnostics.episodeTimeMs, wallMs: wall, score: effectiveMetrics.score ?? null };
+      set((s) => ({ episodeRecords: [...s.episodeRecords, record],
+        fillHistory: [...s.fillHistory, record.fill == null ? null : record.fill * 100],
+        rentableHistory: [...s.rentableHistory, effectiveMetrics.rentableRatio == null ? null : effectiveMetrics.rentableRatio * 100],
+        modulesHistory: [...s.modulesHistory, effectiveMetrics.moduleCount ?? effectiveMetrics.graphNodes ?? null],
+        epTimeHistory: [...s.epTimeHistory, record.serverMs],
+        rewardHistory: data.scoreHistory ?? s.rewardHistory, bestReward: data.bestScore ?? s.bestReward }));
+      if (get().mode === 'inference') { set({ trainingWanted: false }); return; }
+      if (!wasRunning) { get().requestEvaluation(); return; }
+      const count = get().episodesOnCurrentSite + 1;
+      const limit = get().settings.autoChangeEpisodes ?? 1;
+      set({ episodesOnCurrentSite: count });
+      if (limit <= 20 && count >= limit) {
+        // Keep run intent across the authoritative site transaction.
+        get().requestNewSite();
+        set({ trainingWanted: true, episodesOnCurrentSite: 0 });
+      } else get().dispatchStep();
+    } else if (!isEval && type !== 'sync') {
+      if (wasRunning) get().dispatchStep();
+      else get().requestEvaluation();
     }
   },
 }));

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import * as THREE from 'three';
+import { displayPolygon } from '../store/presentation';
 import { useStore } from '../store/useStore';
 import { SiteInfoCard } from './SiteInfoCard';
 import { ViewToggle } from './ViewToggle';
@@ -15,6 +15,7 @@ export const ThreeViewer = () => {
   const setViewMode = useStore((s) => s.setViewMode);
   const settings = useStore((s) => s.settings);
   const boundaries = useStore((s) => s.boundaries);
+  const contextData = useStore((s) => s.contextData);
   const completed3DPlacements = useStore((s) => s.completed3DPlacements);
   const individualPlacementsList = useStore((s) => s.individualPlacementsList);
   const currentMergedPlacements = useStore((s) => s.currentMergedPlacements);
@@ -22,7 +23,7 @@ export const ThreeViewer = () => {
   const phase = useStore((s) => s.phase);
   const graphState = useStore((s) => s.graphState);
   const maximizedPane = useStore((s) => s.maximizedPane);
-  const visualsEnabled = useStore((s) => s.visualsEnabled);
+  const visualsEnabled = useStore((s) => s.visualsEnabled && s.show3D);
 
   const targetSite = filteredSites[activeSiteIndex];
 
@@ -59,23 +60,26 @@ export const ThreeViewer = () => {
     // frozen (blank) instead of flashing the site context before our
     // set_visuals_enabled message lands.
     const u = new URL(base, window.location.origin);
-    u.searchParams.set('v', 'v0.10.0');
-    if (!visualsEnabled) u.searchParams.set('visuals', 'off');
+    u.searchParams.set('v', 'v0.10.0-editorial');
+    // Start frozen; the ready handshake enables this pane when requested.
+    u.searchParams.set('visuals', 'off');
     return u.pathname + u.search;
   };
 
   const configureIframe = useCallback((iframe) => {
     if (!iframe || !iframe.contentWindow) return;
 
-    // Live Real-Time 3D Building Stream (Merged on Pause / Episode Done, Live Unmerged during Episode)
-    const effectiveList = (graphState && !graphState.realized) ? [] : (Array.isArray(completed3DPlacements) && completed3DPlacements.length > 0)
-      ? completed3DPlacements
-      : ((!disableMerging && Array.isArray(currentMergedPlacements) && currentMergedPlacements.length > 0)
-          ? currentMergedPlacements
-          : (Array.isArray(individualPlacementsList) ? individualPlacementsList : []));
+    // Live Real-Time 3D Building Stream: Geometry is realized on pause and episode completion.
+    const isGraphMidway = settings?.generatorEngine === 'graph_voronoi' && graphState && !graphState.realized;
+    const effectiveList = isGraphMidway
+      ? []
+      : ((Array.isArray(completed3DPlacements) && completed3DPlacements.length > 0)
+          ? completed3DPlacements
+          : ((!disableMerging && Array.isArray(currentMergedPlacements) && currentMergedPlacements.length > 0)
+              ? currentMergedPlacements
+              : (Array.isArray(individualPlacementsList) ? individualPlacementsList : [])));
 
-    const isCustom = !!(activeSite?.is_custom || targetSite?.is_custom || (activeSite?.site_id && activeSite.site_id.startsWith('custom_')));
-    const isReal = isCustom || settings.boundaryType === 'real' || settings.boundaryType === 'mixed' || settings.boundaryType === 'osm' || !settings.boundaryType || settings.boundaryType === 'free';
+    const isReal = settings?.boundaryType === 'real' || (settings?.boundaryType === 'mixed' && Boolean(contextData?.site_id));
     const firstBoundary = Array.isArray(boundaries) && boundaries.length > 0 ? boundaries[0] : null;
     const currentBoundaryPoly = (!isReal && firstBoundary)
       ? (firstBoundary.outer || firstBoundary.polygon || firstBoundary.coords || null)
@@ -110,10 +114,14 @@ export const ThreeViewer = () => {
     }, '*');
 
     }
+    if (!visualsEnabled) {
+      frameSetups.current.set(iframe, { doc: frameDocument, boundaries, boundaryType: settings.boundaryType, viewMode, maximizedPane, visualsEnabled: false, graphOnly });
+      return;
+    }
     if (setupChanged || !graphOnly || previous?.graphOnly !== graphOnly) {
     iframe.contentWindow.postMessage({
       type: 'optimizer_placements',
-      placements: effectiveList,
+      placements: effectiveList.map((p) => ({ ...p, poly: displayPolygon(p, boundaries) })),
       boundaries: boundaries,
       isReal: isReal,
       graphState: graphState,
@@ -160,19 +168,19 @@ export const ThreeViewer = () => {
         gizmo.style.opacity = '1';
         gizmo.style.top = '58px';
         gizmo.style.transition = 'none';
-        gizmo.style.right = maximizedPane === 'left' ? '18px' : 'calc(25vw + 18px)';
+        gizmo.style.right = '18px';
         gizmo.style.zIndex = '100';
       }
 
       // 3. Enforce viewMode on the 3D scene
       const btnPersp = doc.getElementById('btn-persp');
       const btnOrtho = doc.getElementById('btn-ortho') || doc.getElementById('btn-axono');
-      if (viewMode === 'axonometric' && btnOrtho) {
+      if (previous?.viewMode !== viewMode && viewMode === 'axonometric' && btnOrtho) {
         btnOrtho.click();
-      } else if (viewMode === 'perspective' && btnPersp) {
+      } else if (previous?.viewMode !== viewMode && viewMode === 'perspective' && btnPersp) {
         btnPersp.click();
       }
-      iframe.contentWindow.postMessage({ type: 'set_camera_mode', mode: viewMode }, '*');
+      if (previous?.viewMode !== viewMode) iframe.contentWindow.postMessage({ type: 'set_camera_mode', mode: viewMode }, '*');
 
       // 4. Hide surrounding context if boundary is not OSM Plot
       if (!isReal && doc.defaultView) {
@@ -186,7 +194,7 @@ export const ThreeViewer = () => {
         }
       }
     } catch (e) {}
-  }, [graphState, completed3DPlacements, boundaries, currentMergedPlacements, individualPlacementsList, disableMerging, settings.boundaryType, viewMode, maximizedPane, visualsEnabled]);
+  }, [graphState, completed3DPlacements, boundaries, contextData, currentMergedPlacements, individualPlacementsList, disableMerging, settings.boundaryType, viewMode, maximizedPane, visualsEnabled]);
 
   // Sync Gizmo Position on Pane Maximize / Restore (smooth transition on user toggle)
   useEffect(() => {
@@ -197,27 +205,10 @@ export const ThreeViewer = () => {
       const gizmo = doc.getElementById('gizmo-container');
       if (gizmo) {
         gizmo.style.transition = 'right 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        gizmo.style.right = maximizedPane === 'left' ? '18px' : 'calc(25vw + 18px)';
+        gizmo.style.right = '18px';
       }
     } catch (e) {}
   }, [maximizedPane]);
-
-  // Sync Camera Mode (Axo vs Persp) with the active 3D Engine
-  useEffect(() => {
-    const iframe = activeIframeRef.current;
-    if (!iframe || !iframe.contentWindow) return;
-    try {
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      if (viewMode === 'axonometric') {
-        const btn = doc.getElementById('btn-ortho') || doc.getElementById('btn-axono');
-        if (btn) btn.click();
-      } else {
-        const btn = doc.getElementById('btn-persp');
-        if (btn) btn.click();
-      }
-      iframe.contentWindow.postMessage({ type: 'set_camera_mode', mode: viewMode }, '*');
-    } catch (e) {}
-  }, [viewMode, activeSite?.site_id]);
 
   // Listen to camera mode changes or viewer ready signals initiated inside the iframe
   useEffect(() => {
@@ -234,6 +225,18 @@ export const ThreeViewer = () => {
     return () => window.removeEventListener('message', handleMsg);
   }, [setViewMode, configureIframe]);
 
+  // Listen to global reset_views event to reset 3D camera
+  useEffect(() => {
+    const handleReset = () => {
+      const iframe = activeIframeRef.current;
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: 'reset_camera' }, '*');
+      }
+    };
+    window.addEventListener('reset_views', handleReset);
+    return () => window.removeEventListener('reset_views', handleReset);
+  }, []);
+
   // Sync 3D Building Extrusions from Optimizer into the Active Scene
   useEffect(() => {
     configureIframe(activeIframeRef.current);
@@ -242,11 +245,17 @@ export const ThreeViewer = () => {
   const handleActiveIframeLoad = () => {
     if (activeIframeRef.current) frameSetups.current.delete(activeIframeRef.current);
     configureIframe(activeIframeRef.current);
+    try {
+      activeIframeRef.current?.contentWindow?.postMessage({ type: 'reset_camera' }, '*');
+    } catch (e) {}
   };
 
   const handleIncomingIframeLoad = () => {
     const nextIframe = incomingIframeRef.current;
     configureIframe(nextIframe);
+    try {
+      nextIframe?.contentWindow?.postMessage({ type: 'reset_camera' }, '*');
+    } catch (e) {}
 
     // After 80ms buffer paint, cleanly promote incoming site to active site (zero flicker!)
     setTimeout(() => {
