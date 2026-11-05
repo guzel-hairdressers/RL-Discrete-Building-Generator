@@ -100,7 +100,11 @@ export function PlanCanvas2D() {
     if (signature !== lastSite.current && visibleBoundaries.length) {lastSite.current=signature;fit();}
   },[s.boundaries,s.selectedFloor,fit,visibleBoundaries.length]);
   useEffect(()=>{fit();},[s.show3D,fit]);
-  useEffect(()=>{window.addEventListener('reset_views',fit);return()=>window.removeEventListener('reset_views',fit);},[fit]);
+  useEffect(()=>{
+    window.addEventListener('reset_views',fit);
+    window.addEventListener('fit_plan_layout',fit);
+    return()=>{window.removeEventListener('reset_views',fit);window.removeEventListener('fit_plan_layout',fit);};
+  },[fit]);
   useEffect(()=>{
     const c=canvas.current;
     const wheel=(e)=>{ e.preventDefault(); const box=c.getBoundingClientRect(), px=e.clientX-box.left,py=e.clientY-box.top;

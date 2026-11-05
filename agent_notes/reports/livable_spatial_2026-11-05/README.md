@@ -147,3 +147,8 @@ requirement diamonds, labels valid geometry explicitly, and lists failed spatial
 requirements by floor. The latest live failure is primarily livable exposure,
 with some over-limit estimated access paths; fill/core/program requirements pass.
 No constraint was loosened merely to relabel these designs as successful.
+
+The parallel UI work was subsequently committed as6a2b11c1 and merged into the
+release branch with the validation-clarity change. The combined21-test frontend
+suite and production build pass; the chart remains collapsible, all three metrics
+remain available, and spatial failures retain a distinct marker.

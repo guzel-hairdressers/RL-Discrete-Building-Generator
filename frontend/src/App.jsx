@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, Layers3, Box, ScanLine, Network, Route, Eye } from 'lucide-react';
 import { useStore } from './store/useStore';
 import { ThreeViewer } from './components/ThreeViewer';
@@ -14,6 +14,8 @@ import './workspace.css';
 import './editorial.css';
 export function App() {
   const s=useStore();
+  const [hasOpened3D, setHasOpened3D] = useState(false);
+  useEffect(() => { if (s.show3D) setHasOpened3D(true); }, [s.show3D]);
   useEffect(()=>{s.initWebSocket();},[s.initWebSocket]);
   useEffect(()=>{
     const keyboard=(e)=>{
@@ -37,7 +39,7 @@ export function App() {
     <main className="workspace-layout"><section className="drawing-region">
       <div className="workspace-title"><div><span className="eyebrow">Workspace / {s.mode==='training'?'Training':'Generate'}</span><h1>{s.settings.boundaryType==='real'?(site?.city_name||site?.city_code||'Urban site study'):'Procedural site study'}<span>{s.boundaries.length||'—'} floors</span></h1></div><div className="site-navigation"><button aria-label="Previous site" disabled={s.pendingSite||s.settings.boundaryType!=='real'} onClick={()=>s.navigateCarousel(-1)}><ArrowLeft size={15}/></button><button disabled={s.pendingSite} onClick={s.requestNewSite}>Next site <ArrowRight size={15}/></button></div></div>
       <div className="workspace-toolbar"><label className="floor-select"><Layers3 size={14}/><select aria-label="Displayed floor" value={s.selectedFloor} onChange={(e)=>s.setSelectedFloor(e.target.value)}><option value="all">All floors</option>{s.boundaries.map((_,i)=><option key={i} value={i}>Floor {i+1}</option>)}</select></label><div className="layer-controls"><button className={s.showGraph?'active':''} aria-pressed={s.showGraph} onClick={()=>s.setShowGraph(!s.showGraph)}><Network size={14}/>Graph</button><button className={s.showAccess?'active':''} aria-pressed={s.showAccess} onClick={()=>s.setShowAccess(!s.showAccess)} title="Only explicit usable-access edges establish door connections"><Route size={14}/>Access</button></div><div className="view-controls"><button aria-pressed={s.show3D} className={s.show3D?'active':''} onClick={()=>s.setShow3D(!s.show3D)}><Box size={14}/>{s.show3D?'Hide 3D':'Show 3D'}</button><button disabled={s.trainingWanted||s.pendingSite||s.evaluationInFlight||!s.hasSite} onClick={s.requestEvaluation}><ScanLine size={14}/>{s.evaluationInFlight?'Checking…':'Check geometry'}</button></div></div>
-      <div className={`drawing-surfaces ${s.show3D?'with-context':''}`}><div className="plan-container"><PlanCanvas2D/></div><div className={`context-container ${s.show3D?'':'context-hidden'}`}><ThreeViewer/></div></div>
+      <div className={`drawing-surfaces ${s.show3D?'with-context':''}`}><div className="plan-container"><PlanCanvas2D/></div><div className={`context-container ${s.show3D?'':'context-hidden'}`}>{(s.show3D || hasOpened3D) && <ThreeViewer/>}</div></div>
       <div className="workspace-status" role="status"><span><i className={s.trainingWanted?'running-dot':''}/>{s.statusMessage}</span><span>Episode {s.episode} · batch {s.step}<b>Batch ≠ module count</b></span></div><RewardTrendChart/>
     </section><ModulePalette/></main>
     <footer className="workspace-footer"><span>Module Lab · Research preview</span><span><Eye size={12}/>Environmental performance unmeasured</span><span>{s.connected?'Optimizer connected':'Optimizer disconnected'}</span></footer>

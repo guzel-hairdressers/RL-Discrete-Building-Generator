@@ -2,27 +2,27 @@
 > module-lab-frontend@0.10.0 test
 > node --test tests/*.test.mjs
 
-✔ start waits for mode acknowledgement and sends exact authoritative identifiers (2.256375ms)
-✔ graph batches advance synchronously without render or timer gates (0.203125ms)
-✔ pause waits for an in-flight batch before one preview, with no new step (0.249167ms)
-✔ pause on a terminal batch previews using next server episode (0.2045ms)
-✔ completed inference stops even when legacy autoGenerate is true and audit fails (0.205375ms)
-✔ old-generation and old-episode placements cannot replace a current layout (0.110875ms)
-✔ settings apply once and consume authoritative site settings (0.227042ms)
-✔ terminal timings stay unavailable if server did not measure them (0.176292ms)
-✔ geometry previews retain estimate history and prediction differences (0.188042ms)
-✔ errors stop execution instead of an unbounded retry loop (0.113958ms)
-✔ palette counts occurrence IDs separately from floor references and functions (0.163ms)
-✔ unavailable values remain unknown and area is summed only from complete measurements (0.152166ms)
-✔ completed preview keeps inspected episode separate from the next server episode (0.188ms)
-✔ late mode acknowledgement cannot resume paused execution (0.155875ms)
-✔ realized area fallbacks use audited fill and measured residential placements (0.073208ms)
-✔ graph realization uses physical occurrences instead of legacy merged geometry (0.125708ms)
-✔ native graph geometry translates once while legacy display records keep world coordinates (0.156125ms)
-✔ reset dispatch is verified against a simulated socket without resetting live weights (0.587125ms)
-✔ active wall time freezes on pause and resumes without paused or preview time (0.478042ms)
-✔ livable facade proxy and spatial failure retain their own provenance (0.13325ms)
-✔ spatial failures identify the requirement without relabeling valid geometry as failed (0.14125ms)
+✔ start waits for mode acknowledgement and sends exact authoritative identifiers (2.694792ms)
+✔ graph batches advance synchronously without render or timer gates (0.173958ms)
+✔ pause waits for an in-flight batch before one preview, with no new step (0.235375ms)
+✔ pause on a terminal batch previews using next server episode (0.179708ms)
+✔ completed inference stops even when legacy autoGenerate is true and audit fails (0.189875ms)
+✔ old-generation and old-episode placements cannot replace a current layout (0.097666ms)
+✔ settings apply once and consume authoritative site settings (0.18825ms)
+✔ terminal timings stay unavailable if server did not measure them (0.134625ms)
+✔ geometry previews retain estimate history and prediction differences (0.166708ms)
+✔ errors stop execution instead of an unbounded retry loop (0.102958ms)
+✔ palette counts occurrence IDs separately from floor references and functions (0.165083ms)
+✔ unavailable values remain unknown and area is summed only from complete measurements (0.115292ms)
+✔ completed preview keeps inspected episode separate from the next server episode (0.143125ms)
+✔ late mode acknowledgement cannot resume paused execution (0.127333ms)
+✔ realized area fallbacks use audited fill and measured residential placements (0.060375ms)
+✔ graph realization uses physical occurrences instead of legacy merged geometry (0.106834ms)
+✔ native graph geometry translates once while legacy display records keep world coordinates (0.126041ms)
+✔ reset dispatch is verified against a simulated socket without resetting live weights (0.289166ms)
+✔ active wall time freezes on pause and resumes without paused or preview time (0.381958ms)
+✔ livable facade proxy and spatial failure retain their own provenance (0.103042ms)
+✔ spatial failures identify the requirement without relabeling valid geometry as failed (0.115416ms)
 ℹ tests 21
 ℹ suites 0
 ℹ pass 21
@@ -30,4 +30,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 65.324125
+ℹ duration_ms 70.978833
