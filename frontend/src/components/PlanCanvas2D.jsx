@@ -47,10 +47,10 @@ export function PlanCanvas2D() {
     const visibleFloor = (f) => s.selectedFloor === 'all' || Number(f) === Number(s.selectedFloor);
     for (const [i,b] of s.boundaries.entries()) {
       if (!visibleFloor(i)) continue;
-      polygon(ctx,b.outer || []); ctx.fillStyle='#ffffff'; ctx.fill(); ctx.strokeStyle='#7c8c87'; ctx.lineWidth=1.2/z; ctx.stroke();
-      for (const hole of b.holes || []) { polygon(ctx,hole); ctx.fillStyle='#e9eee9'; ctx.fill(); ctx.setLineDash([4/z,3/z]); ctx.stroke(); ctx.setLineDash([]); }
+      polygon(ctx,b.outer || []); ctx.fillStyle='#ffffff'; ctx.fill(); ctx.strokeStyle='#9b9b9b'; ctx.lineWidth=1.2/z; ctx.stroke();
+      for (const hole of b.holes || []) { polygon(ctx,hole); ctx.fillStyle='#f1f1f1'; ctx.fill(); ctx.setLineDash([4/z,3/z]); ctx.stroke(); ctx.setLineDash([]); }
       const pts=(b.outer || []).map(xy);
-      if (pts.length) { ctx.font=`${11/z}px system-ui`; ctx.fillStyle='#667770'; ctx.fillText(`F${String(i+1).padStart(2,'0')}`,Math.min(...pts.map((p)=>p[0])),Math.max(...pts.map((p)=>p[1]))+18/z); }
+      if (pts.length) { ctx.font=`${11/z}px system-ui`; ctx.fillStyle='#9d9d9d'; ctx.fillText(`F${String(i+1).padStart(2,'0')}`,Math.min(...pts.map((p)=>p[0])),Math.max(...pts.map((p)=>p[1]))+18/z); }
     }
     const graph=s.graphState;
     const graphOnly=graph && !graph.realized;
@@ -61,8 +61,8 @@ export function PlanCanvas2D() {
       const id=p.moduleId || p.module?.id;
       const selected=id===s.selectedModuleId || id===s.hoveredModuleId || p.id===s.selectedOccurrenceId;
       ctx.globalAlpha=s.selectedModuleId && !selected ? .2 : .82;
-      polygon(ctx,poly); ctx.fillStyle=moduleColor(id); ctx.fill(); ctx.strokeStyle=selected ? '#113d32' : '#5c7068'; ctx.lineWidth=(selected?2.8:1)/z; ctx.stroke();
-      if (p.category === 'core') { const c=poly.map(xy), cx=c.reduce((a,p)=>a+p[0],0)/c.length, cy=c.reduce((a,p)=>a+p[1],0)/c.length; ctx.font=`bold ${10/z}px system-ui`; ctx.fillStyle='#183d32'; ctx.textAlign='center'; ctx.fillText('C',cx,cy); }
+      polygon(ctx,poly); ctx.fillStyle=moduleColor(id); ctx.fill(); ctx.strokeStyle=selected ? '#6a6a6a' : '#747474'; ctx.lineWidth=(selected?2.8:1)/z; ctx.stroke();
+      if (p.category === 'core') { const c=poly.map(xy), cx=c.reduce((a,p)=>a+p[0],0)/c.length, cy=c.reduce((a,p)=>a+p[1],0)/c.length; ctx.font=`bold ${10/z}px system-ui`; ctx.fillStyle='#444444'; ctx.textAlign='center'; ctx.fillText('C',cx,cy); }
     }
     ctx.globalAlpha=1;
     const nodes=graph?.nodes || [], byId=new Map(nodes.map((n)=>[n.id,n]));
@@ -75,20 +75,20 @@ export function PlanCanvas2D() {
       }
       ctx.stroke();ctx.setLineDash([]);
     };
-    if (s.showGraph) lines(graph?.edgesHoriz,'#879caa',[4,4]);
+    if (s.showGraph) lines(graph?.edgesHoriz,'#aaaaaa',[4,4]);
     // Only explicit usable-access edges from the server may be drawn as access.
-    if (s.showAccess) lines(graph?.accessEdges,'#168467',[]);
+    if (s.showAccess) lines(graph?.accessEdges,'#6b6b6b',[]);
     if (s.showGraph || graphOnly) for (const n of nodes) {
       if (!visibleFloor(n.floor)) continue;
       const [nx,ny]=world(n), selected=n.id===s.selectedOccurrenceId || n.moduleId===s.selectedModuleId || n.moduleId===s.hoveredModuleId;
       ctx.globalAlpha=s.selectedModuleId && !selected ? .25 : 1;
-      ctx.beginPath();ctx.arc(nx,ny,(selected?5:3)/z,0,Math.PI*2);ctx.fillStyle=moduleColor(n.moduleId);ctx.fill();ctx.strokeStyle=selected?'#163c30':'#ffffff';ctx.lineWidth=(selected?2:1)/z;ctx.stroke();
-      if (selected && z>2) {ctx.font=`11px system-ui`; ctx.save();ctx.translate(nx,ny);ctx.scale(1/z,1/z);ctx.fillStyle='#183d32';ctx.textAlign='left';ctx.fillText(n.moduleId || n.id,9,-7);ctx.restore();}
+      ctx.beginPath();ctx.arc(nx,ny,(selected?5:3)/z,0,Math.PI*2);ctx.fillStyle=moduleColor(n.moduleId);ctx.fill();ctx.strokeStyle=selected?'#6a6a6a':'#ffffff';ctx.lineWidth=(selected?2:1)/z;ctx.stroke();
+      if (selected && z>2) {ctx.font=`11px system-ui`; ctx.save();ctx.translate(nx,ny);ctx.scale(1/z,1/z);ctx.fillStyle='#444444';ctx.textAlign='left';ctx.fillText(n.moduleId || n.id,9,-7);ctx.restore();}
     }
     ctx.globalAlpha=1;ctx.restore();
     // A scale bar in actual world units, independent of pan and device pixels.
     const units=10**Math.floor(Math.log10(90/z)), length=units*z;
-    ctx.strokeStyle='#53665e';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(w-28-length,h-28);ctx.lineTo(w-28,h-28);ctx.stroke();ctx.font='10px system-ui';ctx.textAlign='right';ctx.fillStyle='#53665e';ctx.fillText(`${units} m`,w-28,h-35);
+    ctx.strokeStyle='#9d9d9d';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(w-28-length,h-28);ctx.lineTo(w-28,h-28);ctx.stroke();ctx.font='10px system-ui';ctx.textAlign='right';ctx.fillStyle='#9d9d9d';ctx.fillText(`${units} m`,w-28,h-35);
   },[s.boundaries,s.graphState,s.currentMergedPlacements,s.individualPlacementsList,s.selectedFloor,s.selectedModuleId,s.hoveredModuleId,s.selectedOccurrenceId,s.showGraph,s.showAccess,size]);
   const redraw=useRef(()=>{});
   redraw.current=()=>{ cancelAnimationFrame(frame.current); frame.current=requestAnimationFrame(draw); };

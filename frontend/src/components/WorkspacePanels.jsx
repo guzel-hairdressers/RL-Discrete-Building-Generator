@@ -12,7 +12,7 @@ export function OutcomeStrip() {
   const title = !hasSite ? 'Waiting for optimizer' : measured ? 'Realized measurements' : 'Graph constraint estimates';
   const types = audit?.prototypeCount ?? (graphState ? moduleInventory(graphState.nodes, dictionary).length : m.vocabSize);
   return <section className="outcome-strip" aria-label="Layout outcomes">
-    <div className="measurement-source"><span className="eyebrow">LAYOUT OUTCOMES</span><strong>{title}</strong><span className={`validation-pill ${validation?.valid === true ? 'valid' : validation?.valid === false ? 'invalid' : ''}`}>{validation?.valid === true ? <CheckCircle2 size={12}/> : <AlertCircle size={12}/>} {validationLabel(validation)}</span></div>
+    <div className="measurement-source"><span className="eyebrow">Overview</span><strong>{title}</strong><span className={`validation-pill ${validation?.valid === true ? 'valid' : validation?.valid === false ? 'invalid' : ''}`}>{validation?.valid === true ? <CheckCircle2 size={12}/> : <AlertCircle size={12}/>} {validationLabel(validation)}</span></div>
     <div className="outcome"><span>Site fill</span><strong>{percent(m.fillRatio)}</strong><small>{format(areas.filled)} m² filled</small></div>
     <div className="outcome"><span>Residential area</span><strong>{format(areas.residential)}<em> m²</em></strong><small>{percent(m.rentableRatio)} of filled area · circulation {areas.circulation == null ? 'unmeasured' : `${format(areas.circulation)} m²`}</small></div>
     <div className="outcome"><span>Independent reuse</span><strong>{percent(audit?.independentRepeatFraction)}</strong><small>{format(audit?.independentOccurrences)} independent occurrences</small></div>
@@ -26,15 +26,15 @@ function Shape({ shape, id }) {
   const pts = poly.map((p) => [p.x ?? p[0], -(p.y ?? p[1])]);
   const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
   const x = Math.min(...xs), y = Math.min(...ys), w = Math.max(...xs) - x, h = Math.max(...ys) - y;
-  return <svg viewBox={`${x-1} ${y-1} ${w+2} ${h+2}`} aria-label={`Prototype ${id}`}><polygon points={pts.map((p) => p.join(',')).join(' ')} fill={moduleColor(id)} stroke="#394744" strokeWidth=".18"/></svg>;
+  return <svg viewBox={`${x-1} ${y-1} ${w+2} ${h+2}`} aria-label={`Prototype ${id}`}><polygon points={pts.map((p) => p.join(',')).join(' ')} fill={moduleColor(id)} stroke="#626262" strokeWidth=".18"/></svg>;
 }
 export function ModulePalette() {
   const s = useStore();
   const inventory = moduleInventory(s.graphState?.nodes, s.dictionary);
   const selected = (s.graphState?.nodes || []).find((n) => n.id === s.selectedOccurrenceId);
   return <aside className="module-sidebar">
-    <div className="panel-heading"><div><span className="eyebrow">SHARED DICTIONARY</span><h2>Module palette</h2></div><span className="count-tag">{inventory.length}</span></div>
-    <p className="panel-caption">One color per geometric prototype. Function is listed separately.</p>
+    <div className="panel-heading"><div><span className="eyebrow">Library</span><h2>Module palette</h2></div><span className="count-tag">{inventory.length}</span></div>
+    <p className="panel-caption">Select a prototype to highlight its occurrences. Function is listed separately.</p>
     <div className="module-list">
       {inventory.length === 0 && <div className="empty-palette">Your building’s reusable types appear here as it grows.<span>Train a policy or generate a layout to begin.</span></div>}
       {inventory.map((m) => <button key={m.id} className={`module-card ${s.selectedModuleId === m.id ? 'selected' : ''}`} onClick={() => s.setSelectedModuleId(m.id)} onMouseEnter={() => s.setHoveredModuleId(m.id)} onMouseLeave={() => s.setHoveredModuleId(null)} aria-pressed={s.selectedModuleId === m.id}>
@@ -43,7 +43,7 @@ export function ModulePalette() {
       </button>)}
     </div>
     <div className="palette-note">{s.graphState?.realized ? 'Shapes shown from geometry preview.' : 'Constraint metadata · shapes available after preview.'}</div>
-    <section className="occurrence-inspector"><span className="eyebrow">OCCURRENCE INSPECTOR</span>{selected ? <><h3>{selected.id}</h3><dl><dt>Prototype</dt><dd>{selected.moduleId}</dd><dt>Function</dt><dd>{selected.type}</dd><dt>Occurrence</dt><dd>{selected.occurrenceId ?? 'Unavailable'}</dd><dt>Scope</dt><dd>{selected.scope ?? 'Unavailable'}</dd><dt>Floor</dt><dd>{selected.floor + 1}</dd><dt>Rotation</dt><dd>{selected.orientation == null ? '—' : `${format(selected.orientation * 180 / Math.PI, 1)}°`}</dd></dl></> : <p>Select a node or a room in the plan to inspect its identity and floor reference.</p>}</section>
+    <section className="occurrence-inspector"><span className="eyebrow">Occurrence details</span>{selected ? <><h3>{selected.id}</h3><dl><dt>Prototype</dt><dd>{selected.moduleId}</dd><dt>Function</dt><dd>{selected.type}</dd><dt>Occurrence</dt><dd>{selected.occurrenceId ?? 'Unavailable'}</dd><dt>Scope</dt><dd>{selected.scope ?? 'Unavailable'}</dd><dt>Floor</dt><dd>{selected.floor + 1}</dd><dt>Rotation</dt><dd>{selected.orientation == null ? '—' : `${format(selected.orientation * 180 / Math.PI, 1)}°`}</dd></dl></> : <p>Select a node or a room in the plan to inspect its identity and floor reference.</p>}</section>
   </aside>;
 }
 
@@ -59,7 +59,7 @@ export function ConfigurationDrawer() {
   const select = (label, key, options) => <label className="config-field">{label}<select value={draft[key] ?? ''} onChange={(e) => edit(key, e.target.value)}>{options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>;
   const input = (label, key, min, max, step = 1) => <label className="config-field">{label}<input type="number" value={draft[key] ?? ''} min={min} max={max} step={step} onChange={(e) => edit(key, e.target.value === '' ? '' : Number(e.target.value))}/></label>;
   return <div className="drawer-scrim" onClick={() => s.setActiveBottomDrawer(null)}><section className="workspace-drawer" role="dialog" aria-modal="true" aria-label="Configuration" onClick={(e) => e.stopPropagation()}>
-    <div className="drawer-heading"><div><span className="eyebrow">EXPERIMENT SETUP</span><h2>Configuration</h2></div><button aria-label="Close configuration" onClick={() => s.setActiveBottomDrawer(null)}><X size={18}/></button></div>
+    <div className="drawer-heading"><div><span className="eyebrow">Preferences</span><h2>Configuration</h2></div><button aria-label="Close configuration" onClick={() => s.setActiveBottomDrawer(null)}><X size={18}/></button></div>
     <p>Apply changes together. The optimizer returns the authoritative settings and a fresh site.</p>
     <div className="config-grid">
       {select('Generator engine', 'generatorEngine', [['graph_voronoi','Shared graph / Voronoi'],['discrete_polygon','Legacy discrete polygon']])}

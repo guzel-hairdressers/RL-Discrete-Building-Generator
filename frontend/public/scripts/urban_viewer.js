@@ -63,7 +63,7 @@ export function initUrbanContext(DATA) {
   function prototypeColor(id) {
     let hash = 2166136261;
     for (const c of String(id || 'unknown')) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619);
-    return new THREE.Color(`hsl(${((hash % 360) + 360) % 360}, 46%, 62%)`);
+    return new THREE.Color(`hsl(${((hash % 360) + 360) % 360}, 68%, 69%)`);
   }
   const graphGroup = new THREE.Group();
   graphGroup.name = "graphGroup";
@@ -511,7 +511,7 @@ export function initUrbanContext(DATA) {
 
     if (outPts.length >= 3) {
       const siteLineGeom = new THREE.BufferGeometry().setFromPoints(outPts);
-      const siteLineMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2.5 });
+      const siteLineMat = new THREE.LineBasicMaterial({ color: 0x555555, linewidth: 2.5 });
       siteGroup.add(new THREE.Line(siteLineGeom, siteLineMat));
     }
   }
@@ -609,7 +609,7 @@ export function initUrbanContext(DATA) {
         if (horizPositions.length > 0) {
           const hGeom = new THREE.BufferGeometry();
           hGeom.setAttribute('position', new THREE.Float32BufferAttribute(horizPositions, 3));
-          const hMat = new THREE.LineBasicMaterial({ color: 0x0284c7, linewidth: 2.5, transparent: true, opacity: 0.85 });
+          const hMat = new THREE.LineBasicMaterial({ color: 0x888888, linewidth: 2.5, transparent: true, opacity: 0.85 });
           const hLines = new THREE.LineSegments(hGeom, hMat);
           graphGroup.add(hLines);
         }
@@ -630,7 +630,7 @@ export function initUrbanContext(DATA) {
         if (vertPositions.length > 0) {
           const vGeom = new THREE.BufferGeometry();
           vGeom.setAttribute('position', new THREE.Float32BufferAttribute(vertPositions, 3));
-          const vMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 3.5, transparent: true, opacity: 0.9 });
+          const vMat = new THREE.LineBasicMaterial({ color: 0x555555, linewidth: 3.5, transparent: true, opacity: 0.9 });
           const vLines = new THREE.LineSegments(vGeom, vMat);
           graphGroup.add(vLines);
         }

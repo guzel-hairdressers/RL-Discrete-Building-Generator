@@ -60,7 +60,7 @@ export const ThreeViewer = () => {
     // frozen (blank) instead of flashing the site context before our
     // set_visuals_enabled message lands.
     const u = new URL(base, window.location.origin);
-    u.searchParams.set('v', 'v0.10.0-ui-overhaul-2');
+    u.searchParams.set('v', 'v0.10.0-editorial');
     // Start frozen; the ready handshake enables this pane when requested.
     u.searchParams.set('visuals', 'off');
     return u.pathname + u.search;

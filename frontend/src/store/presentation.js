@@ -5,7 +5,7 @@ export const percent = (value) => number(value) == null ? '—' : `${format(Numb
 export function moduleColor(id) {
   let hash = 2166136261;
   for (const c of String(id || 'unknown')) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619);
-  return `hsl(${((hash % 360) + 360) % 360}, 46%, 62%)`;
+  return `hsl(${((hash % 360) + 360) % 360}, 68%, 69%)`;
 }
 export function moduleInventory(nodes = [], dictionary = []) {
   const groups = new Map();
