@@ -1,0 +1,12 @@
+{"seed": 123, "floors": 4, "tier": "L", "floorReferences": 153, "repairSeconds": 0.15969016600138275, "geometryValidAfter": true, "error": null}
+{"seed": 123, "floors": 4, "tier": "XL", "floorReferences": 249, "repairSeconds": 0.09123037499375641, "geometryValidAfter": true, "error": null}
+{"seed": 123, "floors": 8, "tier": "L", "floorReferences": 319, "repairSeconds": 0.11685600000055274, "geometryValidAfter": true, "error": null}
+{"seed": 123, "floors": 8, "tier": "XL", "floorReferences": 504, "repairSeconds": 0.20933749999676365, "geometryValidAfter": true, "error": null}
+{"seed": 456, "floors": 4, "tier": "L", "floorReferences": 417, "repairSeconds": 0.2579546249980922, "geometryValidAfter": true, "error": null}
+{"seed": 456, "floors": 4, "tier": "XL", "floorReferences": 478, "repairSeconds": 0.17279024999879766, "geometryValidAfter": true, "error": null}
+{"seed": 456, "floors": 8, "tier": "L", "floorReferences": 631, "repairSeconds": 0.22306866700091632, "geometryValidAfter": true, "error": null}
+{"seed": 456, "floors": 8, "tier": "XL", "floorReferences": 960, "repairSeconds": 0.4464353749935981, "geometryValidAfter": true, "error": null}
+{"seed": 789, "floors": 4, "tier": "L", "floorReferences": 280, "repairSeconds": 0.11601583399897208, "geometryValidAfter": true, "error": null}
+{"seed": 789, "floors": 4, "tier": "XL", "floorReferences": 449, "repairSeconds": 0.1703269999998156, "geometryValidAfter": true, "error": null}
+{"seed": 789, "floors": 8, "tier": "L", "floorReferences": 680, "repairSeconds": 0.27152504100376973, "geometryValidAfter": true, "error": null}
+{"seed": 789, "floors": 8, "tier": "XL", "floorReferences": 782, "repairSeconds": 0.3207297920016572, "geometryValidAfter": true, "error": null}

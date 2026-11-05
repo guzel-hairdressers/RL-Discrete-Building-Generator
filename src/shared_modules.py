@@ -298,7 +298,7 @@ def validate(result, boundaries):
             if not poly.is_valid or not site.buffer(1e-7).covers(poly):
                 violations.append({'kind':'containment','node':n.node_id})
             floors.setdefault(n.floor_index,[]).append((n,poly))
-    metrics={}
+    metrics={};gap_metrics={}
     for f,rows in floors.items():
         built=[p for n,p in rows if n.cell_type.value!='void']
         coordinates={n.node_id:list(p.exterior.coords)[:-1] for n,p in rows}
@@ -317,6 +317,11 @@ def validate(result, boundaries):
         metrics[f]={'filledArea':occupied_area({'core','room','balcony'}),'exposedPerimeter':union.length,
             'rentableArea':occupied_area({'room'}),'coreArea':occupied_area({'core'}),
             'areaMethod':'geos_union_overlapping' if overlap else 'sum_disjoint_convex'}
+        from layout_gaps import audit_floor_gaps
+        holes=getattr(result.graph,'site_holes',{}).get(f,[])
+        holes=[[(p['x'],p['y']) if isinstance(p,dict) else p for p in hole] for hole in holes]
+        gap_metrics[f]=audit_floor_gaps(Polygon(boundaries[f],holes),built,
+            [p for n,p in rows if n.cell_type.value=='void'],union=union)
     contacts,access=contact_pairs(result)
     contact_set={frozenset(e) for e in contacts}
     for e in result.graph.edges_horiz:
@@ -334,7 +339,13 @@ def validate(result, boundaries):
         for n,p in rows:
             if n.cell_type.value not in ('core','void') and n.node_id not in seen:
                 violations.append({'kind':'access','node':n.node_id})
-    return {'valid':not violations and not result.unresolved,'violations':violations,
+    geometry_valid=not violations and not result.unresolved
+    no_gaps=all(m['noUnplannedEnclosedGaps'] for m in gap_metrics.values())
+    return {'valid':geometry_valid,'violations':violations,
+            'spatialQuality':{'noUnplannedEnclosedGaps':no_gaps,
+                'geometryAndGapChecksPass':geometry_valid and no_gaps,
+                'unplannedEnclosedGapArea':sum(m['unplannedEnclosedGapArea'] for m in gap_metrics.values()),
+                'perFloor':gap_metrics},
             'unresolved':result.unresolved,'perFloor':metrics,'polygons':polygons}
 
 

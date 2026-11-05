@@ -33,7 +33,7 @@ def independent_metrics(event,sites):
   if p['category']!='void':groups.setdefault(p['moduleId'],set()).add(p.get('moduleStackId',p['id']))
  n=sum(map(len,groups.values()));k=len(groups);singletons=sum(len(v)==1 for v in groups.values())
  budget=10.*(max(0,k-10)/10.)**2;singleton=5.*singletons/max(1,n);reuse_bonus=20.*(n-k)/max(1,n)
- scores=[];fills=[];area_errors=[]
+ scores=[];fills=[];area_errors=[];filled_areas=[];site_areas=[]
  for f,site in enumerate(sites):
   xy=lambda poly:[(p['x'],p['y']) if isinstance(p,dict) else p for p in poly]
   site_area=Polygon(xy(site['outer']),[xy(h) for h in site['holes']]).area
@@ -43,11 +43,14 @@ def independent_metrics(event,sites):
   filled=sum(Polygon(xy(p['poly'])).area for p in built)
   rentable=sum(Polygon(xy(p['poly'])).area for p in built if p['category']=='room')
   fill=filled/max(1.,site_area);fills.append(fill)
+  filled_areas.append(filled);site_areas.append(site_area)
   scores.append(80*min(1.,fill)+15*rentable/max(1.,filled)+reuse_bonus-budget-singleton-35*max(0.,1-fill/.6)**2)
   area_errors.append(filled-audit.get('perFloor',{}).get(f,{}).get('filledArea',filled))
  score=statistics.mean(scores);valid=bool(audit['valid'])
+ weighted_fill=math.fsum(filled_areas)/max(1.,math.fsum(site_areas))
  return dict(valid=valid,verifiedScore=score,verifiedOutcome=outcome_reward(score,valid),
-  actualFill=statistics.mean(fills),validAdjustedFill=statistics.mean(fills) if valid else 0.,
+  actualFill=weighted_fill,validAdjustedFill=weighted_fill if valid else 0.,
+  meanFloorFill=statistics.mean(fills),fillAggregation='ratio_of_floor_area_sums',
   builtTypes=k,independentOccurrences=n,independentRepeatFraction=(n-k)/max(1,n),
   singletonCount=singletons,reuseBonus=reuse_bonus,independentAreaCheckErrors=area_errors)
 

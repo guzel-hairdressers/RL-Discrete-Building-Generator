@@ -63,3 +63,9 @@ See [the report](../reports/v010_bounded_dictionary_speed.md) for scope and actu
 - [Angle vocabulary and corrected comparison](reports/v010_angle_proposal_evaluation.md) — three seeds, 60 episodes per strategy, held-out geometry checks; no faster-learning claim.
 - [Next algorithm hypotheses](guides/algorithm_hypotheses_2026-11-05.md) — soft orthogonality, boundary conditioning, circulation and efficiency tests.
 - [UI overhaul handoff](guides/UI_OVERHAUL_HANDOFF.md) and [shared API contract](contracts/graph_ui_v010.md) — separate worktrees and source ownership.
+
+## 2026-11-05 — individual hypotheses and floor-plate gaps
+
+- [Measured report](reports/v010_hypotheses_benchmarks.md): all eight hypotheses, L/XL4/8-floor timing, urban supplement and limitations; no promoted generator.
+- [Gap diagnosis](guides/unplanned_gaps_2026-11-05.md): original geometry checks do not guarantee a continuous floor plate.
+- [Graph area assumptions](guides/graph_area_and_realizer_assumptions.md) and [protocol](guides/hypothesis_benchmark_protocol_2026-11-05.md).

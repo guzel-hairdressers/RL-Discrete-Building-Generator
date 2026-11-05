@@ -1,0 +1,303 @@
+{
+  "pilot": true,
+  "arms": {
+    "baseline": {
+      "valid": 69,
+      "total": 72,
+      "errors": 0,
+      "finalValidAdjustedFill": 0.428487182951132,
+      "fillOnValid": 0.4471170604707464,
+      "finalValidAdjustedWeightedFill": 0.42844983120312974,
+      "weightedFillOnValid": 0.4470780847337006,
+      "meanResidentialPlotCoverage": 0.4283894126324238,
+      "finalOutcome": 0.4687074508996706,
+      "meanLearningGain": 0.0020355793569002043,
+      "perSeedLearningGain": {
+        "123": 0.009172778888041163,
+        "456": -0.006338101282038507,
+        "789": 0.003272060464697956
+      },
+      "meanTypes": 14.565217391304348,
+      "meanIndependentRepeat": 0.7477455703294662,
+      "meanFinalFloorReferences": 125.04347826086956,
+      "maxTypes": 15,
+      "meanTrainEpisodeSeconds": 0.7133590071554661,
+      "meanTrainRolloutSeconds": 0.5982104800888111,
+      "meanTrainReachedReferences": 120.25,
+      "trainingCases": 180,
+      "counters": {
+        "candidatesGenerated": 741939,
+        "probeCalls": 823211,
+        "testedCandidates": 1411198,
+        "positiveCandidates": 120150,
+        "radiusRejected": 587987
+      },
+      "measuredComponentSeconds": {},
+      "auxiliaryTrainingSeconds": 0.0005304150690790266,
+      "episodeTimeIsEqualWorkSpeedup": false
+    },
+    "boundary": {
+      "valid": 69,
+      "total": 72,
+      "errors": 0,
+      "finalValidAdjustedFill": 0.43485320080715195,
+      "fillOnValid": 0.4537598617118107,
+      "finalValidAdjustedWeightedFill": 0.4348530003991239,
+      "weightedFillOnValid": 0.4537596525903901,
+      "meanResidentialPlotCoverage": 0.4368199508634368,
+      "finalOutcome": 0.4671570427810191,
+      "meanLearningGain": 0.0004851712382487235,
+      "perSeedLearningGain": {
+        "123": 0.012628245334251761,
+        "456": -0.0005669436984257897,
+        "789": -0.010605787921079801
+      },
+      "meanTypes": 14.420289855072463,
+      "meanIndependentRepeat": 0.7078884308484351,
+      "meanFinalFloorReferences": 130.6086956521739,
+      "maxTypes": 15,
+      "meanTrainEpisodeSeconds": 0.8505827851609259,
+      "meanTrainRolloutSeconds": 0.7406416340165985,
+      "meanTrainReachedReferences": 119.42222222222222,
+      "trainingCases": 180,
+      "counters": {
+        "candidatesGenerated": 730398,
+        "probeCalls": 796119,
+        "testedCandidates": 1384148,
+        "positiveCandidates": 117885,
+        "radiusRejected": 588029
+      },
+      "measuredComponentSeconds": {},
+      "auxiliaryTrainingSeconds": 0.0004173380439169705,
+      "episodeTimeIsEqualWorkSpeedup": false
+    },
+    "ranking": {
+      "valid": 69,
+      "total": 72,
+      "errors": 0,
+      "finalValidAdjustedFill": 0.3781287807061433,
+      "fillOnValid": 0.3945691624759756,
+      "finalValidAdjustedWeightedFill": 0.37797907350867915,
+      "weightedFillOnValid": 0.39441294626992607,
+      "meanResidentialPlotCoverage": 0.3818964022385196,
+      "finalOutcome": 0.4335803954058038,
+      "meanLearningGain": -0.0374236198048486,
+      "perSeedLearningGain": {
+        "123": -0.06637927823210105,
+        "456": -0.004164061038436186,
+        "789": -0.04172752014400858
+      },
+      "meanTypes": 15,
+      "meanIndependentRepeat": 0.8042427376266122,
+      "meanFinalFloorReferences": 152.02898550724638,
+      "maxTypes": 15,
+      "meanTrainEpisodeSeconds": 0.7742080481720526,
+      "meanTrainRolloutSeconds": 0.6512469728890816,
+      "meanTrainReachedReferences": 130.16666666666666,
+      "trainingCases": 180,
+      "counters": {
+        "candidatesGenerated": 870685,
+        "probeCalls": 749096,
+        "testedCandidates": 1437360,
+        "positiveCandidates": 68455,
+        "radiusRejected": 688264
+      },
+      "measuredComponentSeconds": {
+        "ranking": 7.863762301414681
+      },
+      "auxiliaryTrainingSeconds": 1.547628652981075,
+      "episodeTimeIsEqualWorkSpeedup": false
+    },
+    "repair": {
+      "valid": 69,
+      "total": 72,
+      "errors": 0,
+      "finalValidAdjustedFill": 0.44307977521316266,
+      "fillOnValid": 0.46234411326590885,
+      "finalValidAdjustedWeightedFill": 0.44306742651646036,
+      "weightedFillOnValid": 0.46233122766935,
+      "meanResidentialPlotCoverage": 0.4431982587929715,
+      "finalOutcome": 0.47288397317311354,
+      "meanLearningGain": 0.005335942733815585,
+      "perSeedLearningGain": {
+        "123": -0.006417583098329717,
+        "456": 0.003379675316248179,
+        "789": 0.019045735983528295
+      },
+      "meanTypes": 14.927536231884059,
+      "meanIndependentRepeat": 0.715909143833868,
+      "meanFinalFloorReferences": 124.6231884057971,
+      "maxTypes": 15,
+      "meanTrainEpisodeSeconds": 0.7340732238228358,
+      "meanTrainRolloutSeconds": 0.6273849692004053,
+      "meanTrainReachedReferences": 114.7388888888889,
+      "trainingCases": 180,
+      "counters": {
+        "candidatesGenerated": 709315,
+        "probeCalls": 775879,
+        "testedCandidates": 1348932,
+        "positiveCandidates": 112552,
+        "radiusRejected": 573053,
+        "repairTrials": 908,
+        "repairsAccepted": 57
+      },
+      "measuredComponentSeconds": {
+        "repair": 9.135124007996637
+      },
+      "auxiliaryTrainingSeconds": 0.00048491801135241985,
+      "episodeTimeIsEqualWorkSpeedup": false
+    },
+    "site_certificate": {
+      "valid": 69,
+      "total": 72,
+      "errors": 0,
+      "finalValidAdjustedFill": 0.5091233805462867,
+      "fillOnValid": 0.5312591797004732,
+      "finalValidAdjustedWeightedFill": 0.5089921210353833,
+      "weightedFillOnValid": 0.531122213254313,
+      "meanResidentialPlotCoverage": 0.5148449130345065,
+      "finalOutcome": 0.5393396017684653,
+      "meanLearningGain": 0.002958515544313296,
+      "perSeedLearningGain": {
+        "123": 0.021420856114537697,
+        "456": -0.006133977423079408,
+        "789": -0.0064113320585184
+      },
+      "meanTypes": 13.956521739130435,
+      "meanIndependentRepeat": 0.831331043657734,
+      "meanFinalFloorReferences": 177.2463768115942,
+      "maxTypes": 15,
+      "meanTrainEpisodeSeconds": 1.1313980261890215,
+      "meanTrainRolloutSeconds": 1.025051501844387,
+      "meanTrainReachedReferences": 142.46666666666667,
+      "trainingCases": 180,
+      "counters": {
+        "candidatesGenerated": 926341,
+        "probeCalls": 1771244,
+        "testedCandidates": 1771244,
+        "positiveCandidates": 145422,
+        "radiusRejected": 0,
+        "shapeSiteTests": 182935,
+        "radiusRejectedButShapeFits": 18849
+      },
+      "measuredComponentSeconds": {
+        "siteCertificate": 3.286578359773557
+      },
+      "auxiliaryTrainingSeconds": 0.00043925501813646406,
+      "episodeTimeIsEqualWorkSpeedup": false
+    }
+  },
+  "paired": {
+    "boundary": {
+      "outcomeDifference": -0.0015504081186514806,
+      "outcomeCrossed95": [
+        -0.019230160089463596,
+        0.014199587035889588
+      ],
+      "fillDifference": 0.006366017856019922,
+      "fillCrossed95": [
+        -0.00837528178214703,
+        0.022146704586360744
+      ],
+      "weightedFillDifference": 0.006403169195994095,
+      "weightedFillCrossed95": [
+        -0.008608900007219996,
+        0.02237234608044415
+      ],
+      "gainDifference": -0.0015504081186514806,
+      "gainCrossed95": [
+        -0.019230160089463596,
+        0.014199587035889588
+      ],
+      "descriptiveCommonTimeGainBySeed": {
+        "123": 0.0026951058992582544,
+        "456": 0.01739667159494762,
+        "789": -0.010392254123889777
+      }
+    },
+    "ranking": {
+      "outcomeDifference": -0.03512705549386677,
+      "outcomeCrossed95": [
+        -0.07528616923964516,
+        0.014121501943620593
+      ],
+      "fillDifference": -0.05035840224498869,
+      "fillCrossed95": [
+        -0.10810907163892727,
+        0.023273626169141103
+      ],
+      "weightedFillDifference": -0.05047075769445061,
+      "weightedFillCrossed95": [
+        -0.10814922949021603,
+        0.022864491473222025
+      ],
+      "gainDifference": -0.03945919916174881,
+      "gainCrossed95": [
+        -0.07631861432499298,
+        0.0012558526524930817
+      ],
+      "descriptiveCommonTimeGainBySeed": {
+        "123": -0.09919187080377095,
+        "456": 0.021246961504080453,
+        "789": -0.05623082456318801
+      }
+    },
+    "repair": {
+      "outcomeDifference": 0.004176522273442922,
+      "outcomeCrossed95": [
+        -0.013542855285068498,
+        0.022905059443390146
+      ],
+      "fillDifference": 0.014592592262030683,
+      "fillCrossed95": [
+        -0.024576250841087388,
+        0.04984829132459058
+      ],
+      "weightedFillDifference": 0.01461759531333063,
+      "weightedFillCrossed95": [
+        -0.02446072559078311,
+        0.049739614084329635
+      ],
+      "gainDifference": 0.0033003633769153815,
+      "gainCrossed95": [
+        -0.015499961071954905,
+        0.022412675978854102
+      ],
+      "descriptiveCommonTimeGainBySeed": {
+        "123": -0.019263513215048267,
+        "456": 0.012360190644079005,
+        "789": 0.014300486043759442
+      }
+    },
+    "site_certificate": {
+      "outcomeDifference": 0.07063215086879479,
+      "outcomeCrossed95": [
+        0.04968145977069417,
+        0.09265643084915101
+      ],
+      "fillDifference": 0.0806361975951548,
+      "fillCrossed95": [
+        0.05704276285446584,
+        0.10547946984227628
+      ],
+      "weightedFillDifference": 0.08054228983225348,
+      "weightedFillCrossed95": [
+        0.05710337224061336,
+        0.10538923466825115
+      ],
+      "gainDifference": 0.000922936187413092,
+      "gainCrossed95": [
+        -0.0176817491986346,
+        0.01784015817886004
+      ],
+      "descriptiveCommonTimeGainBySeed": {
+        "123": -0.01170437313390471,
+        "456": 0.006324654393723206,
+        "789": -0.015269335226687386
+      }
+    }
+  },
+  "multipleComparisons": "exploratory; no multiplicity correction",
+  "confidence": "Crossed bootstrap over initialization seeds/shared sites;4000 draws;three seeds limited evidence.",
+  "defaultPromotion": false
+}

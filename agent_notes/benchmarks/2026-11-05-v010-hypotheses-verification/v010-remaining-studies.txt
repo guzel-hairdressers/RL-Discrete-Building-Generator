@@ -1,0 +1,19 @@
+START native-build
+END native-build 0
+START hypotheses-native-tests
+END hypotheses-native-tests 0
+START hypotheses-speed-01
+END hypotheses-speed-01 0
+START hypotheses-quality-analysis
+END hypotheses-quality-analysis 0
+START hypotheses-speed-analysis
+END hypotheses-speed-analysis 0
+START hypotheses-frozen-quality-01
+END hypotheses-frozen-quality-01 0
+START hypotheses-frozen-speed-01
+END hypotheses-frozen-speed-01 0
+START hypotheses-archive-01
+END hypotheses-archive-01 0
+START hypotheses-urban-01
+END hypotheses-urban-01 0
+ALL COMPLETE

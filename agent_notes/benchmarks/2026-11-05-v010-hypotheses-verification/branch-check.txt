@@ -1,0 +1,2 @@
+Active branch:version/v0.10.0
+origin/version/v0.10.0 is not configured locally. Compared against origin/main and parent4084bc42;no version-defining files deleted;no frontend/user-data changes. No push.

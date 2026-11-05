@@ -330,3 +330,12 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [MEASURED] Three seeds × three strategies × 60 training episodes with 24 initial/final held-out cases each; no faster learning established. Current default retained.
 - [PLANNED] Boundary/goal conditioning, adaptive ranking, local repair, explicit circulation and soft real-corner orthogonality; no new reward/grid imposed.
 - [PREPARED] UI handoff, protocol contract and isolated worktrees for backend/UI branches. [Brief](guides/UI_OVERHAUL_HANDOFF.md).
+
+### 2026-11-05 — hypothesis benchmarks and continuity gate
+
+- [MEASURED] Individual boundary/ranking/repair/site-certificate pilots; L/XL120max/floor4/8floors; frozen geometry, circulation, alternatives and untouched urban supplement. No default promotion or faster-learning claim.
+- [CORRECTED] Exact net-area graph fill and benchmark aggregation; repair acceptance matches per-floor terminal objective.
+- [IMPLEMENTED] Independent enclosed-gap diagnostics on preview/inference; no geometry work added to training.
+- [OPEN, PRIORITY] Shared contact-endpoint/interior-junction closure and intentional voids. Gap avoidance is not yet part of graph growth; original geometric validity is insufficient.
+- [DEFER] Generic random repair and corner styling as quality fixes; six-trial live endgame repair0 improvements/72trials. Ports still need non-oracle generation.
+- [OPEN]750-episode confirmation and calibrated candidate-local/goal-conditioned learning, after geometric/program validity is trustworthy. [Report](reports/v010_hypotheses_benchmarks.md).

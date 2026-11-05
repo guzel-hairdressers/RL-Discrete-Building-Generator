@@ -1,0 +1,13 @@
+{
+  "status": "complete",
+  "input": "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-quality-01",
+  "revision": "4084bc42dbca502b8bea58e7546ce18046d2f631",
+  "candidatesPerSite": 4,
+  "objectiveChanged": false,
+  "trained": false,
+  "sourceSha256": "0333678f495f474c3085a66899dcd7945a9f98556f6f5b4babd377fe1c479438",
+  "preregistration": "Deterministic baseline plus three frozen categorical samples. Same site, shared policy weights, hard geometry checks, unchanged objective. Compare valid-adjusted outcome/fill with first candidate, total inference time, and coarse contact-topology descriptor count within0.02 outcome of best. Never count invalid layouts as alternatives.",
+  "cases": 72,
+  "errors": 0,
+  "elapsedSeconds": 141.64282829100557
+}

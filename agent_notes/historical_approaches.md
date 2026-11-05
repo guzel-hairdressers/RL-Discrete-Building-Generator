@@ -194,3 +194,7 @@ Discarded live whole-star quantized classification, repeated all-node proposal d
 ## 2026-11-05 — observed factors and controlled learning comparison
 
 Implemented data-derived angle/length proposals with composite directed turns and a learned continuous head. Fixed factors are excluded from proposal-density credit. The corrected 1,116-case pilot finds a small uncertain fill advantage, no demonstrated faster learning, and poorer mean fill for continuous exploration. Keep legacy as default; no winner promoted. Superseded numeric-facet results remain raw evidence. Further orthogonality/circulation/boundary hypotheses are planning only. [Report](reports/v010_angle_proposal_evaluation.md).
+
+## 2026-11-05 — individual hypotheses, no architectural winner
+
+Implemented opt-in boundary context, feasibility ranking, bounded pose repair, implicit shape-specific site certificates, frozen orthogonal/port adapters, circulation assignment and best-of-four diagnostics. Preserved 1,860 primary cases, full L/XL4/8-floor timing, urban/frozen/alternative evidence. No faster learning established. Site certificates recover fill, but the user's screenshot prompted an enclosed-gap audit: baseline geometry checks passed69/72, geometry-plus-gap checks0/72. Do not promote a fill-only winner. Orthogonality belongs in realization. Corrected exact net-area reporting and repair acceptance; authoritative live endgame repair spent0.213s mean for six trials and accepted0/72. Prior export-replay failures remain labeled. [Report](reports/v010_hypotheses_benchmarks.md).

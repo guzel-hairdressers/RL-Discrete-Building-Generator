@@ -1,0 +1,29 @@
+{
+  "status": "complete",
+  "revision": "4084bc42dbca502b8bea58e7546ce18046d2f631",
+  "sourceHashes": {
+    "tools/benchmark_live_endgame_repair.py": "5d9d2a14ac8e6babd5cf8557763ef2facb91c2b43906f7d6ebdde05b85a6726c",
+    "src/geometry.py": "ccd8299a098647bee74ebe5de216dd9a1553801e00d7446c0b3adf900ed863bf",
+    "src/graph.py": "8bd672d3e4e39909419e568584a5dfeba564135646d60e366b2e193b5e14c2da",
+    "src/graph_actions.py": "28b4a2d7f92fb0c93df140ad855576e5f7b506e8d12b3c1f118599f1884c01f8",
+    "src/graph_dictionary.py": "254770dc1f53d803ab81c5811ac674433870afadafd70a1f10fc1103fa830848",
+    "src/graph_evidence.py": "61f9b03f2b1996547b4c60ad7242edca3cabb69336103682f72a20ccd0192e3a",
+    "src/graph_experiments.py": "cf07cea0c951ea88884a0e98464a6158e7306aa0488c3d3308fda9a40c35d839",
+    "src/graph_policy.py": "360807bb0455c9908a2381ee3e75f59b3381c38e36a459e878e07545c4852e1f",
+    "src/graph_proxy.py": "e3d7935af80eca2950bc4eb2b23dfda651a0e8de860abd8d03064ce482834e69",
+    "src/graph_sampler.py": "5f728cabe7ea552214157bba8d3a0b0cba0c396fe2eada7a8b774720fb04cd93",
+    "src/layout_gaps.py": "4703d0417dff87d2d74cf088cf2fc240acf9915288ead077d7f3e8b6d06b2513",
+    "src/realizer_experiments.py": "932d53d6edc6f625b8055fefc448c4dcf3cd20aa44c7f4136cc43dd9d06006d4",
+    "src/relative_vocabulary.py": "bf41fffc02603d7e4967dd0d4a1b0fc4ae3e3d571882f244d7a420c4e1032741",
+    "src/server.py": "ab4a8a00a22a2b645c47949274800dc178f02c2b76cc7b0451f1a27adf18a25b",
+    "src/shared_modules.py": "b9b0e00911319f0f79ec52f98225383cb91c53583e1fe9618db52394c66ef2fc",
+    "src/typed_cell.py": "092e1b900299c92b0a21a8d4bbb3853c41c8b75af949b19de04ee79b04ced13d",
+    "src/voronoi_realizer.py": "4bfcee124bd21c4e6f001816d974c8eda8e817eee8de14188c688414306644a7"
+  },
+  "protocol": "L/XL120maximum/floor,4/8floors,seeds123/456/789. Frozen60-episode baseline policy,unchanged exact mean per-floor objective. Six continuous endgame trials,all copy/rebuild cost included. Oracle validation separate. No learned repair.",
+  "input": "agent_notes/benchmarks/2026-11-05-v010-hypotheses-quality-01",
+  "authoritativeDictionary": true,
+  "cases": 12,
+  "errors": 0,
+  "elapsedSeconds": 42.958840541003156
+}

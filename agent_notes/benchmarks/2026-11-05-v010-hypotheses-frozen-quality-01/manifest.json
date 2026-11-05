@@ -1,0 +1,16 @@
+{
+  "status": "complete",
+  "revision": "4084bc42dbca502b8bea58e7546ce18046d2f631",
+  "sourceHashes": {
+    "tools/benchmark_frozen_realizers.py": "721927c1b8e5d5adaf2a3b5b8eeb1a43f69c54f6341b24dd73bde0dbb647d25b",
+    "src/realizer_experiments.py": "932d53d6edc6f625b8055fefc448c4dcf3cd20aa44c7f4136cc43dd9d06006d4",
+    "src/shared_modules.py": "0352ed0e8dab72025b123ba5bc556b026aaf03820244cc2dfd7eb8c9af974f52"
+  },
+  "preregistration": "Frozen baseline final held-out layouts, including failures. Compare shared orthogonal cuts at 0/2/10% maximum area loss; keep all required contacts. Reconstruct midpoint and oracle wall-port adapters with independent validation. Public corridor assignment minimum residential share65%, atomic vertical function. No learning or speedup claim from oracle ports.",
+  "input": "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-quality-01",
+  "phase": "validation",
+  "speedClaim": false,
+  "cases": 72,
+  "errors": 0,
+  "elapsedSeconds": 85.99408412499906
+}

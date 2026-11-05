@@ -12,6 +12,16 @@ import math
 def root_id(n): return n.metadata.get('root_id',n.node_id)
 
 
+def site_net_area(site):
+    """Exact available polygon area; never substitute raster cell counts."""
+    if site.get('exactArea') is not None:return float(site['exactArea'])
+    def area(loop):
+        pts=[(p['x'],p['y']) if isinstance(p,dict) else p for p in loop]
+        return abs(math.fsum(x*v-y*u for (x,y),(u,v) in zip(pts,pts[1:]+pts[:1])))/2
+    if not site.get('outer'):raise ValueError('site has no exact area or boundary')
+    return area(site['outer'])-math.fsum(area(h) for h in site.get('holes',()))
+
+
 def origin_fits(point,boundary,holes=(),radius=4.5):
     """Conservative scalar site certificate for every radius-bounded prototype."""
     from graph_sampler import GraphSeedSampler

@@ -366,3 +366,10 @@ Final browser fixes: graph WebSocket replies now dispatch the next live graph st
 ## 2026-11-05 — angle proposals, numeric facets and truthful UI reuse
 
 Added measured relative-angle/length vocabulary and a learned continuous proposal head, including new-angle/observed-length and observed-angle/new-length routes. The first comparison exposed duplicate near-parallel support faces, inflated graph area and false contact rejection; the corrected solver deduplicates strongest bounds, aliases numerical faces within existing physical tolerance and caches active priors. Invalid starter states no longer credit unrelated draws. Failures and the superseded complete run remain preserved. Additive occurrenceId/scope/reuseAudit exports let the UI count independent occurrences without parsing IDs. See [corrected experiment](reports/v010_angle_proposal_evaluation.md).
+
+## 2026-11-05 — raster denominator, repair surrogate and unplanned gaps
+
+- **Fixed accounting:** graph training/preview used raster cell counts for site area while independent geometry used polygon area. All graph paths now use exact net polygon area; building fill is a ratio of floor-area sums, with independent mean-floor fill separately named. Original experiment data are preserved.
+- **Fixed experimental acceptance:** early repair compared a building-wide nonlinear surrogate rather than the mean per-floor terminal objective. Current selector uses the actual objective; corrected live endgame measurement accepts0/72 trials. Export-based replay had numerical reconstruction failures, so those runs are diagnostics, not primary timing evidence.
+- **Detected, geometry fix OPEN:** pooled shared shapes can leave enclosed gaps despite valid overlaps/contacts. New independent spatialQuality audit distinguishes them; it does not repair geometry or teach gap avoidance. Baseline held-out original passes69/72, geometry-plus-gap passes0/72. No individual stretching/filler relabeling.
+- **Verification:**310 unit tests completed,2 skipped; native C built. [Evidence and limits](reports/v010_hypotheses_benchmarks.md).

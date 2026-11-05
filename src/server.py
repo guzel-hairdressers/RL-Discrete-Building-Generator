@@ -5178,6 +5178,8 @@ class ParallelTrainer:
             "filledArea": filled,
             "siteArea": site_area,
             "fillRatio": fill_ratio,
+            "fillDefinition": "occupied_footprint_over_net_site_area",
+            "fillAggregation": "ratio_of_floor_area_sums",
             "averageFill": fill_ratio,
             "rentableArea": rentable,
             "rentableRatio": rentable_ratio,
@@ -5467,6 +5469,8 @@ class ParallelTrainer:
             "filledArea": filled,
             "siteArea": site_area,
             "fillRatio": fill_ratio,
+            "fillDefinition": "occupied_footprint_over_net_site_area",
+            "fillAggregation": "ratio_of_floor_area_sums",
             "averageFill": fill_ratio,
             "rentableArea": rentable,
             "rentableRatio": rentable_ratio,
@@ -6027,7 +6031,8 @@ class ParallelTrainer:
                 for env in self.environments:
                     poly_pts = env.site.get("outer") or env.boundary.get("outer") or env.boundary.get("polygon", [])
                     pts_for_area = [{"x": float(p["x"] if isinstance(p, dict) else p[0]), "y": float(p["y"] if isinstance(p, dict) else p[1])} for p in poly_pts]
-                    site_area = abs(G.polygon_area(pts_for_area)) if pts_for_area else 1000.0
+                    from graph_proxy import site_net_area
+                    site_area = site_net_area(env.site)
                     pca_angle = env.site_orientation_prior.get("angle_rad", 0.0)
                     graph_per_site.append(self.building_graph.evaluate_graph_metrics(
                         env.index,
@@ -6641,7 +6646,7 @@ class ParallelTrainer:
         self.building_graph.site_boundaries={env.index:env.site.get('outer') or env.boundary.get('outer') or env.boundary.get('polygon',[]) for env in self.environments}
         self.building_graph.site_holes={env.index:env.site.get('holes',[]) for env in self.environments}
         from graph_dictionary import GraphDictionary
-        from graph_proxy import origin_fits
+        from graph_proxy import origin_fits,site_net_area
         if getattr(self.building_graph,'module_bank',None) is None:
             self.building_graph.module_bank=GraphDictionary(self.building_graph,int(self.settings.get('graphMaxTypes',15)))
         bank=self.building_graph.module_bank
@@ -6652,6 +6657,10 @@ class ParallelTrainer:
         self.last_graph_candidate_count=0
         new_nodes_added=0
         radius=bank.prior.radius
+        building_site_area=math.fsum(site_net_area(e.site) for e in self.environments)
+        # Research hooks are opt-in Python objects, never implicit UI settings.
+        # The release path and checkpoint format remain unchanged without one.
+        experiment=getattr(self,'graph_experiment',None)
         for env in active_envs:
             f=env.index
             if len(bank.floor_nodes[f])>=int(self.settings['maxModules']):continue
@@ -6671,32 +6680,40 @@ class ParallelTrainer:
                 if i<len(motif):candidates.append(motif[i])
                 if i<len(observed):candidates.append(observed[i])
                 if i<len(novel):candidates.append(novel[i])
+            if experiment is not None:candidates=experiment.rank(bank,f,candidates)
             choices=[]
             for candidate in candidates:
                 x,y=candidate['x'],candidate['y']
                 for scope in ('independent','multi_floor'):
                     floors=range(num_floors) if scope=='multi_floor' else (f,)
                     if any(len(bank.floor_nodes[floor])>=int(self.settings['maxModules']) for floor in floors):continue
-                    if not all(origin_fits((x,y),self.building_graph.site_boundaries[floor],
-                        self.building_graph.site_holes[floor],radius) for floor in floors):continue
+                    certified=all(origin_fits((x,y),self.building_graph.site_boundaries[floor],
+                        self.building_graph.site_holes[floor],radius) for floor in floors)
+                    if not certified and not (experiment is not None and experiment.exact_site):
+                        if experiment is not None:experiment.observe(bank,f,candidate,False,site_rejected=True)
+                        continue
+                    if experiment is not None:experiment.counters['probeCalls']+=1
                     plans=bank.probe(x,y,f,scope,env.seed_sampler.min_seed_distance,
                         candidate.get('preferredPrototype'),candidate.get('preferredAngle'))
+                    if experiment is not None:
+                        plans=experiment.filter_plans(bank,plans,certified)
+                        experiment.observe(bank,f,candidate,bool(plans))
                     for plan in plans:
                         target=int(self.settings.get('dictCap',10))
                         independent=len(bank.instances)+1
-                        objective=80.*plan.filled/max(1.,sum(e.site['area'] for e in self.environments))+20.*(independent-plan.type_count)/independent-10.*(max(0,plan.type_count-target)/max(1,target))**2-5.*plan.singleton_count/independent
+                        objective=80.*plan.filled/max(1.,building_site_area)+20.*(independent-plan.type_count)/independent-10.*(max(0,plan.type_count-target)/max(1,target))**2-5.*plan.singleton_count/independent
                         nearest_core=min((math.hypot(x-n.x,y-n.y) for n in bank.floor_nodes[f]
                                           if n.cell_type==typed_cell.CellType.CORE),default=0.)
                         features=[float(scope=='multi_floor'),candidate.get('span',0.)/(2*radius),
                             nearest_core/(10*radius),typed_cell.BuildingGraph._min_distance_to_boundary((x,y),site_poly)/(2*radius),
                             plan.type_count/max(1,target),plan.singleton_count/max(1,len(bank.instances)+1),
-                            plan.filled/max(1.,sum(e.site['area'] for e in self.environments)),
+                            plan.filled/max(1.,building_site_area),
                             f/max(1,num_floors-1),float(plan.shapes[plan.prototype].prior_boundary),
                             (len(self.building_graph.nodes)+len(floors))/max(1,self.max_graph_seeds*num_floors),
                             float(candidate.get('source')=='observed_angle_length'),
                             float(candidate.get('source')=='neural_continuous')]
                         choices.append((objective,candidate,plan,features))
-                if len(choices)>=12:break
+                if len(choices)>=(experiment.choice_limit if experiment is not None else 12):break
             if not choices:continue
             self.last_graph_candidate_count=len(choices)
             if self.settings.get('graphController','neural')=='neural':
@@ -6715,6 +6732,13 @@ class ParallelTrainer:
             bank.commit(chosen[2],node_id)
             new_nodes_added+=1
 
+        if experiment is not None and active_envs:
+            repaired=experiment.repair(self,new_nodes_added==0)
+            if repaired:
+                bank=self.building_graph.module_bank
+                # A successful repair gets one more growth opportunity, within
+                # the existing episode action budget.
+                new_nodes_added=max(1,new_nodes_added)
         self.graph_step_count += 1
         self.step_number += 1
         is_complete = (self.graph_step_count >= self.max_graph_seeds) or (new_nodes_added == 0)
@@ -6726,7 +6750,7 @@ class ParallelTrainer:
         from graph_proxy import GraphSketch
         sketch=GraphSketch(self.building_graph)
         predicted_metrics={env.index:sketch.metrics(env.index,
-            float(env.site['area']),int(self.settings.get('dictCap',10)))
+            site_net_area(env.site),int(self.settings.get('dictCap',10)))
             for env in self.environments}
         post_eval_start = None
         if realize_now:
@@ -6857,7 +6881,7 @@ class ParallelTrainer:
         for env in self.environments:
             site_poly = env.site.get("outer") or env.boundary.get("outer") or env.boundary.get("polygon", [])
             pts_for_area = [{"x": float(p["x"] if isinstance(p, dict) else p[0]), "y": float(p["y"] if isinstance(p, dict) else p[1])} for p in site_poly]
-            site_area = float(env.site.get('area',1000.))
+            site_area = site_net_area(env.site)
             pca_angle = env.site_orientation_prior.get("angle_rad", 0.0)
             dict_cap = int(self.settings.get("dictCap", 10))
             fm = self.building_graph.evaluate_graph_metrics(env.index,site_area=site_area,
@@ -6940,6 +6964,11 @@ class ParallelTrainer:
                 "estimatedReuseRatio": _mean([m.get('estimatedReuseRatio',0.) for m in per_floor_metrics]),
                 "score": round(float(agg_metrics.get("score", 0.0)), 2),
                 "fillRatio": round(float(agg_metrics.get("fillRatio", 0.0)), 3),
+                "fillDefinition": "occupied_footprint_over_net_site_area",
+                "fillAggregation": "ratio_of_floor_area_sums",
+                "filledArea": agg_metrics['filledArea'],
+                "siteArea": agg_metrics['siteArea'],
+                "rentableArea": agg_metrics['rentableArea'],
                 "rentableRatio": round(float(agg_metrics.get("rentableRatio", 0.0)), 3),
                 "daylightRatio": round(float(agg_metrics.get("daylightRatio", 0.0)), 3),
                 "reuseRatio": round(float(agg_metrics.get("reuseRatio", 0.0)), 3),
@@ -7404,9 +7433,9 @@ class ParallelTrainer:
 
     def _preview_graph(self, active_graph, completed=False):
         """Explicit geometry preview, isolated from the learner and episode transition."""
-        from graph_proxy import GraphSketch
+        from graph_proxy import GraphSketch,site_net_area
         sketch=GraphSketch(active_graph)
-        predicted={env.index:sketch.metrics(env.index,float(env.site['area']),int(self.settings['dictCap']))
+        predicted={env.index:sketch.metrics(env.index,site_net_area(env.site),int(self.settings['dictCap']))
                    for env in self.environments}
         all_realized = []
         node_template_map: dict[str, str] = {}
@@ -7494,7 +7523,7 @@ class ParallelTrainer:
         for env in self.environments:
             poly_pts = env.site.get("outer") or env.boundary.get("outer") or env.boundary.get("polygon", [])
             pts_for_area = [{"x": float(p["x"] if isinstance(p, dict) else p[0]), "y": float(p["y"] if isinstance(p, dict) else p[1])} for p in poly_pts]
-            site_area = float(env.site.get('area',1000.))
+            site_area = site_net_area(env.site)
             pca_angle = env.site_orientation_prior.get("angle_rad", 0.0)
             fm = active_graph.evaluate_graph_metrics(
                 env.index,
@@ -7534,6 +7563,8 @@ class ParallelTrainer:
                 **self.graph_learner.last,
                 "policyUpdateCount": self.graph_learner.updates,
                 "geometryValid": audit['valid'],
+                "continuousFloorPlateValid": audit['spatialQuality']['geometryAndGapChecksPass'],
+                "unplannedEnclosedGapArea": audit['spatialQuality']['unplannedEnclosedGapArea'],
                 "reuseBonus": agg_metrics['reuseBonus'],
                 "reuseAudit": per_floor_metrics[0].get('reuseAudit',{}) if per_floor_metrics else {},
                 "proposalStrategy": self.settings.get('graphProposalStrategy','legacy'),
@@ -7542,6 +7573,11 @@ class ParallelTrainer:
                 "dictionaryTargetTypes": min(15,int(self.settings.get('dictCap',10))),
                 "estimateStatus": "realized_uncalibrated_environment",
                 "moduleIdentityStatus": "confirmed",
+                "filledArea": agg_metrics['filledArea'],
+                "siteArea": agg_metrics['siteArea'],
+                "rentableArea": agg_metrics['rentableArea'],
+                "fillDefinition": "occupied_footprint_over_net_site_area",
+                "fillAggregation": "ratio_of_floor_area_sums",
                 "score": round(float(agg_metrics.get("score", 0.0)), 2),
                 "fillRatio": round(float(agg_metrics.get("fillRatio", 0.0)), 3),
                 "rentableRatio": round(float(agg_metrics.get("rentableRatio", 0.0)), 3),

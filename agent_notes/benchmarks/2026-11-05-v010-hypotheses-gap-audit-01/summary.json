@@ -1,0 +1,122 @@
+{
+  "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-quality-01": {
+    "boundary": {
+      "cases": 72,
+      "geometryValid": 69,
+      "geometryAndEnclosedGapCheckPass": 4,
+      "meanUnplannedGapAreaOnGeometryValid": 117.39308610343083,
+      "maxUnplannedGapAreaOnGeometryValid": 678.2898367294446
+    },
+    "repair": {
+      "cases": 72,
+      "geometryValid": 69,
+      "geometryAndEnclosedGapCheckPass": 1,
+      "meanUnplannedGapAreaOnGeometryValid": 94.66033322396862,
+      "maxUnplannedGapAreaOnGeometryValid": 546.0056132727436
+    },
+    "ranking": {
+      "cases": 72,
+      "geometryValid": 69,
+      "geometryAndEnclosedGapCheckPass": 0,
+      "meanUnplannedGapAreaOnGeometryValid": 98.88586130710469,
+      "maxUnplannedGapAreaOnGeometryValid": 573.629453816101
+    },
+    "site_certificate": {
+      "cases": 72,
+      "geometryValid": 69,
+      "geometryAndEnclosedGapCheckPass": 0,
+      "meanUnplannedGapAreaOnGeometryValid": 157.2911721947836,
+      "maxUnplannedGapAreaOnGeometryValid": 755.7588140868179
+    },
+    "baseline": {
+      "cases": 72,
+      "geometryValid": 69,
+      "geometryAndEnclosedGapCheckPass": 0,
+      "meanUnplannedGapAreaOnGeometryValid": 106.26294522299509,
+      "maxUnplannedGapAreaOnGeometryValid": 650.7722635867921
+    }
+  },
+  "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-speed-01": {
+    "boundary": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 0,
+      "meanUnplannedGapAreaOnGeometryValid": 680.6112058702004,
+      "maxUnplannedGapAreaOnGeometryValid": 1390.4409409960626
+    },
+    "ranking": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 0,
+      "meanUnplannedGapAreaOnGeometryValid": 506.0193060074036,
+      "maxUnplannedGapAreaOnGeometryValid": 1264.1227476279685
+    },
+    "repair": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 0,
+      "meanUnplannedGapAreaOnGeometryValid": 624.0503309542738,
+      "maxUnplannedGapAreaOnGeometryValid": 1414.438177921397
+    },
+    "site_certificate": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 0,
+      "meanUnplannedGapAreaOnGeometryValid": 687.8174901221389,
+      "maxUnplannedGapAreaOnGeometryValid": 1477.6506092639997
+    },
+    "baseline": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 0,
+      "meanUnplannedGapAreaOnGeometryValid": 547.9685516144491,
+      "maxUnplannedGapAreaOnGeometryValid": 853.7464287447664
+    }
+  },
+  "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-archive-01": {
+    "baseline": {
+      "cases": 216,
+      "geometryValid": 207,
+      "geometryAndEnclosedGapCheckPass": 0,
+      "meanUnplannedGapAreaOnGeometryValid": 101.01044798436966,
+      "maxUnplannedGapAreaOnGeometryValid": 523.3946624832918
+    }
+  },
+  "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-urban-01": {
+    "baseline": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 2,
+      "meanUnplannedGapAreaOnGeometryValid": 239.14581373419483,
+      "maxUnplannedGapAreaOnGeometryValid": 951.5314514294104
+    },
+    "boundary": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 3,
+      "meanUnplannedGapAreaOnGeometryValid": 244.9052854319079,
+      "maxUnplannedGapAreaOnGeometryValid": 1547.1434661156038
+    },
+    "ranking": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 1,
+      "meanUnplannedGapAreaOnGeometryValid": 230.8528249467027,
+      "maxUnplannedGapAreaOnGeometryValid": 1642.5814725157186
+    },
+    "repair": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 3,
+      "meanUnplannedGapAreaOnGeometryValid": 150.2402381200915,
+      "maxUnplannedGapAreaOnGeometryValid": 527.9476796810756
+    },
+    "site_certificate": {
+      "cases": 12,
+      "geometryValid": 12,
+      "geometryAndEnclosedGapCheckPass": 1,
+      "meanUnplannedGapAreaOnGeometryValid": 284.48302820156766,
+      "maxUnplannedGapAreaOnGeometryValid": 887.7100241213438
+    }
+  }
+}

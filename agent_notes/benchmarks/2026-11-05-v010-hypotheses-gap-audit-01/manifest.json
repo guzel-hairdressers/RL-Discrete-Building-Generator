@@ -1,0 +1,21 @@
+{
+  "status": "complete",
+  "postHoc": true,
+  "reason": "User screenshot: unintended holes between reused modules are unacceptable.",
+  "inputs": [
+    "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-quality-01",
+    "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-speed-01",
+    "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-archive-01",
+    "/Users/ruslan_faz/.codex/worktrees/graph-research-v010/Thesis/agent_notes/benchmarks/2026-11-05-v010-hypotheses-urban-01"
+  ],
+  "revision": "4084bc42dbca502b8bea58e7546ce18046d2f631",
+  "sourceHashes": {
+    "tools/audit_benchmark_gaps.py": "b637e2bbd264335a4051462344cd79f9ce5b70261f3cd635911808d3c1803c39",
+    "src/layout_gaps.py": "4703d0417dff87d2d74cf088cf2fc240acf9915288ead077d7f3e8b6d06b2513",
+    "src/realizer_experiments.py": "932d53d6edc6f625b8055fefc448c4dcf3cd20aa44c7f4136cc43dd9d06006d4"
+  },
+  "criterion": "No enclosed unplanned hole over0.01m2; exclude only explicitly planned void footprints/site holes. 1e-6m diagnostic seam closing does not alter actual footprints or credited area. Exterior morphological crevices are diagnostic only.",
+  "cases": 696,
+  "errors": 0,
+  "elapsedSeconds": 23.339405332997558
+}

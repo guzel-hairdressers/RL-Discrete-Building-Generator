@@ -124,3 +124,11 @@ See [the report](../reports/v010_bounded_dictionary_speed.md) for scope and actu
 ## 2026-11-05 — angle/length comparison
 
 `2026-11-04-v010-angle-study-02` is the corrected completed 1,116-case pilot. Three initialization seeds, 60 episodes per strategy, ANY/FREE changing sites, four floors/120 maximum modules per floor. All initial/final geometry audits and failures are retained. Analysis and learning curves distinguish the common eight-site monitor from final 24-site validation. `angle-study-01` is complete but superseded by numeric-facet and invalid-start fixes; do not promote its results. Smoke and four-floor timing/profile directories are diagnostics, not convergence or matched whole-episode throughput evidence. [Report](../reports/v010_angle_proposal_evaluation.md).
+
+## 2026-11-05 — individual hypotheses and gap audit
+
+The `2026-11-05-v010-hypotheses-*` directories preserve the1,860-case ANY/FREE pilot, trained-checkpoint L/XL4/8-floor speed batch, frozen realizer/circulation checks,216 alternative rollouts,60 urban evaluations and696 post-hoc gap audits. Raw values/failed runs remain intact; geometry-check validity does not imply gap-free architecture.
+
+`2026-11-05-v010-live-endgame-repair-01` is the authoritative exact-objective in-memory12-case/72-trial endgame diagnostic. `endgame-repair-01`/`02` retain export-reconstruction failures;01 overlapped tests and is not timing evidence,02 still has5 replay failures. Do not treat them as the live benchmark.
+
+[Full report](../reports/v010_hypotheses_benchmarks.md). Research checkpoints have a separate schema; none replaced production weights.

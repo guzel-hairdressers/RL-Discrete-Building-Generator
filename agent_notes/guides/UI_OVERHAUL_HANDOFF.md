@@ -57,3 +57,7 @@ Build/test what you change. State-machine or protocol changes warrant behavioral
 Commit UI source on codex/ui-overhaul. Report commit IDs, changed files, build/interaction checks, screenshots and any requested API additions. Do not merge the backend branch, alter the release branch, or push remotely.
 
 The backend agent will review the diff, merge the UI branch into version/v0.10.0, resolve protocol conflicts, rebuild assets once, and run combined verification. Worktrees isolate edits; integration tests still decide whether the combined result is correct.
+
+## 2026-11-05 backend follow-up: unintended gaps
+
+Read the additive exact-fill/spatialQuality section in the contract after integrating backend changes. Original geometry validity is insufficient: the screenshot-reported holes are real. Show gap status/area separately, and allow the supplied per-floor gap polygons to be inspected. Missing training-time audit is unmeasured. Do not hide gaps by insetting/expanding polygons or labeling them as courtyards. [Diagnosis](unplanned_gaps_2026-11-05.md).

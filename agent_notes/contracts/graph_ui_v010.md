@@ -58,3 +58,11 @@ Use moduleId for stable palette/highlighting. Per-prototype independent counts c
 `selectedProposalSources` and `selectedFactorSources` describe completed decisions. The latter distinguishes observed/observed, neural/observed, observed/neural and neural/neural angle/length factors. Do not present old completed counts as the current in-progress episode.
 
 There is currently no orthogonality-weight control, corridor-function policy, sunlight result, or guaranteed quality improvement to expose as a working feature. New backend fields will be additive; the UI should ignore unknown fields and tolerate absent optional fields.
+
+## 2026-11-05 additive corrections — exact fill and gap diagnostics
+
+Graph fill uses exact net polygon area (outer minus predefined site holes), not legacy raster-cell counts. Building fill is sum(occupied footprint)/sum(net floor plot area). `filledArea`, `siteArea`, `rentableArea`, `fillDefinition` and `fillAggregation` are available in active/preview metrics. Mean-floor ratios in old benchmark artifacts remain separately documented.
+
+On realization, `validation.spatialQuality` reports `noUnplannedEnclosedGaps`, `geometryAndGapChecksPass`, total unplanned enclosed gap area and per-floor gap polygons/statistics. `validation.valid` and `metrics.geometryValid` retain their original overlap/containment/contact/access scope; they do NOT establish architectural acceptability. Preview metrics also expose `continuousFloorPlateValid` and `unplannedEnclosedGapArea`. Show the gap check separately; do not show an unqualified green architectural-valid label from geometryValid alone. Actual door/program/courtyard design remains unverified.
+
+Training performs no gap realization/audit. Missing spatialQuality means unmeasured, never zero gaps. No graph-growth gap avoidance or automatic gap filling has been implemented.

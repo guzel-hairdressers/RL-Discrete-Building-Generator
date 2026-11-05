@@ -1,0 +1,22 @@
+{
+  "status": "complete",
+  "inputs": [
+    "agent_notes/benchmarks/2026-11-05-v010-hypotheses-speed-01",
+    "agent_notes/benchmarks/2026-11-05-v010-hypotheses-quality-01"
+  ],
+  "sourceHashes": {
+    "tools/benchmark_endgame_repair.py": "84dcddad4ca6ed4cb831bb146920108303b1e9e4cedd0dfdc61a1ff3d4e5b642",
+    "src/graph_experiments.py": "47663ac6acd824b9dae83d72925b0c8b9c2f8c7700bc83cf56b4e0e22f7014a2",
+    "src/graph_proxy.py": "e3d7935af80eca2950bc4eb2b23dfda651a0e8de860abd8d03064ce482834e69",
+    "src/realizer_experiments.py": "932d53d6edc6f625b8055fefc448c4dcf3cd20aa44c7f4136cc43dd9d06006d4",
+    "src/shared_modules.py": "b9b0e00911319f0f79ec52f98225383cb91c53583e1fe9618db52394c66ef2fc",
+    "src/layout_gaps.py": "4703d0417dff87d2d74cf088cf2fc240acf9915288ead077d7f3e8b6d06b2513"
+  },
+  "revision": "4084bc42dbca502b8bea58e7546ce18046d2f631",
+  "protocol": "Matched baseline completed graphs;ANY/FREE held-out and L/XL120max/floor4/8floors. Six continuous local pose trials each;accept only a higher exact mean per-floor objective;all copying/rebuilding/checking timed. No training.",
+  "correction": "Earlier pilot repair used building-wide ratio surrogate and spent trials early. Its data remain labeled; this pass tests corrected acceptance at the expensive completed states.",
+  "cases": 84,
+  "errors": 12,
+  "elapsedSeconds": 12.479530540993437,
+  "limitations": "Superseded export replay:unstable polygon-normal recovery;12 reconstruction/audit errors;overlapped unit tests,not timing evidence."
+}

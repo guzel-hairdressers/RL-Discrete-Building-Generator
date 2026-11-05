@@ -1,0 +1,414 @@
+{
+  "arms": {
+    "baseline": {
+      "L-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 1.1897384723318585,
+        "meanRolloutSeconds": 1.128793833333475,
+        "meanReachedReferences": 234.66666666666666,
+        "meanAuditFill": 0.4594483563977414,
+        "valid": 3,
+        "medianActiveStep": 0.018167125002946705,
+        "p95ActiveStep": 0.03151682469979278,
+        "counters": {
+          "candidatesGenerated": 24672,
+          "probeCalls": 36435,
+          "testedCandidates": 45800,
+          "positiveCandidates": 4114,
+          "radiusRejected": 9365
+        },
+        "componentSeconds": {}
+      },
+      "XL-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 2.9182398333359743,
+        "meanRolloutSeconds": 2.8196730419973997,
+        "meanReachedReferences": 403,
+        "meanAuditFill": 0.45768586667656397,
+        "valid": 3,
+        "medianActiveStep": 0.026485750000574626,
+        "p95ActiveStep": 0.04058591699867975,
+        "counters": {
+          "candidatesGenerated": 43920,
+          "probeCalls": 67567,
+          "testedCandidates": 81662,
+          "positiveCandidates": 6961,
+          "radiusRejected": 14095
+        },
+        "componentSeconds": {}
+      },
+      "L-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 2.884225041338747,
+        "meanRolloutSeconds": 2.757448347331471,
+        "meanReachedReferences": 481.3333333333333,
+        "meanAuditFill": 0.4864084753778631,
+        "valid": 3,
+        "medianActiveStep": 0.04525810400082264,
+        "p95ActiveStep": 0.06686365625064354,
+        "counters": {
+          "candidatesGenerated": 49230,
+          "probeCalls": 69981,
+          "testedCandidates": 93558,
+          "positiveCandidates": 7953,
+          "radiusRejected": 23577
+        },
+        "componentSeconds": {}
+      },
+      "XL-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 7.063371791334551,
+        "meanRolloutSeconds": 6.84217961133254,
+        "meanReachedReferences": 785.3333333333334,
+        "meanAuditFill": 0.5006782047642414,
+        "valid": 3,
+        "medianActiveStep": 0.06364362499880372,
+        "p95ActiveStep": 0.1500002875003701,
+        "counters": {
+          "candidatesGenerated": 91820,
+          "probeCalls": 132972,
+          "testedCandidates": 170730,
+          "positiveCandidates": 13214,
+          "radiusRejected": 37758
+        },
+        "componentSeconds": {}
+      }
+    },
+    "boundary": {
+      "L-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 1.0730276386651287,
+        "meanRolloutSeconds": 1.0093433889972705,
+        "meanReachedReferences": 200.33333333333334,
+        "meanAuditFill": 0.5236066015728951,
+        "valid": 3,
+        "medianActiveStep": 0.019450125000730623,
+        "p95ActiveStep": 0.026561658999708013,
+        "counters": {
+          "candidatesGenerated": 21081,
+          "probeCalls": 28545,
+          "testedCandidates": 39678,
+          "positiveCandidates": 3742,
+          "radiusRejected": 11133
+        },
+        "componentSeconds": {}
+      },
+      "XL-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 2.3798789586677835,
+        "meanRolloutSeconds": 2.2823764583348143,
+        "meanReachedReferences": 346.6666666666667,
+        "meanAuditFill": 0.544509265574783,
+        "valid": 3,
+        "medianActiveStep": 0.02443966699502198,
+        "p95ActiveStep": 0.03966680419980546,
+        "counters": {
+          "candidatesGenerated": 37636,
+          "probeCalls": 56382,
+          "testedCandidates": 70802,
+          "positiveCandidates": 6189,
+          "radiusRejected": 14420
+        },
+        "componentSeconds": {}
+      },
+      "L-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 3.182057458667259,
+        "meanRolloutSeconds": 3.061232360996655,
+        "meanReachedReferences": 428.6666666666667,
+        "meanAuditFill": 0.5083429392221082,
+        "valid": 3,
+        "medianActiveStep": 0.04841366700202343,
+        "p95ActiveStep": 0.06822803125178324,
+        "counters": {
+          "candidatesGenerated": 52547,
+          "probeCalls": 74547,
+          "testedCandidates": 102314,
+          "positiveCandidates": 7102,
+          "radiusRejected": 27767
+        },
+        "componentSeconds": {}
+      },
+      "XL-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 8.73485736133201,
+        "meanRolloutSeconds": 8.542558666665476,
+        "meanReachedReferences": 774,
+        "meanAuditFill": 0.4982915198644168,
+        "valid": 3,
+        "medianActiveStep": 0.07728031249644118,
+        "p95ActiveStep": 0.16402221030330102,
+        "counters": {
+          "candidatesGenerated": 96597,
+          "probeCalls": 154840,
+          "testedCandidates": 186756,
+          "positiveCandidates": 14135,
+          "radiusRejected": 31916
+        },
+        "componentSeconds": {}
+      }
+    },
+    "ranking": {
+      "L-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 2.1450437776681306,
+        "meanRolloutSeconds": 2.073816916665237,
+        "meanReachedReferences": 348.6666666666667,
+        "meanAuditFill": 0.4451371251455623,
+        "valid": 3,
+        "medianActiveStep": 0.01938495800277451,
+        "p95ActiveStep": 0.03893768299894869,
+        "counters": {
+          "candidatesGenerated": 41197,
+          "probeCalls": 43684,
+          "testedCandidates": 66620,
+          "positiveCandidates": 3034,
+          "radiusRejected": 22936
+        },
+        "componentSeconds": {
+          "ranking": 0.27189137390087126
+        }
+      },
+      "XL-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 2.646421596999668,
+        "meanRolloutSeconds": 2.533078958001473,
+        "meanReachedReferences": 414.6666666666667,
+        "meanAuditFill": 0.34978877771683853,
+        "valid": 3,
+        "medianActiveStep": 0.022564749997400213,
+        "p95ActiveStep": 0.03370627500262343,
+        "counters": {
+          "candidatesGenerated": 44583,
+          "probeCalls": 47021,
+          "testedCandidates": 65552,
+          "positiveCandidates": 3708,
+          "radiusRejected": 18531
+        },
+        "componentSeconds": {
+          "ranking": 0.287436263912241
+        }
+      },
+      "L-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 4.780531791669394,
+        "meanRolloutSeconds": 4.638325110997054,
+        "meanReachedReferences": 626.3333333333334,
+        "meanAuditFill": 0.42853068025395663,
+        "valid": 3,
+        "medianActiveStep": 0.05051687499508262,
+        "p95ActiveStep": 0.10501516680305918,
+        "counters": {
+          "candidatesGenerated": 78305,
+          "probeCalls": 88075,
+          "testedCandidates": 127988,
+          "positiveCandidates": 5003,
+          "radiusRejected": 39913
+        },
+        "componentSeconds": {
+          "ranking": 0.47804100176290376
+        }
+      },
+      "XL-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 7.775197597332105,
+        "meanRolloutSeconds": 7.555895194331242,
+        "meanReachedReferences": 910.6666666666666,
+        "meanAuditFill": 0.4034870855703923,
+        "valid": 3,
+        "medianActiveStep": 0.057652187497296836,
+        "p95ActiveStep": 0.1443720955521712,
+        "counters": {
+          "candidatesGenerated": 108431,
+          "probeCalls": 123904,
+          "testedCandidates": 162516,
+          "positiveCandidates": 8468,
+          "radiusRejected": 38612
+        },
+        "componentSeconds": {
+          "ranking": 0.6588307800338953
+        }
+      }
+    },
+    "repair": {
+      "L-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 1.1289518193346642,
+        "meanRolloutSeconds": 1.0685569720008061,
+        "meanReachedReferences": 223.33333333333334,
+        "meanAuditFill": 0.4423926488322145,
+        "valid": 3,
+        "medianActiveStep": 0.016692541998054367,
+        "p95ActiveStep": 0.030848124802287203,
+        "counters": {
+          "candidatesGenerated": 23750,
+          "probeCalls": 33959,
+          "testedCandidates": 43720,
+          "positiveCandidates": 4142,
+          "radiusRejected": 9761,
+          "repairTrials": 18
+        },
+        "componentSeconds": {
+          "repair": 0.1320802069894853
+        }
+      },
+      "XL-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 2.368848597332544,
+        "meanRolloutSeconds": 2.1969050693345102,
+        "meanReachedReferences": 361.3333333333333,
+        "meanAuditFill": 0.41121587914892543,
+        "valid": 3,
+        "medianActiveStep": 0.021714603502914542,
+        "p95ActiveStep": 0.033594122955400936,
+        "counters": {
+          "candidatesGenerated": 40283,
+          "probeCalls": 65564,
+          "testedCandidates": 76592,
+          "positiveCandidates": 6247,
+          "radiusRejected": 11028,
+          "repairTrials": 18
+        },
+        "componentSeconds": {
+          "repair": 0.3430582919900189
+        }
+      },
+      "L-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 3.7542369439979666,
+        "meanRolloutSeconds": 3.631487513666798,
+        "meanReachedReferences": 523.6666666666666,
+        "meanAuditFill": 0.4869374370321102,
+        "valid": 3,
+        "medianActiveStep": 0.04929168750095414,
+        "p95ActiveStep": 0.0835555338482663,
+        "counters": {
+          "candidatesGenerated": 59661,
+          "probeCalls": 87396,
+          "testedCandidates": 114288,
+          "positiveCandidates": 9207,
+          "radiusRejected": 26892,
+          "repairTrials": 18
+        },
+        "componentSeconds": {
+          "repair": 0.23789783100801287
+        }
+      },
+      "XL-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 8.444106138667848,
+        "meanRolloutSeconds": 8.242357139000282,
+        "meanReachedReferences": 849,
+        "meanAuditFill": 0.47868886308365577,
+        "valid": 3,
+        "medianActiveStep": 0.0644881250045728,
+        "p95ActiveStep": 0.155482796200522,
+        "counters": {
+          "candidatesGenerated": 95615,
+          "probeCalls": 153115,
+          "testedCandidates": 182800,
+          "positiveCandidates": 15446,
+          "radiusRejected": 29685,
+          "repairTrials": 18,
+          "repairsAccepted": 1
+        },
+        "componentSeconds": {
+          "repair": 0.3671042089918046
+        }
+      }
+    },
+    "site_certificate": {
+      "L-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 1.3832425833340192,
+        "meanRolloutSeconds": 1.3215538886652212,
+        "meanReachedReferences": 253.66666666666666,
+        "meanAuditFill": 0.541751562841875,
+        "valid": 3,
+        "medianActiveStep": 0.02043808300368255,
+        "p95ActiveStep": 0.028562033601338042,
+        "counters": {
+          "candidatesGenerated": 27322,
+          "probeCalls": 50874,
+          "testedCandidates": 50874,
+          "positiveCandidates": 4333,
+          "radiusRejected": 0,
+          "radiusRejectedButShapeFits": 378,
+          "shapeSiteTests": 4270
+        },
+        "componentSeconds": {
+          "siteCertificate": 0.03781325258023571
+        }
+      },
+      "XL-4": {
+        "cases": 3,
+        "meanEpisodeSeconds": 2.47721130533076,
+        "meanRolloutSeconds": 2.37942795833078,
+        "meanReachedReferences": 416.3333333333333,
+        "meanAuditFill": 0.4495747810005209,
+        "valid": 3,
+        "medianActiveStep": 0.02400127099826932,
+        "p95ActiveStep": 0.03371673335168452,
+        "counters": {
+          "candidatesGenerated": 39523,
+          "probeCalls": 73636,
+          "testedCandidates": 73636,
+          "positiveCandidates": 7504,
+          "radiusRejected": 0,
+          "radiusRejectedButShapeFits": 507,
+          "shapeSiteTests": 3285
+        },
+        "componentSeconds": {
+          "siteCertificate": 0.03329984097217675
+        }
+      },
+      "L-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 4.589558694334603,
+        "meanRolloutSeconds": 4.469717764004599,
+        "meanReachedReferences": 595.6666666666666,
+        "meanAuditFill": 0.5446848750872358,
+        "valid": 3,
+        "medianActiveStep": 0.05597620900516631,
+        "p95ActiveStep": 0.0889443955020397,
+        "counters": {
+          "candidatesGenerated": 67138,
+          "probeCalls": 128558,
+          "testedCandidates": 128558,
+          "positiveCandidates": 9831,
+          "radiusRejected": 0,
+          "shapeSiteTests": 7952,
+          "radiusRejectedButShapeFits": 1254
+        },
+        "componentSeconds": {
+          "siteCertificate": 0.07993641768553061
+        }
+      },
+      "XL-8": {
+        "cases": 3,
+        "meanEpisodeSeconds": 8.995386792000014,
+        "meanRolloutSeconds": 8.804718750000271,
+        "meanReachedReferences": 890.6666666666666,
+        "meanAuditFill": 0.48426772324676287,
+        "valid": 3,
+        "medianActiveStep": 0.06910993749988847,
+        "p95ActiveStep": 0.15742075440030015,
+        "counters": {
+          "candidatesGenerated": 102348,
+          "probeCalls": 194513,
+          "testedCandidates": 194513,
+          "positiveCandidates": 15437,
+          "radiusRejected": 0,
+          "shapeSiteTests": 7628,
+          "radiusRejectedButShapeFits": 917
+        },
+        "componentSeconds": {
+          "siteCertificate": 0.07748211354919476
+        }
+      }
+    }
+  },
+  "equalWorkSpeedupClaim": false,
+  "protocol": "L/XL,120 maximum per floor,4 and8 floors; actual reached counts reported",
+  "failures": []
+}
