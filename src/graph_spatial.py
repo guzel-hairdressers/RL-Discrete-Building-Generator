@@ -12,7 +12,9 @@ import numpy as np
 DEFAULTS = dict(graphSpatialEnabled=True, graphFacadeClearance=4., graphExposureHorizon=30.,
     graphDaylightDepth=6., graphMinRoomExposure=.35, graphMaxAccessDistance=30.,
     graphExposureSampleSpacing=1., graphMinResidentialShare=.65,
-    graphMinCoreArea=12., graphMinCoreWidth=2., graphCoreCapacity=500.,graphMinSkyShare=.25,graphMinFill=.4)
+    graphMinCoreArea=12., graphMinCoreWidth=2., graphCoreCapacity=500.,graphMinSkyShare=.25,graphMinFill=.4,
+    graphWindowFrontage=2.,graphWindowReferenceArea=15.,graphWindowSeparation=25.,graphWindowCone=60.,
+    graphMaxCreviceFraction=.05,graphPlotDirections=True)
 
 
 def settings(graph):
@@ -101,6 +103,8 @@ class SpatialEvidence:
         self.bank=bank;self.graph=bank.graph;self.options=settings(self.graph)
         self.cache={};self.relations={};self.counters=defaultdict(int)
         self.plane_cache={}
+        self.intersection_cache={}
+        self.build_candidates=False
         self._index_key=None
 
     def surface(self,instance):
@@ -162,10 +166,13 @@ class SpatialEvidence:
         radius=self.options['graphExposureHorizon']+2*self.bank.prior.radius
         return sorted(oid for oid in found if math.dist(origin,self.bank.instances[oid].origin)<=radius)
 
-    def occurrence(self,oid,floor):
+    def measure(self,oid,floor):
         i=self.bank.instances[oid];o=self.options
-        if i.nodes[0].cell_type.value!='room':return None
-        near=self.neighbors(i.origin,floor)
+        if i.nodes[0].cell_type.value=='void':return None
+        # Full-height occurrences share their footprint on every floor. Query
+        # the union once; lower objects contribute zero sky angle upstairs.
+        # Independent occurrences retain their ordinary floor-local query.
+        near=self.neighbors(i.origin,0 if len(i.nodes)>1 else floor)
         # Local footprint changes include remote occurrences of a shared type.
         # A core/room change does not change obstruction but does change obligation.
         signature=tuple((other,shape_token(self.bank.shapes[self.bank.instances[other].prototype]),
@@ -183,7 +190,12 @@ class SpatialEvidence:
         contact=np.zeros(len(origins),dtype=bool);nearest=np.full(len(origins),'',dtype=object)
         floor_z=floor*self.graph.floor_height+1.5
         obstacles=[self.bank.instances[other] for other in near if other!=oid and self.bank.instances[other].nodes[0].cell_type.value!='void']
-        entries,exits=self.intersect_many(obstacles,origins,directions)
+        ray_key=(shape_token(shape),i.origin,i.angle,signature)
+        cached=self.intersection_cache.get(oid)
+        if cached is None or cached[0]!=ray_key:
+            entries,exits=self.intersect_many(obstacles,origins,directions)
+            self.intersection_cache[oid]=(ray_key,entries,exits)
+        else:_,entries,exits=cached
         for j,distance,exit_distance in zip(obstacles,entries,exits):
             other=j.id
             on_floor=any(n.floor_index==floor for n in j.nodes)
@@ -206,21 +218,37 @@ class SpatialEvidence:
                 hidden+=np.maximum(0.,hi-np.maximum(lo,end));end=np.maximum(end,hi)
         sky=np.maximum(0.,1.-hidden/(math.pi/2))
         exposed=~contact
-        qualified=exposed&(clearance>=o['graphFacadeClearance'])&(sky>=o['graphMinSkyShare'])
+        qualified=exposed&(sky>=o['graphMinSkyShare'])
         # Capacity of usable potential window facade; not illuminance, actual
         # window area or transmitted light through adjacent rooms.
         exposed_length=float(weights@exposed)
         qualified_length=float(weights@qualified)
         weighted_length=float(weights@(qualified*sky))
         capacity=min(1.,weighted_length*o['graphDaylightDepth']/max(1e-9,area))
+        # Only the realized adapter creates whole glazed-edge candidates.
+        candidates=self.facade_candidates(i,qualified,sky,obstacles) if self.build_candidates and i.nodes[0].cell_type.value=='room' else []
+        opportunities=[]
+        if i.nodes[0].cell_type.value=='room' and not self.build_candidates:
+            # Scalar frontage budgets per observed direction, not window strips.
+            groups={}
+            for k in range(len(weights)):
+                normal_key=tuple(np.round(directions[k],7));groups.setdefault(normal_key,[]).append(k)
+            for normal,indices in groups.items():
+                if not np.all(qualified[indices]):continue
+                w=weights[indices];length=float(w.sum())
+                opportunities.append(dict(occurrenceId=oid,floor=floor,normal=list(normal),length=length,
+                    estimatedPoint=np.average(origins[indices],axis=0,weights=w).tolist(),
+                    skyShare=float(np.average(sky[indices],weights=w))))
         room=dict(nodeIds=[n.node_id for n in i.nodes if n.floor_index==floor],occurrenceId=oid,
-            function='room',area=area,exposedLength=exposed_length,qualifiedFacadeLength=qualified_length,
+            function=i.nodes[0].cell_type.value,area=area,exposedLength=exposed_length,qualifiedFacadeLength=qualified_length,
             skyWeightedFacadeLength=weighted_length,daylightAccessProxy=capacity,
             exposureDeficit=max(0.,o['graphMinRoomExposure']-capacity)/max(1e-9,o['graphMinRoomExposure']),
             narrowFacingLength=float(weights@(exposed&(clearance<o['graphFacadeClearance']))),
+            poorVoidFacingLength=float(weights@(exposed&((clearance<o['graphFacadeClearance'])|((sky<o['graphMinSkyShare'])&(clearance<o['graphExposureHorizon']))))),
             lowSkyFacingLength=float(weights@(exposed&(sky<o['graphMinSkyShare']))),
             minimumFacingClearance=float(np.min(clearance[exposed])) if np.any(exposed) else None,
-            evidence='implicit_shared_supports',unknownWindows=True,unobservedBoundary=shape.prior_boundary)
+            evidence='implicit_shared_supports',unknownWindows=not self.build_candidates,unobservedBoundary=shape.prior_boundary,
+            windowCandidates=candidates,facadeOpportunities=opportunities)
         relations=[]
         for other in sorted(set(nearest[exposed])- {''}):
             selected=exposed&(nearest==other)
@@ -231,8 +259,45 @@ class SpatialEvidence:
         self.cache[key]=(signature,room)
         return room
 
+    def window_plan(self,floor):
+        from graph_windows import required_frontage
+        if self.build_candidates:
+            from graph_windows import allocate
+        else:
+            from graph_window_proxy import allocate
+        # One allocation per unchanged floor, shared by metrics and every room.
+        key=tuple((i.id,i.origin,i.angle,tuple(n.floor_index for n in i.nodes),i.nodes[0].cell_type.value,
+                   shape_token(self.bank.shapes[i.prototype])) for i in self.bank.instances.values())
+        cached=getattr(self,'window_cache',{}).get(floor)
+        if cached and cached[0]==key:return cached[1]
+        instances=[i for i in self.bank.instances.values() if any(n.floor_index==floor for n in i.nodes) and i.nodes[0].cell_type.value!='void']
+        rows=[self.measure(i.id,floor) for i in instances]
+        required={row['occurrenceId']:required_frontage(row['area'],self.options['graphWindowFrontage'],self.options['graphWindowReferenceArea'])
+                  for row in rows if row['function']=='room'}
+        result=allocate([c for row in rows for c in row['windowCandidates' if self.build_candidates else 'facadeOpportunities']],required,
+                        self.options['graphWindowSeparation'],self.options['graphWindowCone'])
+        result['required']=required
+        # All occupied facades count, even blank cores. This separate diagnostic
+        # cannot be evaded by deleting windows or changing a room to a core.
+        exposed=sum(row['exposedLength'] for row in rows)
+        narrow=sum(row['poorVoidFacingLength'] for row in rows)
+        result['creviceFraction']=narrow/exposed if exposed else 0.
+        if not hasattr(self,'window_cache'):self.window_cache={}
+        self.window_cache[floor]=(key,result)
+        return result
+
+    def occurrence(self,oid,floor,plan=None):
+        if self.bank.instances[oid].nodes[0].cell_type.value!='room':return None
+        row=self.measure(oid,floor);plan=self.window_plan(floor) if plan is None else plan
+        required=plan['required'][oid];frontage=plan['frontage'].get(oid,0.)
+        row.update(requiredWindowFrontage=required,windowFrontage=frontage,
+                   windowFrontageDeficit=max(0.,1-frontage/required),exposureDeficit=max(0.,1-frontage/required),
+                   windows=[w for w in plan['windows'] if w['occurrenceId']==oid])
+        return row
+
     def metrics(self,floor):
-        rows=[self.occurrence(oid,floor) for oid,i in self.bank.instances.items()
+        plan=self.window_plan(floor)
+        rows=[self.occurrence(oid,floor,plan) for oid,i in self.bank.instances.items()
               if i.nodes[0].cell_type.value=='room' and any(n.floor_index==floor for n in i.nodes)]
         total=sum(row['area'] for row in rows)
         occupied=sum(self.bank.shapes[i.prototype].area for i in self.bank.instances.values()
@@ -251,11 +316,19 @@ class SpatialEvidence:
         core_geometry_deficit=(len(cores)-len(eligible))/max(1,len(cores))
         proxy=sum(row['area']*row['daylightAccessProxy'] for row in rows)/total if total else None
         deficit=sum(row['area']*row['exposureDeficit'] for row in rows)/total if total else 0.
+        worst_window=max((row['windowFrontageDeficit'] for row in rows),default=0.)
+        if worst_window>1e-6:deficit=max(2e-6,deficit)
         distances=access_distances(self.graph,floor);limit=self.options['graphMaxAccessDistance']
         travel_deficit=sum(row['area']*min(1.,max(0.,distances.get(row['nodeIds'][0],math.inf)/limit-1.)) for row in rows)/total if total else 0.
         maximum=max((distances.get(row['nodeIds'][0],math.inf) for row in rows),default=0.)
+        crevice_deficit=max(0.,plan['creviceFraction']-self.options['graphMaxCreviceFraction'])
         return dict(daylightAccessProxy=proxy,livableAreaEvaluated=total,livableOccurrencesEvaluated=len(rows),
             daylightDeficit=deficit,accessDistanceDeficit=travel_deficit,
+            windowFrontageRatio=sum(min(row['windowFrontage'],row['requiredWindowFrontage']) for row in rows)/max(1e-9,sum(row['requiredWindowFrontage'] for row in rows)),
+            windowFrontageDeficit=deficit,roomsMeetingWindowRule=sum(row['windowFrontageDeficit']<=1e-6 for row in rows),
+            worstWindowFrontageDeficit=worst_window,
+            creviceDeficit=crevice_deficit,creviceFraction=plan['creviceFraction'],
+            windowPlan={k:v for k,v in plan.items() if k!='frontage'},
             residentialProgramDeficit=program_deficit,residentialShare=residential_share,
             fillDeficit=fill_deficit,occupiedSiteFill=fill,
             coreCapacityDeficit=capacity_deficit,coreGeometryDeficit=core_geometry_deficit,
@@ -263,9 +336,9 @@ class SpatialEvidence:
             maximumEstimatedAccessDistance=maximum if math.isfinite(maximum) else None,
             coreOccurrences=len({i.id for i in self.bank.instances.values() if i.nodes[0].cell_type.value=='core' and any(n.floor_index==floor for n in i.nodes)}),
             coreOccurrenceIds=[i.id for i in cores],
-            spatialDeficit=max(deficit,travel_deficit,program_deficit,capacity_deficit,core_geometry_deficit,fill_deficit),
-            spatialRequirementsMet=bool(rows and max(deficit,travel_deficit,program_deficit,capacity_deficit,core_geometry_deficit,fill_deficit)<=1e-6),
-            daylightEvidenceStatus='uncalibrated_window_facade_proxy',
+            spatialDeficit=max(deficit,travel_deficit,program_deficit,capacity_deficit,core_geometry_deficit,fill_deficit,crevice_deficit),
+            spatialRequirementsMet=bool(rows and max(deficit,travel_deficit,program_deficit,capacity_deficit,core_geometry_deficit,fill_deficit,crevice_deficit)<=1e-6),
+            daylightEvidenceStatus='realized_window_intervals_checked' if self.build_candidates else 'graph_frontage_privacy_proxy',
             daylightObligationFunctions=['room'],environmentalComplianceVerified=False,
             rooms=rows)
 
@@ -291,14 +364,15 @@ def summary(per_floor):
     if not rows or not all('spatialDeficit' in row for row in rows):return {}
     area=sum(row['livableAreaEvaluated'] for row in rows)
     return dict(daylightAccessProxy=sum(row['livableAreaEvaluated']*(row['daylightAccessProxy'] or 0.) for row in rows)/area if area else None,
+        windowFrontageRatio=sum(row['livableAreaEvaluated']*row['windowFrontageRatio'] for row in rows)/area if area else None,
         livableAreaEvaluated=area,spatialDeficit=max(row['spatialDeficit'] for row in rows),
         spatialRequirementsMet=all(row['spatialRequirementsMet'] for row in rows),
         coreOccurrences=len({oid for row in rows for oid in row.get('coreOccurrenceIds',[])}),
         spatialPerFloor=[{k:row.get(k) for k in ('floorIndex','daylightAccessProxy','livableAreaEvaluated',
-            'daylightDeficit','accessDistanceDeficit','residentialProgramDeficit','residentialShare','fillDeficit','occupiedSiteFill',
+            'daylightDeficit','windowFrontageDeficit','windowFrontageRatio','roomsMeetingWindowRule','creviceDeficit','creviceFraction','accessDistanceDeficit','residentialProgramDeficit','residentialShare','fillDeficit','occupiedSiteFill',
             'coreCapacityDeficit','coreGeometryDeficit','maximumEstimatedAccessDistance','coreOccurrences',
             'spatialDeficit','spatialRequirementsMet')} for row in rows],
-        daylightEvidenceStatus='uncalibrated_window_facade_proxy',daylightObligationFunctions=['room'],
+        daylightEvidenceStatus=rows[0].get('daylightEvidenceStatus'),daylightObligationFunctions=['room'],
         environmentalComplianceVerified=False)
 
 

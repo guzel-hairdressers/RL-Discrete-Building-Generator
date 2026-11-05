@@ -20,22 +20,23 @@ def digest(learner):
     return h.hexdigest()
 
 def run(args):
+    SETTINGS['graphPlotDirections']=args.directions=='on'
     args.output.mkdir(parents=True,exist_ok=False);(args.output/'layouts').mkdir()
     if args.train:server.OUTPUT_DIR=str((args.output/'checkpoints').resolve())
     sources={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in (ROOT/'src').glob('*.py')}
     manifest=dict(status='running',purpose='paired finite correctness/latency pilot, not convergence evidence',mode=args.mode,
         revision=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),sourceHashes=sources,
-        settings=SETTINGS,spatialDefaults=DEFAULTS,seeds=args.seeds,cases=args.cases,device='cpu')
+        settings=SETTINGS,spatialDefaults=DEFAULTS,seeds=args.seeds,cases=args.cases,arms=args.arms,device='cpu')
     snapshot={name:(ROOT/name).read_text() for name in sources}
     snapshot['tools/benchmark_graph_spatial.py']=Path(__file__).read_text()
     (args.output/'sources.json').write_text(json.dumps(snapshot))
     (args.output/'manifest.json').write_text(json.dumps(manifest,indent=2));rows=[]
     for seed in args.seeds:
-        learners={arm:GraphLearner(seed=seed) for arm in ('baseline','spatial')}
+        learners={arm:GraphLearner(seed=seed) for arm in args.arms}
         configs=[dict(siteAreaTier=tier,boundaryType='rect',parallelEnvironments=floors) for floors in (4,8) for tier in ('L','XL')] if args.mode=='speed' else [dict(siteAreaTier='ANY',boundaryType='free',parallelEnvironments=4) for _ in range(args.cases)]
         for index,config in enumerate(configs):
             site_seed=900001+index*101 if args.mode!='speed' else seed
-            arms=['baseline','spatial'];random.Random(seed+index).shuffle(arms)
+            arms=list(args.arms);random.Random(seed+index).shuffle(arms)
             site_hashes={}
             for arm in arms:
                 settings=dict(SETTINGS,**config,graphSpatialEnabled=arm=='spatial')
@@ -85,7 +86,8 @@ def run(args):
                 rows.append(row)
                 with (args.output/'episodes.jsonl').open('a') as f:f.write(json.dumps(row,allow_nan=False)+'\n')
                 print(json.dumps({key:row.get(key) for key in ('arm','seed','index','floorReferences','rolloutSeconds','measurementSeconds','spatialRequirementsMet','error')}),flush=True)
-            assert site_hashes.get('baseline')==site_hashes.get('spatial'),'unpaired sites'
+            if set(args.arms)=={'baseline','spatial'}:
+                assert site_hashes.get('baseline')==site_hashes.get('spatial'),'unpaired sites'
     summary={}
     for arm in ('baseline','spatial'):
         selected=[r for r in rows if r['arm']==arm];good=[r for r in selected if 'error' not in r]
@@ -103,4 +105,6 @@ def run(args):
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--mode',choices=('quality','speed'),default='quality');p.add_argument('--cases',type=int,default=12)
     p.add_argument('--seeds',type=int,nargs='+',default=[123,456,789]);p.add_argument('--train',action='store_true');p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--directions',choices=('on','off'),default='on')
+    p.add_argument('--arms',choices=('baseline','spatial'),nargs='+',default=['baseline','spatial'])
     run(p.parse_args())

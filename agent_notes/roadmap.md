@@ -354,3 +354,11 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [VERIFIED]337 backend tests,21 frontend tests; graph-only updates and independent preview; pause-excluding client/server timing.
 - [EXPERIMENTAL] Explicit spatial/program/core/fill feasibility tiers.72-case paired changing-site pilot has0/36 fully feasible layouts in each arm; no convergence success claimed.
 - [OPEN]750-episode held-out learning, public circulation, real windows/privacy, context shading, calibrated physical daylight and learned joint core relocation. [Report](reports/livable_spatial_2026-11-05/README.md).
+
+### 2026-11-05 — glazed-edge constraints and parcel directions
+
+- [IMPLEMENTED] Whole-edge glazing:2m minimum, area-scaled2m/15m², ±30°/25m separation between glazed facades; cores exempt. Graph training uses an explicit uncertain capacity proxy.
+- [IMPLEMENTED] Narrow/poor-sky void quality covers windowless cores as well as rooms. Glazing-pattern variants are distinct from footprint reuse.
+- [IMPLEMENTED] Trainable rotation-relative parcel-edge/principal-axis conditioning and optional measured-direction proposals; continuous/motif routes retained. Schema5 migrates legacy weights and Adam moments.
+- [IMPLEMENTED] Exact constraint/site/contact caches and numeric tensor packing; final validation bypasses growth-contact result caches.
+- [OPEN] Longer learning evaluations, physical daylight/context windows, less conservative visibility-aware glazing allocation, jointly reused opening patterns and benchmarked soft right-angle realization preference.

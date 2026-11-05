@@ -3,6 +3,8 @@
 2026-11-05. Branch version/v0.10.0. This supersedes the graph v4 objective where
 only fill/reuse/program fraction contributed and exterior wells were unmeasured.
 
+> Superseded for window/privacy requirements by [whole-edge glazing and graph proxies](whole_edge_glazing_v010.md). The original facade-depth target below is retained as historical evidence, not the current frontage requirement.
+
 ## What replaces the old daylight reward
 
 The old6m-to-property-boundary score is not restored. The new quantity is a

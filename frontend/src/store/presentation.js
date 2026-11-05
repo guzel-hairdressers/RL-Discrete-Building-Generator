@@ -48,13 +48,14 @@ export function displayPolygon(placement, boundaries = []) {
   return poly.map((p) => ({ x: Number(p.x ?? p[0]) + Number(offset.x || 0), y: Number(p.y ?? p[1]) + Number(offset.y || 0) }));
 }
 
-const SPATIAL_REQUIREMENTS = {daylightDeficit:'livable facade access',accessDistanceDeficit:'estimated core access distance',residentialProgramDeficit:'minimum residential share',coreCapacityDeficit:'core service capacity',coreGeometryDeficit:'core dimensions',fillDeficit:'minimum site fill'};
+const SPATIAL_REQUIREMENTS = {windowFrontageDeficit:'required window frontage',creviceDeficit:'narrow open-space crevices',accessDistanceDeficit:'estimated core access distance',residentialProgramDeficit:'minimum residential share',coreCapacityDeficit:'core service capacity',coreGeometryDeficit:'core dimensions',fillDeficit:'minimum site fill'};
 export function spatialFailureRows(metrics = {}, validation) {
   const actual=Object.entries(validation?.residentialSpatial?.perFloor || {});
   const rows=actual.length ? actual.map(([floor,row])=>({...row,floorIndex:Number(floor)})) :
     (metrics.perSite?.some((r)=>r.spatialDeficit != null) ? metrics.perSite : metrics.spatialPerFloor || []);
   return rows.map((row,index)=>({floor:(row.floorIndex ?? index)+1,
     failed:Object.entries(SPATIAL_REQUIREMENTS).filter(([key])=>Number(row[key])>1e-6).map(([key,label])=>
-      key === 'daylightDeficit' && row.rooms?.length ? `${label} (${row.rooms.filter((r)=>r.exposureDeficit>1e-6).length}/${row.rooms.length} livable rooms below target)` : label)
+      key === 'windowFrontageDeficit' && row.rooms?.length ? `${label} (${row.rooms.filter((r)=>r.exposureDeficit>1e-6).length}/${row.rooms.length} livable rooms below target)` : label)
+      .concat(row.windowFrontageDeficit == null && Number(row.daylightDeficit)>1e-6 ? [row.rooms?.length ? `livable facade access (${row.rooms.filter((r)=>r.exposureDeficit>1e-6).length}/${row.rooms.length} livable rooms below target)` : 'livable facade access'] : [])
   })).filter((row)=>row.failed.length);
 }

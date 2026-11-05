@@ -608,4 +608,6 @@ class BuildingGraph:
             actual=(audit.get('residentialSpatial') or {}).get('perFloor',{}).get(floor_index)
             metrics.update(actual or predicted)
             metrics['predictedDaylightAccessProxy']=predicted['daylightAccessProxy']
+            metrics['predictedWindowFrontageRatio']=predicted['windowFrontageRatio']
+            metrics['predictedCreviceFraction']=predicted['creviceFraction']
         return metrics

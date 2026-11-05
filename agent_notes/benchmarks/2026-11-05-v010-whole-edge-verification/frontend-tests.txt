@@ -1,0 +1,33 @@
+
+> module-lab-frontend@0.10.0 test
+> node --test tests/*.test.mjs
+
+✔ start waits for mode acknowledgement and sends exact authoritative identifiers (4.12325ms)
+✔ graph batches advance synchronously without render or timer gates (0.589ms)
+✔ pause waits for an in-flight batch before one preview, with no new step (0.772084ms)
+✔ pause on a terminal batch previews using next server episode (0.633958ms)
+✔ completed inference stops even when legacy autoGenerate is true and audit fails (0.72175ms)
+✔ old-generation and old-episode placements cannot replace a current layout (0.401709ms)
+✔ settings apply once and consume authoritative site settings (0.696ms)
+✔ terminal timings stay unavailable if server did not measure them (0.494333ms)
+✔ geometry previews retain estimate history and prediction differences (0.573542ms)
+✔ errors stop execution instead of an unbounded retry loop (0.368ms)
+✔ palette counts occurrence IDs separately from floor references and functions (0.466792ms)
+✔ unavailable values remain unknown and area is summed only from complete measurements (0.343292ms)
+✔ completed preview keeps inspected episode separate from the next server episode (0.598ms)
+✔ late mode acknowledgement cannot resume paused execution (0.440667ms)
+✔ realized area fallbacks use audited fill and measured residential placements (0.203625ms)
+✔ graph realization uses physical occurrences instead of legacy merged geometry (0.373333ms)
+✔ native graph geometry translates once while legacy display records keep world coordinates (0.37775ms)
+✔ reset dispatch is verified against a simulated socket without resetting live weights (0.851084ms)
+✔ active wall time freezes on pause and resumes without paused or preview time (1.304833ms)
+✔ livable facade proxy and spatial failure retain their own provenance (0.321875ms)
+✔ spatial failures identify the requirement without relabeling valid geometry as failed (0.355083ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 146.895541

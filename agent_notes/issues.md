@@ -381,3 +381,9 @@ Implemented a connected contact-arc certificate plus shared multi-room junction 
 ## 2026-11-05 — exposure and pause timing corrections
 
 Graph v4 had no facing-air/daylight-access feedback and automatic growth only made rooms after one starter core. Added livable-only scalar exposure evidence, bounded role/proximity inputs and additional-core/promotion choices. Independent checking exposed overhang-entry and duplicated-near-collinear-frontage bugs; both have regressions. Preview now exports the new metrics rather than discarding them. Client clocks exclude pause/preview/disconnected intervals; server timing sums step work. All-core relabeling and sparse-patch feasibility have explicit guards. See [validation and remaining limits](reports/livable_spatial_2026-11-05/README.md); no physical-daylight or successful-learning claim.
+
+## 2026-11-05 — whole-edge glazing and graph-only privacy estimates
+
+Replaced the generic facade-depth target with the user's area-scaled frontage requirement:2m minimum,2m per15m² above15m². Training predicts directional frontage/privacy budgets; only realization assigns complete edges glazed/solid and evaluates the25m/±30° cone. No fixed window intervals, forced25m wall spacing or window obligations for cores. Narrow/dark crevices remain separately visible across all occupied functions. Graph and actual frontage errors are retained, never overwritten.
+
+A development test caught a shadowed per-room cache key and a core inadvertently offered as a glazed candidate; both are corrected. Interrupted slow/failed development benchmarks remain labeled separately. The exact allocator remains a bounded conservative search, not an infeasibility oracle or physical-light model. See [contract](guides/whole_edge_glazing_v010.md).

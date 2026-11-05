@@ -81,3 +81,5 @@ See [the report](../reports/v010_bounded_dictionary_speed.md) for scope and actu
 ## 2026-11-05 — livable exposure constraints and pause-aware time
 
 [Implemented contract](guides/livable_spatial_constraints_v010.md) and [validation report](reports/livable_spatial_2026-11-05/README.md): livable-only potential-window exposure, multiple-core policy choices, explicit feasibility requirements and an active-time clock.337 backend tests (2 skipped),21 frontend tests; live training/preview verified. Finite pilots have no fully spatial-feasible layouts and establish no convergence improvement; failed/superseded runs are retained.
+
+- [Whole-edge glazing, graph privacy proxy and parcel directions](guides/whole_edge_glazing_v010.md) — current frontage contract and computational changes (2026-11-05).

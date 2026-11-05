@@ -6,6 +6,7 @@ The episode objective is explicitly experimental, not a calibrated design score.
 """
 from __future__ import annotations
 import math
+import numpy as np
 import torch
 from torch import nn
 from torch.distributions import Categorical,Normal
@@ -37,9 +38,14 @@ class GraphActorCritic(nn.Module):
         # New relation/role features start with zero influence on old policies.
         self.spatial=nn.Sequential(nn.Linear(6,32),nn.SiLU(),nn.Linear(32,1))
         nn.init.zeros_(self.spatial[-1].weight);nn.init.zeros_(self.spatial[-1].bias)
+        self.plot_encoder=nn.Sequential(nn.Linear(8,32),nn.SiLU(),nn.Linear(32,32))
+        self.plot_actor=nn.Sequential(nn.Linear(8,32),nn.SiLU(),nn.Linear(32,1))
+        for head in (self.plot_encoder,self.plot_actor):
+            nn.init.zeros_(head[-1].weight);nn.init.zeros_(head[-1].bias)
 
-    def encode(self,nodes,edges,lengths):
+    def encode(self,nodes,edges,lengths,plot=None):
         h=self.node(nodes)
+        if plot is not None:h=h+self.plot_encoder(plot)
         for _ in range(2):
             messages=torch.zeros_like(h)
             degree=torch.zeros((len(h),1),device=h.device)
@@ -50,7 +56,7 @@ class GraphActorCritic(nn.Module):
             h=self.update(torch.cat((h,messages/degree.clamp_min(1)),dim=1))
         return h,h.mean(0)
 
-    def forward(self,nodes,edges,lengths,candidates,anchors=None,geometry=None,encoded=None):
+    def forward(self,nodes,edges,lengths,candidates,anchors=None,geometry=None,encoded=None,plot=None):
         h,context=self.encode(nodes,edges,lengths) if encoded is None else encoded
         if candidates.shape[-1]==10:
             candidates=torch.nn.functional.pad(candidates,(0,2))
@@ -68,6 +74,7 @@ class GraphActorCritic(nn.Module):
             parts.append((energies.softmax(dim=1).unsqueeze(-1)*nodes).sum(dim=1))
         logits=self.actor(torch.cat(parts,dim=1)).squeeze(-1)
         if spatial is not None:logits=logits+self.spatial(spatial).squeeze(-1)
+        if plot is not None:logits=logits+self.plot_actor(plot).squeeze(-1)
         return logits,self.critic(context).squeeze(-1)
 
 
@@ -81,15 +88,40 @@ def encode_graph(graph,device):
         features.append([float(role=='room'),float(role=='core'),float(role=='void'),
             float(n.scope.value=='multi_floor'),len(graph._adj_horiz.get(n.node_id,()))/8,
             math.hypot(n.x-cx,n.y-cy)/(10*radius),n.area/(4*radius*radius),n.floor_index/max(1,graph.num_floors-1)])
-    pairs=[];lengths=[]
-    for e in graph.edges_horiz+graph.edges_vert:
-        a,b=graph.nodes[e.u],graph.nodes[e.v]
-        length=math.dist(a.pos3d,b.pos3d)/(2*radius)
-        for u,v in ((e.u,e.v),(e.v,e.u)):
-            pairs.append([ids[u],ids[v]]);lengths.append([length])
-    edges=torch.tensor(pairs,dtype=torch.long,device=device).reshape(-1,2).T
-    return (torch.tensor(features,dtype=torch.float32,device=device),edges,
-            torch.tensor(lengths,dtype=torch.float32,device=device).reshape(-1,1))
+    pairs,lengths=_edge_arrays(graph,ids,radius)
+    # NumPy packs numeric lists without PyTorch's recursive scalar conversion.
+    # Keep the original Python calculations and ordering bit-for-bit.
+    edges=torch.from_numpy(pairs).to(device).T
+    return (torch.from_numpy(np.asarray(features,dtype=np.float32)).to(device),edges,
+            torch.from_numpy(lengths).to(device))
+
+
+def _edge_arrays(graph,ids,radius):
+    """Append-only growth packs only new edges; poses/order invalidate exactly.
+
+    Allocate new arrays on append: prior action tapes may retain old tensors.
+    Never mutate arrays already consumed by an autograd computation.
+    """
+    key=(radius,getattr(graph,'pose_revision',0),tuple(ids))
+    cache=getattr(graph,'_policy_edges',None)
+    valid=cache is not None and cache['radius_pose']==key[:2] and key[2][:len(cache['ids'])]==cache['ids']
+    if not valid:cache={'radius_pose':key[:2],'ids':(),'groups':{}}
+    cache['ids']=key[2];groups=[]
+    for name,edges in (('horizontal',graph.edges_horiz),('vertical',graph.edges_vert)):
+        previous=cache['groups'].get(name)
+        if previous is not None and (len(edges)<previous[0] or (previous[0] and edges[previous[0]-1] is not previous[1])):previous=None
+        start=previous[0] if previous else 0;pairs=[];lengths=[]
+        for edge in edges[start:]:
+            a,b=graph.nodes[edge.u],graph.nodes[edge.v]
+            length=math.dist(a.pos3d,b.pos3d)/(2*radius)
+            pairs.extend(((ids[edge.u],ids[edge.v]),(ids[edge.v],ids[edge.u])));lengths.extend((length,length))
+        p=np.asarray(pairs,dtype=np.int64).reshape(-1,2);v=np.asarray(lengths,dtype=np.float32).reshape(-1,1)
+        if previous is not None:
+            p=np.concatenate((previous[2],p)) if len(p) else previous[2]
+            v=np.concatenate((previous[3],v)) if len(v) else previous[3]
+        result=(len(edges),edges[-1] if edges else None,p,v);cache['groups'][name]=result;groups.append(result)
+    graph._policy_edges=cache
+    return np.concatenate([g[2] for g in groups]),np.concatenate([g[3] for g in groups])
 
 
 def relative_candidate_geometry(graph,anchors,positions,device):
@@ -132,7 +164,12 @@ class GraphLearner:
         key=(id(graph),len(graph.nodes),torch.is_grad_enabled())
         if self._prepared is None or self._prepared[0]!=key:
             tensors=encode_graph(graph,self.device)
-            self._prepared=(key,tensors,self.model.encode(*tensors))
+            plot=None
+            if getattr(graph,'spatial_settings',{}).get('graphPlotDirections',True):
+                from plot_directions import features
+                plot=torch.tensor([features(graph,n.floor_index,n.pos2d,n.pos2d,n.orientation)
+                                   for n in graph.nodes.values()],dtype=torch.float32,device=self.device)
+            self._prepared=(key,tensors,self.model.encode(*tensors,plot))
         return self._prepared[1:]
 
     def propose_continuous(self,bank,floor,training=True,limit=4,min_distance=2.5,use_vocabulary=False):
@@ -209,9 +246,14 @@ class GraphLearner:
             geometry=relative_candidate_geometry(graph,anchor_indices,positions,self.device)
         with torch.set_grad_enabled(training):
             tensors,encoded=self._prepare(graph)
+            plot=None
+            if anchors is not None and positions is not None and getattr(graph,'spatial_settings',{}).get('graphPlotDirections',True):
+                from plot_directions import features as plot_features
+                plot=torch.tensor([plot_features(graph,graph.nodes[a].floor_index,graph.nodes[a].pos2d,p)
+                                   for a,p in zip(anchors,positions)],dtype=torch.float32,device=self.device)
             logits,value=self.model(*tensors,
                 torch.tensor(features,dtype=torch.float32,device=self.device),
-                anchor_indices,geometry,encoded=encoded)
+                anchor_indices,geometry,encoded=encoded,plot=plot)
             distribution=Categorical(logits=logits)
             index=int(torch.multinomial(distribution.probs.detach().cpu(),1,generator=self.rng)) if training else int(logits.argmax())
             if training:
@@ -256,11 +298,11 @@ class GraphLearner:
         return stats
 
     def state(self):
-        return dict(schema=4,architecture=self.model.architecture,model={k:v.detach().cpu().clone() for k,v in self.model.state_dict().items()},
+        return dict(schema=5,architecture=self.model.architecture,model={k:v.detach().cpu().clone() for k,v in self.model.state_dict().items()},
             optimizer=self.optimizer.state_dict(),rng=self.rng.get_state(),updates=self.updates)
 
     def load(self,state):
-        if not isinstance(state,dict) or state.get('schema') not in (1,2,3,4):
+        if not isinstance(state,dict) or state.get('schema') not in (1,2,3,4,5):
             raise ValueError('unsupported graph policy checkpoint')
         architecture=state.get('architecture','message_passing')
         if architecture not in ARCHITECTURES: raise ValueError('unknown graph architecture')
@@ -297,6 +339,10 @@ class GraphLearner:
         if state['schema']<4:
             for key,value in candidate.model.state_dict().items():
                 if key.startswith('spatial.') and key not in model_state:model_state[key]=value
+            optimizer_state['param_groups'][0]['params']=candidate.optimizer.state_dict()['param_groups'][0]['params']
+        if state['schema']<5:
+            for key,value in candidate.model.state_dict().items():
+                if key.startswith(('plot_encoder.','plot_actor.')) and key not in model_state:model_state[key]=value
             optimizer_state['param_groups'][0]['params']=candidate.optimizer.state_dict()['param_groups'][0]['params']
         candidate.model.load_state_dict(model_state,strict=True)
         candidate.optimizer.load_state_dict(optimizer_state)

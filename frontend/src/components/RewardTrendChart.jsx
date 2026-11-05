@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { format } from '../store/presentation';
 
 const HEIGHT = 174;
-const LABELS={fill:'Site fill',reuse:'Independent reuse',exposure:'Livable facade access proxy'};
+const LABELS={fill:'Site fill',reuse:'Independent reuse',windows:'Required window frontage'};
 const MARGIN = { left: 37, right: 39, top: 15, bottom: 29 };
 const finite = (value) => value != null && Number.isFinite(Number(value));
 
@@ -55,7 +55,7 @@ export function RewardTrendChart() {
   return <section className={`progress-panel ${chartOpen ? 'chart-open' : 'chart-closed'}`}>
     <div className="progress-heading">
       <div><span className="eyebrow">Activity</span><strong>Learning progress</strong></div>
-      <div className="segmented small chart-detail-control">{['fill', 'reuse', 'exposure'].map((v) => <button key={v} className={metric === v ? 'active' : ''} onClick={() => setMetric(v)}>{LABELS[v]}</button>)}</div>
+      <div className="segmented small chart-detail-control">{['fill', 'reuse', 'windows'].map((v) => <button key={v} className={metric === v ? 'active' : ''} onClick={() => setMetric(v)}>{LABELS[v]}</button>)}</div>
       <div className="segmented small axis-controls chart-detail-control">
         <button className={!timeAxis ? 'active' : ''} onClick={() => setAxis('episode')}>Episodes</button>
         <button className={timeAxis ? 'active' : ''} disabled={!hasTime} onClick={() => setAxis('time')}>Wall time</button>
@@ -87,7 +87,7 @@ export function RewardTrendChart() {
           })}
         </g>
         {tickIndices.map((i) => <text key={i} x={x(i)} y={HEIGHT - 7} textAnchor={selected.length === 1 ? 'middle' : i === 0 ? 'start' : i === selected.length - 1 ? 'end' : 'middle'} fill="#999" fontSize="10">{timeAxis ? `${format((elapsed[i] - elapsed[0]) / 1000, 1)} s` : `Ep ${selected[i].episode}`}</text>)}
-      </svg> : <div className="chart-empty">{records.length ? 'This metric has not been measured yet.' : 'Completed layouts will trace fill, reuse and livable facade access here.'}</div>}
+      </svg> : <div className="chart-empty">{records.length ? 'This metric has not been measured yet.' : 'Completed layouts will trace fill, reuse and window frontage here.'}</div>}
     </div>
     <div className="chart-legend" hidden={!chartOpen}>
       <span><i className="estimate-symbol"/>Graph estimate</span><span><i className="checked-symbol"/>Geometry checked</span><span><i className="failed-symbol"/>Geometry/graph failed</span><span><i style={{display:'inline-block',width:7,height:7,border:'1px solid #a5682a',transform:'rotate(45deg)',marginRight:6}}/>Spatial requirements unmet</span>

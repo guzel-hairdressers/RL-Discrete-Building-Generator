@@ -280,10 +280,12 @@ def validate_settings_patch(current: dict[str, Any], patch: Any) -> dict[str, An
         if isinstance(default,bool):
             if type(merged[key]) is not bool:raise SettingsError(f'{key} must be a boolean')
         else:
-            lo,hi=(.01,1.) if key in ('graphMinRoomExposure','graphMinResidentialShare','graphMinSkyShare','graphMinFill') else (.1,10000.)
+            lo,hi=(.01,1.) if key in ('graphMinRoomExposure','graphMinResidentialShare','graphMinSkyShare','graphMinFill','graphMaxCreviceFraction') else ((1.,179.) if key=='graphWindowCone' else (.1,10000.))
             merged[key]=_in_range(_finite_number(merged[key],key),lo,hi,key)
     if merged['graphFacadeClearance']>merged['graphExposureHorizon']:
         raise SettingsError('facade clearance exceeds the exposure horizon')
+    if merged['graphWindowSeparation']>merged['graphExposureHorizon']:
+        raise SettingsError('window separation exceeds the exposure horizon')
     from shared_modules import SizePrior
     try:
         SizePrior(radius=float(merged.get('graphPriorRadius',4.5)),
@@ -6129,7 +6131,7 @@ class ParallelTrainer:
                 self.last_loss=stats['policyLoss']; self.last_actor_loss=stats['actorLoss']
                 self.last_value_loss=stats['valueLoss']; self.last_entropy=stats['policyEntropy']
                 self.last_gradient_norm=stats['gradientNorm']; self.last_advantage=stats['advantage']
-                metrics['trainingObjective']=('shared_constraints_v5_livable_spatial' if self.settings.get('graphSpatialEnabled') else 'shared_constraints_v4_reuse')
+                metrics['trainingObjective']=('shared_constraints_v6_window_proxy' if self.settings.get('graphSpatialEnabled') else 'shared_constraints_v4_reuse')
 
             self.placement_decisions=[]
             self.shape_log_probs=[]
@@ -6667,6 +6669,19 @@ class ParallelTrainer:
         if getattr(self.building_graph,'module_bank',None) is None:
             self.building_graph.module_bank=GraphDictionary(self.building_graph,int(self.settings.get('graphMaxTypes',15)))
         bank=self.building_graph.module_bank
+        # Exact site certificates depend on coordinates, radius and actual
+        # boundary loops, not the floor label. Identical vertical copies reuse
+        # their certificate across scopes, proposals and subsequent steps.
+        def loop_key(loop):return tuple((p['x'],p['y']) if isinstance(p,dict) else tuple(p) for p in loop)
+        site_keys={f:(loop_key(poly),tuple(loop_key(h) for h in self.building_graph.site_holes[f]))
+                   for f,poly in self.building_graph.site_boundaries.items()}
+        def certified_origin(floor,x,y,radius):
+            key=(site_keys[floor],x,y,radius)
+            if key not in self.graph_clearance_cache:
+                if len(self.graph_clearance_cache)>=32768:self.graph_clearance_cache.clear()
+                self.graph_clearance_cache[key]=origin_fits((x,y),self.building_graph.site_boundaries[floor],
+                    self.building_graph.site_holes[floor],radius)
+            return self.graph_clearance_cache[key]
         # No placement can repair an already invalid full-height starter.
         # Retain the failed layout, but do not credit arbitrary proposal draws.
         active_envs=([env for env in self.environments if not env.done]
@@ -6687,6 +6702,8 @@ class ParallelTrainer:
             strategy=self.settings.get('graphProposalStrategy','vocabulary')
             neural=self.settings.get('graphController','neural')=='neural'
             observed=bank.vocabulary.candidates(bank,f,8) if strategy=='vocabulary' else []
+            from plot_directions import candidates as plot_candidates
+            directed=plot_candidates(bank,f,4) if self.settings['graphPlotDirections'] else []
             if strategy=='legacy' or not neural:
                 novel=env.seed_sampler.generate_candidates(self.building_graph,f,site_poly,max_proposals=16)
             else:
@@ -6694,11 +6711,12 @@ class ParallelTrainer:
                     limit=16-len(observed),min_distance=env.seed_sampler.min_seed_distance,use_vocabulary=strategy=='vocabulary')
             # Bound work and offer every source before scanning further motifs.
             candidates=[]
-            for i in range(max(len(motif),len(novel),len(observed),len(closure))):
+            for i in range(max(len(motif),len(novel),len(observed),len(closure),len(directed))):
                 if i<len(motif):candidates.append(motif[i])
                 if i<len(closure):candidates.append(closure[i])
                 if i<len(observed):candidates.append(observed[i])
                 if i<len(novel):candidates.append(novel[i])
+                if i<len(directed):candidates.append(directed[i])
             if experiment is not None:candidates=experiment.rank(bank,f,candidates)
             from graph_spatial import access_distances,candidate_features,core_eligible
             from dataclasses import replace
@@ -6711,8 +6729,7 @@ class ParallelTrainer:
                 for scope in ('independent','multi_floor'):
                     floors=range(num_floors) if scope=='multi_floor' else (f,)
                     if any(len(bank.floor_nodes[floor])>=int(self.settings['maxModules']) for floor in floors):continue
-                    certified=all(origin_fits((x,y),self.building_graph.site_boundaries[floor],
-                        self.building_graph.site_holes[floor],radius) for floor in floors)
+                    certified=all(certified_origin(floor,x,y,radius) for floor in floors)
                     if not certified and not (experiment is not None and experiment.exact_site):
                         if experiment is not None:experiment.observe(bank,f,candidate,False,site_rejected=True)
                         continue
@@ -6877,6 +6894,7 @@ class ParallelTrainer:
             "step": self.step_number,
             "isComplete": is_complete,
             "realized": realize_now,
+            "windows": [w for m in audit.get('residentialSpatial',{}).get('perFloor',{}).values() for w in m.get('windowPlan',{}).get('windows',[])] if realize_now else [],
             "moduleIdentityStatus": 'confirmed' if realize_now else 'constraint_checked',
             "proposalVocabulary": bank.vocabulary.summary(),
             "edgesProximity": [edge for rows in getattr(getattr(bank,'spatial_evidence',None),'relations',{}).values() for edge in rows] if is_complete else [],
@@ -7539,6 +7557,7 @@ class ParallelTrainer:
             "step": self.step_number,
             "isComplete": completed,
             "realized": True,
+            "windows": [w for m in audit.get('residentialSpatial',{}).get('perFloor',{}).values() for w in m.get('windowPlan',{}).get('windows',[])],
             "moduleIdentityStatus": "confirmed",
             "proposalVocabulary": active_graph.module_bank.vocabulary.export() if getattr(active_graph,'module_bank',None) else None,
             "nodes": [

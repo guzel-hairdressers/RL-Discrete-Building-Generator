@@ -56,6 +56,7 @@ export const DEFAULT_SETTINGS = {
   graphPolicyArchitecture: 'message_passing',
   graphSearchMode: 'balanced',
   graphSpatialEnabled: true,
+  graphWindowFrontage: 2, graphWindowReferenceArea: 15, graphWindowSeparation: 25, graphWindowCone: 60, graphMaxCreviceFraction: .05, graphPlotDirections: true,
   graphFacadeClearance: 4, graphExposureHorizon: 30, graphDaylightDepth: 6,
   graphMinRoomExposure: .35, graphMaxAccessDistance: 30, graphExposureSampleSpacing: 1,
   graphMinResidentialShare: .65, graphMinCoreArea: 12, graphMinCoreWidth: 2, graphCoreCapacity: 500, graphMinSkyShare: .25, graphMinFill: .4,
@@ -587,6 +588,7 @@ export const useStore = create((set, get) => ({
       const record = { episode: get().episode, mode: get().mode, realized: Boolean(data.graphState?.realized),
         fill: effectiveMetrics.fillRatio ?? null, reuse: effectiveMetrics.reuseAudit?.independentRepeatFraction ?? null,
         exposure: effectiveMetrics.daylightAccessProxy ?? null,
+        windows: effectiveMetrics.windowFrontageRatio ?? null,
         spatialRequirementsMet: effectiveMetrics.spatialRequirementsMet ?? null,
         valid: validation?.valid ?? null, graphValid: validation?.graphValid ?? effectiveMetrics.graphValid ?? null,
         serverMs: diagnostics.episodeTimeMs, wallMs: wall, score: effectiveMetrics.score ?? null };

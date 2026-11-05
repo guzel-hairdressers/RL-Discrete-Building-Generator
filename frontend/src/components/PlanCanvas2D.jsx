@@ -65,6 +65,16 @@ export function PlanCanvas2D() {
       if (p.category === 'core') { const c=poly.map(xy), cx=c.reduce((a,p)=>a+p[0],0)/c.length, cy=c.reduce((a,p)=>a+p[1],0)/c.length; ctx.font=`bold ${10/z}px system-ui`; ctx.fillStyle='#444444'; ctx.textAlign='center'; ctx.fillText('C',cx,cy); }
     }
     ctx.globalAlpha=1;
+    // Explicit planned openings, in site coordinates, with floor offsets.
+    ctx.strokeStyle='#16748a';ctx.lineWidth=3/z;ctx.setLineDash([]);ctx.beginPath();
+    for (const window of graph?.windows || []) {
+      if (!visibleFloor(window.floor)) continue;
+      const offset=s.boundaries[window.floor]?.offset || {};
+      const [a,b]=window.segment;
+      ctx.moveTo(a[0]+(offset.x||0),-a[1]-(offset.y||0));
+      ctx.lineTo(b[0]+(offset.x||0),-b[1]-(offset.y||0));
+    }
+    ctx.stroke();
     const nodes=graph?.nodes || [], byId=new Map(nodes.map((n)=>[n.id,n]));
     const world = (n) => { const b=s.boundaries[n.floor]; return [n.world_x ?? (n.x+(b?.offset?.x || 0)), -(n.world_y ?? (n.y+(b?.offset?.y || 0)))]; };
     const lines=(edges,color,dash) => {
@@ -129,7 +139,7 @@ export function PlanCanvas2D() {
       onPointerMove={(e)=>{const p=pointer.current;if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;if(Math.hypot(dx,dy)>3)p.moved=true;camera.current={...camera.current,x:p.origin.x+dx,y:p.origin.y+dy};redraw.current();}}
       onPointerUp={(e)=>{if(pointer.current&&!pointer.current.moved)selectAt(e);pointer.current=null;}} onPointerCancel={()=>pointer.current=null} onDoubleClick={fit}/>
     {!s.hasSite && <div className="canvas-empty"><span>⌗</span><h2>A place for possibilities.</h2><p>Connecting to the optimizer to prepare your site.</p></div>}
-    <div className="plan-legend"><span><i className="legend-boundary"/>Site boundary</span><span><i className="legend-construction"/>Construction graph</span>{s.showAccess && <span><i className="legend-access"/>{s.graphState?.accessEdges ? 'Usable access' : 'Access overlay unavailable'}</span>}</div>
+    <div className="plan-legend"><span><i className="legend-boundary"/>Site boundary</span><span><i className="legend-construction"/>Construction graph</span><span><i style={{display:'inline-block',width:14,borderTop:'3px solid #16748a'}}/>Glazed edges</span>{s.showAccess && <span><i className="legend-access"/>{s.graphState?.accessEdges ? 'Usable access' : 'Access overlay unavailable'}</span>}</div>
     <div className="canvas-tools"><span><MousePointer2 size={12}/>Drag to pan · scroll to zoom</span><button onClick={fit} title="Fit view (0 / Z)"><Maximize2 size={14}/>Fit view</button></div>
   </div>;
 }

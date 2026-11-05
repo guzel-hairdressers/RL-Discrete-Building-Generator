@@ -206,3 +206,9 @@ Replaced detection-only handling with connected boundary-arc attachment and pers
 ## 2026-11-05 — livable spatial constraints
 
 Replaced property-boundary daylight scoring with graph-derived potential-window-frontage/sky/depth-allowance evidence for ROOM only. Cores remain obstructions and gain additional full-height placement/promotion actions without shape changes. Feasibility tiers replace buying spatial failure with fill/reuse; residential-share and minimum-fill guards counter relabeling/thinning. Dropped rounded-bin frontage grouping after a0.46 room-level overestimate; geometric alias normalization now agrees with independent realized measurement. This validates the same proxy, not actual daylight. Pilots remain spatially infeasible; no convergence/speedup conclusion. [Report](reports/livable_spatial_2026-11-05/README.md).
+
+## 2026-11-05 — window privacy proxy, site conditioning and exact caches
+
+Implemented whole-edge glazed/solid facades at realization and a separate graph opening-budget proxy. Discarded fixed2m window strips after user clarification, and kept the expensive exact allocator out of training. Replaced the old facade-depth feasibility target with area-scaled frontage; retained the sky/depth quantity only as a diagnostic. Added separate crevice quality, measured parcel edge/principal directions as neural conditioning and optional proposals, and schema5 migration preserving prior weights/Adam state. No forced grid, right-angle graph constraint or fixed length palette.
+
+Speed work reuses exact shape updates, full-height contact proofs and site certificates, and packs policy tensors through numeric arrays. Final contact validation bypasses growth-result caches. Neither solver thresholds nor module compatibility are weakened. [Contract and limits](guides/whole_edge_glazing_v010.md).

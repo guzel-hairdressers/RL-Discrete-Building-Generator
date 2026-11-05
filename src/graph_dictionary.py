@@ -145,6 +145,20 @@ def make_shape(planes,required,prior,retained_prior=None):
 
 
 def shape_with(base,extra,required,prior):
+    # The same constraints recur in independent/full-height probes and repeated
+    # motifs. Cache exact inputs, including required contacts; never quantize.
+    raw_extra=frozenset(extra);added=frozenset(required)
+    cache=base.continuity_cache.setdefault('shape_updates',{}) if base is not None else None
+    key=(raw_extra,added,base.required,prior) if base is not None else None
+    if cache is not None and key in cache:return cache[key]
+    result=_shape_with(base,raw_extra,added,prior)
+    if cache is not None:
+        if len(cache)>=8:cache.pop(next(iter(cache)))
+        cache[key]=result
+    return result
+
+
+def _shape_with(base,extra,required,prior):
     extras=set(extra)
     added=frozenset(required)
     req=(base.required if not added else base.required|added) if base else added
@@ -220,22 +234,23 @@ class GraphDictionary:
         self.continuity_ready=True
 
     def _preserves_junctions(self,changed):
-        from graph_continuity import TOLERANCE
         for pid,shape in changed.items():
             if pid not in self.shapes or shape.faces==self.shapes[pid].faces:continue
-            points=self.protected_junctions.get(pid,())
-            if not points:continue
-            previous=set(self.shapes[pid].planes);cache=self.junction_support[pid]
-            # Every old half-space already contains every protected witness.
-            # Only genuinely new active cuts need checking. Convexity lets the
-            # extreme witnesses represent all occurrences without weakening it.
-            for nx,ny,b in shape.planes:
-                if (nx,ny,b) in previous:continue
-                key=(nx,ny)
-                if key not in cache:
-                    if len(cache)>=512:cache.pop(next(iter(cache)))
-                    cache[key]=max(nx*x+ny*y for x,y in points)
-                if cache[key]>b+TOLERANCE*math.hypot(nx,ny):return False
+            if not self._junction_planes_fit(pid,shape.planes):return False
+        return True
+
+    def _junction_planes_fit(self,pid,planes):
+        from graph_continuity import TOLERANCE
+        points=self.protected_junctions.get(pid,())
+        if not points:return True
+        previous=set(self.shapes[pid].planes);cache=self.junction_support[pid]
+        for nx,ny,b in planes:
+            if (nx,ny,b) in previous or b>=self.prior.radius+1e-8:continue
+            key=(nx,ny)
+            if key not in cache:
+                if len(cache)>=512:cache.pop(next(iter(cache)))
+                cache[key]=max(nx*x+ny*y for x,y in points)
+            if cache[key]>b+TOLERANCE*math.hypot(nx,ny):return False
         return True
 
     def _continuity_certificate(self,plan,near):
@@ -319,15 +334,34 @@ class GraphDictionary:
         return max(0.,min(ia[1],-ib[0])-max(ia[0],-ib[1]))
 
     def _preserves_edges(self,changed,check_all=False):
+        # Independent final checks deliberately bypass growth caches.
+        if check_all:return self._check_edges(changed,True)
+        revision=(len(self.graph.nodes),len(self.graph.edges_horiz),getattr(self.graph,'pose_revision',0))
+        cached=getattr(self,'_edge_check_cache',None)
+        if cached is None or cached[0]!=revision:
+            self._edge_check_cache=(revision,{})
+        cache=self._edge_check_cache[1]
+        signature=(check_all,tuple((pid,shape.continuity_cache.setdefault('edge_geometry_identity',object()))
+                                   for pid,shape in sorted(changed.items())))
+        if signature in cache:return cache[signature]
+        result=self._check_edges(changed,check_all)
+        if len(cache)>=256:cache.pop(next(iter(cache)))
+        cache[signature]=result
+        return result
+
+    def _check_edges(self,changed,check_all=False):
         seen=set()
         for pid,shape in changed.items():
             if pid not in self.shapes or (not check_all and shape.planes==self.shapes[pid].planes):continue
-            for edge in self.incident[pid]:
-                key=(edge.u,edge.v)
+            if not hasattr(self,'_incident_pair_cache'):self._incident_pair_cache={}
+            edges=self.incident[pid];cached=self._incident_pair_cache.get(pid)
+            if check_all or cached is None or cached[0] is not edges or cached[1]!=len(edges):
+                pairs=dict.fromkeys(tuple(sorted((root_id(self.graph.nodes[e.u]),root_id(self.graph.nodes[e.v])))) for e in edges)
+                self._incident_pair_cache[pid]=(edges,len(edges),tuple(pairs))
+            for key in self._incident_pair_cache[pid][2]:
                 if key in seen:continue
                 seen.add(key)
-                a=self.instances[root_id(self.graph.nodes[edge.u])]
-                b=self.instances[root_id(self.graph.nodes[edge.v])]
+                a=self.instances[key[0]];b=self.instances[key[1]]
                 if self.contact(a.origin,changed.get(a.prototype,self.shapes[a.prototype]),a.angle,
                                 b.origin,changed.get(b.prototype,self.shapes[b.prototype]),b.angle)<self.prior.min_contact-1e-6:return False
         return True
@@ -442,6 +476,10 @@ class GraphDictionary:
                 plane=displacement_plane((x-n.x,y-n.y),instance.angle)
                 if plane:extra[instance.prototype].add(plane)
         changed={}
+        if self.enforce_continuity and any(not self._junction_planes_fit(pid,planes) for pid,planes in extra.items()):
+            # A cut excluding a compulsory junction cannot be made compatible
+            # by solving/shrinking a prototype. Reject before any O(C²) solve.
+            self.rejections['junction_displaced']+=1;return []
         for pid,planes in extra.items():
             shape=shape_with(self.shapes[pid],planes,(),self.prior)
             if shape is None:self.rejections['existing_required_contact']+=1;return []

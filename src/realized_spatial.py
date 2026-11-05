@@ -1,7 +1,7 @@
-"""Independent realized-facade measurement of the same architectural proxy.
+"""Independent whole-edge glazing and open-space validation.
 
 Actual polygon edges and ray/segment intersections replace numeric support slabs.
-This validates graph prediction, not illuminance, windows or code compliance.
+This compares graph predictions with glazing feasibility; it is not illuminance or code compliance.
 Only called on explicit realization, never during graph training.
 """
 import math
@@ -12,12 +12,45 @@ class RealizedSpatialEvidence(SpatialEvidence):
     def __init__(self,solution):
         super().__init__(solution.graph.module_bank)
         self.polygons={oid:np.asarray(solution.polygon(oid),dtype=float) for oid in solution.occurrences}
-        self.surface_cache={};self.edge_cache={}
+        self.surface_cache={};self.edge_cache={};self.facade_ranges={}
+        self.build_candidates=True
 
-    def occurrence(self,oid,floor):
-        room=super().occurrence(oid,floor)
+    def occurrence(self,oid,floor,plan=None):
+        room=super().occurrence(oid,floor,plan)
         if room is not None:room['evidence']='realized_polygon_edges'
         return room
+
+    def window_plan(self,floor):
+        """Allocate actual windows only after realization, then check them."""
+        if floor in getattr(self,'checked_windows',{}):return self.checked_windows[floor]
+        from graph_windows import conflict
+        source=super().window_plan(floor)
+        result=dict(source,windows=[],frontage={oid:0. for oid in source['required']},violations=[])
+        for window in source['windows']:
+            a,b=np.asarray(window['segment']);length=math.dist(a,b);t=(b-a)/length
+            poly=self.polygons[window['occurrenceId']];intervals=[]
+            for p,q in zip(poly,np.roll(poly,-1,axis=0)):
+                # Exact realized straight-edge coverage of the entire opening.
+                if max(abs(t[0]*(p-a)[1]-t[1]*(p-a)[0]),abs(t[0]*(q-a)[1]-t[1]*(q-a)[0]))>2e-6:continue
+                lo,hi=sorted((float((p-a)@t),float((q-a)@t)))
+                intervals.append((max(0.,lo),min(length,hi)))
+            covered=0.;end=0.
+            for lo,hi in sorted(intervals):
+                covered+=max(0.,hi-max(lo,end));end=max(end,hi)
+            if covered<length-2e-6:
+                result['violations'].append(dict(occurrenceId=window['occurrenceId'],reason='opening_not_on_realized_facade'))
+                continue
+            result['windows'].append(window);result['frontage'][window['occurrenceId']]+=length
+        from graph_windows import nearby_pairs
+        for k,j in nearby_pairs(result['windows'],self.options['graphWindowSeparation']):
+            a,b=result['windows'][k],result['windows'][j]
+            if a['occurrenceId']!=b['occurrenceId'] and conflict(a,b,self.options['graphWindowSeparation'],self.options['graphWindowCone']):
+                result['violations'].append(dict(u=a['occurrenceId'],v=b['occurrenceId'],reason='window_cone_separation'))
+        # super() measured void quality with actual polygon edges, including
+        # windowless cores. None of its exact opening choices enter training.
+        if not hasattr(self,'checked_windows'):self.checked_windows={}
+        self.checked_windows[floor]=result
+        return result
 
     def intersect_many(self,instances,origins,directions):
         rows=[self.intersect(i,origins,directions) for i in instances]
@@ -37,18 +70,41 @@ class RealizedSpatialEvidence(SpatialEvidence):
                 a=poly[k-1];c=poly[(k+1)%len(poly)];u=b-a;v=c-b
                 if abs(u[0]*v[1]-u[1]*v[0])<=1e-7*max(1e-12,math.hypot(*u)*math.hypot(*v)) and float(u@v)>=0:
                     poly.pop(k);changed=True;break
-        poly=np.asarray(poly);rows=[]
+        poly=np.asarray(poly);rows=[];facades=[]
         for a,b in zip(poly,np.roll(poly,-1,axis=0)):
             dx,dy=b-a;length=math.hypot(dx,dy)
             if length<1e-8:continue
             count=max(1,math.ceil(length/self.options['graphExposureSampleSpacing']-1e-8))
+            start=len(rows)
             for j in range(count):
                 point=a+(j+.5)/count*(b-a)
                 rows.append((*point,dy/length,-dx/length,length/count))
+            facades.append((start,len(rows),a,b,(dy/length,-dx/length),length))
         table=np.asarray(rows)
         result=table[:,:2],table[:,2:4],table[:,4],area
         self.surface_cache[instance.id]=result
+        self.facade_ranges[instance.id]=facades
         return result
+
+    def facade_candidates(self,instance,qualified,sky,obstacles):
+        """Each complete realized edge is glazed or solid; never trimmed."""
+        floor=self._measuring_floor
+        candidates=[]
+        for start,end,a,b,normal,length in self.facade_ranges[instance.id]:
+            if not np.all(qualified[start:end]):continue
+            tangent=(b-a)/length
+            blocked=False
+            for other in obstacles:
+                if not any(n.floor_index==floor for n in other.nodes):continue
+                entry,exit=self.intersect(other,a[None,:],tangent[None,:])
+                if entry[0]<length-1e-6 and exit[0]>1e-6:blocked=True;break
+            if not blocked:candidates.append(dict(occurrenceId=instance.id,floor=floor,segment=[a.tolist(),b.tolist()],
+                normal=list(normal),length=length,skyShare=float(np.min(sky[start:end])),glazing='whole_edge'))
+        return candidates
+
+    def measure(self,oid,floor):
+        self._measuring_floor=floor
+        return super().measure(oid,floor)
 
     def intersect(self,instance,origins,directions):
         if instance.id not in self.edge_cache:
@@ -89,8 +145,23 @@ def audit_spatial(solution):
         for f,actual in per_floor.items():
             estimate=predicted.metrics(f)
             errors[f]={key:(estimate[key]-actual[key] if estimate[key] is not None and actual[key] is not None else None)
-                       for key in ('daylightAccessProxy','daylightDeficit','narrowFacingLength')}
+                       for key in ('daylightAccessProxy','windowFrontageRatio','daylightDeficit','narrowFacingLength','creviceFraction')}
+    patterns={}
+    for floor,row in per_floor.items():
+        by_occurrence={}
+        for w in row['windowPlan']['windows']:
+            i=solution.graph.module_bank.instances[w['occurrenceId']]
+            c,s=math.cos(i.angle),math.sin(i.angle);nx,ny=w['normal']
+            # Canonical module coordinates; world rotation adds no variant.
+            x,y=w['segment'][0];x-=i.origin[0];y-=i.origin[1]
+            key=(round(c*nx+s*ny,6),round(-s*nx+c*ny,6),round(nx*x+ny*y,6))
+            by_occurrence.setdefault(i.id,[]).append(key)
+        for i in solution.graph.module_bank.instances.values():
+            if i.nodes[0].cell_type.value!='void' and any(n.floor_index==floor for n in i.nodes):
+                patterns.setdefault(i.prototype,set()).add(tuple(sorted(by_occurrence.get(i.id,[]))))
     return dict(status='realized_proxy_checked',perFloor=per_floor,predictionErrors=errors,
-        requirementsMet=all(row['spatialRequirementsMet'] for row in per_floor.values()),
+        glazingPatternVariants={pid:len(values) for pid,values in patterns.items()},
+        footprintReuseDoesNotCertifyGlazingReuse=True,
+        requirementsMet=all(row['spatialRequirementsMet'] and not row['windowPlan'].get('violations') for row in per_floor.values()),
         environmentalComplianceVerified=False,actualIlluminance=None,
-        missingEvidence=['window_positions','glazing','materials','climate_sky','external_context_obstructions'])
+        missingEvidence=['glazing_height_transmittance','materials','climate_sky','external_context_obstructions'])
