@@ -39,7 +39,7 @@ export function ModulePalette() {
       {inventory.length === 0 && <div className="empty-palette">Your building’s reusable types appear here as it grows.<span>Train a policy or generate a layout to begin.</span></div>}
       {inventory.map((m) => <button key={m.id} className={`module-card ${s.selectedModuleId === m.id ? 'selected' : ''}`} onClick={() => s.setSelectedModuleId(m.id)} onMouseEnter={() => s.setHoveredModuleId(m.id)} onMouseLeave={() => s.setHoveredModuleId(null)} aria-pressed={s.selectedModuleId === m.id}>
         <span className="module-preview"><Shape shape={s.graphState?.realized ? m.shape : null} id={m.id}/></span>
-        <span className="module-info"><strong><i style={{ background: moduleColor(m.id) }}/>{m.id}</strong><small>{[...m.functions].join(' · ')}</small><span>{format(m.independent)} independent <b>·</b> {format(m.copies)} floor copies</span></span>
+        <span className="module-info"><strong><i style={{ background: moduleColor(m.id) }}/>{m.id}</strong><small>{[...m.functions].join(' · ')}</small><span title={`${format(m.independent)} independent occurrences · ${format(m.copies)} vertical floor copies`}>{format(m.independent)} uses <b>·</b> {format(m.copies)} copies</span></span>
       </button>)}
     </div>
     <div className="palette-note">{s.graphState?.realized ? 'Shapes shown from geometry preview.' : 'Constraint metadata · shapes available after preview.'}</div>

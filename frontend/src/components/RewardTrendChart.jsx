@@ -11,6 +11,7 @@ export function RewardTrendChart() {
   const records = useStore((s) => s.episodeRecords);
   const [metric, setMetric] = useState('fill');
   const [axis, setAxis] = useState('episode');
+  const [chartOpen, setChartOpen] = useState(false);
   const plot = useRef(null);
   const [width, setWidth] = useState(700);
 
@@ -51,17 +52,18 @@ export function RewardTrendChart() {
   const tickIndices = [...new Set([0, Math.floor((selected.length - 1) / 2), selected.length - 1])].filter((i) => i >= 0);
   const hasValues = selected.some((r) => finite(r[metric]));
 
-  return <section className="progress-panel">
+  return <section className={`progress-panel ${chartOpen ? 'chart-open' : 'chart-closed'}`}>
     <div className="progress-heading">
       <div><span className="eyebrow">Activity</span><strong>Learning progress</strong></div>
-      <div className="segmented small">{['fill', 'reuse', 'exposure'].map((v) => <button key={v} className={metric === v ? 'active' : ''} onClick={() => setMetric(v)}>{LABELS[v]}</button>)}</div>
-      <div className="segmented small axis-controls">
+      <div className="segmented small chart-detail-control">{['fill', 'reuse', 'exposure'].map((v) => <button key={v} className={metric === v ? 'active' : ''} onClick={() => setMetric(v)}>{LABELS[v]}</button>)}</div>
+      <div className="segmented small axis-controls chart-detail-control">
         <button className={!timeAxis ? 'active' : ''} onClick={() => setAxis('episode')}>Episodes</button>
         <button className={timeAxis ? 'active' : ''} disabled={!hasTime} onClick={() => setAxis('time')}>Wall time</button>
       </div>
       <span className="progress-count">{records.length > 80 ? 'Latest 80 · ' : ''}{records.length} recorded</span>
+      <button className="chart-toggle" aria-expanded={chartOpen} onClick={() => { setChartOpen(!chartOpen); requestAnimationFrame(() => window.dispatchEvent(new CustomEvent('fit_plan_layout'))); }}>{chartOpen ? 'Hide chart' : 'Show chart'}</button>
     </div>
-    <div className="learning-plot" ref={plot}>
+    <div className="learning-plot" ref={plot} hidden={!chartOpen}>
       {hasValues ? <svg className="learning-chart" viewBox={`0 0 ${width} ${HEIGHT}`} role="img" aria-label={`${LABELS[metric]} from 0 to 100 percent by ${timeAxis ? 'active client time (pauses excluded)' : 'completed episode'}. Hollow dots: graph estimates. Solid dots: checked geometry. Crosses: failed checks.`}>
         <defs><clipPath id="learning-plot-clip"><rect x={MARGIN.left - 4} y={MARGIN.top - 4} width={plotWidth + 8} height={plotHeight + 8}/></clipPath></defs>
         {[0, .25, .5, .75, 1].map((v) => <g key={v}>
@@ -86,7 +88,7 @@ export function RewardTrendChart() {
         {tickIndices.map((i) => <text key={i} x={x(i)} y={HEIGHT - 7} textAnchor={selected.length === 1 ? 'middle' : i === 0 ? 'start' : i === selected.length - 1 ? 'end' : 'middle'} fill="#999" fontSize="10">{timeAxis ? `${format((elapsed[i] - elapsed[0]) / 1000, 1)} s` : `Ep ${selected[i].episode}`}</text>)}
       </svg> : <div className="chart-empty">{records.length ? 'This metric has not been measured yet.' : 'Completed layouts will trace fill, reuse and livable facade access here.'}</div>}
     </div>
-    <div className="chart-legend">
+    <div className="chart-legend" hidden={!chartOpen}>
       <span><i className="estimate-symbol"/>Graph estimate</span><span><i className="checked-symbol"/>Geometry checked</span><span><i className="failed-symbol"/>Failed check</span>
       <small>{timeAxis ? 'Active run time since first visible result; pauses excluded' : 'Completed episodes'} · hover a point for details</small>
     </div>
