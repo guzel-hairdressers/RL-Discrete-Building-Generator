@@ -1,10 +1,12 @@
 """Production WebSocket smoke check; no speed or convergence claim."""
-import asyncio,gzip,json,time
+import asyncio,gzip,json,time,os
 from pathlib import Path
 import websockets
 OUT=Path(__file__).resolve().parent
+PORT=int(os.environ.get("MODULELAB_VERIFY_PORT","8002"))
+PREFIX="live" if PORT==8002 else f"live-{PORT}"
 async def main():
- async with websockets.connect('ws://127.0.0.1:8002/ws',origin='http://127.0.0.1:8002',max_size=32*1024*1024) as ws:
+ async with websockets.connect(f'ws://127.0.0.1:{PORT}/ws',origin=f'http://127.0.0.1:{PORT}',max_size=32*1024*1024) as ws:
   async def cmd(name,**data):
    await ws.send(json.dumps(dict(cmd=name,**data)));e=json.loads(await ws.recv())
    if e['type']=='error':raise RuntimeError(e)
@@ -28,12 +30,12 @@ async def main():
   assert preview['metrics']['policyUpdateCount']==1
   assert audit['residentialSpatial']['environmentalComplianceVerified'] is False
   raw=sum(v['rawUnplannedEnclosedGapArea'] for v in audit['spatialQuality']['perFloor'].values());assert raw==0
-  result=dict(endpoint='http://127.0.0.1:8002/',training=training,preview=preview,clientSecondsIncludingPause=elapsed,
+  result=dict(endpoint=f'http://127.0.0.1:{PORT}/',training=training,preview=preview,clientSecondsIncludingPause=elapsed,
               simulatedPauseSeconds=2.,serverActiveSeconds=training['metrics']['episodeExecutionTimeMs']/1000,rawGapArea=raw)
-  (OUT/'live-event.json.gz').write_bytes(gzip.compress(json.dumps(result,allow_nan=False).encode(),mtime=0))
+  (OUT/f'{PREFIX}-event.json.gz').write_bytes(gzip.compress(json.dumps(result,allow_nan=False).encode(),mtime=0))
   summary=dict(coreOccurrences=training['metrics']['coreOccurrences'],policyUpdates=1,
     serverActiveSeconds=result['serverActiveSeconds'],clientSecondsIncludingPause=elapsed,
     geometryAndGapChecksPass=True,rawGapArea=0,spatialRequirementsMet=audit['residentialSpatial']['requirementsMet'],
     liveFacadeProxy=preview['metrics']['daylightAccessProxy'])
-  (OUT/'live-summary.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary))
+  (OUT/f'{PREFIX}-summary.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary))
 asyncio.run(main())

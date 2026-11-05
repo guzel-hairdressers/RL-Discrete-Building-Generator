@@ -1,0 +1,24 @@
+{
+  "userPathsUnchanged": {
+    "README.md": true,
+    "frontend/public/data/custom_sites_dataset.json": true,
+    "frontend/dist/data/custom_sites_dataset.json": true,
+    "frontend/public/sites/custom_m_1787768191.html": true,
+    "frontend/public/sites/custom_s_1787768129.html": true,
+    "frontend/dist/sites/custom_m_1787768191.html": true,
+    "frontend/dist/sites/custom_s_1787768129.html": true
+  },
+  "savedPoliciesUnchanged": {
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint_ep250_mixed_any.pt": true,
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint_lr0001_default_500ep.pt": true,
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint_ep250_free_any.pt": true,
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint_graph_only_demo_20261104.pt": true,
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint.pt": true
+  },
+  "userNoteEditsPreserved": true,
+  "compactUiMerged": true,
+  "compactCssAtMerge": "6efdb3a6e76e15126731743feb01a7115e4255ebc7d9d1d292909139a8ff2335",
+  "compactCssCurrent": "37c18971dd8f08a53e153e906acaaa628aef6eeb3ad539bf8e7bfd76bacbb45d",
+  "cssUpdatedExternallyDuringWork": true,
+  "cssNeverEditedByThisTask": true
+}

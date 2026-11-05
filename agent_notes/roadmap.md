@@ -351,6 +351,6 @@ This document defines the master development plan for the **RL-Discrete-Building
 ### 2026-11-05 — livable spatial constraints
 
 - [IMPLEMENTED] Livable-only graph/dictionary exposure; cores exempt but obstructing. Additional full-height core placements/promotions and migrated trainable relation head.
-- [VERIFIED]337 backend tests,20 frontend tests; graph-only updates and independent preview; pause-excluding client/server timing.
+- [VERIFIED]337 backend tests,21 frontend tests; graph-only updates and independent preview; pause-excluding client/server timing.
 - [EXPERIMENTAL] Explicit spatial/program/core/fill feasibility tiers.72-case paired changing-site pilot has0/36 fully feasible layouts in each arm; no convergence success claimed.
 - [OPEN]750-episode held-out learning, public circulation, real windows/privacy, context shading, calibrated physical daylight and learned joint core relocation. [Report](reports/livable_spatial_2026-11-05/README.md).

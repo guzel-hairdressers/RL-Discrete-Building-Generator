@@ -26,7 +26,7 @@ export function moduleInventory(nodes = [], dictionary = []) {
 }
 export function validationLabel(validation) {
   if (validation?.valid === false) return 'Validation failed';
-  if (validation?.residentialSpatial?.requirementsMet === false) return 'Spatial proxy requirements unmet';
+  if (validation?.residentialSpatial?.requirementsMet === false) return validation?.valid === true ? 'Geometry checked · spatial unmet' : 'Spatial requirements unmet · geometry unchecked';
   if (validation?.valid === true) return 'Geometry & access checked';
   return 'Geometry not checked';
 }
@@ -46,4 +46,15 @@ export function displayPolygon(placement, boundaries = []) {
   if (placement.position == null || placement.floor == null) return poly;
   const offset = boundaries[placement.floor]?.offset || {};
   return poly.map((p) => ({ x: Number(p.x ?? p[0]) + Number(offset.x || 0), y: Number(p.y ?? p[1]) + Number(offset.y || 0) }));
+}
+
+const SPATIAL_REQUIREMENTS = {daylightDeficit:'livable facade access',accessDistanceDeficit:'estimated core access distance',residentialProgramDeficit:'minimum residential share',coreCapacityDeficit:'core service capacity',coreGeometryDeficit:'core dimensions',fillDeficit:'minimum site fill'};
+export function spatialFailureRows(metrics = {}, validation) {
+  const actual=Object.entries(validation?.residentialSpatial?.perFloor || {});
+  const rows=actual.length ? actual.map(([floor,row])=>({...row,floorIndex:Number(floor)})) :
+    (metrics.perSite?.some((r)=>r.spatialDeficit != null) ? metrics.perSite : metrics.spatialPerFloor || []);
+  return rows.map((row,index)=>({floor:(row.floorIndex ?? index)+1,
+    failed:Object.entries(SPATIAL_REQUIREMENTS).filter(([key])=>Number(row[key])>1e-6).map(([key,label])=>
+      key === 'daylightDeficit' && row.rooms?.length ? `${label} (${row.rooms.filter((r)=>r.exposureDeficit>1e-6).length}/${row.rooms.length} livable rooms below target)` : label)
+  })).filter((row)=>row.failed.length);
 }

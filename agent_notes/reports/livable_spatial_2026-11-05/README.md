@@ -12,7 +12,7 @@ No polygon realization/Boolean operations were added to graph training.
 
 ## What is established
 
-- 337 backend tests complete successfully,2 skipped;20 frontend protocol tests pass;
+- 337 backend tests complete successfully,2 skipped;21 frontend protocol tests pass;
  production bundle builds. Tests include core exemption/obstruction, narrow wells,
  floor height, overhangs, continuous rotation, remote shared-prototype cache changes,
  numeric seams, collinear aliases, shape-preserving full-height role changes,
@@ -125,3 +125,25 @@ and promotion rather than claiming all these actions are trained.
 No remote push was made. Existing saved production policies are preserved; schema4
 migrates their learned tensors/moments and starts the added relation head at zero
 influence. Warm-start compatibility is not proof of meeting the new objective.
+
+## Production demo integration
+
+Implementation commit8de3ed72 was installed in the original checkout with the user's
+explicit saved-policy/restart authorization. Port8000 now serves the new backend;
+its live WebSocket test performs one graph-only update,7core occurrences,zero raw
+enclosed gaps and separate spatial failure reporting. A2s idle interval is
+excluded from server work time (3.24s work versus5.35s elapsed in this smoke run).
+These live timings are correctness evidence, not throughput measurements.
+
+Newer uncommitted compact-UI edits appeared during installation. They were backed
+up and merged with the exposure controls; compact CSS was never overwritten and
+continues to reflect the user's ongoing edits. Saved policies, custom-site data,
+deletions, README and note deltas remain preserved. Checkpoint.pt loads under
+the migrated model. Backups/stashes remain recoverable under
+/private/tmp/modulelab-pre-spatial-20261105.
+
+The UI now distinguishes geometry/graph failure crosses from unmet-spatial
+requirement diamonds, labels valid geometry explicitly, and lists failed spatial
+requirements by floor. The latest live failure is primarily livable exposure,
+with some over-limit estimated access paths; fill/core/program requirements pass.
+No constraint was loosened merely to relabel these designs as successful.

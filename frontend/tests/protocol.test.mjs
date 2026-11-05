@@ -1,7 +1,7 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { useStore } from '../src/store/useStore.js';
-import { moduleInventory, areaMetrics, validationLabel, number } from '../src/store/presentation.js';
+import { moduleInventory, areaMetrics, validationLabel, number, spatialFailureRows } from '../src/store/presentation.js';
 let sent;
 const initial=useStore.getInitialState();
 globalThis.WebSocket={OPEN:1};
@@ -157,6 +157,13 @@ test('livable facade proxy and spatial failure retain their own provenance',()=>
   useStore.getState().handleServerEvent(done({metrics:{daylightAccessProxy:.4,spatialRequirementsMet:false},validation:{valid:true,residentialSpatial:{requirementsMet:false}}}));
   assert.equal(useStore.getState().episodeRecords[0].exposure,.4);
   assert.equal(useStore.getState().episodeRecords[0].spatialRequirementsMet,false);
-  assert.equal(validationLabel(useStore.getState().validation),'Spatial proxy requirements unmet');
+  assert.equal(validationLabel(useStore.getState().validation),'Geometry checked · spatial unmet');
   assert.equal(validationLabel({valid:false,residentialSpatial:{requirementsMet:false}}),'Validation failed');
+});
+
+test('spatial failures identify the requirement without relabeling valid geometry as failed',()=>{
+  const validation={valid:true,residentialSpatial:{requirementsMet:false,perFloor:{0:{daylightDeficit:.5,accessDistanceDeficit:0,fillDeficit:0,rooms:[{exposureDeficit:1},{exposureDeficit:0}]}}}};
+  assert.equal(validationLabel(validation),'Geometry checked · spatial unmet');
+  assert.deepEqual(spatialFailureRows({},validation),[{floor:1,failed:['livable facade access (1/2 livable rooms below target)']}]);
+  assert.equal(validationLabel({...validation,valid:false}),'Validation failed');
 });
