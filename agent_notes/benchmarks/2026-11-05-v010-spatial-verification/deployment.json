@@ -1,0 +1,14 @@
+{
+  "endpoint": "http://127.0.0.1:8000/",
+  "codeCommit": "4f712101465ec30e25f7e9d2adbbcdd7333260b5",
+  "serverPid": 70739,
+  "bundle": "index-DdaK0gns.js",
+  "geometryAndSpatialStatusesSeparate": true,
+  "sourceMatchesOriginalCheckout": true,
+  "userDataAndNotesPreserved": true,
+  "allFiveSavedPolicyHashesAndMtimesUnchanged": true,
+  "compactUiCommit": "6a2b11c15500e90bb8691624feed6f6d5d3ada3e",
+  "combinedUiTestCount": 21,
+  "userAuthorization": "My policy is saved; replace8000",
+  "noPush": true
+}
