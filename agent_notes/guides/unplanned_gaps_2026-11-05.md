@@ -65,3 +65,7 @@ The current orthogonal-cut realizer only removes material. It cannot fill an
 existing gap, even if it improves a corner statistic. The oracle port adapter
 reconstructs its supplied reference evidence; it is not an end-to-end solution
 to the gap problem. These limitations take precedence over attractive fill scores.
+
+## Subsequent implementation
+
+Generation-time connected contact arcs and protected shared junctions now prevent these enclosed gaps. Endpoint proposals retain fill. See [current fix and measurements](../reports/continuity_2026-11-05/README.md). The earlier diagnosis/planning above describes12abf74d; the active-demo integration remains pending.

@@ -6666,6 +6666,7 @@ class ParallelTrainer:
             if len(bank.floor_nodes[f])>=int(self.settings['maxModules']):continue
             site_poly=self.building_graph.site_boundaries[f]
             motif=bank.frontier_candidates(f,24)
+            closure=bank.closure_candidates(f,12)
             strategy=self.settings.get('graphProposalStrategy','vocabulary')
             neural=self.settings.get('graphController','neural')=='neural'
             observed=bank.vocabulary.candidates(bank,f,8) if strategy=='vocabulary' else []
@@ -6676,8 +6677,9 @@ class ParallelTrainer:
                     limit=16-len(observed),min_distance=env.seed_sampler.min_seed_distance,use_vocabulary=strategy=='vocabulary')
             # Bound work and offer every source before scanning further motifs.
             candidates=[]
-            for i in range(max(len(motif),len(novel),len(observed))):
+            for i in range(max(len(motif),len(novel),len(observed),len(closure))):
                 if i<len(motif):candidates.append(motif[i])
+                if i<len(closure):candidates.append(closure[i])
                 if i<len(observed):candidates.append(observed[i])
                 if i<len(novel):candidates.append(novel[i])
             if experiment is not None:candidates=experiment.rank(bank,f,candidates)

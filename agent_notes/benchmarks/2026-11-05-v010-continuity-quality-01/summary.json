@@ -1,0 +1,44 @@
+{
+  "previous": {
+    "cases": 72,
+    "errors": 0,
+    "geometryValid": 69,
+    "geometryAndGapChecksPass": 0,
+    "meanValidAdjustedFill": 0.4291150486271705,
+    "meanFillOnGeometryValid": 0.4477722246544388,
+    "meanRawGapArea": 105.82911208860587,
+    "maxRawGapArea": 653.8152543145908,
+    "meanCreviceDiagnostic": 15.817544850600735,
+    "meanRolloutSeconds": 0.5179988698189644,
+    "meanReachedReferences": 119.66666666666667,
+    "meanTypes": 14.565217391304348
+  },
+  "guard": {
+    "cases": 72,
+    "errors": 0,
+    "geometryValid": 69,
+    "geometryAndGapChecksPass": 69,
+    "meanValidAdjustedFill": 0.4046880940972572,
+    "meanFillOnGeometryValid": 0.4222832286232249,
+    "meanRawGapArea": 0,
+    "maxRawGapArea": 0,
+    "meanCreviceDiagnostic": 16.306397139670505,
+    "meanRolloutSeconds": 0.6271307071668465,
+    "meanReachedReferences": 117.81944444444444,
+    "meanTypes": 14.434782608695652
+  },
+  "closure": {
+    "cases": 72,
+    "errors": 0,
+    "geometryValid": 69,
+    "geometryAndGapChecksPass": 69,
+    "meanValidAdjustedFill": 0.4236868749259328,
+    "meanFillOnGeometryValid": 0.44210804340097337,
+    "meanRawGapArea": 0,
+    "maxRawGapArea": 0,
+    "meanCreviceDiagnostic": 16.309018227942175,
+    "meanRolloutSeconds": 0.8337570370839684,
+    "meanReachedReferences": 122.45833333333333,
+    "meanTypes": 14.72463768115942
+  }
+}

@@ -66,3 +66,7 @@ Graph fill uses exact net polygon area (outer minus predefined site holes), not 
 On realization, `validation.spatialQuality` reports `noUnplannedEnclosedGaps`, `geometryAndGapChecksPass`, total unplanned enclosed gap area and per-floor gap polygons/statistics. `validation.valid` and `metrics.geometryValid` retain their original overlap/containment/contact/access scope; they do NOT establish architectural acceptability. Preview metrics also expose `continuousFloorPlateValid` and `unplannedEnclosedGapArea`. Show the gap check separately; do not show an unqualified green architectural-valid label from geometryValid alone. Actual door/program/courtyard design remains unverified.
 
 Training performs no gap realization/audit. Missing spatialQuality means unmeasured, never zero gaps. No graph-growth gap avoidance or automatic gap filling has been implemented.
+
+## Continuity prevention follow-up
+
+The new graph generator enforces implicit contact-arc continuity and preserves shared multi-room junctions before placement. Preview/inference still independently audit actual geometry. This adds no client command/settings or forced grid. A saved policy remains compatible, but an old in-memory layout is not repaired merely by changing code: regenerate after the updated backend starts. Exterior crevice diagnostics and actual architectural program remain separate from enclosed holes.

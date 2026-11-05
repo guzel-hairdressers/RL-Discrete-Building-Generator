@@ -1,0 +1,18 @@
+{
+  "revision": "12abf74d9a9814a1f9052cc77725cd56d68b89bb",
+  "protocol": "L/XL,120 max modules per floor,4 floors,seed123",
+  "pilotOnly": true,
+  "sourceHashes": {
+    "tools/benchmark_graph_training.py": "86621849730142bda35785037ba14af59b9b3e206ad9f77efb6bff1f481dbd9a",
+    "src/server.py": "ab4a8a00a22a2b645c47949274800dc178f02c2b76cc7b0451f1a27adf18a25b",
+    "src/typed_cell.py": "092e1b900299c92b0a21a8d4bbb3853c41c8b75af949b19de04ee79b04ced13d",
+    "src/graph_proxy.py": "e3d7935af80eca2950bc4eb2b23dfda651a0e8de860abd8d03064ce482834e69",
+    "src/graph_dictionary.py": "208c8ec50d5ebf752de8e2fc30d0d482db13a1244b4ba10a62c34941b7602bee",
+    "src/relative_vocabulary.py": "bf41fffc02603d7e4967dd0d4a1b0fc4ae3e3d571882f244d7a420c4e1032741",
+    "src/graph_sampler.py": "5f728cabe7ea552214157bba8d3a0b0cba0c396fe2eada7a8b774720fb04cd93",
+    "src/graph_policy.py": "360807bb0455c9908a2381ee3e75f59b3381c38e36a459e878e07545c4852e1f",
+    "src/shared_modules.py": "b9b0e00911319f0f79ec52f98225383cb91c53583e1fe9618db52394c66ef2fc",
+    "src/voronoi_realizer.py": "4bfcee124bd21c4e6f001816d974c8eda8e817eee8de14188c688414306644a7"
+  },
+  "snapshotLimitation": "Early diagnostic omitted graph_continuity.py from sources;not a complete reproducible comparison. Use continuity-quality-01/02 and continuity-speed-01/02 with full source snapshots."
+}

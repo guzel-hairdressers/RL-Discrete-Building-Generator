@@ -69,3 +69,7 @@ See [the report](../reports/v010_bounded_dictionary_speed.md) for scope and actu
 - [Measured report](reports/v010_hypotheses_benchmarks.md): all eight hypotheses, L/XL4/8-floor timing, urban supplement and limitations; no promoted generator.
 - [Gap diagnosis](guides/unplanned_gaps_2026-11-05.md): original geometry checks do not guarantee a continuous floor plate.
 - [Graph area assumptions](guides/graph_area_and_realizer_assumptions.md) and [protocol](guides/hypothesis_benchmark_protocol_2026-11-05.md).
+
+## 2026-11-05 — continuity prevention implemented
+
+[Shared-module hole fix](reports/continuity_2026-11-05/README.md): connected boundary-arc growth, protected shared junctions, numeric contact correction and measured endpoint proposals. Final held-out69/69 valid starts, dense12/12 and stochastic-training36/36 pass independent checks with zero raw enclosed-gap area. Three starting-core failures remain explicit. Backend fixed; active-demo integration pending.

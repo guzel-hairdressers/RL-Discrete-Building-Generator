@@ -1,0 +1,16 @@
+{
+  "closure": {
+    "cases": 72,
+    "errors": 0,
+    "geometryValid": 69,
+    "geometryAndGapChecksPass": 69,
+    "meanValidAdjustedFill": 0.4236868749259328,
+    "meanFillOnGeometryValid": 0.44210804340097337,
+    "meanRawGapArea": 0,
+    "maxRawGapArea": 0,
+    "meanCreviceDiagnostic": 16.309018227942175,
+    "meanRolloutSeconds": 0.7841724154578615,
+    "meanReachedReferences": 122.45833333333333,
+    "meanTypes": 14.72463768115942
+  }
+}

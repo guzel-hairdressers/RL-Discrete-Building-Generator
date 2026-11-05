@@ -195,7 +195,10 @@ def restore_dictionary(solution,max_types=15):
     bank.initial_fits={f:all(origin_fits((n.x,n.y),graph.site_boundaries[f],graph.site_holes[f],bank.prior.radius) for n in nodes)
         for f,nodes in bank.floor_nodes.items()}
     bank.vocabulary=RelativeVocabulary();bank.vocabulary.observe(graph,list(graph.nodes))
-    graph.module_bank=bank;bank.view();return graph
+    graph.module_bank=bank;bank.view()
+    bank.enforce_continuity=True;bank.enable_closure_proposals=True
+    bank.junctions=defaultdict(dict);bank.continuity_ready=bank.rebuild_continuity()
+    return graph
 
 
 def rebuild_after_pose(original,oid,position,angle):
@@ -245,6 +248,9 @@ def rebuild_after_pose(original,oid,position,angle):
     bank.shapes=shapes;bank._distance_index=None
     bank.vocabulary=RelativeVocabulary();bank.vocabulary.observe(graph,list(graph.nodes))
     bank.view()
+    if getattr(bank,'enforce_continuity',True):
+        if not bank.rebuild_continuity():return None
+        bank.continuity_ready=True
     return graph
 
 

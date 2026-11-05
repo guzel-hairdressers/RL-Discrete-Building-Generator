@@ -1,0 +1,60 @@
+{
+  "status": "complete",
+  "mode": "quality",
+  "training": true,
+  "arms": [
+    "closure"
+  ],
+  "seeds": [
+    123,
+    456,
+    789
+  ],
+  "cases": 12,
+  "settings": {
+    "generatorEngine": "graph_voronoi",
+    "graphController": "neural",
+    "graphProposalStrategy": "legacy",
+    "graphPolicyArchitecture": "message_passing",
+    "siteAreaTier": "ANY",
+    "boundaryType": "free",
+    "parallelEnvironments": 4,
+    "maxModules": 120,
+    "autoChangeEpisodes": 1,
+    "dictCap": 10,
+    "graphMaxTypes": 15,
+    "graphPriorRadius": 4.5,
+    "graphMinArea": 1.0,
+    "graphMaxArea": 80.0,
+    "learningRate": 0.001
+  },
+  "revision": "12abf74d9a9814a1f9052cc77725cd56d68b89bb",
+  "sourceHashes": {
+    "tools/benchmark_graph_continuity.py": "37e69a39e360378af86753f46653759b73767da1564379c951912b4fd8aa8cec",
+    "tools/compare_graph_proposals.py": "7245368d06655c139ba9be21f07e21a6c2fcf5189f6fe773733e619fc5769d2e",
+    "src/geometry.py": "ccd8299a098647bee74ebe5de216dd9a1553801e00d7446c0b3adf900ed863bf",
+    "src/graph.py": "8bd672d3e4e39909419e568584a5dfeba564135646d60e366b2e193b5e14c2da",
+    "src/graph_actions.py": "28b4a2d7f92fb0c93df140ad855576e5f7b506e8d12b3c1f118599f1884c01f8",
+    "src/graph_continuity.py": "8e04f4b32a3240c1ae905d69edf56aeee105825a5393e30a6b16631e0b75136b",
+    "src/graph_dictionary.py": "8debd844529b8dc5d71cfa151f2fdd94c0acd98498c4003f4a41734c965d8723",
+    "src/graph_evidence.py": "61f9b03f2b1996547b4c60ad7242edca3cabb69336103682f72a20ccd0192e3a",
+    "src/graph_experiments.py": "a104050383f26e66f9d9264a0b5d74fa8e006807e4118d152af45bbecf1d30df",
+    "src/graph_policy.py": "360807bb0455c9908a2381ee3e75f59b3381c38e36a459e878e07545c4852e1f",
+    "src/graph_proxy.py": "e3d7935af80eca2950bc4eb2b23dfda651a0e8de860abd8d03064ce482834e69",
+    "src/graph_sampler.py": "5f728cabe7ea552214157bba8d3a0b0cba0c396fe2eada7a8b774720fb04cd93",
+    "src/layout_gaps.py": "90b07b90516eaa8fd6eaef07210f6730800d8da8c0f225cdbd91a9952f551453",
+    "src/realizer_experiments.py": "932d53d6edc6f625b8055fefc448c4dcf3cd20aa44c7f4136cc43dd9d06006d4",
+    "src/relative_vocabulary.py": "bf41fffc02603d7e4967dd0d4a1b0fc4ae3e3d571882f244d7a420c4e1032741",
+    "src/server.py": "8ca3a716553a9f0639a0c0da499db5aded38c1504d5dcfb2b2c2ff66fe62e8dd",
+    "src/shared_modules.py": "b9b0e00911319f0f79ec52f98225383cb91c53583e1fe9618db52394c66ef2fc",
+    "src/typed_cell.py": "092e1b900299c92b0a21a8d4bbb3853c41c8b75af949b19de04ee79b04ced13d",
+    "src/voronoi_realizer.py": "4bfcee124bd21c4e6f001816d974c8eda8e817eee8de14188c688414306644a7"
+  },
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "torch": "2.13.0",
+  "device": "cpu",
+  "preregistration": "Frozen identical trained policy and paired sites;previous/guard/guard+closure. Independent geometry and enclosed-gap checks;raw tiny gaps and exterior crevices retained;fill/reuse/types/reached size reported. Quality ANY/FREE120max/floor4floors. Speed L/XL120max/floor4/8floors with one graph-only policy update and separate audit of the exact produced graph. No empty/thinned-layout success,per-instance deformation,filler relabeling,grid presets or unequal-work speedup claims.",
+  "elapsedSeconds": 36.0280461250004,
+  "completedCases": 36,
+  "errors": 0
+}

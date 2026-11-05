@@ -198,3 +198,7 @@ Implemented data-derived angle/length proposals with composite directed turns an
 ## 2026-11-05 — individual hypotheses, no architectural winner
 
 Implemented opt-in boundary context, feasibility ranking, bounded pose repair, implicit shape-specific site certificates, frozen orthogonal/port adapters, circulation assignment and best-of-four diagnostics. Preserved 1,860 primary cases, full L/XL4/8-floor timing, urban/frozen/alternative evidence. No faster learning established. Site certificates recover fill, but the user's screenshot prompted an enclosed-gap audit: baseline geometry checks passed69/72, geometry-plus-gap checks0/72. Do not promote a fill-only winner. Orthogonality belongs in realization. Corrected exact net-area reporting and repair acceptance; authoritative live endgame repair spent0.213s mean for six trials and accepted0/72. Prior export-replay failures remain labeled. [Report](reports/v010_hypotheses_benchmarks.md).
+
+## 2026-11-05 — continuity during graph growth
+
+Replaced detection-only handling with connected boundary-arc attachment and persistent shared-junction witnesses. Measured wall endpoints/circumcircles provide closure proposals with free directions, no grid/templates. Prototype extreme-point/support caching preserves the same constraint strength. The initial failed2.48m² diagnostic is retained; a fragmented-contact lookup caused the missed contact and is fixed. Shared shapes stay rigid and no per-instance fillers/void relabeling are used. [Measured result](reports/continuity_2026-11-05/README.md).

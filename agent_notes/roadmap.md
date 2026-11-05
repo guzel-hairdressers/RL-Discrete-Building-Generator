@@ -339,3 +339,11 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [OPEN, PRIORITY] Shared contact-endpoint/interior-junction closure and intentional voids. Gap avoidance is not yet part of graph growth; original geometric validity is insufficient.
 - [DEFER] Generic random repair and corner styling as quality fixes; six-trial live endgame repair0 improvements/72trials. Ports still need non-oracle generation.
 - [OPEN]750-episode confirmation and calibrated candidate-local/goal-conditioned learning, after geometric/program validity is trustworthy. [Report](reports/v010_hypotheses_benchmarks.md).
+
+### 2026-11-05 — hole prevention
+
+- [IMPLEMENTED] Growth-time boundary-arc continuity, protected shared junctions and corrected collinear contact intervals.
+- [IMPLEMENTED] Measured endpoint/junction proposals; no fixed angle family, scale/reflection equivalence, clipping or filler types.
+- [VERIFIED]69/69 valid-start held-out layouts,12/12 dense L/XL4/8-floor cases and36/36 stochastic-training cases have zero raw enclosed gaps.320 tests completed,2 skipped.
+- [PENDING] Integrate backend with completed UI branch and verify the active demo; do not claim the running old server is updated yet.
+- [OPEN] Three pre-existing starting-core containment failures; ordinary exterior recesses, architectural program and broader learning remain separate. [Report](reports/continuity_2026-11-05/README.md).

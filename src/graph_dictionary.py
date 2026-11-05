@@ -44,10 +44,11 @@ class Shape:
     face_angles: tuple = field(compare=False,repr=False)
     prior_planes: frozenset = field(compare=False,repr=False)
     support_cache: dict = field(default_factory=dict,compare=False,repr=False)
+    continuity_cache: dict = field(default_factory=dict,compare=False,repr=False)
 
     def interval(self,key):
-        cached=self.intervals.get(key)
-        if cached is not None:return cached
+        aliases=self.continuity_cache.setdefault('aliases',{})
+        if key in aliases:return aliases[key]
         # Indexed numeric contact aliases, tighter than the oracle's existing
         # micrometre tolerance. No array scan for every rejected proposal.
         length=math.hypot(*key[:2]);nx,ny=key[0]/length,key[1]/length
@@ -63,8 +64,8 @@ class Shape:
                 center=-cx*ny+cy*nx;slope=-tx*ny+ty*nx
                 a,b=center+slope*lo,center+slope*hi
                 lower=min(lower,a,b);upper=max(upper,a,b)
-        if lower==math.inf:return None
-        result=(lower,upper);self.intervals[key]=result
+        if lower==math.inf:aliases[key]=None;return None
+        result=(lower,upper);aliases[key]=result
         return result
 
     def support(self,normal):
@@ -155,7 +156,7 @@ def shape_with(base,extra,required,prior):
             if req==base.required:return base
             if any(base.interval(key) is None or base.interval(key)[1]-base.interval(key)[0]<prior.min_contact-1e-6 for key in added-base.required):return None
             return Shape(base.planes,req,base.intervals,base.area,base.prior_boundary,
-                         base.centers,base.tangents,base.limits,base.faces,base.face_angles,base.prior_planes,base.support_cache)
+                         base.centers,base.tangents,base.limits,base.faces,base.face_angles,base.prior_planes,base.support_cache,base.continuity_cache)
     planes=tuple(sorted(set(base.planes if base else ())|extras))
     # Adding cuts cannot reactivate a previously redundant prior inequality.
     # Retain active prior faces instead of rebuilding all 64 rows per trial.
@@ -186,6 +187,8 @@ class PlacementPlan:
     filled: float
     type_count: int
     singleton_count: int
+    continuity: object = None
+    revision: object = None
 
 
 class GraphDictionary:
@@ -208,6 +211,101 @@ class GraphDictionary:
             getattr(graph,'site_holes',{}).get(f,()),self.prior.radius) for n in nodes)
             for f,nodes in self.floor_nodes.items()} if hasattr(graph,'site_boundaries') else {f:True for f in self.floor_nodes}
         self.rejections=Counter();self._distance_index=None
+        self.junctions=defaultdict(dict)
+        self.protected_junctions={};self.junction_support=defaultdict(dict)
+        self.enforce_continuity=not getattr(graph,'allow_unplanned_gaps',False)
+        self.enable_closure_proposals=True
+        self.continuity_ready=True
+
+    def _preserves_junctions(self,changed):
+        from graph_continuity import TOLERANCE
+        for pid,shape in changed.items():
+            if pid not in self.shapes or shape.faces==self.shapes[pid].faces:continue
+            points=self.protected_junctions.get(pid,())
+            if not points:continue
+            previous=set(self.shapes[pid].planes);cache=self.junction_support[pid]
+            # Every old half-space already contains every protected witness.
+            # Only genuinely new active cuts need checking. Convexity lets the
+            # extreme witnesses represent all occurrences without weakening it.
+            for nx,ny,b in shape.planes:
+                if (nx,ny,b) in previous:continue
+                key=(nx,ny)
+                if key not in cache:
+                    if len(cache)>=512:cache.pop(next(iter(cache)))
+                    cache[key]=max(nx*x+ny*y for x,y in points)
+                if cache[key]>b+TOLERANCE*math.hypot(nx,ny):return False
+        return True
+
+    def _continuity_certificate(self,plan,near):
+        from graph_continuity import boundary_data,boundary_interval,arc_position,connected_contact_arc,junctions_from_contacts
+        shape=plan.shapes[plan.prototype];_,perimeter=boundary_data(shape);result=[]
+        for floor,nodes in near.items():
+            contacts=[]
+            for node in nodes:
+                # Explicit void footprints participate in the construction
+                # topology, but never in occupied area or traversable access.
+                # This permits intentional courtyards without inventing voids
+                # to excuse leftover gaps.
+                other=self.instances[root_id(node)]
+                a=displacement_plane((node.x-plan.x,node.y-plan.y),plan.angle)
+                b=displacement_plane((plan.x-node.x,plan.y-node.y),other.angle)
+                ia=boundary_interval(shape,a)
+                ib=boundary_interval(plan.shapes.get(other.prototype,self.shapes[other.prototype]),b)
+                if ia is None or ib is None:continue
+                lo,hi=max(ia[0],-ib[1]),min(ia[1],-ib[0])
+                if lo>hi+1e-7:continue
+                if lo>hi:lo=hi=(lo+hi)/2
+                first=arc_position(shape,a,lo);second=arc_position(shape,a,hi)
+                if first is None or second is None:return None
+                s,p=first;t,q=second
+                contacts.append((node.node_id,s,t,p,q))
+            if not connected_contact_arc([(r[1],r[2]) for r in contacts],perimeter):return None
+            result.extend((floor,p,neighbors) for p,neighbors in junctions_from_contacts(contacts,perimeter))
+        return result
+
+    def _record_junctions(self,certificate,oid,origin,angle):
+        from graph_continuity import protected_hull
+        additions=defaultdict(list)
+        for floor,point,neighbors in certificate:
+            dx,dy=rotate(point,angle);world=(origin[0]+dx,origin[1]+dy)
+            for root in {oid,*[root_id(self.graph.nodes[nid]) for nid in neighbors]}:
+                current=self.instances[root]
+                local=rotate((world[0]-current.origin[0],world[1]-current.origin[1]),-current.angle)
+                self.junctions[root][tuple(round(v,7) for v in local)]=local
+                additions[current.prototype].append(local)
+        for pid,points in additions.items():
+            old=self.protected_junctions.get(pid,())
+            hull=protected_hull((*old,*points))
+            if hull!=old:
+                self.protected_junctions[pid]=hull;self.junction_support[pid].clear()
+
+    def rebuild_continuity(self):
+        """Recertify a pose transaction by replaying final implicit footprints.
+
+        Conservative: each insertion prefix must be continuous. This is for
+        uncommon search transactions/restoration, not the ordinary growth path.
+        It uses no polygons, and cannot bless a previously hole-filled snapshot.
+        """
+        spatial=SpatialNodes(self.graph,self.prior.radius);spatial.cells.clear()
+        old_junctions=getattr(self,'junctions',defaultdict(dict))
+        old_protected=getattr(self,'protected_junctions',{})
+        old_support=getattr(self,'junction_support',defaultdict(dict))
+        self.protected_junctions={};self.junction_support=defaultdict(dict)
+        self.junctions=defaultdict(dict);floors_seen=set()
+        for oid,current in self.instances.items():
+            floors=[node.floor_index for node in current.nodes]
+            near={f:spatial.near(f,*current.origin) for f in floors if f in floors_seen}
+            if near:
+                plan=PlacementPlan(*current.origin,current.nodes[0].floor_index,current.nodes[0].scope.value,
+                    current.prototype,current.angle,self.shapes,[],0.,len(self.shapes),0)
+                certificate=self._continuity_certificate(plan,near)
+                if certificate is None:
+                    self.junctions=old_junctions;self.protected_junctions=old_protected;self.junction_support=old_support;return False
+                self._record_junctions(certificate,oid,current.origin,current.angle)
+            for node in current.nodes:
+                spatial.cells[spatial.key(node.floor_index,node.x,node.y)].append(node)
+                floors_seen.add(node.floor_index)
+        return True
 
     def _interval(self,shape,origin,angle,other):
         key=displacement_plane((other[0]-origin[0],other[1]-origin[1]),angle)
@@ -255,7 +353,56 @@ class GraphDictionary:
                 if len(result)>=limit:return result
         return result
 
+    def closure_candidates(self,floor,limit=12):
+        """Measured facet/end-point proposals, no angle set or pattern catalogue.
+
+        Matching a previously observed wall endpoint encourages true junctions.
+        Continuous circumcircle proposals can discover a new neighbor while
+        retaining an existing endpoint as the three-room junction.
+        """
+        import random
+        if not self.enable_closure_proposals:return []
+        rng=random.Random(313+len(self.graph.nodes)*104729+floor)
+        anchors=list(self.floor_nodes[floor]);rng.shuffle(anchors)
+        result=[];seen=set()
+        def append(node,x,y,**extra):
+            key=(round(x,6),round(y,6),extra.get('preferredPrototype'),round(extra.get('preferredAngle',0.),8))
+            if key in seen:return
+            seen.add(key)
+            if any((n.x-x)**2+(n.y-y)**2<2.5**2 for n in self.spatial.near(floor,x,y)):return
+            result.append(dict(x=x,y=y,anchor_node=node.node_id,span=math.hypot(x-node.x,y-node.y),
+                source='shared_junction',**extra))
+        for node in anchors[:12]:
+            instance=self.instances[root_id(node)];shape=self.shapes[instance.prototype]
+            faces=list(shape.faces);rng.shuffle(faces)
+            for _,nx,ny,b,cx,cy,tx,ty,lo,hi in faces:
+                if hi-lo<self.prior.min_contact:continue
+                # The circular size prior is not observed fabrication evidence.
+                if not any(abs(nx-x)<1e-6 and abs(ny-y)<1e-6 and abs(b-bound)<1e-6 for x,y,bound in shape.planes):continue
+                wx,wy=rotate((2*b*nx,2*b*ny),instance.angle);x,y=node.x+wx,node.y+wy
+                types=list(self.shapes);rng.shuffle(types)
+                for pid in types:
+                    for _,fx,fy,fb,*tail in self.shapes[pid].faces:
+                        flo,fhi=tail[-2:]
+                        if abs(fb-b)>1e-6:continue
+                        if min(abs(lo+fhi),abs(hi+flo))>1e-6:continue
+                        angle=instance.angle+math.atan2(ny,nx)+math.pi-math.atan2(fy,fx)
+                        append(node,x,y,preferredPrototype=pid,preferredAngle=angle)
+                        if len(result)>=limit:return result
+                append(node,x,y)
+                for t in (lo,hi):
+                    px,py=rotate((cx+tx*t,cy+ty*t),instance.angle)
+                    radius=math.hypot(px,py);base=math.atan2(-py,-px)
+                    turns=self.vocabulary._angle_keys
+                    turn=(self.vocabulary.angles[rng.choice(turns)] if turns and rng.random()<.5 else rng.uniform(-math.pi,math.pi))
+                    bearing=base+turn
+                    append(node,node.x+px+radius*math.cos(bearing),node.y+py+radius*math.sin(bearing))
+                    if len(result)>=limit:return result
+        return result[:limit]
+
     def probe(self,x,y,floor,scope,min_distance=2.5,preferred_pid=None,preferred_angle=None):
+        if self.enforce_continuity and not self.continuity_ready:
+            self.rejections['unverified_continuity']+=1;return []
         if not all(self.initial_fits.values()):return []
         floors=range(self.graph.num_floors) if scope=='multi_floor' else (floor,)
         near={f:self.spatial.near(f,x,y) for f in floors}
@@ -297,6 +444,8 @@ class GraphDictionary:
             shape=shape_with(self.shapes[pid],planes,(),self.prior)
             if shape is None:self.rejections['existing_required_contact']+=1;return []
             changed[pid]=shape
+        if self.enforce_continuity and not self._preserves_junctions(changed):
+            self.rejections['junction_displaced']+=1;return []
         best_existing=None;new_option=None
         for pid,angle in options:
             planes={displacement_plane(v,angle) for v in vectors}
@@ -324,6 +473,13 @@ class GraphDictionary:
             size=self._area_total(trial)+trial[pid].area*len(floors)
             counts={p:len(members) for p,members in self.members.items()};counts[pid]=counts.get(pid,0)+1
             plan=PlacementPlan(x,y,floor,scope,pid,angle,trial,contacts,size,len(counts),sum(v==1 for v in counts.values()))
+            plan.revision=len(self.graph.nodes)
+            if self.enforce_continuity:
+                if not self._preserves_junctions(trial):
+                    self.rejections['junction_displaced']+=1;continue
+                plan.continuity=self._continuity_certificate(plan,near)
+                if plan.continuity is None:
+                    self.rejections['disconnected_contact_arc']+=1;continue
             if pid==new_pid:new_option=plan
             elif best_existing is None or size>best_existing.filled:best_existing=plan
         if best_existing is not None and new_option is not None and abs(best_existing.filled-new_option.filled)<1e-6:
@@ -337,6 +493,8 @@ class GraphDictionary:
 
     def commit(self,plan,node_id):
         from typed_cell import CellType,VerticalScope
+        if plan.revision is not None and plan.revision!=len(self.graph.nodes):raise ValueError('stale placement plan')
+        if self.enforce_continuity and plan.continuity is None:raise ValueError('placement has no continuity certificate')
         if any(pid not in self.shapes or shape.planes!=self.shapes[pid].planes for pid,shape in plan.shapes.items()):
             self._distance_index=None
         self.shapes.update(plan.shapes)
@@ -361,6 +519,8 @@ class GraphDictionary:
             self.links[plan.prototype].add((vx,vy,other,neighbor.angle-plan.angle))
             vx,vy=rotate((-dx,-dy),-neighbor.angle)
             self.links[other].add((vx,vy,plan.prototype,plan.angle-neighbor.angle))
+
+        self._record_junctions(plan.continuity or (),node_id,(plan.x,plan.y),plan.angle)
 
         self.vocabulary.observe(self.graph,[n.node_id for n in nodes]+[nid for _,nid,_ in plan.contacts])
         for pid in plan.shapes:

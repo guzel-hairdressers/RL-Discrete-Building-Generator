@@ -132,3 +132,7 @@ The `2026-11-05-v010-hypotheses-*` directories preserve the1,860-case ANY/FREE p
 `2026-11-05-v010-live-endgame-repair-01` is the authoritative exact-objective in-memory12-case/72-trial endgame diagnostic. `endgame-repair-01`/`02` retain export-reconstruction failures;01 overlapped tests and is not timing evidence,02 still has5 replay failures. Do not treat them as the live benchmark.
 
 [Full report](../reports/v010_hypotheses_benchmarks.md). Research checkpoints have a separate schema; none replaced production weights.
+
+## 2026-11-05 — continuity fix
+
+`continuity-quality-01` is the216-case paired old/guard/closure comparison. `quality-02` rechecks72 final cases after support caching. `speed-02` is the final L/XL120max/floor4/8-floor,three-seed comparison; `speed-01` preserves the uncached measurement. `training-01` has36 ANY/FREE stochastic vocabulary episodes, one real update each and independent final audits. Final valid-start outputs have zero raw enclosed-gap area. Timing is not an equal-work speedup claim; the fix adds checking. `first-4floors` contains the superseded2.48m² failure. [Report](../reports/continuity_2026-11-05/README.md).

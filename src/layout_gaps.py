@@ -24,7 +24,8 @@ def audit_floor_gaps(site,built,planned_voids=(),union=None,min_report_area=.01,
     diagnostic=union.buffer(seam_tolerance,join_style=2).buffer(-seam_tolerance,join_style=2)
     raw_holes=[Polygon(ring) for part in polygon_parts(diagnostic) for ring in part.interiors]
     unplanned=unary_union(raw_holes).intersection(site).difference(planned)
-    holes=[p for p in polygon_parts(unplanned) if p.area>min_report_area]
+    parts=polygon_parts(unplanned)
+    holes=[p for p in parts if p.area>min_report_area]
     records=[]
     for hole in holes:
         label=polylabel(hole,tolerance=.025)
@@ -37,6 +38,8 @@ def audit_floor_gaps(site,built,planned_voids=(),union=None,min_report_area=.01,
     closed=diagnostic.buffer(narrow_radius,join_style=2).buffer(-narrow_radius,join_style=2)
     crevices=closed.difference(diagnostic).intersection(site).difference(planned).difference(unplanned)
     return dict(noUnplannedEnclosedGaps=not records,unplannedEnclosedGapCount=len(records),
+        rawUnplannedEnclosedGapArea=sum(p.area for p in parts),
+        largestRawUnplannedEnclosedGapArea=max((p.area for p in parts),default=0.),
         unplannedEnclosedGapArea=sum(r['area'] for r in records),
         largestUnplannedEnclosedGapArea=max((r['area'] for r in records),default=0.),gaps=records,
         narrowExteriorCreviceAreaDiagnostic=crevices.area,narrowDiagnosticRadius=narrow_radius,

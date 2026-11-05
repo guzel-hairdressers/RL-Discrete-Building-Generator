@@ -1,0 +1,20 @@
+{
+  "speed": {
+    "cases": 36,
+    "allIdentical": true,
+    "differences": []
+  },
+  "quality": {
+    "cases": 72,
+    "allIdentical": false,
+    "differences": [
+      {
+        "file": "layouts/closure-789-8-ANY-4.json",
+        "identical": false
+      }
+    ],
+    "maxCoordinateDifference": 3.552713678800501e-15,
+    "categoricalAssignmentsAndPositionsUnchanged": true,
+    "maxRotationDegreesDifference": 1.1368683772161603e-13
+  }
+}
