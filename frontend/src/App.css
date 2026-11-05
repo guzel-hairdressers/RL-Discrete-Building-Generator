@@ -22,6 +22,7 @@ body, html, #root {
   background-color: #ffffff;
   color: #0f172a;
   position: relative;
+  touch-action: none;
 }
 
 .app-shell {
@@ -32,6 +33,7 @@ body, html, #root {
   position: relative;
   background: #ffffff;
   overflow: hidden;
+  touch-action: none;
 }
 
 /* Glassmorphic Panels */
@@ -198,6 +200,31 @@ body, html, #root {
 }
 
 .pane-expand-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+/* 2D Plan Fit / Center Button */
+.pane-fit-btn {
+  position: absolute;
+  top: 14px;
+  right: 48px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pane-fit-btn:hover {
   background: #f8fafc;
   color: #0f172a;
   border-color: #94a3b8;
@@ -1226,5 +1253,80 @@ body, html, #root {
   font-style: italic;
   padding: 12px;
   text-align: center;
+}
+
+/* Toolbar Reset Views Button */
+.view-btn.reset-views-btn {
+  gap: 4px;
+}
+
+/* Responsive Scaling for Laptops and Small Viewports */
+@media (max-height: 768px) {
+  .bottom-deck-floating-wrapper {
+    bottom: 8px;
+  }
+
+  .bottom-deck-floating {
+    height: 118px;
+    padding: 6px 14px;
+  }
+
+  .deck-row-actions {
+    gap: 4px;
+  }
+
+  .split-side-btn,
+  .btn-clean-pause,
+  .deck-btn-clean {
+    height: 28px;
+    font-size: 11px;
+    padding: 0 8px;
+  }
+
+  .metric-block-clean {
+    padding: 2px 4px;
+  }
+
+  .metric-clean-val {
+    font-size: 16px;
+  }
+
+  .site-info-card {
+    padding: 8px 10px;
+    width: 195px;
+  }
+}
+
+@media (max-height: 640px) {
+  .bottom-deck-floating-wrapper {
+    bottom: 4px;
+  }
+
+  .bottom-deck-floating {
+    height: 104px;
+    padding: 4px 10px;
+  }
+
+  .metric-clean-val {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .deck-row-actions {
+    gap: 3px;
+  }
+
+  .split-btn-clean {
+    min-width: 110px;
+  }
+
+  .split-side-btn,
+  .btn-clean-pause,
+  .deck-btn-clean {
+    font-size: 9.5px;
+    padding: 0 4px;
+    height: 26px;
+  }
 }
 

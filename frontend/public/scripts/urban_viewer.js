@@ -60,7 +60,11 @@ export function initUrbanContext(DATA) {
   window.optimizerGroup = optimizerGroup;
 
   // Global Building Graph Lattice Group (PROP-16, PROP-17, PROP-18)
-  const graphBadgeMaterials = new Map();
+  function prototypeColor(id) {
+    let hash = 2166136261;
+    for (const c of String(id || 'unknown')) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619);
+    return new THREE.Color(`hsl(${((hash % 360) + 360) % 360}, 46%, 62%)`);
+  }
   const graphGroup = new THREE.Group();
   graphGroup.name = "graphGroup";
   scene.add(graphGroup);
@@ -399,7 +403,7 @@ export function initUrbanContext(DATA) {
       });
       const extruded = new THREE.ExtrudeGeometry(shape, { depth: 0.20, bevelEnabled: false });
       extruded.rotateX(-Math.PI / 2);
-      geom = extruded.toNonIndexed();
+      geom = extruded.index ? extruded.toNonIndexed() : extruded;
       outPts = customPolygon.map((p) => {
         const px = Number(p.x ?? p[0] ?? 0);
         const py = Number(p.y ?? p[1] ?? 0);
@@ -547,7 +551,7 @@ export function initUrbanContext(DATA) {
 
     if (event.data.type === 'set_context_visibility') {
       const hasUrbanContext = !!(DATA.buildings && DATA.buildings.length > 0);
-      const isVisible = hasUrbanContext || event.data.visible !== false;
+      const isVisible = event.data.visible !== false;
       contextGroup.visible = isVisible;
       if (!isVisible && event.data.customPolygon) {
         renderSiteParcel(event.data.customPolygon, event.data.boundaryOffset);
@@ -559,6 +563,11 @@ export function initUrbanContext(DATA) {
 
     if (event.data.type === 'set_camera_mode' && event.data.mode) {
       setCamera(event.data.mode === 'axonometric' ? 'ortho' : 'persp');
+      return;
+    }
+
+    if (event.data.type === 'reset_camera') {
+      resetCameraToDefault();
       return;
     }
 
@@ -584,48 +593,6 @@ export function initUrbanContext(DATA) {
       const floorBoundary = (Array.isArray(boundaries) && boundaries.length > 0) ? boundaries[0] : null;
       const ox = Number(floorBoundary?.originOffset?.x || 0);
       const oy = Number(floorBoundary?.originOffset?.y || 0);
-
-      // Helper: Clean, flat 3D Billboard Sprite with Integer Room Number (NO outline)
-      function createNodeBadgeSprite(text, bgColor = '#2563eb') {
-        const key = `${text}|${bgColor}`;
-        const cached = graphBadgeMaterials.get(key);
-        if (cached) {
-          const sprite = new THREE.Sprite(cached);
-          sprite.renderOrder = 999; sprite.scale.set(1.2, 1.2, 1);
-          return sprite;
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 128;
-        const ctx = canvas.getContext('2d');
-
-        // Solid circular background badge (no outline)
-        ctx.beginPath();
-        ctx.arc(64, 64, 60, 0, Math.PI * 2);
-        ctx.fillStyle = bgColor;
-        ctx.fill();
-
-        // Centered bold integer room number
-        ctx.font = 'bold 72px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(String(text), 64, 66);
-
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.minFilter = THREE.LinearFilter;
-        const spriteMat = new THREE.SpriteMaterial({
-          map: texture,
-          transparent: true,
-          depthTest: false,
-        });
-        spriteMat.userData.sharedGraphBadge = true;
-        graphBadgeMaterials.set(key, spriteMat);
-        const sprite = new THREE.Sprite(spriteMat);
-        sprite.renderOrder = 999;
-        sprite.scale.set(1.2, 1.2, 1);
-        return sprite;
-      }
 
       // 1. Horizontal Edges (Glowing cyan line segments)
       if (Array.isArray(graphState.edgesHoriz) && graphState.edgesHoriz.length > 0) {
@@ -669,42 +636,26 @@ export function initUrbanContext(DATA) {
         }
       }
 
-      // 3. Nodes: either clean room number badge or unshaded compact dot (NO black spheres under numbers)
-      let dotGeom, dotCoreMat, dotRoomMat;
-
-      graphState.nodes.forEach(node => {
-        const nodeX = Number(node.x) + ox;
-        const nodeY = Number(node.z) + 1.75;
-        const nodeZ = -(Number(node.y) + oy);
-
-        const isCore = node.type === 'core';
-        const bgCol = isCore ? '#dc2626' : '#2563eb';
-
-        if (node.roomNumber != null) {
-          // Evaluated pause: render ONLY the clean flat number badge directly at node position.
-          // Eliminates redundant black unlit spheres underneath.
-          const badge = createNodeBadgeSprite(node.roomNumber, bgCol);
-          badge.position.set(nodeX, nodeY, nodeZ);
-          graphGroup.add(badge);
-        } else {
-          // Live generation: compact bright unshaded dot
-          if (!dotGeom) {
-            dotGeom = new THREE.SphereGeometry(0.35, 12, 12);
-            dotCoreMat = new THREE.MeshBasicMaterial({ color: 0xdc2626 });
-            dotRoomMat = new THREE.MeshBasicMaterial({ color: 0x2563eb });
-          }
-          const nodeMesh = new THREE.Mesh(dotGeom, isCore ? dotCoreMat : dotRoomMat);
-          nodeMesh.position.set(nodeX, nodeY, nodeZ);
-          graphGroup.add(nodeMesh);
-        }
-      });
+      // One vertex-colored point buffer; no per-node text textures or meshes.
+      const positions = [], colors = [];
+      for (const node of graphState.nodes) {
+        positions.push(Number(node.x) + ox, Number(node.z) + 1.75, -(Number(node.y) + oy));
+        const color = prototypeColor(node.moduleId);
+        colors.push(color.r, color.g, color.b);
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      graphGroup.add(new THREE.Points(geometry, new THREE.PointsMaterial({
+        size: 4, sizeAttenuation: false, vertexColors: true,
+      })));
       return;
     }
 
     if (event.data.type !== 'optimizer_placements') return;
     const { placements, boundaries, isReal, graphState } = event.data;
     const hasUrbanContext = !!(DATA.buildings && DATA.buildings.length > 0);
-    const treatAsReal = hasUrbanContext || isReal === true;
+    const treatAsReal = isReal === true;
     if (!treatAsReal && Array.isArray(boundaries) && boundaries.length > 0) {
       const b0 = boundaries[0];
       const poly = b0.outer || b0.polygon || b0.coords;
@@ -727,7 +678,10 @@ export function initUrbanContext(DATA) {
         else child.material.dispose();
       }
     }
-    if (graphState && !graphState.realized) return;
+    // Solid 3D realization happens ONLY at the end of points generation!
+    if (graphState && !graphState.realized) {
+      return;
+    }
     if (Array.isArray(placements) && placements.length > 0) {
       while (graphGroup.children.length > 0) {
         const child = graphGroup.children.pop();
@@ -747,7 +701,7 @@ export function initUrbanContext(DATA) {
     const edgeMat = new THREE.LineBasicMaterial({ color: edgeHex, linewidth: 3.5 });
 
     placements.forEach((placement) => {
-      const floorIdx = Number(placement.instanceIdx ?? placement.floorIndex ?? 0);
+      const floorIdx = Number(placement.floor ?? placement.instanceIdx ?? placement.floorIndex ?? 0);
       const poly = placement.poly || placement.polygon || placement.mergedPolygon || placement.coords;
       if (!Array.isArray(poly) || poly.length < 3) return;
 
@@ -788,10 +742,11 @@ export function initUrbanContext(DATA) {
 
         const cCat = comp.category || (comp.module ? comp.module.category : 'room');
         const isCore = cCat === 'core' || comp.isCore || (comp.id && String(comp.id).toLowerCase().includes('core'));
-        const litColor = isCore ? coreLitColor : roomLitColor;
-        const shadowColor = isCore ? coreShadowColor : roomShadowColor;
+        const litColor = prototypeColor(comp.moduleId || placement.moduleId || comp.module?.id);
+        const shadowColor = litColor.clone().multiplyScalar(.8);
 
-        const nonIndexed = cGeom.toNonIndexed();
+        const nonIndexed = cGeom.index ? cGeom.toNonIndexed() : cGeom;
+        if (nonIndexed !== cGeom) cGeom.dispose();
         const posAttr = nonIndexed.attributes.position;
         const vertexCount = posAttr.count;
         const numTris = vertexCount / 3;
@@ -864,6 +819,7 @@ export function initUrbanContext(DATA) {
       outerGeom.translate(0, floorIdx * floorHeight + 0.2, 0);
 
       const edges = new THREE.EdgesGeometry(outerGeom, 15);
+      outerGeom.dispose();
       const edgeOffsets = [
         [0, 0, 0],
         [0.055, 0, 0], [-0.055, 0, 0],
@@ -1024,6 +980,62 @@ export function initUrbanContext(DATA) {
     controls.object = activeCamera;
     controls.update();
   }
+
+  // Camera Reset to Clean Default Centered Framing
+  function resetCameraToDefault() {
+    let cx = 0;
+    let cz = 0;
+    let siteR = R;
+
+    if (DATA.site && DATA.site.vertices && DATA.site.vertices.length > 0) {
+      const vs = DATA.site.vertices;
+      let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+      vs.forEach(v => {
+        const vx = Number(v[0]), vz = Number(v[1]);
+        if (vx < minX) minX = vx;
+        if (vx > maxX) maxX = vx;
+        if (vz < minZ) minZ = vz;
+        if (vz > maxZ) maxZ = vz;
+      });
+      if (Number.isFinite(minX)) {
+        cx = (minX + maxX) / 2;
+        cz = (minZ + maxZ) / 2;
+        const siteSpan = Math.max(maxX - minX, maxZ - minZ);
+        siteR = Math.max(siteSpan * 0.95, R * 0.65);
+      }
+    }
+
+    const targetY = (DATA.maxHeight || 40) * 0.08;
+    controls.target.set(cx, targetY, cz);
+
+    const fitDist = Math.max(siteR * 2.8, R * 2.2);
+    const pos = new THREE.Vector3(cx + fitDist * 0.7, fitDist * 0.65, cz + fitDist * 0.7);
+
+    cameraOrtho.position.copy(pos);
+    cameraOrtho.zoom = 1.0;
+    const curAspect = window.innerWidth / window.innerHeight;
+    const fitOrthoSize = Math.max(siteR * 1.45, R * 1.15);
+    cameraOrtho.left = -fitOrthoSize * curAspect;
+    cameraOrtho.right = fitOrthoSize * curAspect;
+    cameraOrtho.top = fitOrthoSize;
+    cameraOrtho.bottom = -fitOrthoSize;
+    cameraOrtho.updateProjectionMatrix();
+
+    cameraPersp.position.copy(pos);
+    cameraPersp.updateProjectionMatrix();
+
+    activeCamera.lookAt(controls.target);
+    controls.update();
+
+    try {
+      localStorage.removeItem('context_generator_camera_view');
+    } catch (e) {}
+  }
+
+  // Double-click to reset camera framing
+  window.addEventListener('dblclick', () => {
+    resetCameraToDefault();
+  });
 
   // Hover Tooltips
   const raycaster = new THREE.Raycaster();

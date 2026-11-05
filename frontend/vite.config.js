@@ -23,9 +23,8 @@ export default defineConfig({
       '/data': {
         target: backendUrl,
       },
-      '/scripts': {
-        target: backendUrl,
-      },
+      // Renderer source comes from frontend/public during development.
+      // The integration build copies it into dist once the branches are merged.
       '/styles': {
         target: backendUrl,
       },
