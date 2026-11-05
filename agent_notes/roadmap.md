@@ -345,5 +345,5 @@ This document defines the master development plan for the **RL-Discrete-Building
 - [IMPLEMENTED] Growth-time boundary-arc continuity, protected shared junctions and corrected collinear contact intervals.
 - [IMPLEMENTED] Measured endpoint/junction proposals; no fixed angle family, scale/reflection equivalence, clipping or filler types.
 - [VERIFIED]69/69 valid-start held-out layouts,12/12 dense L/XL4/8-floor cases and36/36 stochastic-training cases have zero raw enclosed gaps.320 tests completed,2 skipped.
-- [PENDING] Integrate backend with completed UI branch and verify the active demo; do not claim the running old server is updated yet.
+- [VERIFIED] Backend and completed UI merged in `d5e1e7eb`, rebuilt and running on port8000. Fresh9-floor UI run passes; separate live API run has694 floor references,15 types and zero raw enclosed gaps. User data/checkpoints preserved.
 - [OPEN] Three pre-existing starting-core containment failures; ordinary exterior recesses, architectural program and broader learning remain separate. [Report](reports/continuity_2026-11-05/README.md).

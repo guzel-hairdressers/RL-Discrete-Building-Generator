@@ -72,4 +72,4 @@ See [the report](../reports/v010_bounded_dictionary_speed.md) for scope and actu
 
 ## 2026-11-05 — continuity prevention implemented
 
-[Shared-module hole fix](reports/continuity_2026-11-05/README.md): connected boundary-arc growth, protected shared junctions, numeric contact correction and measured endpoint proposals. Final held-out69/69 valid starts, dense12/12 and stochastic-training36/36 pass independent checks with zero raw enclosed-gap area. Three starting-core failures remain explicit. Backend fixed; active-demo integration pending.
+[Shared-module hole fix](reports/continuity_2026-11-05/README.md): connected boundary-arc growth, protected shared junctions, numeric contact correction and measured endpoint proposals. Final held-out69/69 valid starts, dense12/12 and stochastic-training36/36 pass independent checks with zero raw enclosed-gap area. Three starting-core failures remain explicit. Backend/UI integrated and verified on port8000, including fresh9-floor UI and independent WebSocket runs. Existing data/checkpoints preserved.

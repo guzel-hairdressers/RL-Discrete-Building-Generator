@@ -1,0 +1,18 @@
+{
+  "pathsUnchanged": {
+    "README.md": true,
+    "frontend/public/data/custom_sites_dataset.json": true,
+    "frontend/dist/data/custom_sites_dataset.json": true,
+    "frontend/public/sites/custom_m_1787768191.html": true,
+    "frontend/public/sites/custom_s_1787768129.html": true,
+    "frontend/dist/sites/custom_m_1787768191.html": true,
+    "frontend/dist/sites/custom_s_1787768129.html": true
+  },
+  "checkpointsUnchanged": {
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint_ep250_mixed_any.pt": true,
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint_lr0001_default_500ep.pt": true,
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint_ep250_free_any.pt": true,
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint_graph_only_demo_20261104.pt": true,
+    "/Users/ruslan_faz/Desktop/Work/Thesis/src/outputs/checkpoint.pt": true
+  }
+}

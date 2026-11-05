@@ -1,0 +1,33 @@
+{
+  "purpose": "Actual port8000 deployment smoke check; not a benchmark",
+  "revision": "d5e1e7eb40906067810425ed0d26091a13f15618",
+  "serverPid": 55620,
+  "bundle": "index-DEvDr_LW.js",
+  "ui": {
+    "floors": 9,
+    "maximumModulesPerFloor": 130,
+    "types": 15,
+    "independentOccurrences": 816,
+    "verticalCopies": 8,
+    "fillRatio": 0.456,
+    "geometryAndAccessChecked": true,
+    "policyUpdates": 0,
+    "clientWallTimeMs": 14326,
+    "serverEpisodeRuntimeMs": 14182.92,
+    "geometryValidationTimeMs": 1240.85,
+    "firstSite": "Existing tiny-site starting-core failure; rejected and retained as a limitation, not a success."
+  },
+  "api": {
+    "geometryValid": true,
+    "geometryAndGapChecksPass": true,
+    "rawGapArea": 0,
+    "moduleTypes": 15,
+    "floorReferences": 694
+  },
+  "sourceHashes": {
+    "src/server.py": "8ca3a716553a9f0639a0c0da499db5aded38c1504d5dcfb2b2c2ff66fe62e8dd",
+    "src/graph_dictionary.py": "8debd844529b8dc5d71cfa151f2fdd94c0acd98498c4003f4a41734c965d8723",
+    "src/graph_continuity.py": "8e04f4b32a3240c1ae905d69edf56aeee105825a5393e30a6b16631e0b75136b",
+    "agent_notes/benchmarks/2026-11-05-v010-continuity-live/verify.py": "470a9d114272fc7b3c66f6da45b812c33fd6eba4cf1b90b75a3edf092796df09"
+  }
+}

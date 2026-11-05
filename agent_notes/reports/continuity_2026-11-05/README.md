@@ -3,7 +3,8 @@
 Backend generation now prevents unintended enclosed gaps during construction.
 It does not stretch instances, paint gaps over, add hidden filler modules, relabel
 leftovers as courtyards, reject completed layouts, or prescribe a rectangular grid.
-Integration into the active demo remains a separate deployment step.
+The backend and completed UI redesign are integrated and verified in the active
+port8000 demo (integration commit `d5e1e7eb`).
 
 ## Implementation
 
@@ -113,3 +114,29 @@ include every held-out plot and the unchanged starting-core failures.
 ![Same-site geometry comparison](comparison.png)
 
 Verification:320 tests completed successfully,2 skipped. [Logs and cache equivalence](../../benchmarks/2026-11-05-v010-continuity-verification/).
+
+## Running demo verification
+
+The original checkout now contains the integrated backend/UI, and its idle old
+daemon was replaced on port8000. The rebuilt UI serves `index-DEvDr_LW.js`.
+Its existing README edits, custom-site dataset/deletion intent, user notes and
+five saved checkpoint files were preserved. No remote push was made.
+
+A fresh nine-floor UI inference run (130 maximum/floor,15-type ceiling) completed
+with816 independent occurrences plus8 vertical copies,45.6% fill and passing
+geometry/access checks. Inference made0 policy updates. Its measured server time
+was14.18s including1.24s final geometry validation; this single live run is not a
+throughput benchmark. The first tiny site exposed the existing starting-core
+failure and was rejected; that limitation remains open.
+
+A separate production-WebSocket smoke check against the same daemon generated
+694 occupied floor references across9 floors,15 types, passing geometry/access
+and gap checks, with zero raw unplanned enclosed-gap area on every floor.
+An independent unbuffered polygon union retained its numerical interior-ring
+areas: seven floors0, two floors approximately1.42e-9m² each. These are recorded
+alongside the seam-aware server audit rather than discarded from the evidence.
+
+[Live settings, final geometry, checks and reproducible client](../../benchmarks/2026-11-05-v010-continuity-live/manifest.json).
+The merged frontend's18 protocol tests and production build pass. The displayed
+floor remains open in the app. Exterior recesses and architectural circulation
+design remain separate from preventing unintended enclosed holes.

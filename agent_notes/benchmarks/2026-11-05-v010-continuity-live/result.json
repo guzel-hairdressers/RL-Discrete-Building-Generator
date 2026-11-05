@@ -1,0 +1,4929 @@
+{
+  "endpoint": "http://127.0.0.1:8000",
+  "settings": {
+    "generatorEngine": "graph_voronoi",
+    "graphController": "neural",
+    "graphProposalStrategy": "legacy",
+    "siteAreaTier": "L",
+    "boundaryType": "free",
+    "parallelEnvironments": 9,
+    "maxModules": 130,
+    "dictCap": 10,
+    "graphMaxTypes": 15,
+    "seed": 123,
+    "autoChangeEpisodes": 1
+  },
+  "seconds": 10.991611125005875,
+  "geometryValid": true,
+  "geometryAndGapChecksPass": true,
+  "rawGapArea": 0,
+  "moduleTypes": 15,
+  "floorReferences": 694,
+  "independentPolygonUnion": {
+    "0": {
+      "rooms": 68,
+      "area": 1222.446784248274,
+      "rawInteriorRingArea": 0
+    },
+    "1": {
+      "rooms": 84,
+      "area": 1572.3143516619546,
+      "rawInteriorRingArea": 0
+    },
+    "2": {
+      "rooms": 75,
+      "area": 1384.5250117432427,
+      "rawInteriorRingArea": 1.4197684235974986e-09
+    },
+    "3": {
+      "rooms": 77,
+      "area": 1368.480400602726,
+      "rawInteriorRingArea": 0
+    },
+    "4": {
+      "rooms": 80,
+      "area": 1377.5645784941776,
+      "rawInteriorRingArea": 0
+    },
+    "5": {
+      "rooms": 74,
+      "area": 1332.7448772448035,
+      "rawInteriorRingArea": 0
+    },
+    "6": {
+      "rooms": 77,
+      "area": 1333.929618481439,
+      "rawInteriorRingArea": 1.4197689574237024e-09
+    },
+    "7": {
+      "rooms": 76,
+      "area": 1268.6434756996982,
+      "rawInteriorRingArea": 0
+    },
+    "8": {
+      "rooms": 83,
+      "area": 1517.4383100302928,
+      "rawInteriorRingArea": 0
+    }
+  },
+  "metrics": {
+    "filledArea": 12378.087409777714,
+    "siteArea": 26893.094599082648,
+    "fillRatio": 0.4602701025786725,
+    "fillDefinition": "occupied_footprint_over_net_site_area",
+    "fillAggregation": "ratio_of_floor_area_sums",
+    "averageFill": 0.4602701025786725,
+    "rentableArea": 12208.589463694434,
+    "rentableRatio": 0.9863066126072603,
+    "averageRentable": 0.9863066126072603,
+    "daylightRatio": 0.0,
+    "siteDaylightRatio": 0.0,
+    "envelopeDaylightRatio": 0.0,
+    "reuseRatio": 1.0,
+    "moduleCount": 694,
+    "dictionaryLength": 15,
+    "exposedPerimeter": 0.0,
+    "perimeters": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "envelopeEfficiency": 0.0,
+    "constructibilityScore": 0.0,
+    "lightScore": 0.0,
+    "exteriorCorridorRatio": 0.0,
+    "triangleRatio": 0.0,
+    "topologyValid": true,
+    "topologyViolations": [],
+    "topologyViolationRate": 0.0,
+    "topologyPenalty": 0.0,
+    "topologyMultiplier": 0.05,
+    "nextTopologyMultiplier": 0.05,
+    "rawScore": 52.507023241663155,
+    "areaVariancePenalty": 0.9037833428484642,
+    "deepRoomRatio": 0.0,
+    "deepInteriorPenalty": 0.0,
+    "facadeChasmRatio": 0.0,
+    "facadeChasmPenalty": 0.0,
+    "underfillPenalty": 1.933601213117891,
+    "internalExposedPenalty": 0.0,
+    "partialConnectionPenalty": 0.0,
+    "score": "66.7202",
+    "perSite": [
+      {
+        "instanceIdx": 0,
+        "floorIndex": 0,
+        "filledArea": 1222.446784392398,
+        "siteArea": 2765.5365027165835,
+        "rentableArea": 1203.6136792720336,
+        "coreArea": 18.8331051203644,
+        "moduleCount": 68,
+        "exposedPerimeter": 0.0,
+        "fillRatio": 0.44202880099090713,
+        "rentableRatio": 0.9845939264098721,
+        "daylightRatio": 0.0,
+        "envelopeDaylightRatio": 0.0,
+        "reuseRatio": 1.0,
+        "constructibilityScore": 0.0,
+        "envelopeEfficiency": 0.0,
+        "exteriorCorridorRatio": 0.0,
+        "triangleRatio": 0.0,
+        "topologyValid": true,
+        "topologyViolations": [],
+        "totalPartialLength": 0.0,
+        "deepRoomCount": 0,
+        "depthPenaltyScore": 0.0,
+        "facadeChasmOccludedLength": 0.0,
+        "areaVariancePenalty": 0.0,
+        "rawScore": 67.19389519116409,
+        "underfillPenalty": 2.426170805758235,
+        "topologyPenalty": 0.0,
+        "facadeChasmPenalty": 0.0,
+        "vocabSize": 15,
+        "dictLimitBreach": 5,
+        "dictBreachPenalty": 2.5,
+        "singletonPenalty": 0.0,
+        "reuseBonus": 19.56268221574344,
+        "score": 64.76772438540586,
+        "estimateStatus": "realized_uncalibrated_environment",
+        "sunExposure": null,
+        "daylightAccessibility": {
+          "node_0_9": {
+            "value": 0.33821332055519027,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_18": {
+            "value": 0.37483672387533107,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_27": {
+            "value": 0.5775097380362604,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_36": {
+            "value": 0.5775097377228784,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_45": {
+            "value": 0.36607889376956904,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_54": {
+            "value": 0.3837097399738055,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_63": {
+            "value": 0.33778134693514905,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_72": {
+            "value": 0.5125256107309311,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_81": {
+            "value": 0.5000000000000001,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_90": {
+            "value": 0.7639743265167543,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_99": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_108": {
+            "value": 0.38122313314542805,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_117": {
+            "value": 0.5087794030664271,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_126": {
+            "value": 0.7639743259744608,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_135": {
+            "value": 0.5000000000067993,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_144": {
+            "value": 0.8960780916084872,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_153": {
+            "value": 0.4415528847788788,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_162": {
+            "value": 0.5190532185141763,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_171": {
+            "value": 0.4026801831877876,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_180": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_189": {
+            "value": 0.4026801845185435,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_198": {
+            "value": 0.5984752513180049,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_207": {
+            "value": 0.5984752523940599,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_216": {
+            "value": 0.5000000000055738,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_225": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_234": {
+            "value": 0.46488660579035745,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_243": {
+            "value": 0.5592604369270571,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_252": {
+            "value": 0.4648866057978493,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_261": {
+            "value": 0.39607809126261284,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_270": {
+            "value": 0.49999999999999994,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_279": {
+            "value": 0.4278888382598982,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_288": {
+            "value": 0.48094678083508585,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_297": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_306": {
+            "value": 0.757041135653266,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_315": {
+            "value": 0.4610006834144165,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_324": {
+            "value": 0.5000000000042287,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_333": {
+            "value": 0.49122059073995483,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_342": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_351": {
+            "value": 0.6654990708046552,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_360": {
+            "value": 0.7570411356600654,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_369": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_378": {
+            "value": 0.4049960317246656,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_387": {
+            "value": 0.5984752513106717,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_404": {
+            "value": 0.8772126377444,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_413": {
+            "value": 0.5973198158253529,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_422": {
+            "value": 0.6654990690219453,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_431": {
+            "value": 0.595108325056003,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_440": {
+            "value": 0.8345009288440104,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_449": {
+            "value": 0.7242432818011789,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_458": {
+            "value": 0.597319815827065,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_467": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_476": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_485": {
+            "value": 0.8345009302407222,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_502": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_511": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_520": {
+            "value": 0.6589840859107698,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_529": {
+            "value": 0.7242432818091287,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_538": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_547": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_562": {
+            "value": 0.6162902600420008,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_571": {
+            "value": 0.6622186546564003,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_588": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_597": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_0_611": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_620": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_627": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_0_666": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          }
+        },
+        "unavailableMetrics": [
+          "daylightRatio",
+          "constructibilityScore",
+          "envelopeEfficiency"
+        ],
+        "uncertainty": {
+          "priorDerivedPrototypes": 2,
+          "unresolvedOccurrences": 0
+        },
+        "reuseAudit": {
+          "prototypeCount": 15,
+          "independentOccurrences": 686,
+          "verticalCopies": 8,
+          "singletonCount": 0,
+          "independentRepeatFraction": 0.978134110787172,
+          "confirmedReuseRatio": 1.0
+        }
+      },
+      {
+        "instanceIdx": 1,
+        "floorIndex": 1,
+        "filledArea": 1572.3143518249246,
+        "siteArea": 3284.8733729044015,
+        "rentableArea": 1553.4812467045601,
+        "coreArea": 18.8331051203644,
+        "moduleCount": 84,
+        "exposedPerimeter": 0.0,
+        "fillRatio": 0.47865295654752266,
+        "rentableRatio": 0.9880220484545564,
+        "daylightRatio": 0.0,
+        "envelopeDaylightRatio": 0.0,
+        "reuseRatio": 1.0,
+        "constructibilityScore": 0.0,
+        "envelopeEfficiency": 0.0,
+        "exteriorCorridorRatio": 0.0,
+        "triangleRatio": 0.0,
+        "topologyValid": true,
+        "topologyViolations": [],
+        "totalPartialLength": 0.0,
+        "deepRoomCount": 0,
+        "depthPenaltyScore": 0.0,
+        "facadeChasmOccludedLength": 0.0,
+        "areaVariancePenalty": 0.0,
+        "rawScore": 70.1752494663636,
+        "underfillPenalty": 1.4316074261472498,
+        "topologyPenalty": 0.0,
+        "facadeChasmPenalty": 0.0,
+        "vocabSize": 15,
+        "dictLimitBreach": 5,
+        "dictBreachPenalty": 2.5,
+        "singletonPenalty": 0.0,
+        "reuseBonus": 19.56268221574344,
+        "score": 68.74364204021634,
+        "estimateStatus": "realized_uncalibrated_environment",
+        "sunExposure": null,
+        "daylightAccessibility": {
+          "node_1_10": {
+            "value": 0.5150516555703306,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_19": {
+            "value": 0.38122313376449146,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_28": {
+            "value": 0.3837097375628797,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_37": {
+            "value": 0.39607809126261306,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_46": {
+            "value": 0.2882864329866555,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_55": {
+            "value": 0.5000000000042288,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_64": {
+            "value": 0.36979424125302307,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_73": {
+            "value": 0.7036455564587192,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_82": {
+            "value": 0.34562150733614677,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_91": {
+            "value": 0.3697942424372923,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_100": {
+            "value": 0.3209798547866423,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_109": {
+            "value": 0.337781346935149,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_118": {
+            "value": 0.9234339870681652,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_127": {
+            "value": 0.5000000000016244,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_136": {
+            "value": 0.6589840840911334,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_145": {
+            "value": 0.598475252906455,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_154": {
+            "value": 0.5716407846416157,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_163": {
+            "value": 0.3812231337644916,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_172": {
+            "value": 0.40152474868530225,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_181": {
+            "value": 0.8694021959588414,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_190": {
+            "value": 0.3837097418099212,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_199": {
+            "value": 0.38370973926749424,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_208": {
+            "value": 0.40268018319231547,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_217": {
+            "value": 0.6654990697848439,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_226": {
+            "value": 0.4912205909418144,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_235": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_244": {
+            "value": 0.2286810117053037,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_253": {
+            "value": 0.7436534975738323,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_262": {
+            "value": 0.4015247467675372,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_271": {
+            "value": 0.4415528851692289,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_280": {
+            "value": 0.33821332020755995,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_289": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_298": {
+            "value": 0.6742784802141752,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_307": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_316": {
+            "value": 0.6654990705221765,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_325": {
+            "value": 0.5984752538837994,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_334": {
+            "value": 0.4015247476008269,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_343": {
+            "value": 0.6654990694235371,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_352": {
+            "value": 0.5087794090551929,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_361": {
+            "value": 0.531449282428262,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_370": {
+            "value": 0.6747373730294602,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_379": {
+            "value": 0.5861258306131873,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_388": {
+            "value": 0.3457633560209968,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_396": {
+            "value": 0.3941800808441347,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_405": {
+            "value": 0.7112942299751238,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_414": {
+            "value": 0.508779400888115,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_423": {
+            "value": 0.36595021462571725,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_432": {
+            "value": 0.5973198158220828,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_441": {
+            "value": 0.8853628846146951,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_450": {
+            "value": 0.33778134769033863,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_459": {
+            "value": 0.3410159134384922,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_468": {
+            "value": 0.5716407846416158,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_477": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_486": {
+            "value": 0.383709739182621,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_494": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_503": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_512": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_521": {
+            "value": 0.665499070903415,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_530": {
+            "value": 0.5237584084196161,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_539": {
+            "value": 0.44155288439775725,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_548": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_554": {
+            "value": 0.7882864347659075,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_563": {
+            "value": 0.6058199181527255,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_572": {
+            "value": 0.7036455564587194,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_580": {
+            "value": 0.4999999954515897,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_589": {
+            "value": 0.6417406608103907,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_598": {
+            "value": 0.6058199174306194,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_604": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_612": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_621": {
+            "value": 0.5169674449530569,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_628": {
+            "value": 0.7117135653281232,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_634": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_641": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_644": {
+            "value": 0.8627307973431664,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_649": {
+            "value": 0.5237584087419355,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_654": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_660": {
+            "value": 0.871868437683262,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_673": {
+            "value": 0.46508759550597584,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_676": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_1_681": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_686": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_690": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_1_692": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          }
+        },
+        "unavailableMetrics": [
+          "daylightRatio",
+          "constructibilityScore",
+          "envelopeEfficiency"
+        ],
+        "uncertainty": {
+          "priorDerivedPrototypes": 2,
+          "unresolvedOccurrences": 0
+        },
+        "reuseAudit": {
+          "prototypeCount": 15,
+          "independentOccurrences": 686,
+          "verticalCopies": 8,
+          "singletonCount": 0,
+          "independentRepeatFraction": 0.978134110787172,
+          "confirmedReuseRatio": 1.0
+        }
+      },
+      {
+        "instanceIdx": 2,
+        "floorIndex": 2,
+        "filledArea": 1384.5250119408163,
+        "siteArea": 2955.8580446186475,
+        "rentableArea": 1365.691906820452,
+        "coreArea": 18.8331051203644,
+        "moduleCount": 75,
+        "exposedPerimeter": 0.0,
+        "fillRatio": 0.46840037344196683,
+        "rentableRatio": 0.9863974251400744,
+        "daylightRatio": 0.0,
+        "envelopeDaylightRatio": 0.0,
+        "reuseRatio": 1.0,
+        "constructibilityScore": 0.0,
+        "envelopeEfficiency": 0.0,
+        "exteriorCorridorRatio": 0.0,
+        "triangleRatio": 0.0,
+        "topologyValid": true,
+        "topologyViolations": [],
+        "totalPartialLength": 0.0,
+        "deepRoomCount": 0,
+        "depthPenaltyScore": 0.0,
+        "facadeChasmOccludedLength": 0.0,
+        "areaVariancePenalty": 0.0,
+        "rawScore": 69.33067346820191,
+        "underfillPenalty": 1.6837393329374513,
+        "topologyPenalty": 0.0,
+        "facadeChasmPenalty": 0.0,
+        "vocabSize": 15,
+        "dictLimitBreach": 5,
+        "dictBreachPenalty": 2.5,
+        "singletonPenalty": 0.0,
+        "reuseBonus": 19.56268221574344,
+        "score": 67.64693413526446,
+        "estimateStatus": "realized_uncalibrated_environment",
+        "sunExposure": null,
+        "daylightAccessibility": {
+          "node_2_11": {
+            "value": 0.33821332014878697,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_20": {
+            "value": 0.38370973997380564,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_29": {
+            "value": 0.34562150688135707,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_38": {
+            "value": 0.1971310562663014,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_47": {
+            "value": 0.38122313376449163,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_56": {
+            "value": 0.3377813469351492,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_65": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_74": {
+            "value": 0.5000000000000001,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_83": {
+            "value": 0.7036455564587192,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_92": {
+            "value": 0.39418008039526026,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_101": {
+            "value": 0.6747373754047988,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_110": {
+            "value": 0.6146371132458035,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_119": {
+            "value": 0.4999999993682789,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_128": {
+            "value": 0.3377882355838418,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_137": {
+            "value": 0.3837097387294011,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_146": {
+            "value": 0.34848030686795345,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_155": {
+            "value": 0.7078454701228002,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_164": {
+            "value": 0.33821332020756023,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_173": {
+            "value": 0.49999999999999994,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_182": {
+            "value": 0.5984752532364889,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_191": {
+            "value": 0.40489167494399714,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_200": {
+            "value": 0.404891674943997,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_209": {
+            "value": 0.6146371132444589,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_218": {
+            "value": 0.7713189902397841,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_227": {
+            "value": 0.4695337535338947,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_236": {
+            "value": 0.7639743222674511,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_245": {
+            "value": 0.7639743228258702,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_254": {
+            "value": 0.7078454701302921,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_263": {
+            "value": 0.8345009290500612,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_272": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_281": {
+            "value": 0.5984752534676887,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_290": {
+            "value": 0.38370973872940145,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_299": {
+            "value": 0.6589840859107697,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_308": {
+            "value": 0.6654990698671746,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_317": {
+            "value": 0.5000000000067991,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_326": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_335": {
+            "value": 0.4015247465178266,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_344": {
+            "value": 0.4809467808350858,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_353": {
+            "value": 0.7042922130649871,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_362": {
+            "value": 0.44155288749924704,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_371": {
+            "value": 0.3377813387411028,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_380": {
+            "value": 0.862730797116798,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_389": {
+            "value": 0.5262549082711121,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_397": {
+            "value": 0.5000000000000001,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_406": {
+            "value": 0.7639743224664959,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_415": {
+            "value": 0.33778134037317165,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_424": {
+            "value": 0.6790201463997936,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_433": {
+            "value": 0.8694021959588415,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_442": {
+            "value": 0.6654990697848439,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_451": {
+            "value": 0.7436534975738323,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_460": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_469": {
+            "value": 0.5984752523991733,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_478": {
+            "value": 0.5984752513105063,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_487": {
+            "value": 0.3837097419012188,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_495": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_504": {
+            "value": 0.5000000000000001,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_513": {
+            "value": 0.7112942287646697,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_522": {
+            "value": 0.8659502144889848,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_531": {
+            "value": 0.8772126368543068,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_540": {
+            "value": 0.7882864332130158,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_555": {
+            "value": 0.7887057718326647,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_564": {
+            "value": 0.658984083991356,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_573": {
+            "value": 0.665499070903415,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_581": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_590": {
+            "value": 0.6654990736634679,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_599": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_605": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_613": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_622": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_629": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_635": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_645": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_2_670": {
+            "value": 0.7112942289163853,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_2_687": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          }
+        },
+        "unavailableMetrics": [
+          "daylightRatio",
+          "constructibilityScore",
+          "envelopeEfficiency"
+        ],
+        "uncertainty": {
+          "priorDerivedPrototypes": 2,
+          "unresolvedOccurrences": 0
+        },
+        "reuseAudit": {
+          "prototypeCount": 15,
+          "independentOccurrences": 686,
+          "verticalCopies": 8,
+          "singletonCount": 0,
+          "independentRepeatFraction": 0.978134110787172,
+          "confirmedReuseRatio": 1.0
+        }
+      },
+      {
+        "instanceIdx": 3,
+        "floorIndex": 3,
+        "filledArea": 1368.4804007998082,
+        "siteArea": 2924.612683142517,
+        "rentableArea": 1349.647295679444,
+        "coreArea": 18.8331051203644,
+        "moduleCount": 77,
+        "exposedPerimeter": 0.0,
+        "fillRatio": 0.4679185071882292,
+        "rentableRatio": 0.9862379431160597,
+        "daylightRatio": 0.0,
+        "envelopeDaylightRatio": 0.0,
+        "reuseRatio": 1.0,
+        "constructibilityScore": 0.0,
+        "envelopeEfficiency": 0.0,
+        "exteriorCorridorRatio": 0.0,
+        "triangleRatio": 0.0,
+        "topologyValid": true,
+        "topologyViolations": [],
+        "totalPartialLength": 0.0,
+        "deepRoomCount": 0,
+        "depthPenaltyScore": 0.0,
+        "facadeChasmOccludedLength": 0.0,
+        "areaVariancePenalty": 0.0,
+        "rawScore": 69.28973193754267,
+        "underfillPenalty": 1.696092294495847,
+        "topologyPenalty": 0.0,
+        "facadeChasmPenalty": 0.0,
+        "vocabSize": 15,
+        "dictLimitBreach": 5,
+        "dictBreachPenalty": 2.5,
+        "singletonPenalty": 0.0,
+        "reuseBonus": 19.56268221574344,
+        "score": 67.59363964304683,
+        "estimateStatus": "realized_uncalibrated_environment",
+        "sunExposure": null,
+        "daylightAccessibility": {
+          "node_3_12": {
+            "value": 0.33821332014878697,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_21": {
+            "value": 0.38370973997380564,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_30": {
+            "value": 0.5775097367874806,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_39": {
+            "value": 0.5125256125939717,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_48": {
+            "value": 0.3660788936481896,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_57": {
+            "value": 0.5190532185141763,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_66": {
+            "value": 0.3377813469351492,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_75": {
+            "value": 0.5000000000000001,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_84": {
+            "value": 0.3812231337644914,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_93": {
+            "value": 0.5716407846363515,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_102": {
+            "value": 0.39418008039526026,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_111": {
+            "value": 0.4026801831923153,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_120": {
+            "value": 0.7639743222713187,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_129": {
+            "value": 0.49999999999999983,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_138": {
+            "value": 0.5000000000067992,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_147": {
+            "value": 0.40268018319231547,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_156": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_165": {
+            "value": 0.6058199203874395,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_174": {
+            "value": 0.7078454701228003,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_183": {
+            "value": 0.5984752513106718,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_192": {
+            "value": 0.45083704098238464,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_201": {
+            "value": 0.4415528856154298,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_210": {
+            "value": 0.441552882758303,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_219": {
+            "value": 0.5984752529604069,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_228": {
+            "value": 0.674737380099523,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_237": {
+            "value": 0.5181109106538043,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_246": {
+            "value": 0.42343398741753113,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_255": {
+            "value": 0.32097985568701126,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_264": {
+            "value": 0.768111770710502,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_273": {
+            "value": 0.34562150735679115,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_282": {
+            "value": 0.45083703279567444,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_291": {
+            "value": 0.38370974091106647,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_300": {
+            "value": 0.6589840859107698,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_309": {
+            "value": 0.46488660579035745,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_318": {
+            "value": 0.5181109107240089,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_327": {
+            "value": 0.38370973816520193,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_336": {
+            "value": 0.5000000002274728,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_345": {
+            "value": 0.6654990691150121,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_354": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_363": {
+            "value": 0.6162902600261945,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_372": {
+            "value": 0.7958210780805991,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_381": {
+            "value": 0.413874169966796,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_390": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_398": {
+            "value": 0.5000000022006019,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_407": {
+            "value": 0.4415528832294273,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_416": {
+            "value": 0.4999999994645742,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_425": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_434": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_443": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_452": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_461": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_470": {
+            "value": 0.5000000013182473,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_479": {
+            "value": 0.5000000000073362,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_488": {
+            "value": 0.5000000036041117,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_496": {
+            "value": 0.7442049865387821,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_505": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_514": {
+            "value": 0.7042922124350975,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_523": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_532": {
+            "value": 0.45083704098972077,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_541": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_556": {
+            "value": 0.3812231346499686,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_565": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_574": {
+            "value": 0.7436534975822618,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_582": {
+            "value": 0.8252626219066708,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_591": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_600": {
+            "value": 0.5491629590166359,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_606": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_614": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_623": {
+            "value": 0.5592604383595049,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_630": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_3_636": {
+            "value": 0.8960780912626126,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_655": {
+            "value": 0.896078091456218,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_661": {
+            "value": 0.703645555614376,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_667": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_677": {
+            "value": 0.7036455564587197,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_3_689": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          }
+        },
+        "unavailableMetrics": [
+          "daylightRatio",
+          "constructibilityScore",
+          "envelopeEfficiency"
+        ],
+        "uncertainty": {
+          "priorDerivedPrototypes": 2,
+          "unresolvedOccurrences": 0
+        },
+        "reuseAudit": {
+          "prototypeCount": 15,
+          "independentOccurrences": 686,
+          "verticalCopies": 8,
+          "singletonCount": 0,
+          "independentRepeatFraction": 0.978134110787172,
+          "confirmedReuseRatio": 1.0
+        }
+      },
+      {
+        "instanceIdx": 4,
+        "floorIndex": 4,
+        "filledArea": 1377.5645786756552,
+        "siteArea": 3164.6652127242032,
+        "rentableArea": 1358.7314735552907,
+        "coreArea": 18.8331051203644,
+        "moduleCount": 80,
+        "exposedPerimeter": 0.0,
+        "fillRatio": 0.43529551661163607,
+        "rentableRatio": 0.9863286952844925,
+        "daylightRatio": 0.0,
+        "envelopeDaylightRatio": 0.0,
+        "reuseRatio": 1.0,
+        "constructibilityScore": 0.0,
+        "envelopeEfficiency": 0.0,
+        "exteriorCorridorRatio": 0.0,
+        "triangleRatio": 0.0,
+        "topologyValid": true,
+        "topologyViolations": [],
+        "totalPartialLength": 0.0,
+        "deepRoomCount": 0,
+        "depthPenaltyScore": 0.0,
+        "facadeChasmOccludedLength": 0.0,
+        "areaVariancePenalty": 0.0,
+        "rawScore": 66.68125397394171,
+        "underfillPenalty": 2.6374023324665967,
+        "topologyPenalty": 0.0,
+        "facadeChasmPenalty": 0.0,
+        "vocabSize": 15,
+        "dictLimitBreach": 5,
+        "dictBreachPenalty": 2.5,
+        "singletonPenalty": 0.0,
+        "reuseBonus": 19.56268221574344,
+        "score": 64.04385164147511,
+        "estimateStatus": "realized_uncalibrated_environment",
+        "sunExposure": null,
+        "daylightAccessibility": {
+          "node_4_13": {
+            "value": 0.33821332014878697,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_22": {
+            "value": 0.38122313376449146,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_31": {
+            "value": 0.38370973886939586,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_40": {
+            "value": 0.39607809126261306,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_49": {
+            "value": 0.34562150733614677,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_58": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_67": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_76": {
+            "value": 0.7036455564587192,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_85": {
+            "value": 0.320979854325284,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_94": {
+            "value": 0.4508370395822635,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_103": {
+            "value": 0.4912205907466372,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_112": {
+            "value": 0.4999999996506341,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_121": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_130": {
+            "value": 0.5716407846363515,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_139": {
+            "value": 0.9002763522786676,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_148": {
+            "value": 0.5984752534754035,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_157": {
+            "value": 0.4415528851692289,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_166": {
+            "value": 0.48094678083508563,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_175": {
+            "value": 0.6146371132444589,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_184": {
+            "value": 0.5000000000026045,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_193": {
+            "value": 0.4026801842453541,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_202": {
+            "value": 0.5000000000061791,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_211": {
+            "value": 0.38370973756287957,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_220": {
+            "value": 0.5304662467835899,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_229": {
+            "value": 0.6755626937342782,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_238": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_247": {
+            "value": 0.5000000002274728,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_256": {
+            "value": 0.3660788937630773,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_265": {
+            "value": 0.8345009306428512,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_274": {
+            "value": 0.6742784726187531,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_283": {
+            "value": 0.49999999887242086,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_292": {
+            "value": 0.6585898274044486,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_301": {
+            "value": 0.49999999818036356,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_310": {
+            "value": 0.41387416906932795,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_319": {
+            "value": 0.6585898295753521,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_328": {
+            "value": 0.6039219083915126,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_337": {
+            "value": 0.5000000000073361,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_346": {
+            "value": 0.8772126378005181,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_355": {
+            "value": 0.49999999999999983,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_364": {
+            "value": 0.4685507166255264,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_373": {
+            "value": 0.6162902600420366,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_382": {
+            "value": 0.616290260497319,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_391": {
+            "value": 0.6162902605131252,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_399": {
+            "value": 0.7251199104973366,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_408": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_417": {
+            "value": 0.6990346267318844,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_426": {
+            "value": 0.3377882354834444,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_435": {
+            "value": 0.711713565034632,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_444": {
+            "value": 0.7036455574410505,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_453": {
+            "value": 0.4695337535545388,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_462": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_471": {
+            "value": 0.6747373796428141,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_480": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_489": {
+            "value": 0.7442049848039516,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_497": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_506": {
+            "value": 0.341015913438492,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_515": {
+            "value": 0.44155287601827276,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_524": {
+            "value": 0.5716407852726221,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_533": {
+            "value": 0.5716407853427654,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_542": {
+            "value": 0.5000000003501166,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_549": {
+            "value": 0.6654990730243272,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_557": {
+            "value": 0.5511182138410224,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_566": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_575": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_583": {
+            "value": 0.500000001660705,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_592": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_601": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_607": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_4_615": {
+            "value": 0.6747373805645526,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_631": {
+            "value": 0.6747373774447714,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_637": {
+            "value": 0.6747373796496379,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_646": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_650": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_656": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_662": {
+            "value": 0.7036455569739463,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_671": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_674": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_684": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_4_693": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          }
+        },
+        "unavailableMetrics": [
+          "daylightRatio",
+          "constructibilityScore",
+          "envelopeEfficiency"
+        ],
+        "uncertainty": {
+          "priorDerivedPrototypes": 2,
+          "unresolvedOccurrences": 0
+        },
+        "reuseAudit": {
+          "prototypeCount": 15,
+          "independentOccurrences": 686,
+          "verticalCopies": 8,
+          "singletonCount": 0,
+          "independentRepeatFraction": 0.978134110787172,
+          "confirmedReuseRatio": 1.0
+        }
+      },
+      {
+        "instanceIdx": 5,
+        "floorIndex": 5,
+        "filledArea": 1332.7448774282436,
+        "siteArea": 2989.638954050663,
+        "rentableArea": 1313.9117723078791,
+        "coreArea": 18.8331051203644,
+        "moduleCount": 74,
+        "exposedPerimeter": 0.0,
+        "fillRatio": 0.44578790212192915,
+        "rentableRatio": 0.9858689345280349,
+        "daylightRatio": 0.0,
+        "envelopeDaylightRatio": 0.0,
+        "reuseRatio": 1.0,
+        "constructibilityScore": 0.0,
+        "envelopeEfficiency": 0.0,
+        "exteriorCorridorRatio": 0.0,
+        "triangleRatio": 0.0,
+        "topologyValid": true,
+        "topologyViolations": [],
+        "totalPartialLength": 0.0,
+        "deepRoomCount": 0,
+        "depthPenaltyScore": 0.0,
+        "facadeChasmOccludedLength": 0.0,
+        "areaVariancePenalty": 0.0,
+        "rawScore": 67.51374840341829,
+        "underfillPenalty": 2.3120777489401383,
+        "topologyPenalty": 0.0,
+        "facadeChasmPenalty": 0.0,
+        "vocabSize": 15,
+        "dictLimitBreach": 5,
+        "dictBreachPenalty": 2.5,
+        "singletonPenalty": 0.0,
+        "reuseBonus": 19.56268221574344,
+        "score": 65.20167065447815,
+        "estimateStatus": "realized_uncalibrated_environment",
+        "sunExposure": null,
+        "daylightAccessibility": {
+          "node_5_14": {
+            "value": 0.33821332055519027,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_23": {
+            "value": 0.3812231337644916,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_32": {
+            "value": 0.3659502126445226,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_41": {
+            "value": 0.39607809126261306,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_50": {
+            "value": 0.34562150733614677,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_59": {
+            "value": 0.4234339870681652,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_68": {
+            "value": 0.3837097383195102,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_77": {
+            "value": 0.7639743244367788,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_86": {
+            "value": 0.5000000000000001,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_95": {
+            "value": 0.3377813469278131,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_104": {
+            "value": 0.7036455564587192,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_113": {
+            "value": 0.32097985294274956,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_122": {
+            "value": 0.5984752529103023,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_131": {
+            "value": 0.48094678083508563,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_140": {
+            "value": 0.7570411356607578,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_149": {
+            "value": 0.6462424781999654,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_158": {
+            "value": 0.5000000010396616,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_167": {
+            "value": 0.4138741697858872,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_176": {
+            "value": 0.5314492823927663,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_185": {
+            "value": 0.5000000000016244,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_194": {
+            "value": 0.5984752529140107,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_203": {
+            "value": 0.42833085062866527,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_212": {
+            "value": 0.3837097364833944,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_221": {
+            "value": 0.7272462697499489,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_230": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_239": {
+            "value": 0.48747438853466313,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_248": {
+            "value": 0.5584471158909284,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_257": {
+            "value": 0.6515196925235889,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_266": {
+            "value": 0.675562693379003,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_275": {
+            "value": 0.6058199191558654,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_284": {
+            "value": 0.531449282392766,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_293": {
+            "value": 0.49122059095525317,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_302": {
+            "value": 0.8410159134384919,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_311": {
+            "value": 0.36595021286881063,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_320": {
+            "value": 0.4685507171984159,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_329": {
+            "value": 0.36595021349976775,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_338": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_347": {
+            "value": 0.4874743905359385,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_356": {
+            "value": 0.6058199194095625,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_365": {
+            "value": 0.3377813469278131,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_374": {
+            "value": 0.45083704046782286,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_383": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_392": {
+            "value": 0.8772126358089292,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_400": {
+            "value": 0.6747373791570952,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_409": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_418": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_427": {
+            "value": 0.6162902572320021,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_436": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_445": {
+            "value": 0.6058199217910777,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_454": {
+            "value": 0.8627307984229976,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_463": {
+            "value": 0.47624159125806487,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_472": {
+            "value": 0.8345009307699931,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_481": {
+            "value": 0.3837097395026802,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_490": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_498": {
+            "value": 0.8772126356021287,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_507": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_516": {
+            "value": 0.862730796197161,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_525": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_534": {
+            "value": 0.6542366482448331,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_543": {
+            "value": 0.35375750971646946,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_550": {
+            "value": 0.5000000013455632,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_558": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_567": {
+            "value": 0.4415528861424593,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_576": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_584": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_593": {
+            "value": 0.7112942303570141,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_602": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_616": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_638": {
+            "value": 0.3941800823438595,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_651": {
+            "value": 0.7112942346057123,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_663": {
+            "value": 0.7887057700375255,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_5_675": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_5_678": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          }
+        },
+        "unavailableMetrics": [
+          "daylightRatio",
+          "constructibilityScore",
+          "envelopeEfficiency"
+        ],
+        "uncertainty": {
+          "priorDerivedPrototypes": 2,
+          "unresolvedOccurrences": 0
+        },
+        "reuseAudit": {
+          "prototypeCount": 15,
+          "independentOccurrences": 686,
+          "verticalCopies": 8,
+          "singletonCount": 0,
+          "independentRepeatFraction": 0.978134110787172,
+          "confirmedReuseRatio": 1.0
+        }
+      },
+      {
+        "instanceIdx": 6,
+        "floorIndex": 6,
+        "filledArea": 1333.9296186531772,
+        "siteArea": 2946.8411182230484,
+        "rentableArea": 1315.0965135328129,
+        "coreArea": 18.8331051203644,
+        "moduleCount": 77,
+        "exposedPerimeter": 0.0,
+        "fillRatio": 0.45266424796513616,
+        "rentableRatio": 0.985881485157081,
+        "daylightRatio": 0.0,
+        "envelopeDaylightRatio": 0.0,
+        "reuseRatio": 1.0,
+        "constructibilityScore": 0.0,
+        "envelopeEfficiency": 0.0,
+        "exteriorCorridorRatio": 0.0,
+        "triangleRatio": 0.0,
+        "topologyValid": true,
+        "topologyViolations": [],
+        "totalPartialLength": 0.0,
+        "deepRoomCount": 0,
+        "depthPenaltyScore": 0.0,
+        "facadeChasmOccludedLength": 0.0,
+        "areaVariancePenalty": 0.0,
+        "rawScore": 68.06404433031054,
+        "underfillPenalty": 2.110482872135447,
+        "topologyPenalty": 0.0,
+        "facadeChasmPenalty": 0.0,
+        "vocabSize": 15,
+        "dictLimitBreach": 5,
+        "dictBreachPenalty": 2.5,
+        "singletonPenalty": 0.0,
+        "reuseBonus": 19.56268221574344,
+        "score": 65.95356145817509,
+        "estimateStatus": "realized_uncalibrated_environment",
+        "sunExposure": null,
+        "daylightAccessibility": {
+          "node_6_15": {
+            "value": 0.33821332055519027,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_24": {
+            "value": 0.3837097386359022,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_33": {
+            "value": 0.33778823558808013,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_42": {
+            "value": 0.3812231337644916,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_51": {
+            "value": 0.3377813469351491,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_60": {
+            "value": 0.5775097375878485,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_69": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_78": {
+            "value": 0.39607809126261306,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_87": {
+            "value": 0.7036455564587192,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_96": {
+            "value": 0.7042922139757923,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_105": {
+            "value": 0.3537575209496406,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_114": {
+            "value": 0.49122059029571513,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_123": {
+            "value": 0.33778823558384263,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_132": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_141": {
+            "value": 0.38370973956595217,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_150": {
+            "value": 0.41387417059510573,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_159": {
+            "value": 0.5984752527189926,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_168": {
+            "value": 0.33778134628206047,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_177": {
+            "value": 0.5951083244768657,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_186": {
+            "value": 0.5765660128101798,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_195": {
+            "value": 0.8252626232205109,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_204": {
+            "value": 0.4809467808350857,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_213": {
+            "value": 0.33821332020593575,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_222": {
+            "value": 0.6543784930085071,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_231": {
+            "value": 0.4415528827583029,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_240": {
+            "value": 0.6058199191625476,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_249": {
+            "value": 0.385362886331136,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_258": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_267": {
+            "value": 0.5087794028712499,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_276": {
+            "value": 0.3410159160023486,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_285": {
+            "value": 0.4508370340089373,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_294": {
+            "value": 0.4999999998477308,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_303": {
+            "value": 0.7036455556143763,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_312": {
+            "value": 0.5304662464661056,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_321": {
+            "value": 0.38370973974575034,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_330": {
+            "value": 0.4610006834144166,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_339": {
+            "value": 0.665499069458789,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_348": {
+            "value": 0.5950039681496218,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_357": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_366": {
+            "value": 0.703645557441051,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_375": {
+            "value": 0.49999999999999994,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_384": {
+            "value": 0.6654990705035825,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_393": {
+            "value": 0.3377813387411028,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_401": {
+            "value": 0.757041135653266,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_410": {
+            "value": 0.7570411356675572,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_419": {
+            "value": 0.4508370404678228,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_428": {
+            "value": 0.6058199191558654,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_437": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_446": {
+            "value": 0.6585898290867821,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_455": {
+            "value": 0.38370973762091204,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_464": {
+            "value": 0.6747373752988963,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_473": {
+            "value": 0.6654990720959295,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_482": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_491": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_499": {
+            "value": 0.4830325537407434,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_508": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_517": {
+            "value": 0.8718684365588181,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_526": {
+            "value": 0.6654990720781154,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_535": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_544": {
+            "value": 0.6542366456300736,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_551": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_559": {
+            "value": 0.6747373785893138,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_568": {
+            "value": 0.8345009285304182,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_577": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_585": {
+            "value": 0.7681117708583766,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_594": {
+            "value": 0.4874743900635045,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_608": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_617": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_624": {
+            "value": 0.5262549071980893,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_632": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_642": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_647": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_657": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_6_664": {
+            "value": 0.8893315385538174,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_668": {
+            "value": 0.8219626924338849,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_6_682": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          }
+        },
+        "unavailableMetrics": [
+          "daylightRatio",
+          "constructibilityScore",
+          "envelopeEfficiency"
+        ],
+        "uncertainty": {
+          "priorDerivedPrototypes": 2,
+          "unresolvedOccurrences": 0
+        },
+        "reuseAudit": {
+          "prototypeCount": 15,
+          "independentOccurrences": 686,
+          "verticalCopies": 8,
+          "singletonCount": 0,
+          "independentRepeatFraction": 0.978134110787172,
+          "confirmedReuseRatio": 1.0
+        }
+      },
+      {
+        "instanceIdx": 7,
+        "floorIndex": 7,
+        "filledArea": 1268.6434759008032,
+        "siteArea": 2759.1460979864664,
+        "rentableArea": 1249.8103707804387,
+        "coreArea": 18.8331051203644,
+        "moduleCount": 76,
+        "exposedPerimeter": 0.0,
+        "fillRatio": 0.4597956870883413,
+        "rentableRatio": 0.9851549269135743,
+        "daylightRatio": 0.0,
+        "envelopeDaylightRatio": 0.0,
+        "reuseRatio": 1.0,
+        "constructibilityScore": 0.0,
+        "envelopeEfficiency": 0.0,
+        "exteriorCorridorRatio": 0.0,
+        "triangleRatio": 0.0,
+        "topologyValid": true,
+        "topologyViolations": [],
+        "totalPartialLength": 0.0,
+        "deepRoomCount": 0,
+        "depthPenaltyScore": 0.0,
+        "facadeChasmOccludedLength": 0.0,
+        "areaVariancePenalty": 0.0,
+        "rawScore": 68.62366108651436,
+        "underfillPenalty": 1.9111214654612796,
+        "topologyPenalty": 0.0,
+        "facadeChasmPenalty": 0.0,
+        "vocabSize": 15,
+        "dictLimitBreach": 5,
+        "dictBreachPenalty": 2.5,
+        "singletonPenalty": 0.0,
+        "reuseBonus": 19.56268221574344,
+        "score": 66.71253962105308,
+        "estimateStatus": "realized_uncalibrated_environment",
+        "sunExposure": null,
+        "daylightAccessibility": {
+          "node_7_16": {
+            "value": 0.3382133202075601,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_25": {
+            "value": 0.38370973819616394,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_34": {
+            "value": 0.5775097384967353,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_43": {
+            "value": 0.3812231337644916,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_52": {
+            "value": 0.42249026256357514,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_61": {
+            "value": 0.3377813469351492,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_70": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_79": {
+            "value": 0.5125256113257791,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_88": {
+            "value": 0.38536288733951285,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_97": {
+            "value": 0.39607809126261306,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_106": {
+            "value": 0.4026801839167595,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_115": {
+            "value": 0.6622117639874079,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_124": {
+            "value": 0.39418008157952944,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_133": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_142": {
+            "value": 0.4415528847788789,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_151": {
+            "value": 0.4234339869969343,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_160": {
+            "value": 0.3377813476895179,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_169": {
+            "value": 0.7436534975738323,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_178": {
+            "value": 0.32097985249617456,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_187": {
+            "value": 0.6747373782353567,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_196": {
+            "value": 0.6162902587196784,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_205": {
+            "value": 0.4415528811789813,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_214": {
+            "value": 0.4809467770004521,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_223": {
+            "value": 0.3456215061167169,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_232": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_241": {
+            "value": 0.4415528847788788,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_250": {
+            "value": 0.5592604369270572,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_259": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_268": {
+            "value": 0.6039219087373869,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_277": {
+            "value": 0.3837097394821389,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_286": {
+            "value": 0.8960780912626132,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_295": {
+            "value": 0.7713189890575949,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_304": {
+            "value": 0.6162902591908027,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_313": {
+            "value": 0.703645556458719,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_322": {
+            "value": 0.5984752529604069,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_331": {
+            "value": 0.38370973903654393,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_340": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_349": {
+            "value": 0.48747438556039113,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_358": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_367": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_376": {
+            "value": 0.40268018319114585,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_385": {
+            "value": 0.7042922150189724,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_394": {
+            "value": 0.4508370404678228,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_402": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_411": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_420": {
+            "value": 0.8893315342181021,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_429": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_438": {
+            "value": 0.674737384191927,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_447": {
+            "value": 0.4999999992371014,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_456": {
+            "value": 0.4508370400095295,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_465": {
+            "value": 0.5592604388401755,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_474": {
+            "value": 0.5000000000042285,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_483": {
+            "value": 0.665499071330564,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_492": {
+            "value": 0.42249026256357514,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_500": {
+            "value": 0.6339211062369227,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_509": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_518": {
+            "value": 0.7958210778675663,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_527": {
+            "value": 0.5973198160832407,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_536": {
+            "value": 0.6295678728570314,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_545": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_552": {
+            "value": 0.5000000000000001,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_560": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_569": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_578": {
+            "value": 0.7639743222711597,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_586": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_595": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_609": {
+            "value": 0.825262620904702,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_7_618": {
+            "value": 0.703645556458719,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_625": {
+            "value": 0.8028689442779109,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_633": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_639": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_652": {
+            "value": 0.7882864343700396,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_658": {
+            "value": 0.7117135651296178,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_665": {
+            "value": 0.8718684333714884,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_7_679": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          }
+        },
+        "unavailableMetrics": [
+          "daylightRatio",
+          "constructibilityScore",
+          "envelopeEfficiency"
+        ],
+        "uncertainty": {
+          "priorDerivedPrototypes": 2,
+          "unresolvedOccurrences": 0
+        },
+        "reuseAudit": {
+          "prototypeCount": 15,
+          "independentOccurrences": 686,
+          "verticalCopies": 8,
+          "singletonCount": 0,
+          "independentRepeatFraction": 0.978134110787172,
+          "confirmedReuseRatio": 1.0
+        }
+      },
+      {
+        "instanceIdx": 8,
+        "floorIndex": 8,
+        "filledArea": 1517.4383101618873,
+        "siteArea": 3101.9226127161173,
+        "rentableArea": 1498.6052050415228,
+        "coreArea": 18.8331051203644,
+        "moduleCount": 83,
+        "exposedPerimeter": 0.0,
+        "fillRatio": 0.4891928328389799,
+        "rentableRatio": 0.9875888825303513,
+        "daylightRatio": 0.0,
+        "envelopeDaylightRatio": 0.0,
+        "reuseRatio": 1.0,
+        "constructibilityScore": 0.0,
+        "envelopeEfficiency": 0.0,
+        "exteriorCorridorRatio": 0.0,
+        "triangleRatio": 0.0,
+        "topologyValid": true,
+        "topologyViolations": [],
+        "totalPartialLength": 0.0,
+        "deepRoomCount": 0,
+        "depthPenaltyScore": 0.0,
+        "facadeChasmOccludedLength": 0.0,
+        "areaVariancePenalty": 0.0,
+        "rawScore": 71.0119420808171,
+        "underfillPenalty": 1.1937166397187735,
+        "topologyPenalty": 0.0,
+        "facadeChasmPenalty": 0.0,
+        "vocabSize": 15,
+        "dictLimitBreach": 5,
+        "dictBreachPenalty": 2.5,
+        "singletonPenalty": 0.0,
+        "reuseBonus": 19.56268221574344,
+        "score": 69.81822544109832,
+        "estimateStatus": "realized_uncalibrated_environment",
+        "sunExposure": null,
+        "daylightAccessibility": {
+          "node_8_17": {
+            "value": 0.5150516555703306,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_26": {
+            "value": 0.38122313376449146,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_35": {
+            "value": 0.38370973862009583,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_44": {
+            "value": 0.3659502134997678,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_53": {
+            "value": 0.3456215064272602,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_62": {
+            "value": 0.39607809126261306,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_71": {
+            "value": 0.3697942424372922,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_80": {
+            "value": 0.7036455564587192,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_89": {
+            "value": 0.5984752529141699,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_98": {
+            "value": 0.3377813453435997,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_107": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_116": {
+            "value": 0.320979855762473,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_125": {
+            "value": 0.42343398718982045,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_134": {
+            "value": 0.8084542411883269,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_143": {
+            "value": 0.5984752523991732,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_152": {
+            "value": 0.3257215232468791,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_161": {
+            "value": 0.4912205907429476,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_170": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_179": {
+            "value": 0.3377813476895182,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_188": {
+            "value": 0.3837097374880933,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_197": {
+            "value": 0.5314492823927663,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_206": {
+            "value": 0.4415528840962062,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_215": {
+            "value": 0.7436534975738323,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_224": {
+            "value": 0.6340497875829504,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_233": {
+            "value": 0.5314492830571389,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_242": {
+            "value": 0.658984084528543,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_251": {
+            "value": 0.42249026426506175,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_260": {
+            "value": 0.5984752529064548,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_269": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_278": {
+            "value": 0.33778134768951806,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_287": {
+            "value": 0.468550716308115,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_296": {
+            "value": 0.44155288108249974,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_305": {
+            "value": 0.5262549079841673,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_314": {
+            "value": 0.4999999992371014,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_323": {
+            "value": 0.6339211062369227,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_332": {
+            "value": 0.6305978040411584,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_341": {
+            "value": 0.7112942321085618,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_350": {
+            "value": 0.3837097394979454,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_359": {
+            "value": 0.5000000002659434,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_368": {
+            "value": 0.2713189889335843,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_377": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_386": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_395": {
+            "value": 0.38370974003227964,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_403": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_412": {
+            "value": 0.5951083250560029,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_421": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_430": {
+            "value": 0.4999999978089854,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_439": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_448": {
+            "value": 0.4015247481240685,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_457": {
+            "value": 0.401524742845666,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_466": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_475": {
+            "value": 0.6162902600420362,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_484": {
+            "value": 0.6162902605116296,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_493": {
+            "value": 0.5775097359444356,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_501": {
+            "value": 0.6654990725137653,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_510": {
+            "value": 0.7882864385188745,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_519": {
+            "value": 0.4685507154652022,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_528": {
+            "value": 0.7436534976484381,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_537": {
+            "value": 0.6417406606131335,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_546": {
+            "value": 0.5000000009648052,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_553": {
+            "value": 0.7882864313376654,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_561": {
+            "value": 0.5,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_570": {
+            "value": 0.7117135653339046,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_579": {
+            "value": 0.3377813476895179,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_587": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_596": {
+            "value": 0.46855071717039026,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_603": {
+            "value": 0.6622186530648508,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_610": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_619": {
+            "value": 0.512525612129798,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_626": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_640": {
+            "value": 0.6417406620672278,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_643": {
+            "value": 0.8659502122884257,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_648": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_653": {
+            "value": 0.825262621968984,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_659": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": true
+          },
+          "node_8_669": {
+            "value": 0.7882864345181407,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_672": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_680": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_683": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_685": {
+            "value": 0.8772126360538873,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_688": {
+            "value": 1.0,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          },
+          "node_8_691": {
+            "value": 0.7117135639449331,
+            "status": "uncalibrated",
+            "evidence": "angular_openness_and_well_span",
+            "priorBoundary": false
+          }
+        },
+        "unavailableMetrics": [
+          "daylightRatio",
+          "constructibilityScore",
+          "envelopeEfficiency"
+        ],
+        "uncertainty": {
+          "priorDerivedPrototypes": 2,
+          "unresolvedOccurrences": 0
+        },
+        "reuseAudit": {
+          "prototypeCount": 15,
+          "independentOccurrences": 686,
+          "verticalCopies": 8,
+          "singletonCount": 0,
+          "independentRepeatFraction": 0.978134110787172,
+          "confirmedReuseRatio": 1.0
+        }
+      }
+    ],
+    "coreStacking": {
+      "enabled": true,
+      "status": "locked",
+      "mode": "graph-full-height",
+      "boundaryPolicy": "unchanged",
+      "siteResampleAttempts": 0,
+      "graphOrigin": [
+        22.816957147263626,
+        14.245854002970747
+      ],
+      "initialCandidateCount": 521,
+      "floorCount": 9,
+      "stackCount": 1,
+      "lockedCoreCount": 9,
+      "exactLocalAlignment": true,
+      "violations": [],
+      "stacks": [
+        {
+          "id": "stack_core_0"
+        }
+      ]
+    },
+    "estimateStatus": "realized_uncalibrated_environment",
+    "moduleIdentityStatus": "confirmed",
+    "proposalStrategy": "legacy",
+    "proposalVocabulary": {
+      "observedLengthCount": 157,
+      "observedAngleCount": 677,
+      "angleConvention": "directed_modulo_2pi",
+      "includesCompositeTurns": true
+    },
+    "dictionaryMaxTypes": 15,
+    "dictionaryTargetTypes": 10,
+    "incompatibleProposalCount": 38745,
+    "sunExposure": null,
+    "unavailableMetrics": [
+      "daylightRatio",
+      "constructibilityScore",
+      "envelopeEfficiency"
+    ],
+    "dictBreachPenalty": 2.5,
+    "dictLimitBreach": 5,
+    "vocabSize": 15,
+    "totalPlacements": 694,
+    "bpeRounds": 0,
+    "reusedBpeModules": 15,
+    "bpeBonus": 0.0,
+    "utilizationEntropyBonus": 0.0,
+    "unmergedTriangles": 0,
+    "averageUnmergedTriangles": 0.0,
+    "unmergedTrianglePenalty": 0.0,
+    "generationTimeSeconds": 0.0,
+    "candidateEvaluations": 0,
+    "actionNormalizedGenerationTime": 0.0,
+    "sizeNormalizedGenerationTime": 0.0,
+    "meanModuleArea": 17.83586082100535,
+    "generationTimeReferenceUsed": 1e-09,
+    "generationTimeBaseline": 1.0000000000000003e-09,
+    "relativeGenerationTime": 0.0,
+    "frontierGrowthPotential": 0.0,
+    "frontierGrowthReferenceUsed": 1e-09,
+    "frontierGrowthBaseline": 1.0000000000000003e-09,
+    "relativeFrontierGrowth": 0.0,
+    "smallShapeRatio": 0.0,
+    "smallShapeExploitPenalty": 0.0,
+    "unblendedRelativeTimeReward": 0.0,
+    "relativeTimeReward": 0.0,
+    "baselineTransitionEpisodes": 0,
+    "singletonPenalty": 0.0,
+    "reuseBonus": 19.56268221574344,
+    "reuseAudit": {
+      "prototypeCount": 15,
+      "independentOccurrences": 686,
+      "verticalCopies": 8,
+      "singletonCount": 0,
+      "independentRepeatFraction": 0.978134110787172,
+      "confirmedReuseRatio": 1.0
+    },
+    "perFloorScores": [
+      64.76772438540586,
+      68.74364204021634,
+      67.64693413526446,
+      67.59363964304683,
+      64.04385164147511,
+      65.20167065447815,
+      65.95356145817509,
+      66.71253962105308,
+      69.81822544109832
+    ],
+    "policyLoss": 0.0,
+    "actorLoss": 0.0,
+    "valueLoss": 0.0,
+    "policyEntropy": 0.0,
+    "gradientNorm": 0.0,
+    "advantage": 0.0,
+    "learningRate": 0.0,
+    "learningAlgorithm": "graph_inference",
+    "policyUpdateCount": 0,
+    "policyDecisionCount": 0,
+    "architecture": "message_passing",
+    "trainingReward": 0.5831363418886226,
+    "continuousProposalCount": 0,
+    "continuousProposalDecisions": 0,
+    "selectedProposalSources": {
+      "continuous_reference": 43,
+      "shared_module_contact": 528,
+      "shared_junction": 114
+    },
+    "selectedFactorSources": {
+      "sampled/sampled": 157,
+      "observed/observed": 528
+    },
+    "geometryValid": true,
+    "graphValid": true,
+    "trainingObjective": "shared_constraints_v4_reuse",
+    "baseline": 0.3817201987800237,
+    "episodeExecutionTimeMs": 10885.35,
+    "postStepEvaluationMs": 841.36,
+    "runtimeDiagnostics": {
+      "device": "cpu",
+      "nativeGeometry": {
+        "available": true,
+        "enabled": true,
+        "abiVersion": 3,
+        "library": "/Users/ruslan_faz/Desktop/Work/Thesis/src/c/libfast_geometry.dylib",
+        "loadError": null,
+        "disabledByEnvironment": false
+      },
+      "processPeakRssBytes": 1007943680,
+      "acceleratorAllocatedBytes": 0,
+      "acceleratorPeakBytes": 0,
+      "torchThreads": 1,
+      "episodeTimeMs": 10885.35,
+      "postStepEvaluationMs": 841.36
+    },
+    "performanceTimings": {
+      "stepTotal": {
+        "avg": 118.65430348858685,
+        "min": 46.328875003382564,
+        "max": 909.9875419997261,
+        "count": 88
+      },
+      "voronoiRealization": {
+        "avg": 828.1295410051825,
+        "min": 828.1295410051825,
+        "max": 828.1295410051825,
+        "count": 1
+      },
+      "canonicalDictionary": {
+        "avg": 0.31754199881106615,
+        "min": 0.31754199881106615,
+        "max": 0.31754199881106615,
+        "count": 1
+      },
+      "graphMetricsEvaluation": {
+        "avg": 4.513124993536621,
+        "min": 4.513124993536621,
+        "max": 4.513124993536621,
+        "count": 1
+      },
+      "aggregateTerminal": {
+        "avg": 0.1022080032271333,
+        "min": 0.1022080032271333,
+        "max": 0.1022080032271333,
+        "count": 1
+      },
+      "episodeFormatting": {
+        "avg": 2.9668749994016252,
+        "min": 2.9668749994016252,
+        "max": 2.9668749994016252,
+        "count": 1
+      },
+      "postStepEvaluation": {
+        "avg": 841.3563750000321,
+        "min": 841.3563750000321,
+        "max": 841.3563750000321,
+        "count": 1
+      },
+      "episodeTotal": {
+        "avg": 10885.354083002312,
+        "min": 10885.354083002312,
+        "max": 10885.354083002312,
+        "count": 1
+      }
+    }
+  }
+}

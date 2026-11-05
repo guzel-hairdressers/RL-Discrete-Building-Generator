@@ -136,3 +136,9 @@ The `2026-11-05-v010-hypotheses-*` directories preserve the1,860-case ANY/FREE p
 ## 2026-11-05 — continuity fix
 
 `continuity-quality-01` is the216-case paired old/guard/closure comparison. `quality-02` rechecks72 final cases after support caching. `speed-02` is the final L/XL120max/floor4/8-floor,three-seed comparison; `speed-01` preserves the uncached measurement. `training-01` has36 ANY/FREE stochastic vocabulary episodes, one real update each and independent final audits. Final valid-start outputs have zero raw enclosed-gap area. Timing is not an equal-work speedup claim; the fix adds checking. `first-4floors` contains the superseded2.48m² failure. [Report](../reports/continuity_2026-11-05/README.md).
+
+`continuity-live` records actual port8000 deployment verification after UI integration:
+fresh9-floor UI inference and a separate694-reference WebSocket run,15 types,
+zero raw enclosed gaps. Includes settings, full final event, independent polygon
+union results and data/checkpoint preservation hashes. This is a smoke check,
+not another speed or quality benchmark.
